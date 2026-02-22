@@ -215,8 +215,8 @@ export default function DepositionExhibits() {
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
             <Badge className={`text-[10px] ${sideColors[ex.provided_by_side]}`}>{ex.provided_by_side}</Badge>
             {ex.group_name && <Badge variant="outline" className="text-[10px] text-indigo-400 border-indigo-500/30">{ex.group_name}</Badge>}
-            {(ex.tags || []).map(t => <Badge key={t} variant="outline" className="text-[10px] text-slate-500 border-slate-700">{t}</Badge>)}
-            {ex.referenced_page && <span className="text-[10px] text-slate-600">p.{ex.referenced_page}</span>}
+            {(ex.tags || []).map(t => <Badge key={t} variant="outline" className="text-[10px] text-slate-300 border-slate-600">{t}</Badge>)}
+            {ex.referenced_page && <span className="text-[10px] text-slate-400">p.{ex.referenced_page}</span>}
           </div>
         </div>
 
