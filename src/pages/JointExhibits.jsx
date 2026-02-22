@@ -1,139 +1,392 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown } from "lucide-react";
+import { format } from "date-fns";
 
 const statusColors = {
-  NotUsed: "bg-slate-500/20 text-slate-400",
   Marked: "bg-cyan-500/20 text-cyan-400",
   Offered: "bg-blue-500/20 text-blue-400",
   Admitted: "bg-green-500/20 text-green-400",
   Excluded: "bg-red-500/20 text-red-400",
   Withdrawn: "bg-yellow-500/20 text-yellow-400",
+  NotUsed: "bg-slate-500/20 text-slate-400",
 };
+
+const fmtDate = (d) => { try { return format(new Date(d), "MMM d, yyyy"); } catch { return d || "—"; } };
 
 export default function JointExhibits() {
   const { activeCase } = useActiveCase();
   const [joints, setJoints] = useState([]);
-  const [masters, setMasters] = useState([]);
-  const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState(null);
-  const [open, setOpen] = useState(false);
+  const [admitted, setAdmitted] = useState([]);
+  const [depoExhibits, setDepoExhibits] = useState([]);
 
-  const load = () => {
+  // Filters
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterSide, setFilterSide] = useState("all");
+
+  // Dialogs
+  const [editJoint, setEditJoint] = useState(null);
+  const [admitDialog, setAdmitDialog] = useState(null);
+  const [admitForm, setAdmitForm] = useState({ admitted_no: "", admitted_by_side: "Plaintiff", date_admitted: new Date().toISOString().split("T")[0], notes: "" });
+  const [editAdmit, setEditAdmit] = useState(null);
+
+  const load = async () => {
     if (!activeCase) return;
     const cid = activeCase.id;
-    Promise.all([
+    const [jo, ad, de] = await Promise.all([
       base44.entities.JointExhibits.filter({ case_id: cid }),
-      base44.entities.MasterExhibits.filter({ case_id: cid }),
-    ]).then(([j, m]) => { setJoints(j); setMasters(m); });
+      base44.entities.AdmittedExhibits.filter({ case_id: cid }),
+      base44.entities.DepositionExhibits.filter({ case_id: cid }),
+    ]);
+    setJoints(jo);
+    setAdmitted(ad);
+    setDepoExhibits(de);
   };
-  useEffect(load, [activeCase]);
 
-  const save = async () => {
-    const data = { ...editing, case_id: activeCase.id };
-    if (editing.id) await base44.entities.JointExhibits.update(editing.id, data);
-    else await base44.entities.JointExhibits.create(data);
-    setOpen(false);
+  useEffect(() => { load(); }, [activeCase]);
+
+  const admittedByJointId = useMemo(() => {
+    const m = {};
+    admitted.forEach(a => { m[a.joint_exhibit_id] = a; });
+    return m;
+  }, [admitted]);
+
+  const depoByJointId = useMemo(() => {
+    const m = {};
+    depoExhibits.forEach(d => { if (d.joint_exhibit_id) m[d.joint_exhibit_id] = d; });
+    return m;
+  }, [depoExhibits]);
+
+  const filtered = useMemo(() => joints.filter(j => {
+    const admRec = admittedByJointId[j.id];
+    const matchSearch = !search ||
+      j.marked_title?.toLowerCase().includes(search.toLowerCase()) ||
+      j.marked_no?.toLowerCase().includes(search.toLowerCase()) ||
+      admRec?.admitted_no?.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filterStatus === "all" || j.status === filterStatus;
+    const matchSide = filterSide === "all" || j.marked_by_side === filterSide;
+    return matchSearch && matchStatus && matchSide;
+  }), [joints, admitted, search, filterStatus, filterSide, admittedByJointId]);
+
+  // Edit joint
+  const saveJoint = async () => {
+    await base44.entities.JointExhibits.update(editJoint.id, editJoint);
+    setEditJoint(null);
     load();
   };
 
-  const remove = async (id) => {
-    if (!confirm("Delete?")) return;
-    await base44.entities.JointExhibits.delete(id);
+  const removeJoint = async (j) => {
+    if (!confirm("Remove this exhibit from the Joint List? It will return to Deposition Exhibits as unmarked.")) return;
+    // un-mark on depo exhibit
+    const depo = depoByJointId[j.id];
+    if (depo) await base44.entities.DepositionExhibits.update(depo.id, { joint_exhibit_id: "" });
+    // delete admitted record if exists
+    const admRec = admittedByJointId[j.id];
+    if (admRec) await base44.entities.AdmittedExhibits.delete(admRec.id);
+    await base44.entities.JointExhibits.delete(j.id);
     load();
   };
 
-  const getMasterTitle = (mid) => masters.find(m => m.id === mid)?.master_title || "Unknown";
-  const filtered = joints.filter(j => !search || j.marked_title?.toLowerCase().includes(search.toLowerCase()) || getMasterTitle(j.master_exhibit_id).toLowerCase().includes(search.toLowerCase()));
+  // Admit
+  const openAdmit = (joint) => {
+    setAdmitDialog(joint);
+    setAdmitForm({ admitted_no: "", admitted_by_side: "Plaintiff", date_admitted: new Date().toISOString().split("T")[0], notes: "" });
+  };
 
-  if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
+  const saveAdmit = async () => {
+    const data = { ...admitForm, case_id: activeCase.id, joint_exhibit_id: admitDialog.id };
+    await base44.entities.AdmittedExhibits.create(data);
+    await base44.entities.JointExhibits.update(admitDialog.id, { status: "Admitted" });
+    setAdmitDialog(null);
+    load();
+  };
+
+  const saveEditAdmit = async () => {
+    await base44.entities.AdmittedExhibits.update(editAdmit.id, editAdmit);
+    setEditAdmit(null);
+    load();
+  };
+
+  const removeAdmit = async (admRec, jointId) => {
+    if (!confirm("Remove admission? Exhibit will revert to Marked status.")) return;
+    await base44.entities.AdmittedExhibits.delete(admRec.id);
+    await base44.entities.JointExhibits.update(jointId, { status: "Marked" });
+    load();
+  };
+
+  if (!activeCase) return <div className="p-8 text-slate-400">No active case selected.</div>;
+
+  const admittedCount = joints.filter(j => admittedByJointId[j.id]).length;
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-white">Joint Exhibit List</h1>
-          <p className="text-sm text-slate-500">Marked exhibits for trial</p>
+          <div className="flex gap-3 mt-1 text-xs text-slate-500">
+            <span>{joints.length} marked</span>
+            <span className="text-slate-600">·</span>
+            <span className="text-green-400">{admittedCount} admitted</span>
+          </div>
         </div>
-        <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={() => { setEditing({ master_exhibit_id: "", marked_no: "", marked_title: "", marked_by_side: "Plaintiff", status: "Marked", notes: "" }); setOpen(true); }}>
-          <Plus className="w-4 h-4 mr-2" /> Add Joint Exhibit
-        </Button>
       </div>
 
-      <div className="relative max-w-sm mb-6">
-        <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-        <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
+        <div className="relative min-w-[200px] max-w-xs flex-1">
+          <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+          <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+        </div>
+
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-36 bg-[#131a2e] border-[#1e2a45] text-slate-200 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            {["Marked","Offered","Admitted","Excluded","Withdrawn","NotUsed"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterSide} onValueChange={setFilterSide}>
+          <SelectTrigger className="w-36 bg-[#131a2e] border-[#1e2a45] text-slate-200 h-9"><SelectValue placeholder="Side" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sides</SelectItem>
+            {["Plaintiff","Defense","Unknown"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
+      {/* List */}
       <div className="space-y-2">
-        {filtered.map(j => (
-          <Card key={j.id} className="bg-[#131a2e] border-[#1e2a45]">
-            <CardContent className="py-3 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-lg font-bold text-cyan-400 min-w-[60px]">#{j.marked_no}</span>
-                <div>
-                  <p className="text-sm text-white font-medium">{j.marked_title}</p>
-                  <p className="text-xs text-slate-500">From: {getMasterTitle(j.master_exhibit_id)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge className={statusColors[j.status]}>{j.status}</Badge>
-                <Badge variant="outline" className="text-slate-500 border-slate-600 text-xs">{j.marked_by_side}</Badge>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...j }); setOpen(true); }}><Pencil className="w-3 h-3" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(j.id)}><Trash2 className="w-3 h-3" /></Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {filtered.map(j => {
+          const admRec = admittedByJointId[j.id];
+          const depo = depoByJointId[j.id];
+          return (
+            <Accordion key={j.id} type="single" collapsible>
+              <AccordionItem value={j.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:hidden">
+                  <div className="flex items-center gap-3 w-full text-left">
+                    {/* Exhibit number */}
+                    <div className="flex-shrink-0 text-center w-16">
+                      <span className="text-lg font-bold text-cyan-400">#{j.marked_no}</span>
+                    </div>
+
+                    {/* Title + source */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium">{j.marked_title}</p>
+                      {depo && depo.display_title !== j.marked_title && (
+                        <p className="text-xs text-slate-600">Depo: {depo.display_title || depo.depo_exhibit_title}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <Badge className={`text-[10px] ${statusColors[j.status]}`}>{j.status}</Badge>
+                        <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">{j.marked_by_side}</Badge>
+                      </div>
+                    </div>
+
+                    {/* Admitted chip or button */}
+                    <div className="flex-shrink-0 flex items-center gap-2 pr-2">
+                      {admRec ? (
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-500 block">Admitted</span>
+                          <span className="text-xs font-semibold text-green-400">#{admRec.admitted_no} · {fmtDate(admRec.date_admitted)}</span>
+                          <span className="text-[10px] text-slate-600 block">{admRec.admitted_by_side}</span>
+                        </div>
+                      ) : (
+                        <button
+                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"
+                          onClick={e => { e.stopPropagation(); openAdmit(j); }}
+                        >
+                          <CheckSquare className="w-3 h-3" /> Admit
+                        </button>
+                      )}
+                      <ChevronDown className="w-4 h-4 text-slate-500" />
+                    </div>
+                  </div>
+                </AccordionTrigger>
+
+                <AccordionContent className="px-4 pb-4 pt-0 border-t border-[#1e2a45]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                    {/* Left: joint details */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Marking Details</p>
+                      <div className="space-y-1 text-xs text-slate-400">
+                        <p><span className="text-slate-500">Marked #:</span> {j.marked_no}</p>
+                        <p><span className="text-slate-500">Title:</span> {j.marked_title}</p>
+                        <p><span className="text-slate-500">By:</span> {j.marked_by_side}</p>
+                        <p><span className="text-slate-500">Status:</span> {j.status}</p>
+                        {j.notes && <p className="text-slate-500 italic">{j.notes}</p>}
+                        {depo && (
+                          <div className="mt-2 pt-2 border-t border-[#1e2a45]">
+                            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Source Exhibit</p>
+                            <p>No. {depo.depo_exhibit_no} — {depo.display_title || depo.depo_exhibit_title}</p>
+                            {depo.display_title && depo.display_title !== depo.depo_exhibit_title && (
+                              <p className="text-slate-600 text-[10px]">Original: {depo.depo_exhibit_title}</p>
+                            )}
+                            {depo.referenced_page && <p className="text-slate-500">Page {depo.referenced_page}</p>}
+                            {(depo.tags || []).length > 0 && (
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {(depo.tags || []).map(t => <Badge key={t} variant="outline" className="text-[10px] text-slate-500 border-slate-700">{t}</Badge>)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <button className="text-[10px] text-slate-400 hover:text-cyan-400" onClick={() => setEditJoint({ ...j })}>Edit marking</button>
+                        <span className="text-slate-700">·</span>
+                        <button className="text-[10px] text-slate-400 hover:text-red-400" onClick={() => removeJoint(j)}>Remove from list</button>
+                      </div>
+                    </div>
+
+                    {/* Right: admission */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Admission</p>
+                      {admRec ? (
+                        <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-3">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div><span className="text-slate-500">Admitted #:</span> <span className="text-green-400 font-semibold">{admRec.admitted_no}</span></div>
+                            <div><span className="text-slate-500">By:</span> <span className="text-slate-300">{admRec.admitted_by_side}</span></div>
+                            <div className="col-span-2"><span className="text-slate-500">Date:</span> <span className="text-slate-300">{fmtDate(admRec.date_admitted)}</span></div>
+                          </div>
+                          {admRec.notes && <p className="text-xs text-slate-500 mt-2 italic">{admRec.notes}</p>}
+                          <div className="flex gap-2 mt-2">
+                            <button className="text-[10px] text-slate-400 hover:text-cyan-400" onClick={() => setEditAdmit({ ...admRec })}>Edit</button>
+                            <span className="text-slate-700">·</span>
+                            <button className="text-[10px] text-slate-400 hover:text-red-400" onClick={() => removeAdmit(admRec, j.id)}>Remove</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs text-slate-500">Not yet admitted.</p>
+                          <Button size="sm" className="bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-500/30 text-xs h-7 w-fit" onClick={() => openAdmit(j)}>
+                            <CheckSquare className="w-3 h-3 mr-1" /> Mark as Admitted
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          );
+        })}
+
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-slate-500 text-sm">
+            {joints.length === 0 ? "No exhibits have been marked yet. Go to Deposition Exhibits to mark them." : "No exhibits match the current filters."}
+          </div>
+        )}
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      {/* ── Edit Joint Dialog ── */}
+      <Dialog open={!!editJoint} onOpenChange={v => !v && setEditJoint(null)}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
-          <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Add"} Joint Exhibit</DialogTitle></DialogHeader>
-          {editing && (
+          <DialogHeader><DialogTitle>Edit Marking</DialogTitle></DialogHeader>
+          {editJoint && (
             <div className="space-y-3">
-              <div>
-                <Label className="text-slate-400 text-xs">Master Exhibit</Label>
-                <Select value={editing.master_exhibit_id} onValueChange={v => setEditing({ ...editing, master_exhibit_id: v, marked_title: editing.marked_title || masters.find(m => m.id === v)?.master_title || "" })}>
-                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent>{masters.map(m => <SelectItem key={m.id} value={m.id}>{m.master_title}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-slate-400 text-xs">Marked #</Label><Input value={editing.marked_no} onChange={e => setEditing({ ...editing, marked_no: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" /></div>
-                <div><Label className="text-slate-400 text-xs">Title</Label><Input value={editing.marked_title} onChange={e => setEditing({ ...editing, marked_title: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-slate-400 text-xs">Marked By</Label>
-                  <Select value={editing.marked_by_side} onValueChange={v => setEditing({ ...editing, marked_by_side: v })}>
+                <div><Label className="text-slate-400 text-xs">Exhibit #</Label>
+                  <Input value={editJoint.marked_no} onChange={e => setEditJoint({ ...editJoint, marked_no: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+                </div>
+                <div><Label className="text-slate-400 text-xs">Marked By</Label>
+                  <Select value={editJoint.marked_by_side} onValueChange={v => setEditJoint({ ...editJoint, marked_by_side: v })}>
                     <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
                     <SelectContent>{["Plaintiff","Defense","Unknown"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-slate-400 text-xs">Status</Label>
-                  <Select value={editing.status} onValueChange={v => setEditing({ ...editing, status: v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-                    <SelectContent>{["NotUsed","Marked","Offered","Admitted","Excluded","Withdrawn"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
               </div>
-              <div><Label className="text-slate-400 text-xs">Notes</Label><Textarea value={editing.notes || ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} /></div>
+              <div><Label className="text-slate-400 text-xs">Trial Title</Label>
+                <Input value={editJoint.marked_title} onChange={e => setEditJoint({ ...editJoint, marked_title: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+              </div>
+              <div><Label className="text-slate-400 text-xs">Status</Label>
+                <Select value={editJoint.status} onValueChange={v => setEditJoint({ ...editJoint, status: v })}>
+                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+                  <SelectContent>{["NotUsed","Marked","Offered","Admitted","Excluded","Withdrawn"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label className="text-slate-400 text-xs">Notes</Label>
+                <Textarea value={editJoint.notes || ""} onChange={e => setEditJoint({ ...editJoint, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
+              </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} className="border-slate-600 text-slate-300">Cancel</Button>
-            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={save}>Save</Button>
+            <Button variant="outline" onClick={() => setEditJoint(null)} className="border-slate-600 text-slate-300">Cancel</Button>
+            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={saveJoint}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Admit Dialog ── */}
+      <Dialog open={!!admitDialog} onOpenChange={v => !v && setAdmitDialog(null)}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+          <DialogHeader>
+            <DialogTitle>Admit Exhibit</DialogTitle>
+            {admitDialog && <p className="text-xs text-slate-500 mt-1">Exhibit {admitDialog.marked_no} — {admitDialog.marked_title}</p>}
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-slate-400 text-xs">Admitted #</Label>
+                <Input placeholder="e.g. 12" value={admitForm.admitted_no} onChange={e => setAdmitForm({ ...admitForm, admitted_no: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+              </div>
+              <div><Label className="text-slate-400 text-xs">Date Admitted</Label>
+                <Input type="date" value={admitForm.date_admitted} onChange={e => setAdmitForm({ ...admitForm, date_admitted: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+              </div>
+            </div>
+            <div><Label className="text-slate-400 text-xs">Admitted By</Label>
+              <Select value={admitForm.admitted_by_side} onValueChange={v => setAdmitForm({ ...admitForm, admitted_by_side: v })}>
+                <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+                <SelectContent>{["Plaintiff","Defense","Unknown"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label className="text-slate-400 text-xs">Notes</Label>
+              <Textarea value={admitForm.notes} onChange={e => setAdmitForm({ ...admitForm, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdmitDialog(null)} className="border-slate-600 text-slate-300">Cancel</Button>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={saveAdmit}>Admit Exhibit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Admitted Dialog ── */}
+      <Dialog open={!!editAdmit} onOpenChange={v => !v && setEditAdmit(null)}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+          <DialogHeader><DialogTitle>Edit Admission</DialogTitle></DialogHeader>
+          {editAdmit && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label className="text-slate-400 text-xs">Admitted #</Label>
+                  <Input value={editAdmit.admitted_no} onChange={e => setEditAdmit({ ...editAdmit, admitted_no: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+                </div>
+                <div><Label className="text-slate-400 text-xs">Date</Label>
+                  <Input type="date" value={editAdmit.date_admitted || ""} onChange={e => setEditAdmit({ ...editAdmit, date_admitted: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+                </div>
+              </div>
+              <div><Label className="text-slate-400 text-xs">Admitted By</Label>
+                <Select value={editAdmit.admitted_by_side} onValueChange={v => setEditAdmit({ ...editAdmit, admitted_by_side: v })}>
+                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+                  <SelectContent>{["Plaintiff","Defense","Unknown"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label className="text-slate-400 text-xs">Notes</Label>
+                <Textarea value={editAdmit.notes || ""} onChange={e => setEditAdmit({ ...editAdmit, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditAdmit(null)} className="border-slate-600 text-slate-300">Cancel</Button>
+            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={saveEditAdmit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
