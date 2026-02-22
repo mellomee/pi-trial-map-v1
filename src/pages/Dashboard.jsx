@@ -44,7 +44,7 @@ export default function Dashboard() {
     { label: "Parties", value: stats?.parties || 0, icon: Users, color: "text-cyan-400", sub: `${stats?.plaintiffParties || 0} Plaintiff · ${stats?.defenseParties || 0} Defense` },
     { label: "Depositions", value: stats?.depositions || 0, icon: FileText, color: "text-blue-400" },
     { label: "Trial Points", value: stats?.trialPoints || 0, icon: Target, color: "text-amber-400" },
-    { label: "Master Exhibits", value: stats?.exhibits || 0, icon: Library, color: "text-purple-400" },
+    { label: "Depo Exhibits", value: stats?.exhibits || 0, icon: Library, color: "text-purple-400" },
     { label: "Clips", value: stats?.clips || 0, icon: Bookmark, color: "text-green-400" },
     { label: "Joint Exhibits", value: stats?.jointExhibits || 0, icon: CheckSquare, color: "text-rose-400" },
   ];
