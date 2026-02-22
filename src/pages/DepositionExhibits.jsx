@@ -108,8 +108,9 @@ export default function DepositionExhibits() {
     const matchGroup = filterGroup === "all" || ex.group_name === filterGroup || (filterGroup === "__none__" && !ex.group_name);
     const isMarked = !!ex.joint_exhibit_id;
     const matchMarked = filterMarked === "all" || (filterMarked === "marked" && isMarked) || (filterMarked === "unmarked" && !isMarked);
-    return matchSearch && matchSide && matchGroup && matchMarked;
-  }), [exhibits, search, filterSide, filterGroup, filterMarked]);
+    const matchDeponent = filterDeponent === "all" || ex.deponent_name === filterDeponent || (filterDeponent === "__none__" && !ex.deponent_name);
+    return matchSearch && matchSide && matchGroup && matchMarked && matchDeponent;
+  }), [exhibits, search, filterSide, filterGroup, filterMarked, filterDeponent]);
 
   // Grouping
   const grouped = useMemo(() => {
