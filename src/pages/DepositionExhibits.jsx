@@ -396,6 +396,8 @@ export default function DepositionExhibits() {
                             marked_no: "",
                             marked_title: grp === "__ungrouped__" ? (first?.display_title || first?.depo_exhibit_title || "") : grp,
                             marked_by_side: "Plaintiff",
+                            pages: "",
+                            primary_depo_exhibit_id: first?.id || "",
                             notes: grp !== "__ungrouped__" ? `Group: ${grp}` : "",
                           });
                           setMarkDialog(true);
