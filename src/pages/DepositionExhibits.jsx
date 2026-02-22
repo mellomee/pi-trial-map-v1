@@ -185,6 +185,12 @@ export default function DepositionExhibits() {
 
   const getParty = (pid) => { const p = parties.find(x => x.id === pid); return p ? `${p.first_name || ""} ${p.last_name}`.trim() : ""; };
 
+  const uploadFile = async (exhibitId, file) => {
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.entities.DepositionExhibits.update(exhibitId, { file_url });
+    load();
+  };
+
   const ExhibitRow = ({ ex }) => {
     const isSelected = selectedIds.has(ex.id);
     const isMarked = !!ex.joint_exhibit_id;
