@@ -237,22 +237,34 @@ export default function JointExhibits() {
                         <p><span className="text-slate-500">Title:</span> {j.marked_title}</p>
                         <p><span className="text-slate-500">By:</span> {j.marked_by_side}</p>
                         <p><span className="text-slate-500">Status:</span> {j.status}</p>
+                        {j.pages && <p><span className="text-slate-500">Pages:</span> {j.pages}</p>}
                         {j.notes && <p className="text-slate-500 italic">{j.notes}</p>}
-                        {depo && (
-                          <div className="mt-2 pt-2 border-t border-[#1e2a45]">
-                            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Source Exhibit</p>
-                            <p>No. {depo.depo_exhibit_no} — {depo.display_title || depo.depo_exhibit_title}</p>
-                            {depo.display_title && depo.display_title !== depo.depo_exhibit_title && (
-                              <p className="text-slate-600 text-[10px]">Original: {depo.depo_exhibit_title}</p>
-                            )}
-                            {depo.referenced_page && <p className="text-slate-500">Page {depo.referenced_page}</p>}
-                            {(depo.tags || []).length > 0 && (
-                              <div className="flex gap-1 mt-1 flex-wrap">
-                                {(depo.tags || []).map(t => <Badge key={t} variant="outline" className="text-[10px] text-slate-500 border-slate-700">{t}</Badge>)}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        {(() => {
+                          const allDepos = deposByJointId[j.id] || (depoByJointId[j.id] ? [depoByJointId[j.id]] : []);
+                          if (!allDepos.length) return null;
+                          return (
+                            <div className="mt-2 pt-2 border-t border-[#1e2a45]">
+                              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                                Source Exhibit{allDepos.length > 1 ? "s" : ""} ({allDepos.length})
+                              </p>
+                              {allDepos.map(d => (
+                                <div key={d.id} className={`mb-1 pb-1 border-b border-[#1e2a45] last:border-0 ${j.primary_depo_exhibit_id === d.id ? "text-cyan-300" : ""}`}>
+                                  <p>
+                                    {j.primary_depo_exhibit_id === d.id && <span className="text-[9px] text-cyan-500 mr-1">[PRIMARY]</span>}
+                                    No. {d.depo_exhibit_no} — {d.display_title || d.depo_exhibit_title}
+                                  </p>
+                                  {d.deponent_name && <p className="text-slate-600 text-[10px]">Deponent: {d.deponent_name}</p>}
+                                  {d.referenced_page && <p className="text-slate-500 text-[10px]">Page {d.referenced_page}</p>}
+                                  {(d.tags || []).length > 0 && (
+                                    <div className="flex gap-1 mt-0.5 flex-wrap">
+                                      {(d.tags || []).map(t => <Badge key={t} variant="outline" className="text-[10px] text-slate-500 border-slate-700">{t}</Badge>)}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="flex gap-2 mt-3">
                         <button className="text-[10px] text-slate-400 hover:text-cyan-400" onClick={() => setEditJoint({ ...j })}>Edit marking</button>
