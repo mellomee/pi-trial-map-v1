@@ -121,7 +121,8 @@ async function runImport(base44, { file_url, case_id, mode, file_name, run_id })
         if (!exhibitNo && !title) continue;
 
         const side = normalizeSide(row.SIDE || row.Side || row.side);
-        const deponentKey = normalizeSheetKey((row.deponent || row.Deponent || row.Witness || row.LastName || "").toString());
+        const rawDeponent = (row.deponent || row.Deponent || row.Witness || row.LastName || "").toString().trim();
+        const deponentKey = normalizeSheetKey(rawDeponent);
         const party = partyMap[deponentKey];
         const dedupeKey = `${exhibitNo}|${title}`.toLowerCase();
 
