@@ -61,6 +61,19 @@ export default function JointExhibits() {
     return m;
   }, [admitted]);
 
+  // Map joint_id -> array of all depo exhibits in that group
+  const deposByJointId = useMemo(() => {
+    const m = {};
+    depoExhibits.forEach(d => {
+      if (d.joint_exhibit_id) {
+        if (!m[d.joint_exhibit_id]) m[d.joint_exhibit_id] = [];
+        m[d.joint_exhibit_id].push(d);
+      }
+    });
+    return m;
+  }, [depoExhibits]);
+
+  // Legacy single depo lookup
   const depoByJointId = useMemo(() => {
     const m = {};
     depoExhibits.forEach(d => { if (d.joint_exhibit_id) m[d.joint_exhibit_id] = d; });
