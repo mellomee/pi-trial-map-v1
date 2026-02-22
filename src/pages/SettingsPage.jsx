@@ -41,10 +41,24 @@ export default function SettingsPage() {
     loadCases();
   };
 
+  const [wipingId, setWipingId] = useState(null);
+  const [wipeProgress, setWipeProgress] = useState("");
+
   const wipeCase = async (id) => {
     if (!confirm("This will DELETE all data for this case (parties, transcripts, exhibits, etc). Continue?")) return;
     if (!confirm("Are you SURE? This cannot be undone.")) return;
-    await base44.functions.invoke("wipeCase", { case_id: id });
+    setWipingId(id);
+    let index = 0;
+    let done = false;
+    while (!done) {
+      setWipeProgress(`Wiping... (${index}/15)`);
+      const res = await base44.functions.invoke("wipeCase", { case_id: id, entity_index: index });
+      const data = res.data;
+      done = data.done;
+      index = data.next_index;
+    }
+    setWipingId(null);
+    setWipeProgress("");
     refresh();
     alert("Case data wiped.");
   };
