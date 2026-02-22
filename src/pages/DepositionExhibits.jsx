@@ -42,7 +42,7 @@ export default function DepositionExhibits() {
   const [tagDialog, setTagDialog] = useState(false);
   const [tagForm, setTagForm] = useState({ group_name: "", tags: "" });
   const [markDialog, setMarkDialog] = useState(false);
-  const [markForm, setMarkForm] = useState({ marked_no: "", marked_title: "", marked_by_side: "Plaintiff", notes: "" });
+  const [markForm, setMarkForm] = useState({ marked_no: "", marked_title: "", marked_by_side: "Plaintiff", pages: "", primary_depo_exhibit_id: "", notes: "" });
   const [addDialog, setAddDialog] = useState(false);
   const [addForm, setAddForm] = useState({ depo_exhibit_no: "", depo_exhibit_title: "", provided_by_side: "Unknown", referenced_page: "", notes: "" });
 
