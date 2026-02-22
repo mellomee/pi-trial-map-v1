@@ -53,7 +53,7 @@ export default function Layout({ children, currentPageName }) {
           --accent: #06b6d4;
           --accent-hover: #0891b2;
           --text-primary: #e2e8f0;
-          --text-secondary: #94a3b8;
+          --text-secondary: #cbd5e1;
           --plaintiff: #f59e0b;
           --defense: #ef4444;
           --independent: #8b5cf6;
