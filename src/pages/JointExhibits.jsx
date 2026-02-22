@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown } from "lucide-react";
+import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 
 const statusColors = {

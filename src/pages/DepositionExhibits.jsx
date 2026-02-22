@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, Pencil, Trash2, Tag, X, ChevronRight, ChevronDown, History } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Tag, X, ChevronRight, ChevronDown, History, Paperclip, ExternalLink, Upload } from "lucide-react";
 
 const sideColors = {
   Plaintiff: "bg-amber-500/20 text-amber-400",
