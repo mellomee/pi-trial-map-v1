@@ -207,10 +207,8 @@ Deno.serve(async (req) => {
       }
 
       // Upload transcript text as a file to avoid field size limits
-      const blob = new Blob([transcriptText], { type: "text/plain" });
-      const formData = new FormData();
-      formData.append("file", blob, `${sheetName}.txt`);
-      const uploadResp = await base44.asServiceRole.integrations.Core.UploadFile({ file: blob });
+      const transcriptFile = new File([transcriptText], `${sheetName}.txt`, { type: "text/plain" });
+      const uploadResp = await base44.asServiceRole.integrations.Core.UploadFile({ file: transcriptFile });
       const transcript_url = uploadResp.file_url;
 
       const existingTranscript = await base44.asServiceRole.entities.DepositionTranscripts.filter({ deposition_id: depo.id });
