@@ -340,24 +340,66 @@ export default function DepositionExhibits() {
         ) : (
           Object.entries(grouped || {}).map(([grp, items]) => {
             const isOpen = expandedGroups.has(grp);
+            const unmarkedInGroup = items.filter(ex => !ex.joint_exhibit_id);
+            const allMarked = unmarkedInGroup.length === 0;
             return (
               <div key={grp}>
-                <button
-                  className="w-full flex items-center gap-2 px-4 py-2 bg-[#0f1629] border-b border-[#1e2a45] text-xs font-semibold text-slate-400 hover:text-white transition-colors"
-                  onClick={() => {
-                    const n = new Set(expandedGroups);
-                    n.has(grp) ? n.delete(grp) : n.add(grp);
-                    setExpandedGroups(n);
-                  }}
-                >
-                  {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                  {grp === "__ungrouped__" ? "Ungrouped" : grp}
-                  <span className="text-slate-600 font-normal ml-1">({items.length})</span>
-                </button>
+                <div className="flex items-center bg-[#0f1629] border-b border-[#1e2a45]">
+                  <button
+                    className="flex-1 flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors text-left"
+                    onClick={() => {
+                      const n = new Set(expandedGroups);
+                      n.has(grp) ? n.delete(grp) : n.add(grp);
+                      setExpandedGroups(n);
+                    }}
+                  >
+                    {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    {grp === "__ungrouped__" ? "Ungrouped" : grp}
+                    <span className="text-slate-600 font-normal ml-1">({items.length})</span>
+                    {allMarked && <span className="text-[10px] text-cyan-500 font-normal ml-1">✓ all marked</span>}
+                  </button>
+                  {/* Group-level actions */}
+                  <div className="flex items-center gap-2 pr-3">
+                    <button
+                      className="text-[10px] px-2 py-1 rounded border border-slate-600 text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
+                      title="Select all in this group"
+                      onClick={() => {
+                        const groupIds = new Set(items.map(e => e.id));
+                        setSelectedIds(prev => {
+                          const n = new Set(prev);
+                          items.forEach(e => n.add(e.id));
+                          return n;
+                        });
+                      }}
+                    >
+                      Select all
+                    </button>
+                    {!allMarked && (
+                      <button
+                        className="text-[10px] px-2 py-1 rounded border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 transition-colors flex items-center gap-1"
+                        title="Mark entire group as Joint Exhibit"
+                        onClick={() => {
+                          const ids = new Set(unmarkedInGroup.map(e => e.id));
+                          setSelectedIds(ids);
+                          const first = unmarkedInGroup[0];
+                          setMarkForm({
+                            marked_no: "",
+                            marked_title: grp === "__ungrouped__" ? (first?.display_title || first?.depo_exhibit_title || "") : grp,
+                            marked_by_side: "Plaintiff",
+                            notes: grp !== "__ungrouped__" ? `Group: ${grp}` : "",
+                          });
+                          setMarkDialog(true);
+                        }}
+                      >
+                        <Tag className="w-3 h-3" /> Mark group
+                      </button>
+                    )}
+                  </div>
+                </div>
                 {isOpen && items.map(ex => <ExhibitRow key={ex.id} ex={ex} />)}
               </div>
             );
-          })
+          }))
         )}
       </div>
 
