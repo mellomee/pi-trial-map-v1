@@ -362,6 +362,15 @@ export default function DepositionExhibits() {
           </SelectContent>
         </Select>
 
+        <Select value={filterDeponent} onValueChange={setFilterDeponent}>
+          <SelectTrigger className="w-44 bg-[#131a2e] border-[#1e2a45] text-slate-200 h-9"><SelectValue placeholder="Deponent" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Deponents</SelectItem>
+            <SelectItem value="__none__">No Deponent</SelectItem>
+            {allDeponents.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
         <div className="flex gap-1">
           {[{ v: "all", l: "All" }, { v: "unmarked", l: "Unmarked" }, { v: "marked", l: "Marked" }].map(f => (
             <button key={f.v} onClick={() => setFilterMarked(f.v)}
