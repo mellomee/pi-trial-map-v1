@@ -414,6 +414,47 @@ export default function DepositionExhibits() {
         )}
       </div>
 
+      {/* ── Edit Exhibit Dialog ── */}
+      <Dialog open={!!editDialog} onOpenChange={v => !v && setEditDialog(null)}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+          <DialogHeader><DialogTitle>Edit Exhibit</DialogTitle></DialogHeader>
+          {editDialog && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label className="text-slate-400 text-xs">Exhibit No.</Label>
+                  <Input value={editDialog.depo_exhibit_no} onChange={e => setEditDialog({ ...editDialog, depo_exhibit_no: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+                </div>
+                <div><Label className="text-slate-400 text-xs">Side</Label>
+                  <Select value={editDialog.provided_by_side} onValueChange={v => setEditDialog({ ...editDialog, provided_by_side: v })}>
+                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>{SIDES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div><Label className="text-slate-400 text-xs">Title</Label>
+                <Input value={editDialog.depo_exhibit_title} onChange={e => setEditDialog({ ...editDialog, depo_exhibit_title: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+              </div>
+              <div><Label className="text-slate-400 text-xs">Display Title (rename)</Label>
+                <Input value={editDialog.display_title || ""} onChange={e => setEditDialog({ ...editDialog, display_title: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="Leave blank to use original title" />
+              </div>
+              <div><Label className="text-slate-400 text-xs">Deponent Name</Label>
+                <Input value={editDialog.deponent_name || ""} onChange={e => setEditDialog({ ...editDialog, deponent_name: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. Dr. Smith" />
+              </div>
+              <div><Label className="text-slate-400 text-xs">Referenced Page</Label>
+                <Input value={editDialog.referenced_page || ""} onChange={e => setEditDialog({ ...editDialog, referenced_page: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. 42" />
+              </div>
+              <div><Label className="text-slate-400 text-xs">Notes</Label>
+                <Textarea value={editDialog.notes || ""} onChange={e => setEditDialog({ ...editDialog, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialog(null)} className="border-slate-600 text-slate-300">Cancel</Button>
+            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={saveEdit}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Add Exhibit Dialog ── */}
       <Dialog open={addDialog} onOpenChange={setAddDialog}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
