@@ -207,9 +207,9 @@ export default function JointExhibits() {
                           const primary = allDepos.find(d => d.id === j.primary_depo_exhibit_id) || allDepos[0];
                           return primary?.file_url ? (
                             <button
-                              onClick={e => { e.stopPropagation(); window.open(primary.file_url, "_blank"); }}
+                              onClick={e => { e.stopPropagation(); setViewFile({ url: primary.file_url, title: j.marked_title }); }}
                               className="flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 rounded px-1.5 py-0.5"
-                              title="Open attached file"
+                              title="View attached file"
                             >
                               <ExternalLink className="w-3 h-3" /> View File
                             </button>
