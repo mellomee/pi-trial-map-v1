@@ -100,9 +100,11 @@ export default function JointExhibits() {
 
   const removeJoint = async (j) => {
     if (!confirm("Remove this exhibit from the Joint List? It will return to Deposition Exhibits as unmarked.")) return;
-    // un-mark on depo exhibit
-    const depo = depoByJointId[j.id];
-    if (depo) await base44.entities.DepositionExhibits.update(depo.id, { joint_exhibit_id: "" });
+    // un-mark all source depo exhibits
+    const allDepos = deposByJointId[j.id] || (depoByJointId[j.id] ? [depoByJointId[j.id]] : []);
+    for (const depo of allDepos) {
+      await base44.entities.DepositionExhibits.update(depo.id, { joint_exhibit_id: "" });
+    }
     // delete admitted record if exists
     const admRec = admittedByJointId[j.id];
     if (admRec) await base44.entities.AdmittedExhibits.delete(admRec.id);
