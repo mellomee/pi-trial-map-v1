@@ -234,8 +234,8 @@ export default function DepositionExhibits() {
 
         {/* Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button title="Edit deponent / details" onClick={() => setEditDialog({ ...ex })} className="p-1 text-slate-500 hover:text-cyan-400"><Pencil className="w-3.5 h-3.5" /></button>
-          {wasRenamed && <button title="Revert name" onClick={() => revertName(ex)} className="p-1 text-slate-500 hover:text-amber-400"><History className="w-3.5 h-3.5" /></button>}
+          <button title="Edit deponent / details" onClick={() => setEditDialog({ ...ex })} className="p-1 text-slate-400 hover:text-cyan-400"><Pencil className="w-3.5 h-3.5" /></button>
+          {wasRenamed && <button title="Revert name" onClick={() => revertName(ex)} className="p-1 text-slate-400 hover:text-amber-400"><History className="w-3.5 h-3.5" /></button>}
           {isMarked
             ? <button title="Remove from Joint List" onClick={() => removeMark(ex)} className="p-1 text-cyan-500 hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
             : null
