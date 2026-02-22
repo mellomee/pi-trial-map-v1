@@ -225,7 +225,7 @@ export default function DepositionExhibits() {
           {isMarked && joint ? (
             <div>
               <span className="text-[10px] text-cyan-400 font-semibold">Exhibit {joint.marked_no}</span>
-              <span className="text-[10px] text-slate-500 block">{joint.status}</span>
+              <span className="text-[10px] text-slate-300 block">{joint.status}</span>
             </div>
           ) : (
             <span className="text-[10px] text-slate-700 italic">Unmarked</span>
