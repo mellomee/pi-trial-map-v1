@@ -46,10 +46,9 @@ export default function FileViewerModal({ url, title, onClose }) {
         <div className="flex-1 overflow-auto flex items-center justify-center bg-[#080d1a] rounded-b-xl">
           {isPdf && (
             <iframe
-              src={pdfViewerUrl}
+              src={url}
               className="w-full h-full rounded-b-xl"
               title={title}
-              sandbox="allow-scripts allow-same-origin allow-popups"
             />
           )}
           {isImage && (
