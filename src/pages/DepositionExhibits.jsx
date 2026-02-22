@@ -243,7 +243,7 @@ export default function DepositionExhibits() {
         {/* File attachment */}
         <div className="flex-shrink-0 flex items-center gap-1">
           {ex.file_url ? (
-            <button title="Open attached file" onClick={() => window.open(ex.file_url, "_blank")} className="p-1 text-green-400 hover:text-green-300">
+            <button title="View attached file" onClick={() => setViewFile({ url: ex.file_url, title: ex.display_title || ex.depo_exhibit_title })} className="p-1 text-green-400 hover:text-green-300">
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
           ) : null}
