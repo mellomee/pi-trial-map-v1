@@ -371,7 +371,7 @@ export default function DepositionExhibits() {
                   {/* Group-level actions */}
                   <div className="flex items-center gap-2 pr-3">
                     <button
-                      className="text-[10px] px-2 py-1 rounded border border-slate-600 text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
+                      className="text-[10px] px-2 py-1 rounded border border-slate-500 text-slate-300 hover:text-white hover:border-slate-400 transition-colors"
                       title="Select all in this group"
                       onClick={() => {
                         const groupIds = new Set(items.map(e => e.id));
