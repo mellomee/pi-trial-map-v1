@@ -170,10 +170,9 @@ export default function DepositionExhibits() {
     load();
   };
 
-  // Remove mark
+  // Remove mark — unlinks this depo exhibit from the joint entry (but keeps the joint entry if others still link to it)
   const removeMark = async (ex) => {
     if (!confirm("Remove this exhibit from the Joint List?")) return;
-    await base44.entities.JointExhibits.delete(ex.joint_exhibit_id);
     await base44.entities.DepositionExhibits.update(ex.id, { joint_exhibit_id: "" });
     load();
   };
