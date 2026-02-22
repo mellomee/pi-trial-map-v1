@@ -47,6 +47,20 @@ export default function DepositionExhibits() {
   const [addDialog, setAddDialog] = useState(false);
   const [addForm, setAddForm] = useState({ depo_exhibit_no: "", depo_exhibit_title: "", provided_by_side: "Unknown", deponent_name: "", referenced_page: "", notes: "" });
   const [viewFile, setViewFile] = useState(null); // { url, title }
+  const [sortCol, setSortCol] = useState(null); // "no" | "deponent" | "title" | "side"
+  const [sortDir, setSortDir] = useState("asc");
+
+  const handleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <ChevronsUpDown className="w-3 h-3 ml-1 text-slate-500 inline" />;
+    return sortDir === "asc"
+      ? <ChevronUp className="w-3 h-3 ml-1 text-cyan-400 inline" />
+      : <ChevronDown className="w-3 h-3 ml-1 text-cyan-400 inline" />;
+  };
 
   const load = async () => {
     if (!activeCase) return;
