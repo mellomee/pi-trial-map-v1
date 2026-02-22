@@ -58,6 +58,8 @@ import AdmittedExhibits from './pages/AdmittedExhibits';
 import BattleCards from './pages/BattleCards';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
+import Import from './pages/Import';
+import Export from './pages/Export';
 import __Layout from './Layout.jsx';
 
 
@@ -73,6 +75,8 @@ export const PAGES = {
     "BattleCards": BattleCards,
     "Runner": Runner,
     "SettingsPage": SettingsPage,
+    "Import": Import,
+    "Export": Export,
 }
 
 export const pagesConfig = {
