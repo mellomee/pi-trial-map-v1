@@ -40,9 +40,13 @@ export default function Transcripts() {
 
   useEffect(() => {
     if (!selectedDepoId || !activeCase) { setLines([]); return; }
-    base44.entities.DepositionTranscripts.filter({ deposition_id: selectedDepoId }).then(ts => {
+    base44.entities.DepositionTranscripts.filter({ deposition_id: selectedDepoId }).then(async ts => {
       if (ts.length === 0) { setLines([]); return; }
-      const raw = ts[0].transcript_text || "";
+      const t = ts[0];
+      const url = t.transcript_url || "";
+      if (!url) { setLines([]); return; }
+      const resp = await fetch(url);
+      const raw = await resp.text();
       const parsed = raw.split("\n").filter(Boolean).map(line => {
         const idx = line.indexOf("\t");
         return idx >= 0 ? { cite: line.substring(0, idx), text: line.substring(idx + 1) } : { cite: "", text: line };
