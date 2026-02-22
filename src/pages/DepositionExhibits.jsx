@@ -194,14 +194,14 @@ export default function DepositionExhibits() {
 
     return (
       <div className={`flex items-center gap-3 px-4 py-3 border-b border-[#1e2a45] last:border-0 transition-colors ${isSelected ? "bg-cyan-500/5" : "hover:bg-white/[0.02]"}`}>
-        <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(ex.id)} className="border-slate-600 flex-shrink-0" />
+        <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(ex.id)} className="border-slate-400 flex-shrink-0" />
 
         {/* Exhibit # */}
-        <span className="text-xs font-mono text-slate-500 w-14 flex-shrink-0">{ex.depo_exhibit_no}</span>
+        <span className="text-xs font-mono text-slate-300 w-14 flex-shrink-0">{ex.depo_exhibit_no}</span>
 
         {/* Deponent */}
-        <span className="text-xs text-slate-500 w-28 flex-shrink-0 truncate" title={ex.deponent_name || "—"}>
-          {ex.deponent_name || <span className="text-slate-700 italic">—</span>}
+        <span className="text-xs text-slate-300 w-28 flex-shrink-0 truncate" title={ex.deponent_name || "—"}>
+          {ex.deponent_name || <span className="text-slate-500 italic">—</span>}
         </span>
 
         {/* Title */}
