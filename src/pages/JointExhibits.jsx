@@ -199,9 +199,13 @@ export default function JointExhibits() {
                     {/* Title + source */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white font-medium">{j.marked_title}</p>
-                      {depo && depo.display_title !== j.marked_title && (
-                        <p className="text-xs text-slate-600">Depo: {depo.display_title || depo.depo_exhibit_title}</p>
-                      )}
+                      {(() => {
+                        const allDepos = deposByJointId[j.id] || [];
+                        const primary = allDepos.find(d => d.id === j.primary_depo_exhibit_id) || allDepos[0];
+                        return primary && primary.depo_exhibit_title !== j.marked_title
+                          ? <p className="text-xs text-slate-600">Depo: {primary.display_title || primary.depo_exhibit_title}{allDepos.length > 1 ? ` +${allDepos.length - 1} more` : ""}{j.pages ? ` · pp. ${j.pages}` : ""}</p>
+                          : j.pages ? <p className="text-xs text-slate-600">pp. {j.pages}</p> : null;
+                      })()}
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         <Badge className={`text-[10px] ${statusColors[j.status]}`}>{j.status}</Badge>
                         <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">{j.marked_by_side}</Badge>
