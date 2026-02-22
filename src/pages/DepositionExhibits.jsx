@@ -200,6 +200,11 @@ export default function DepositionExhibits() {
         {/* Exhibit # */}
         <span className="text-xs font-mono text-slate-500 w-14 flex-shrink-0">{ex.depo_exhibit_no}</span>
 
+        {/* Deponent */}
+        <span className="text-xs text-slate-500 w-28 flex-shrink-0 truncate" title={ex.deponent_name || "—"}>
+          {ex.deponent_name || <span className="text-slate-700 italic">—</span>}
+        </span>
+
         {/* Title */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
