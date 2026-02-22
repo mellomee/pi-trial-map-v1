@@ -238,6 +238,20 @@ export default function DepositionExhibits() {
           )}
         </div>
 
+        {/* File attachment */}
+        <div className="flex-shrink-0 flex items-center gap-1">
+          {ex.file_url ? (
+            <button title="Open attached file" onClick={() => window.open(ex.file_url, "_blank")} className="p-1 text-green-400 hover:text-green-300">
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          ) : null}
+          <label title="Attach file" className="p-1 text-slate-400 hover:text-cyan-400 cursor-pointer">
+            <Paperclip className="w-3.5 h-3.5" />
+            <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.tiff,.bmp,.webp" className="hidden"
+              onChange={e => { if (e.target.files[0]) uploadFile(ex.id, e.target.files[0]); }} />
+          </label>
+        </div>
+
         {/* Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <button title="Edit deponent / details" onClick={() => setEditDialog({ ...ex })} className="p-1 text-slate-400 hover:text-cyan-400"><Pencil className="w-3.5 h-3.5" /></button>
