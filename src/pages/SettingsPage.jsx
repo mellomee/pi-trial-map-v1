@@ -44,13 +44,7 @@ export default function SettingsPage() {
   const wipeCase = async (id) => {
     if (!confirm("This will DELETE all data for this case (parties, transcripts, exhibits, etc). Continue?")) return;
     if (!confirm("Are you SURE? This cannot be undone.")) return;
-    const entities = ["Parties", "Depositions", "DepositionTranscripts", "DepositionExhibits", "MasterExhibits", "ExhibitLinks", "JointExhibits", "AdmittedExhibits", "TrialPoints", "Questions", "QuestionLinks", "DepoClips", "BattleCards", "ChatMessages", "ImportRuns"];
-    for (const ent of entities) {
-      const items = await base44.entities[ent].filter({ case_id: id });
-      for (const item of items) {
-        await base44.entities[ent].delete(item.id);
-      }
-    }
+    await base44.functions.invoke("wipeCase", { case_id: id });
     refresh();
     alert("Case data wiped.");
   };
