@@ -211,6 +211,14 @@ export default function JointExhibits() {
         </Select>
       </div>
 
+      {/* Sort header */}
+      <div className="flex items-center gap-3 px-4 py-2 mb-1 bg-[#0f1629] border border-[#1e2a45] rounded-lg">
+        <button onClick={() => handleSort("no")} className="text-[10px] font-semibold text-slate-300 uppercase w-16 text-left hover:text-white flex items-center">No.<SortIcon col="no" /></button>
+        <button onClick={() => handleSort("title")} className="text-[10px] font-semibold text-slate-300 uppercase flex-1 text-left hover:text-white flex items-center">Title<SortIcon col="title" /></button>
+        <button onClick={() => handleSort("side")} className="text-[10px] font-semibold text-slate-300 uppercase w-24 text-left hover:text-white flex items-center">Side<SortIcon col="side" /></button>
+        <button onClick={() => handleSort("status")} className="text-[10px] font-semibold text-slate-300 uppercase w-24 text-left hover:text-white flex items-center">Status<SortIcon col="status" /></button>
+      </div>
+
       {/* List */}
       <div className="space-y-2">
         {filtered.map(j => {
