@@ -47,36 +47,38 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Dashboard from './pages/Dashboard';
-import Parties from './pages/Parties';
-import Transcripts from './pages/Transcripts';
-import TrialPoints from './pages/TrialPoints';
-import Questions from './pages/Questions';
-import MasterExhibits from './pages/MasterExhibits';
-import JointExhibits from './pages/JointExhibits';
 import AdmittedExhibits from './pages/AdmittedExhibits';
 import BattleCards from './pages/BattleCards';
+import Dashboard from './pages/Dashboard';
+import Export from './pages/Export';
+import Import from './pages/Import';
+import JointExhibits from './pages/JointExhibits';
+import MasterExhibits from './pages/MasterExhibits';
+import Parties from './pages/Parties';
+import Questions from './pages/Questions';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
-import Import from './pages/Import';
-import Export from './pages/Export';
+import Transcripts from './pages/Transcripts';
+import TrialPoints from './pages/TrialPoints';
+import Exhibits from './pages/Exhibits';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Parties": Parties,
-    "Transcripts": Transcripts,
-    "TrialPoints": TrialPoints,
-    "Questions": Questions,
-    "MasterExhibits": MasterExhibits,
-    "JointExhibits": JointExhibits,
     "AdmittedExhibits": AdmittedExhibits,
     "BattleCards": BattleCards,
+    "Dashboard": Dashboard,
+    "Export": Export,
+    "Import": Import,
+    "JointExhibits": JointExhibits,
+    "MasterExhibits": MasterExhibits,
+    "Parties": Parties,
+    "Questions": Questions,
     "Runner": Runner,
     "SettingsPage": SettingsPage,
-    "Import": Import,
-    "Export": Export,
+    "Transcripts": Transcripts,
+    "TrialPoints": TrialPoints,
+    "Exhibits": Exhibits,
 }
 
 export const pagesConfig = {
