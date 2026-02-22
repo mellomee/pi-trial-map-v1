@@ -206,13 +206,13 @@ export default function DepositionExhibits() {
   const removeMark = async (ex) => {
     if (!confirm("Remove this exhibit from the Joint List?")) return;
     await base44.entities.DepositionExhibits.update(ex.id, { joint_exhibit_id: "" });
-    load();
+    setExhibits(prev => prev.map(e => e.id === ex.id ? { ...e, joint_exhibit_id: "" } : e));
   };
 
   const del = async (id) => {
     if (!confirm("Delete this exhibit?")) return;
     await base44.entities.DepositionExhibits.delete(id);
-    load();
+    setExhibits(prev => prev.filter(e => e.id !== id));
   };
 
   const getParty = (pid) => { const p = parties.find(x => x.id === pid); return p ? `${p.first_name || ""} ${p.last_name}`.trim() : ""; };
