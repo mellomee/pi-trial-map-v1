@@ -385,10 +385,10 @@ export default function DepositionExhibits() {
         {/* Table header */}
         <div className="flex items-center gap-3 px-4 py-2 border-b border-[#1e2a45] bg-[#0f1629]">
           <Checkbox checked={selectedIds.size === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} className="border-slate-400" />
-          <span className="text-[10px] font-semibold text-slate-300 uppercase w-14">No.</span>
-          <span className="text-[10px] font-semibold text-slate-300 uppercase w-28">Deponent</span>
-          <span className="text-[10px] font-semibold text-slate-300 uppercase flex-1">Title / Tags</span>
-          <span className="text-[10px] font-semibold text-slate-300 uppercase w-28 text-right">Joint Status</span>
+          <button onClick={() => handleSort("no")} className="text-[10px] font-semibold text-slate-300 uppercase w-14 text-left hover:text-white flex items-center">No.<SortIcon col="no" /></button>
+          <button onClick={() => handleSort("deponent")} className="text-[10px] font-semibold text-slate-300 uppercase w-28 text-left hover:text-white flex items-center">Deponent<SortIcon col="deponent" /></button>
+          <button onClick={() => handleSort("title")} className="text-[10px] font-semibold text-slate-300 uppercase flex-1 text-left hover:text-white flex items-center">Title / Tags<SortIcon col="title" /></button>
+          <button onClick={() => handleSort("side")} className="text-[10px] font-semibold text-slate-300 uppercase w-28 text-right hover:text-white flex items-center justify-end">Side<SortIcon col="side" /></button>
           <span className="text-[10px] font-semibold text-slate-300 uppercase w-24 text-right">Actions</span>
         </div>
 
