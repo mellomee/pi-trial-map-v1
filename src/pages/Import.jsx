@@ -30,12 +30,11 @@ export default function Import() {
 
     setLogs(prev => [...prev, { msg: "Uploading file...", type: "info", time: new Date().toLocaleTimeString() }]);
 
-    // Upload file first
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setProgress(30);
-    setLogs(prev => [...prev, { msg: "File uploaded. Starting import...", type: "info", time: new Date().toLocaleTimeString() }]);
+    setProgress(20);
+    setLogs(prev => [...prev, { msg: "File uploaded. Starting import (this may take a few minutes for large files)...", type: "info", time: new Date().toLocaleTimeString() }]);
 
-    // Call backend function to parse and import
+    // Kick off import — returns immediately with runId
     const response = await base44.functions.invoke("importExcel", {
       file_url,
       case_id: activeCase.id,
@@ -43,22 +42,34 @@ export default function Import() {
       file_name: file.name,
     });
 
-    const result = response.data;
-    setProgress(100);
+    const { runId } = response.data;
 
-    if (result.logs) {
-      const newLogs = result.logs.map(msg => ({ msg, type: "info", time: new Date().toLocaleTimeString() }));
-      setLogs(prev => [...prev, ...newLogs]);
-    }
+    // Poll the ImportRun record for status
+    const poll = setInterval(async () => {
+      const runs = await base44.entities.ImportRuns.filter({ id: runId });
+      const run = runs[0];
+      if (!run) return;
 
-    if (result.success) {
-      setLogs(prev => [...prev, { msg: `Import complete!`, type: "success", time: new Date().toLocaleTimeString() }]);
-    } else {
-      setLogs(prev => [...prev, { msg: `Error: ${result.error}`, type: "error", time: new Date().toLocaleTimeString() }]);
-    }
+      setProgress(run.progress_percent || 20);
 
-    setImporting(false);
-    base44.entities.ImportRuns.filter({ case_id: activeCase.id }, "-created_date", 10).then(setHistory);
+      if (run.status === "done") {
+        clearInterval(poll);
+        setProgress(100);
+        const logMsgs = run.diagnostics_json ? JSON.parse(run.diagnostics_json) : [];
+        setLogs(logMsgs.map(msg => ({ msg, type: "info", time: "" })));
+        setLogs(prev => [...prev, { msg: "Import complete!", type: "success", time: new Date().toLocaleTimeString() }]);
+        setImporting(false);
+        base44.entities.ImportRuns.filter({ case_id: activeCase.id }, "-created_date", 10).then(setHistory);
+      } else if (run.status === "error") {
+        clearInterval(poll);
+        setProgress(100);
+        const logMsgs = run.diagnostics_json ? JSON.parse(run.diagnostics_json) : [];
+        setLogs(logMsgs.map(msg => ({ msg, type: "info", time: "" })));
+        setLogs(prev => [...prev, { msg: `Error: ${run.error_text}`, type: "error", time: new Date().toLocaleTimeString() }]);
+        setImporting(false);
+        base44.entities.ImportRuns.filter({ case_id: activeCase.id }, "-created_date", 10).then(setHistory);
+      }
+    }, 3000);
   };
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case. Go to Settings first.</div>;
