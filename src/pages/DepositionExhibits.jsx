@@ -321,7 +321,7 @@ export default function DepositionExhibits() {
           <Button size="sm" className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700" onClick={() => {
             const firstId = [...selectedIds][0];
             const ex = exhibits.find(e => e.id === firstId);
-            setMarkForm({ marked_no: "", marked_title: ex?.display_title || ex?.depo_exhibit_title || "", marked_by_side: "Plaintiff", notes: "" });
+            setMarkForm({ marked_no: "", marked_title: ex?.display_title || ex?.depo_exhibit_title || "", marked_by_side: "Plaintiff", pages: "", primary_depo_exhibit_id: firstId || "", notes: "" });
             setMarkDialog(true);
           }}>
             Mark as Joint Exhibit
