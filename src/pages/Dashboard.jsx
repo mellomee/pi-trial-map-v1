@@ -15,7 +15,7 @@ export default function Dashboard() {
       base44.entities.Parties.filter({ case_id: cid }),
       base44.entities.Depositions.filter({ case_id: cid }),
       base44.entities.TrialPoints.filter({ case_id: cid }),
-      base44.entities.MasterExhibits.filter({ case_id: cid }),
+      base44.entities.DepositionExhibits.filter({ case_id: cid }),
       base44.entities.DepoClips.filter({ case_id: cid }),
       base44.entities.JointExhibits.filter({ case_id: cid }),
     ]).then(([parties, depos, tp, me, clips, je]) => {

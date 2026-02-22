@@ -4,10 +4,14 @@ import { X, ExternalLink, Download } from "lucide-react";
 export default function FileViewerModal({ url, title, onClose }) {
   if (!url) return null;
 
-  const ext = url.split("?")[0].split(".").pop().toLowerCase();
-  const isImage = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "svg"].includes(ext);
+  const cleanUrl = url.split("?")[0];
+  const ext = cleanUrl.split(".").pop().toLowerCase();
+  const isImage = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext);
   const isPdf = ext === "pdf";
   const isVideo = ["mp4", "webm", "mov", "avi", "mkv"].includes(ext);
+
+  // Use Google Docs viewer to render PDFs inline without triggering download
+  const pdfViewerUrl = isPdf ? `https://docs.google.com/gviewer?embedded=true&url=${encodeURIComponent(url)}` : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
@@ -18,7 +22,7 @@ export default function FileViewerModal({ url, title, onClose }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2a45] flex-shrink-0">
-          <span className="text-sm font-medium text-slate-200 truncate max-w-[70%]">{title || "File Viewer"}</span>
+          <span className="text-sm font-medium text-slate-200 truncate max-w-[60%]">{title || "File Viewer"}</span>
           <div className="flex items-center gap-2">
             <a
               href={url}
@@ -30,7 +34,7 @@ export default function FileViewerModal({ url, title, onClose }) {
             </a>
             <a
               href={url}
-              download
+              download={title || true}
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 border border-slate-600 rounded px-2 py-1"
             >
               <Download className="w-3 h-3" /> Download
@@ -45,9 +49,10 @@ export default function FileViewerModal({ url, title, onClose }) {
         <div className="flex-1 overflow-auto flex items-center justify-center bg-[#080d1a] rounded-b-xl">
           {isPdf && (
             <iframe
-              src={url}
+              src={pdfViewerUrl}
               className="w-full h-full rounded-b-xl"
               title={title}
+              sandbox="allow-scripts allow-same-origin allow-popups"
             />
           )}
           {isImage && (
@@ -68,14 +73,23 @@ export default function FileViewerModal({ url, title, onClose }) {
           {!isPdf && !isImage && !isVideo && (
             <div className="flex flex-col items-center gap-4 text-slate-400 p-8 text-center">
               <p className="text-sm">This file type cannot be previewed in the browser.</p>
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm"
-              >
-                <ExternalLink className="w-4 h-4" /> Open File
-              </a>
+              <div className="flex gap-3">
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 rounded-lg px-4 py-2 text-sm"
+                >
+                  <ExternalLink className="w-4 h-4" /> Open File
+                </a>
+                <a
+                  href={url}
+                  download={title || true}
+                  className="flex items-center gap-2 text-slate-400 hover:text-slate-200 border border-slate-600 rounded-lg px-4 py-2 text-sm"
+                >
+                  <Download className="w-4 h-4" /> Download
+                </a>
+              </div>
             </div>
           )}
         </div>
