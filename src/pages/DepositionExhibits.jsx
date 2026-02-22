@@ -365,7 +365,7 @@ export default function DepositionExhibits() {
                   >
                     {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     {grp === "__ungrouped__" ? "Ungrouped" : grp}
-                    <span className="text-slate-600 font-normal ml-1">({items.length})</span>
+                    <span className="text-slate-400 font-normal ml-1">({items.length})</span>
                     {allMarked && <span className="text-[10px] text-cyan-500 font-normal ml-1">✓ all marked</span>}
                   </button>
                   {/* Group-level actions */}
