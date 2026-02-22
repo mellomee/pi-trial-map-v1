@@ -128,35 +128,57 @@ Deno.serve(async (req) => {
     if (exhibitsSheetName) {
       log("Parsing Exhibits sheet...");
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[exhibitsSheetName]);
-      const batch = [];
 
       for (const row of rows) {
         const exhibitNo = (row.exhibit_no || row.Exhibit || row.ExhibitNo || row["Exhibit #"] || row.No || "").toString().trim();
         const title = (row.exhibit_title || row.Title || row.ExhibitName || row.Description || "").toString().trim();
         if (!exhibitNo && !title) continue;
 
+        const side = normalizeSide(row.SIDE || row.Side || row.side);
         const deponentKey = normalizeSheetKey((row.deponent || row.Deponent || row.Witness || row.LastName || "").toString());
         const party = partyMap[deponentKey];
+        const dedupeKey = `${exhibitNo}|${title}`.toLowerCase();
 
-        batch.push({
+        // Upsert into MasterExhibits
+        const existingMaster = await base44.asServiceRole.entities.MasterExhibits.filter({ case_id, dedupe_key: dedupeKey });
+        let masterExhibit;
+        if (existingMaster.length > 0) {
+          masterExhibit = existingMaster[0];
+        } else {
+          masterExhibit = await base44.asServiceRole.entities.MasterExhibits.create({
+            case_id,
+            master_title: title || `Exhibit ${exhibitNo}`,
+            master_description: (row.Description || row.description || "").toString().trim(),
+            dedupe_key: dedupeKey,
+            provided_by_side: side,
+            notes: (row.notes || row.Notes || "").toString().trim(),
+          });
+          summary.exhibits++;
+        }
+
+        // Also create DepositionExhibit record
+        await base44.asServiceRole.entities.DepositionExhibits.create({
           case_id,
           deponent_party_id: party?.id || "",
           deponent_sheet_key: deponentKey,
           depo_exhibit_no: exhibitNo,
           depo_exhibit_title: title,
           referenced_page: (row.referenced_page || row.Page || "").toString().trim(),
-          provided_by_side: normalizeSide(row.SIDE || row.Side || row.side),
+          provided_by_side: side,
           raw_label: (row.raw_label || row.Label || "").toString().trim(),
         });
-      }
 
-      for (let i = 0; i < batch.length; i += 50) {
-        const chunk = batch.slice(i, i + 50);
-        await base44.asServiceRole.entities.DepositionExhibits.bulkCreate(chunk);
-        summary.exhibits += chunk.length;
-        await sleep(800);
+        // Link them
+        await base44.asServiceRole.entities.ExhibitLinks.create({
+          case_id,
+          master_exhibit_id: masterExhibit.id,
+          depo_exhibit_no: exhibitNo,
+          depo_exhibit_title: title,
+        });
+
+        await sleep(100);
       }
-      log(`Imported ${summary.exhibits} deposition exhibits`);
+      log(`Imported ${summary.exhibits} master exhibits from Exhibits sheet`);
     }
 
     // === TRANSCRIPTS ===
