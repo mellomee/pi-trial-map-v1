@@ -1,5 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function deleteWithRetry(base44, ent, id, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await base44.asServiceRole.entities[ent].delete(id);
+      return;
+    } catch (e) {
+      if (e.status === 429 && i < retries - 1) {
+        await sleep(1000 * (i + 1));
+      } else {
+        throw e;
+      }
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
@@ -19,10 +36,11 @@ Deno.serve(async (req) => {
   for (const ent of entities) {
     const items = await base44.asServiceRole.entities[ent].filter({ case_id });
     for (const item of items) {
-      await base44.asServiceRole.entities[ent].delete(item.id);
+      await deleteWithRetry(base44, ent, item.id);
+      await sleep(300);
     }
     deleted[ent] = items.length;
-    await new Promise(r => setTimeout(r, 100));
+    await sleep(200);
   }
 
   return Response.json({ success: true, deleted });
