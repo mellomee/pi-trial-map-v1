@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown, ExternalLink } from "lucide-react";
+import FileViewerModal from "@/components/exhibits/FileViewerModal";
 import { format } from "date-fns";
 
 const statusColors = {
