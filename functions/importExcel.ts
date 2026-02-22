@@ -36,35 +36,19 @@ function findHeaderRow(sheet, maxRows = 10) {
 
 async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { file_url, case_id, mode, file_name } = await req.json();
-  if (!file_url || !case_id) {
-    return Response.json({ error: "file_url and case_id required" }, { status: 400 });
-  }
-
+async function runImport(base44, { file_url, case_id, mode, file_name, run_id }) {
   const summary = { parties: 0, depositions: 0, transcriptLines: 0, exhibits: 0, sheets: [] };
   const logs = [];
   const log = (msg) => logs.push(msg);
 
-  // Create import run
-  const run = await base44.entities.ImportRuns.create({
-    case_id, file_name: file_name || "upload.xlsx", mode: mode || "SYNC", status: "running", progress_percent: 1,
-  });
-
   try {
-    // Fetch the file
     const resp = await fetch(file_url);
     const buf = await resp.arrayBuffer();
     const wb = XLSX.read(new Uint8Array(buf), { type: "array" });
-    
+
     log(`Found ${wb.SheetNames.length} sheets: ${wb.SheetNames.join(", ")}`);
     summary.sheets = wb.SheetNames;
 
-    // If REPLACE mode, wipe existing data
     if (mode === "REPLACE") {
       log("REPLACE mode: wiping existing case data...");
       const entities = ["DepoClips", "QuestionLinks", "Questions", "AdmittedExhibits", "JointExhibits", "ExhibitLinks", "DepositionTranscripts", "DepositionExhibits", "Depositions", "BattleCards", "TrialPoints", "Parties"];
@@ -86,7 +70,6 @@ Deno.serve(async (req) => {
       log("Parsing Parties sheet...");
       const sheet = wb.Sheets[partiesSheetName];
       const headerRow = findHeaderRow(sheet);
-      log(`Detected header at row ${headerRow + 1}`);
       const rows = XLSX.utils.sheet_to_json(sheet, { range: headerRow });
 
       for (const row of rows) {
@@ -123,6 +106,9 @@ Deno.serve(async (req) => {
       log(`Imported ${summary.parties} parties`);
     }
 
+    // Update progress
+    await base44.asServiceRole.entities.ImportRuns.update(run_id, { progress_percent: 40 });
+
     // === EXHIBITS ===
     const exhibitsSheetName = wb.SheetNames.find(n => n.toLowerCase() === "exhibits");
     if (exhibitsSheetName) {
@@ -140,7 +126,6 @@ Deno.serve(async (req) => {
         const dedupeKey = `${exhibitNo}|${title}`.toLowerCase();
 
         await sleep(200);
-        // Upsert into MasterExhibits
         const existingMaster = await base44.asServiceRole.entities.MasterExhibits.filter({ case_id, dedupe_key: dedupeKey });
         let masterExhibit;
         if (existingMaster.length > 0) {
@@ -157,7 +142,6 @@ Deno.serve(async (req) => {
           summary.exhibits++;
         }
 
-        // Also create DepositionExhibit record
         await base44.asServiceRole.entities.DepositionExhibits.create({
           case_id,
           deponent_party_id: party?.id || "",
@@ -170,7 +154,6 @@ Deno.serve(async (req) => {
         });
         await sleep(300);
 
-        // Link them
         await base44.asServiceRole.entities.ExhibitLinks.create({
           case_id,
           master_exhibit_id: masterExhibit.id,
@@ -182,6 +165,9 @@ Deno.serve(async (req) => {
       }
       log(`Imported ${summary.exhibits} master exhibits from Exhibits sheet`);
     }
+
+    // Update progress
+    await base44.asServiceRole.entities.ImportRuns.update(run_id, { progress_percent: 70 });
 
     // === TRANSCRIPTS ===
     const skipSheets = new Set(["parties", "exhibits"]);
@@ -230,7 +216,6 @@ Deno.serve(async (req) => {
         depo = await base44.asServiceRole.entities.Depositions.create(depoData);
       }
 
-      // Upload transcript text as a file to avoid field size limits
       const transcriptFile = new File([transcriptText], `${sheetName}.txt`, { type: "text/plain" });
       const uploadResp = await base44.asServiceRole.integrations.Core.UploadFile({ file: transcriptFile });
       const transcript_url = uploadResp.file_url;
@@ -253,19 +238,41 @@ Deno.serve(async (req) => {
       await sleep(300);
     }
 
-    await base44.asServiceRole.entities.ImportRuns.update(run.id, {
-      status: "done", progress_percent: 100,
-      summary_json: JSON.stringify(summary),
-    });
-
     log(`Import complete! ${summary.parties} parties, ${summary.depositions} depositions (${summary.transcriptLines} lines), ${summary.exhibits} exhibits`);
 
-    return Response.json({ success: true, summary, logs, runId: run.id });
+    await base44.asServiceRole.entities.ImportRuns.update(run_id, {
+      status: "done", progress_percent: 100,
+      summary_json: JSON.stringify(summary),
+      diagnostics_json: JSON.stringify(logs),
+    });
 
   } catch (error) {
-    await base44.asServiceRole.entities.ImportRuns.update(run.id, {
+    await base44.asServiceRole.entities.ImportRuns.update(run_id, {
       status: "error", error_text: error.message,
+      diagnostics_json: JSON.stringify(logs),
     });
-    return Response.json({ success: false, error: error.message, logs }, { status: 500 });
   }
+}
+
+Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  const user = await base44.auth.me();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { file_url, case_id, mode, file_name } = await req.json();
+  if (!file_url || !case_id) {
+    return Response.json({ error: "file_url and case_id required" }, { status: 400 });
+  }
+
+  // Create import run record immediately
+  const run = await base44.entities.ImportRuns.create({
+    case_id, file_name: file_name || "upload.xlsx", mode: mode || "SYNC",
+    status: "running", progress_percent: 5,
+  });
+
+  // Fire and forget — don't await so we return quickly before the 504 timeout
+  runImport(base44, { file_url, case_id, mode, file_name, run_id: run.id });
+
+  // Return immediately with the run ID so the frontend can poll
+  return Response.json({ success: true, runId: run.id, polling: true });
 });
