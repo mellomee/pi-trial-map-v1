@@ -10,18 +10,28 @@ const ENTITIES = [
 ];
 
 async function safeFilter(base44, ent, case_id) {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    try {
-      return await base44.asServiceRole.entities[ent].filter({ case_id }, null, 200);
-    } catch (e) {
-      if (e.status === 429) {
-        await sleep(2000 * (attempt + 1));
-      } else {
-        return [];
+  const all = [];
+  let skip = 0;
+  const limit = 200;
+  while (true) {
+    let batch = [];
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        batch = await base44.asServiceRole.entities[ent].filter({ case_id }, null, limit, skip);
+        break;
+      } catch (e) {
+        if (e.status === 429) {
+          await sleep(2000 * (attempt + 1));
+        } else {
+          return all;
+        }
       }
     }
+    all.push(...batch);
+    if (batch.length < limit) break;
+    skip += limit;
   }
-  return [];
+  return all;
 }
 
 async function safeDelete(base44, ent, id) {
