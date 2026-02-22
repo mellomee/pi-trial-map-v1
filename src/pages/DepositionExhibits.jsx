@@ -209,7 +209,7 @@ export default function DepositionExhibits() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-white">{displayTitle}</span>
             {wasRenamed && (
-              <span className="text-[10px] text-slate-600 italic">orig: {ex.depo_exhibit_title}</span>
+              <span className="text-[10px] text-slate-400 italic">orig: {ex.depo_exhibit_title}</span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
