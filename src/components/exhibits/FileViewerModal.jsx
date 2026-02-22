@@ -10,9 +10,6 @@ export default function FileViewerModal({ url, title, onClose }) {
   const isPdf = ext === "pdf";
   const isVideo = ["mp4", "webm", "mov", "avi", "mkv"].includes(ext);
 
-  // Use Google Docs viewer to render PDFs inline without triggering download
-  const pdfViewerUrl = isPdf ? `https://docs.google.com/gviewer?embedded=true&url=${encodeURIComponent(url)}` : null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
       <div
