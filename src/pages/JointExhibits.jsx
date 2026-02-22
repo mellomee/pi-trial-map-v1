@@ -41,6 +41,20 @@ export default function JointExhibits() {
   const [admitForm, setAdmitForm] = useState({ admitted_no: "", admitted_by_side: "Plaintiff", date_admitted: new Date().toISOString().split("T")[0], notes: "" });
   const [editAdmit, setEditAdmit] = useState(null);
   const [viewFile, setViewFile] = useState(null); // { url, title }
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
+
+  const handleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <ChevronsUpDown className="w-3 h-3 ml-1 text-slate-500 inline" />;
+    return sortDir === "asc"
+      ? <ChevronUp className="w-3 h-3 ml-1 text-cyan-400 inline" />
+      : <ChevronDown className="w-3 h-3 ml-1 text-cyan-400 inline" />;
+  };
 
   const load = async () => {
     if (!activeCase) return;
