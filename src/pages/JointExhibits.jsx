@@ -96,7 +96,21 @@ export default function JointExhibits() {
     return m;
   }, [depoExhibits]);
 
-  const filtered = useMemo(() => joints.filter(j => {
+  const sortedJoints = useMemo(() => {
+    if (!sortCol) return joints;
+    return [...joints].sort((a, b) => {
+      let av, bv;
+      if (sortCol === "no") { av = a.marked_no || ""; bv = b.marked_no || ""; }
+      else if (sortCol === "title") { av = a.marked_title || ""; bv = b.marked_title || ""; }
+      else if (sortCol === "side") { av = a.marked_by_side || ""; bv = b.marked_by_side || ""; }
+      else if (sortCol === "status") { av = a.status || ""; bv = b.status || ""; }
+      else { av = ""; bv = ""; }
+      const cmp = av.localeCompare(bv, undefined, { numeric: true });
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [joints, sortCol, sortDir]);
+
+  const filtered = useMemo(() => sortedJoints.filter(j => {
     const admRec = admittedByJointId[j.id];
     const matchSearch = !search ||
       j.marked_title?.toLowerCase().includes(search.toLowerCase()) ||
