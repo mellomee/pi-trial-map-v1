@@ -84,7 +84,21 @@ export default function DepositionExhibits() {
     return [...groups];
   }, [exhibits]);
 
-  const filtered = useMemo(() => exhibits.filter(ex => {
+  const sorted = useMemo(() => {
+    if (!sortCol) return exhibits;
+    return [...exhibits].sort((a, b) => {
+      let av, bv;
+      if (sortCol === "no") { av = a.depo_exhibit_no || ""; bv = b.depo_exhibit_no || ""; }
+      else if (sortCol === "deponent") { av = a.deponent_name || ""; bv = b.deponent_name || ""; }
+      else if (sortCol === "title") { av = a.display_title || a.depo_exhibit_title || ""; bv = b.display_title || b.depo_exhibit_title || ""; }
+      else if (sortCol === "side") { av = a.provided_by_side || ""; bv = b.provided_by_side || ""; }
+      else { av = ""; bv = ""; }
+      const cmp = av.localeCompare(bv, undefined, { numeric: true });
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [exhibits, sortCol, sortDir]);
+
+  const filtered = useMemo(() => sorted.filter(ex => {
     const title = ex.display_title || ex.depo_exhibit_title || "";
     const matchSearch = !search || title.toLowerCase().includes(search.toLowerCase()) ||
       ex.depo_exhibit_no?.toLowerCase().includes(search.toLowerCase()) ||
