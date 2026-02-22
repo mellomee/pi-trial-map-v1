@@ -47,13 +47,36 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Dashboard from './pages/Dashboard';
+import Parties from './pages/Parties';
+import Transcripts from './pages/Transcripts';
+import TrialPoints from './pages/TrialPoints';
+import Questions from './pages/Questions';
+import MasterExhibits from './pages/MasterExhibits';
+import JointExhibits from './pages/JointExhibits';
+import AdmittedExhibits from './pages/AdmittedExhibits';
+import BattleCards from './pages/BattleCards';
+import Runner from './pages/Runner';
+import SettingsPage from './pages/SettingsPage';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Dashboard": Dashboard,
+    "Parties": Parties,
+    "Transcripts": Transcripts,
+    "TrialPoints": TrialPoints,
+    "Questions": Questions,
+    "MasterExhibits": MasterExhibits,
+    "JointExhibits": JointExhibits,
+    "AdmittedExhibits": AdmittedExhibits,
+    "BattleCards": BattleCards,
+    "Runner": Runner,
+    "SettingsPage": SettingsPage,
 }
 
 export const pagesConfig = {
+    mainPage: "Dashboard",
     Pages: PAGES,
     Layout: __Layout,
 };
