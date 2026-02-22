@@ -167,6 +167,7 @@ Deno.serve(async (req) => {
           provided_by_side: side,
           raw_label: (row.raw_label || row.Label || "").toString().trim(),
         });
+        await sleep(300);
 
         // Link them
         await base44.asServiceRole.entities.ExhibitLinks.create({
@@ -176,7 +177,7 @@ Deno.serve(async (req) => {
           depo_exhibit_title: title,
         });
 
-        await sleep(100);
+        await sleep(400);
       }
       log(`Imported ${summary.exhibits} master exhibits from Exhibits sheet`);
     }
