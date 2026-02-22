@@ -2,21 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-async function deleteWithRetry(base44, ent, id, retries = 3) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      await base44.asServiceRole.entities[ent].delete(id);
-      return;
-    } catch (e) {
-      if (e.status === 429 && i < retries - 1) {
-        await sleep(1000 * (i + 1));
-      } else {
-        throw e;
-      }
-    }
-  }
-}
-
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
@@ -33,14 +18,36 @@ Deno.serve(async (req) => {
   ];
 
   const deleted = {};
+
   for (const ent of entities) {
-    const items = await base44.asServiceRole.entities[ent].filter({ case_id });
-    for (const item of items) {
-      await deleteWithRetry(base44, ent, item.id);
-      await sleep(300);
+    let items = [];
+    try {
+      await sleep(600);
+      items = await base44.asServiceRole.entities[ent].filter({ case_id }, null, 200);
+    } catch (e) {
+      // rate limit on filter - wait longer and retry once
+      await sleep(3000);
+      try {
+        items = await base44.asServiceRole.entities[ent].filter({ case_id }, null, 200);
+      } catch (_) {
+        items = [];
+      }
     }
+
+    for (const item of items) {
+      let success = false;
+      for (let attempt = 0; attempt < 4 && !success; attempt++) {
+        try {
+          await base44.asServiceRole.entities[ent].delete(item.id);
+          success = true;
+          await sleep(400);
+        } catch (e) {
+          await sleep(1500 * (attempt + 1));
+        }
+      }
+    }
+
     deleted[ent] = items.length;
-    await sleep(200);
   }
 
   return Response.json({ success: true, deleted });
