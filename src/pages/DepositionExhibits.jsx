@@ -240,8 +240,8 @@ export default function DepositionExhibits() {
             ? <button title="Remove from Joint List" onClick={() => removeMark(ex)} className="p-1 text-cyan-500 hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
             : null
           }
-          <button title="Add to Joint List (new entry)" onClick={() => { setSelectedIds(new Set([ex.id])); setMarkForm({ marked_no: "", marked_title: ex.display_title || ex.depo_exhibit_title, marked_by_side: "Plaintiff", pages: "", primary_depo_exhibit_id: ex.id, notes: "" }); setMarkDialog(true); }} className="p-1 text-slate-500 hover:text-cyan-400"><Tag className="w-3.5 h-3.5" /></button>
-          <button title="Delete" onClick={() => del(ex.id)} className="p-1 text-slate-500 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+          <button title="Add to Joint List (new entry)" onClick={() => { setSelectedIds(new Set([ex.id])); setMarkForm({ marked_no: "", marked_title: ex.display_title || ex.depo_exhibit_title, marked_by_side: "Plaintiff", pages: "", primary_depo_exhibit_id: ex.id, notes: "" }); setMarkDialog(true); }} className="p-1 text-slate-400 hover:text-cyan-400"><Tag className="w-3.5 h-3.5" /></button>
+          <button title="Delete" onClick={() => del(ex.id)} className="p-1 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
     );
