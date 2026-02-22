@@ -559,6 +559,8 @@ export default function DepositionExhibits() {
         </DialogContent>
       </Dialog>
 
+      {viewFile && <FileViewerModal url={viewFile.url} title={viewFile.title} onClose={() => setViewFile(null)} />}
+
       {/* ── Mark as Joint Dialog ── */}
       <Dialog open={markDialog} onOpenChange={setMarkDialog}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg">
