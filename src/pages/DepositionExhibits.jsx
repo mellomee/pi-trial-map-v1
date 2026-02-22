@@ -228,7 +228,7 @@ export default function DepositionExhibits() {
               <span className="text-[10px] text-slate-300 block">{joint.status}</span>
             </div>
           ) : (
-            <span className="text-[10px] text-slate-700 italic">Unmarked</span>
+            <span className="text-[10px] text-slate-400 italic">Unmarked</span>
           )}
         </div>
 
