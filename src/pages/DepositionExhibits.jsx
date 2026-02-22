@@ -399,7 +399,7 @@ export default function DepositionExhibits() {
                 {isOpen && items.map(ex => <ExhibitRow key={ex.id} ex={ex} />)}
               </div>
             );
-          }))
+          })
         )}
       </div>
 
