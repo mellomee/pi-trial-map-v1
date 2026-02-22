@@ -433,6 +433,9 @@ export default function DepositionExhibits() {
             <div><Label className="text-slate-400 text-xs">Title</Label>
               <Input value={addForm.depo_exhibit_title} onChange={e => setAddForm({ ...addForm, depo_exhibit_title: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
             </div>
+            <div><Label className="text-slate-400 text-xs">Deponent Name</Label>
+              <Input value={addForm.deponent_name} onChange={e => setAddForm({ ...addForm, deponent_name: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. Dr. Smith" />
+            </div>
             <div><Label className="text-slate-400 text-xs">Referenced Page</Label>
               <Input value={addForm.referenced_page} onChange={e => setAddForm({ ...addForm, referenced_page: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. 42" />
             </div>
