@@ -40,6 +40,7 @@ export default function JointExhibits() {
   const [admitDialog, setAdmitDialog] = useState(null);
   const [admitForm, setAdmitForm] = useState({ admitted_no: "", admitted_by_side: "Plaintiff", date_admitted: new Date().toISOString().split("T")[0], notes: "" });
   const [editAdmit, setEditAdmit] = useState(null);
+  const [viewFile, setViewFile] = useState(null); // { url, title }
 
   const load = async () => {
     if (!activeCase) return;

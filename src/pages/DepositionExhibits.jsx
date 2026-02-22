@@ -46,6 +46,7 @@ export default function DepositionExhibits() {
   const [markForm, setMarkForm] = useState({ marked_no: "", marked_title: "", marked_by_side: "Plaintiff", pages: "", primary_depo_exhibit_id: "", notes: "" });
   const [addDialog, setAddDialog] = useState(false);
   const [addForm, setAddForm] = useState({ depo_exhibit_no: "", depo_exhibit_title: "", provided_by_side: "Unknown", deponent_name: "", referenced_page: "", notes: "" });
+  const [viewFile, setViewFile] = useState(null); // { url, title }
 
   const load = async () => {
     if (!activeCase) return;
