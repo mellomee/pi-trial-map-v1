@@ -206,15 +206,22 @@ Deno.serve(async (req) => {
         depo = await base44.asServiceRole.entities.Depositions.create(depoData);
       }
 
+      // Upload transcript text as a file to avoid field size limits
+      const blob = new Blob([transcriptText], { type: "text/plain" });
+      const formData = new FormData();
+      formData.append("file", blob, `${sheetName}.txt`);
+      const uploadResp = await base44.asServiceRole.integrations.Core.UploadFile({ file: blob });
+      const transcript_url = uploadResp.file_url;
+
       const existingTranscript = await base44.asServiceRole.entities.DepositionTranscripts.filter({ deposition_id: depo.id });
       if (existingTranscript.length > 0) {
         await base44.asServiceRole.entities.DepositionTranscripts.update(existingTranscript[0].id, {
-          transcript_text: transcriptText, line_count: lineCount, hash
+          transcript_url, line_count: lineCount, hash
         });
       } else {
         await base44.asServiceRole.entities.DepositionTranscripts.create({
           case_id, deposition_id: depo.id, format: "CITE_TAB_TEXT",
-          transcript_text: transcriptText, line_count: lineCount, hash,
+          transcript_url, line_count: lineCount, hash,
         });
       }
 
