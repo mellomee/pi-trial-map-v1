@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
         const party = partyMap[deponentKey];
         const dedupeKey = `${exhibitNo}|${title}`.toLowerCase();
 
+        await sleep(200);
         // Upsert into MasterExhibits
         const existingMaster = await base44.asServiceRole.entities.MasterExhibits.filter({ case_id, dedupe_key: dedupeKey });
         let masterExhibit;
