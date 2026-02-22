@@ -98,8 +98,8 @@ export default function SettingsPage() {
                 <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400 hover:text-amber-400" onClick={() => archiveCase(c.id)}>
                   <Archive className="w-3 h-3 mr-1" /> Archive
                 </Button>
-                <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400 hover:text-red-400" onClick={() => wipeCase(c.id)}>
-                  <Trash2 className="w-3 h-3 mr-1" /> Wipe Data
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400 hover:text-red-400" onClick={() => wipeCase(c.id)} disabled={wipingId === c.id}>
+                  <Trash2 className="w-3 h-3 mr-1" /> {wipingId === c.id ? wipeProgress : "Clear Case Data"}
                 </Button>
               </div>
             </div>
