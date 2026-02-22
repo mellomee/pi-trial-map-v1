@@ -147,6 +147,7 @@ async function runImport(base44, { file_url, case_id, mode, file_name, run_id })
           case_id,
           deponent_party_id: party?.id || "",
           deponent_sheet_key: deponentKey,
+          deponent_name: rawDeponent,
           depo_exhibit_no: exhibitNo,
           depo_exhibit_title: title,
           referenced_page: (row.referenced_page || row.Page || "").toString().trim(),
