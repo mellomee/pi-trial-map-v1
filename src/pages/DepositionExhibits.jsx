@@ -219,8 +219,20 @@ export default function DepositionExhibits() {
   const uploadFile = async (exhibitId, file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     await base44.entities.DepositionExhibits.update(exhibitId, { file_url });
-    load();
+    // Update in-place without full reload to preserve scroll position
+    setExhibits(prev => prev.map(e => e.id === exhibitId ? { ...e, file_url } : e));
   };
+
+  const deleteFile = async (exhibitId) => {
+    if (!confirm("Remove attached file from this exhibit?")) return;
+    await base44.entities.DepositionExhibits.update(exhibitId, { file_url: "" });
+    setExhibits(prev => prev.map(e => e.id === exhibitId ? { ...e, file_url: "" } : e));
+  };
+
+  const allDeponents = useMemo(() => {
+    const names = new Set(exhibits.map(e => e.deponent_name).filter(Boolean));
+    return [...names].sort();
+  }, [exhibits]);
 
   const ExhibitRow = ({ ex }) => {
     const isSelected = selectedIds.has(ex.id);
