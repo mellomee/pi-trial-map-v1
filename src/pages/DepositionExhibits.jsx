@@ -257,7 +257,7 @@ export default function DepositionExhibits() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-white">Deposition Exhibits</h1>
-          <div className="flex gap-3 mt-1 text-xs text-slate-500">
+          <div className="flex gap-3 mt-1 text-xs text-slate-300">
             <span>{exhibits.length} total</span>
             <span className="text-slate-600">·</span>
             <span className="text-cyan-400">{markedCount} marked</span>
