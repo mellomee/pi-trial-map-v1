@@ -335,6 +335,9 @@ export default function JointExhibits() {
               <div><Label className="text-slate-400 text-xs">Trial Title</Label>
                 <Input value={editJoint.marked_title} onChange={e => setEditJoint({ ...editJoint, marked_title: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
               </div>
+              <div><Label className="text-slate-400 text-xs">Pages <span className="text-slate-600">(e.g. "3" or "1-5")</span></Label>
+                <Input value={editJoint.pages || ""} onChange={e => setEditJoint({ ...editJoint, pages: e.target.value })} placeholder="All pages" className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+              </div>
               <div><Label className="text-slate-400 text-xs">Status</Label>
                 <Select value={editJoint.status} onValueChange={v => setEditJoint({ ...editJoint, status: v })}>
                   <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
