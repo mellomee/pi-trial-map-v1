@@ -345,7 +345,7 @@ export default function DepositionExhibits() {
         {/* Rows */}
         {viewMode === "flat" ? (
           filtered.length === 0
-            ? <p className="text-sm text-slate-500 text-center py-10">No exhibits found.</p>
+            ? <p className="text-sm text-slate-400 text-center py-10">No exhibits found.</p>
             : filtered.map(ex => <ExhibitRow key={ex.id} ex={ex} />)
         ) : (
           Object.entries(grouped || {}).map(([grp, items]) => {
