@@ -145,21 +145,25 @@ export default function DepositionExhibits() {
     load();
   };
 
-  // Mark as joint
+  // Mark as joint — creates ONE joint exhibit for all selected, linking them as a group
   const saveMark = async () => {
-    for (const id of selectedIds) {
-      const ex = exhibits.find(e => e.id === id);
-      if (ex.joint_exhibit_id) continue;
-      const joint = await base44.entities.JointExhibits.create({
-        case_id: activeCase.id,
-        master_exhibit_id: ex.id,
-        marked_no: markForm.marked_no,
-        marked_title: markForm.marked_title || ex.display_title || ex.depo_exhibit_title,
-        marked_by_side: markForm.marked_by_side,
-        status: "Marked",
-        notes: markForm.notes,
-      });
-      await base44.entities.DepositionExhibits.update(id, { joint_exhibit_id: joint.id });
+    const selectedExhibits = [...selectedIds].map(id => exhibits.find(e => e.id === id)).filter(Boolean);
+    const primaryId = markForm.primary_depo_exhibit_id || selectedExhibits[0]?.id || "";
+    const primaryEx = selectedExhibits.find(e => e.id === primaryId) || selectedExhibits[0];
+    const joint = await base44.entities.JointExhibits.create({
+      case_id: activeCase.id,
+      master_exhibit_id: primaryId,
+      primary_depo_exhibit_id: primaryId,
+      source_depo_exhibit_ids: selectedExhibits.map(e => e.id),
+      marked_no: markForm.marked_no,
+      marked_title: markForm.marked_title || primaryEx?.display_title || primaryEx?.depo_exhibit_title || "",
+      marked_by_side: markForm.marked_by_side,
+      pages: markForm.pages,
+      status: "Marked",
+      notes: markForm.notes,
+    });
+    for (const ex of selectedExhibits) {
+      await base44.entities.DepositionExhibits.update(ex.id, { joint_exhibit_id: joint.id });
     }
     setMarkDialog(false);
     clearSel();
