@@ -198,7 +198,22 @@ export default function JointExhibits() {
 
                     {/* Title + source */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white font-medium">{j.marked_title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-white font-medium">{j.marked_title}</p>
+                        {(() => {
+                          const allDepos = deposByJointId[j.id] || [];
+                          const primary = allDepos.find(d => d.id === j.primary_depo_exhibit_id) || allDepos[0];
+                          return primary?.file_url ? (
+                            <button
+                              onClick={e => { e.stopPropagation(); window.open(primary.file_url, "_blank"); }}
+                              className="flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 rounded px-1.5 py-0.5"
+                              title="Open attached file"
+                            >
+                              <ExternalLink className="w-3 h-3" /> View File
+                            </button>
+                          ) : null;
+                        })()}
+                      </div>
                       {(() => {
                         const allDepos = deposByJointId[j.id] || [];
                         const primary = allDepos.find(d => d.id === j.primary_depo_exhibit_id) || allDepos[0];
