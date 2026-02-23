@@ -323,7 +323,7 @@ export default function DepositionExhibits() {
           ) : null}
           <label title="Attach file" className="p-1 text-slate-400 hover:text-cyan-400 cursor-pointer">
             <Paperclip className="w-3.5 h-3.5" />
-            <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.tiff,.bmp,.webp" className="hidden"
+            <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.tiff,.bmp,.webp,.mp4,.mov,.avi,.webm" className="hidden"
               onClick={e => { e.target.value = null; }}
               onChange={e => { if (e.target.files[0]) uploadFile(ex.id, e.target.files[0]); }} />
           </label>
