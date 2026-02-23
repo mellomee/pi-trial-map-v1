@@ -49,6 +49,7 @@ export default function DepositionExhibits() {
   const [addForm, setAddForm] = useState({ depo_exhibit_no: "", depo_exhibit_title: "", provided_by_side: "Unknown", deponent_name: "", referenced_page: "", notes: "" });
   const [filterDeponent, setFilterDeponent] = useState("all");
   const [viewFile, setViewFile] = useState(null); // { url, title }
+  const [uploadQueue, setUploadQueue] = useState([]); // [{ id, name, status, progress, error }]
   const [sortCol, setSortCol] = useState(null); // "no" | "deponent" | "title" | "side"
   const [sortDir, setSortDir] = useState("asc");
 
