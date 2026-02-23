@@ -72,22 +72,24 @@ export default function TrialPoints() {
     });
   };
 
-  // Drag handlers
+  // Drag handlers — use ref so setDraggingId re-render doesn't cancel the drag
   const handleDragStart = (e, id) => {
+    draggingIdRef.current = id;
     setDraggingId(id);
     e.dataTransfer.effectAllowed = "move";
+    // Set drag image to avoid browser greying out text
+    e.dataTransfer.setData("text/plain", id);
   };
 
   const handleDragOver = (e, targetId) => {
     e.preventDefault();
-    if (targetId === draggingId) return;
-    // Don't allow dropping onto a child of the dragged item
-    const dragged = points.find(p => p.id === draggingId);
+    const currentDrag = draggingIdRef.current;
+    if (!currentDrag || targetId === currentDrag) return;
+    const dragged = points.find(p => p.id === currentDrag);
     if (dragged && dragged.parent_point_id === targetId) return;
     e.dataTransfer.dropEffect = "move";
     if (dropTargetId !== targetId) {
       setDropTargetId(targetId);
-      // Auto-expand if hovering over a collapsed parent
       if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
       dragOverTimer.current = setTimeout(() => {
         setExpanded(prev => new Set([...prev, targetId]));
@@ -95,7 +97,9 @@ export default function TrialPoints() {
     }
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e) => {
+    // Only clear if leaving the row entirely (not entering a child)
+    if (e.currentTarget.contains(e.relatedTarget)) return;
     if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
     setDropTargetId(null);
   };
@@ -104,23 +108,24 @@ export default function TrialPoints() {
     e.preventDefault();
     if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
     setDropTargetId(null);
-    if (!draggingId || draggingId === newParentId) { setDraggingId(null); return; }
-    // Prevent dropping a parent onto its own child
+    const currentDrag = draggingIdRef.current;
+    draggingIdRef.current = null;
+    setDraggingId(null);
+    if (!currentDrag || currentDrag === newParentId) return;
     const isDescendant = (checkId, ancestorId) => {
       const p = points.find(x => x.id === checkId);
       if (!p || !p.parent_point_id) return false;
       if (p.parent_point_id === ancestorId) return true;
       return isDescendant(p.parent_point_id, ancestorId);
     };
-    if (newParentId && isDescendant(newParentId, draggingId)) { setDraggingId(null); return; }
-
-    await base44.entities.TrialPoints.update(draggingId, { parent_point_id: newParentId || "" });
-    setDraggingId(null);
+    if (newParentId && isDescendant(newParentId, currentDrag)) return;
+    await base44.entities.TrialPoints.update(currentDrag, { parent_point_id: newParentId || "" });
     load();
   };
 
   const handleDragEnd = () => {
     if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
+    draggingIdRef.current = null;
     setDraggingId(null);
     setDropTargetId(null);
   };
