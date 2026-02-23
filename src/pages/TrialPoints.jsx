@@ -292,7 +292,7 @@ export default function TrialPoints() {
         <div className="flex items-center justify-between mb-5 no-print">
           <div>
             <h1 className="text-2xl font-bold text-white">Trial Points</h1>
-            <p className="text-sm text-slate-500">Drag to reorder • Drag a point onto another to make it a subpoint</p>
+            <p className="text-sm text-slate-500">Drag grip to reorder • Use edit dialog to set a parent point</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white" onClick={handlePrint}>
