@@ -310,32 +310,51 @@ export default function TrialPoints() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-5 items-center no-print">
-          <div className="relative min-w-[200px] max-w-xs flex-1">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-            <Input placeholder="Search points..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+        <div className="flex flex-col gap-3 mb-5 no-print">
+          {/* Row 1: search + proof + element */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="relative min-w-[200px] max-w-xs flex-1">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+              <Input placeholder="Search points..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+            </div>
+            <div className="flex gap-1 flex-wrap items-center">
+              {["all", "Proven", "Contested", "Missing", "Weak"].map(v => (
+                <button key={v}
+                  onClick={() => setFilterProof(v)}
+                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${filterProof === v ? "bg-cyan-600 text-white" : "bg-[#131a2e] text-slate-400 hover:text-white border border-[#1e2a45]"}`}>
+                  {v === "all" ? "All Proof" : v}
+                </button>
+              ))}
+              <span className="text-slate-600 text-xs">|</span>
+              <Select value={filterElement} onValueChange={setFilterElement}>
+                <SelectTrigger className="bg-[#131a2e] border-[#1e2a45] text-slate-300 text-xs h-8 w-44">
+                  <SelectValue placeholder="Filter by Element" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Elements</SelectItem>
+                  {ELEMENT_OPTIONS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex gap-1 flex-wrap items-center">
-            {/* Proof filter */}
-            {["all", "Proven", "Contested", "Missing", "Weak"].map(v => (
-              <button key={v}
-                onClick={() => setFilterProof(v)}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${filterProof === v ? "bg-cyan-600 text-white" : "bg-[#131a2e] text-slate-400 hover:text-white border border-[#1e2a45]"}`}>
-                {v === "all" ? "All Proof" : v}
+          {/* Row 2: Category filter */}
+          {categories.length > 0 && (
+            <div className="flex gap-2 flex-wrap items-center">
+              <span className="text-xs text-slate-500 font-medium">Categories:</span>
+              <button
+                onClick={() => setFilterCategories([])}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${filterCategories.length === 0 ? "bg-cyan-600 text-white" : "bg-[#131a2e] text-slate-400 hover:text-white border border-[#1e2a45]"}`}>
+                All
               </button>
-            ))}
-            <span className="text-slate-600 text-xs">|</span>
-            {/* Element filter */}
-            <Select value={filterElement} onValueChange={setFilterElement}>
-              <SelectTrigger className="bg-[#131a2e] border-[#1e2a45] text-slate-300 text-xs h-8 w-44">
-                <SelectValue placeholder="Filter by Element" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Elements</SelectItem>
-                {ELEMENT_OPTIONS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+              {categories.sort((a,b)=>(a.order_index||0)-(b.order_index||0)).map(c => (
+                <button key={c.id}
+                  onClick={() => toggleCategoryFilter(c.id)}
+                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${filterCategories.includes(c.id) ? "bg-indigo-600 text-white" : "bg-[#131a2e] text-slate-400 hover:text-white border border-[#1e2a45]"}`}>
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Grouped drag-and-drop list */}
