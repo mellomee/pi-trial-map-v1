@@ -469,12 +469,7 @@ export default function TrialPoints() {
                   <Label className="text-slate-400 text-xs">Notes</Label>
                   <Textarea value={editing.notes || ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
                 </div>
-                {editing.parent_point_id && (
-                  <p className="text-xs text-slate-500 italic">
-                    Subpoint of: "{points.find(p => p.id === editing.parent_point_id)?.point_text?.slice(0, 60)}…"
-                    <button className="ml-2 text-red-400 hover:text-red-300" onClick={() => setEditing({ ...editing, parent_point_id: "" })}>Remove parent</button>
-                  </p>
-                )}
+
               </div>
             )}
             <DialogFooter>
