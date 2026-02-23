@@ -409,45 +409,48 @@ export default function TrialPoints() {
           )}
         </div>
 
-        {/* Grouped drag-and-drop list */}
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div className="space-y-4">
-            {grouped.length === 0 && (
-              <p className="text-slate-500 text-sm text-center py-10">No trial points found.</p>
-            )}
-            {grouped.map(cat => (
-              <div key={cat.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg overflow-hidden">
-                <div className="px-4 py-2.5 bg-[#0f1629] border-b border-[#1e2a45] flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{cat.name}</span>
-                  <span className="text-xs text-slate-500">{cat.points.length} point{cat.points.length !== 1 ? "s" : ""}</span>
-                </div>
-                <Droppable droppableId={`cat-${cat.id}`} type="parent">
-                  {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps}>
-                      {cat.points.map((p, idx) => (
-                        <Draggable key={p.id} draggableId={p.id} index={idx}>
-                          {(drag, snapshot) => (
-                            <ParentRow
-                              p={p}
-                              drag={drag}
-                              isDragging={snapshot.isDragging}
-                              children={childrenOf[p.id] || []}
-                              expanded={expanded}
-                              toggleExpand={toggleExpand}
-                              onEdit={() => { setEditing({ ...p, elements: p.elements || [] }); setOpen(true); }}
-                              onRemove={() => remove(p.id)}
-                            />
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
+        {/* Grouped list */}
+        <div className="space-y-4">
+          {grouped.length === 0 && (
+            <p className="text-slate-500 text-sm text-center py-10">No trial points found.</p>
+          )}
+          {grouped.map(cat => (
+            <div key={cat.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg overflow-hidden">
+              <div className="px-4 py-2.5 bg-[#0f1629] border-b border-[#1e2a45] flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{cat.name}</span>
+                <span className="text-xs text-slate-500">{cat.points.length} point{cat.points.length !== 1 ? "s" : ""}</span>
               </div>
-            ))}
-          </div>
-        </DragDropContext>
+              <div>
+                {cat.points.map((p, idx) => (
+                  <ParentRow
+                    key={p.id}
+                    p={p}
+                    idx={idx}
+                    total={cat.points.length}
+                    children={childrenOf[p.id] || []}
+                    expanded={expanded}
+                    toggleExpand={toggleExpand}
+                    onEdit={() => { setEditing({ ...p, elements: p.elements || [] }); setOpen(true); }}
+                    onRemove={() => remove(p.id)}
+                    onMoveUp={() => moveParent(p.id, "up")}
+                    onMoveDown={() => moveParent(p.id, "down")}
+                    onDragStart={onNativeDragStart}
+                    onDragEnd={onNativeDragEnd}
+                    onDragOver={onNativeDragOver}
+                    onDragLeave={onNativeDragLeave}
+                    onDrop={onNativeDrop}
+                    isDragOver={dragOverParentId === p.id}
+                    isDragging={draggingId === p.id}
+                    onEditChild={(child) => { setEditing({ ...child, elements: child.elements || [] }); setOpen(true); }}
+                    onRemoveChild={(id) => remove(id)}
+                    onMoveChildUp={(id) => moveChild(id, "up")}
+                    onMoveChildDown={(id) => moveChild(id, "down")}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Edit/Add Dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
