@@ -31,9 +31,10 @@ export default function TrialPoints() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
 
-  // Drag state
-  const [draggingId, setDraggingId] = useState(null);
-  const [dropTargetId, setDropTargetId] = useState(null); // parent to drop onto
+  // Drag state — use ref for draggingId to avoid re-render interrupting drag start
+  const draggingIdRef = useRef(null);
+  const [draggingId, setDraggingId] = useState(null); // only for UI (drop zone visibility)
+  const [dropTargetId, setDropTargetId] = useState(null);
   const dragOverTimer = useRef(null);
 
   const load = async () => {
