@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search, GripVertical, X } from "lucide-react";
 
 const proofColors = {
   Missing: "border-red-500/40 text-red-400",
@@ -18,7 +18,6 @@ const proofColors = {
 };
 
 const priorityOrder = { High: 0, Med: 1, Low: 2 };
-
 const EMPTY = { point_text: "", priority: "Med", status: "Missing", notes: "", category_id: "", parent_point_id: "" };
 
 export default function TrialPoints() {
@@ -31,6 +30,11 @@ export default function TrialPoints() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
+
+  // Drag state
+  const [draggingId, setDraggingId] = useState(null);
+  const [dropTargetId, setDropTargetId] = useState(null); // parent to drop onto
+  const dragOverTimer = useRef(null);
 
   const load = async () => {
     if (!activeCase) return;
@@ -67,6 +71,59 @@ export default function TrialPoints() {
     });
   };
 
+  // Drag handlers
+  const handleDragStart = (e, id) => {
+    setDraggingId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e, targetId) => {
+    e.preventDefault();
+    if (targetId === draggingId) return;
+    // Don't allow dropping onto a child of the dragged item
+    const dragged = points.find(p => p.id === draggingId);
+    if (dragged && dragged.parent_point_id === targetId) return;
+    e.dataTransfer.dropEffect = "move";
+    if (dropTargetId !== targetId) {
+      setDropTargetId(targetId);
+      // Auto-expand if hovering over a collapsed parent
+      if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
+      dragOverTimer.current = setTimeout(() => {
+        setExpanded(prev => new Set([...prev, targetId]));
+      }, 600);
+    }
+  };
+
+  const handleDragLeave = () => {
+    if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
+    setDropTargetId(null);
+  };
+
+  const handleDrop = async (e, newParentId) => {
+    e.preventDefault();
+    if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
+    setDropTargetId(null);
+    if (!draggingId || draggingId === newParentId) { setDraggingId(null); return; }
+    // Prevent dropping a parent onto its own child
+    const isDescendant = (checkId, ancestorId) => {
+      const p = points.find(x => x.id === checkId);
+      if (!p || !p.parent_point_id) return false;
+      if (p.parent_point_id === ancestorId) return true;
+      return isDescendant(p.parent_point_id, ancestorId);
+    };
+    if (newParentId && isDescendant(newParentId, draggingId)) { setDraggingId(null); return; }
+
+    await base44.entities.TrialPoints.update(draggingId, { parent_point_id: newParentId || "" });
+    setDraggingId(null);
+    load();
+  };
+
+  const handleDragEnd = () => {
+    if (dragOverTimer.current) clearTimeout(dragOverTimer.current);
+    setDraggingId(null);
+    setDropTargetId(null);
+  };
+
   const filtered = useMemo(() => points.filter(p => {
     const matchSearch = !search || p.point_text?.toLowerCase().includes(search.toLowerCase());
     const matchProof = filterProof === "all" || p.status === filterProof;
@@ -74,16 +131,13 @@ export default function TrialPoints() {
     return matchSearch && matchProof && matchPriority;
   }), [points, search, filterProof, filterPriority]);
 
-  // Top-level points (no parent)
   const topLevel = useMemo(() =>
     filtered.filter(p => !p.parent_point_id)
       .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]),
     [filtered]);
 
-  // Children map
   const childrenOf = useMemo(() => {
     const map = {};
-    // Use ALL points for children lookup (not just filtered), but only show filtered children
     filtered.forEach(p => {
       if (p.parent_point_id) {
         if (!map[p.parent_point_id]) map[p.parent_point_id] = [];
@@ -94,7 +148,6 @@ export default function TrialPoints() {
     return map;
   }, [filtered]);
 
-  // Group top-level points by category
   const grouped = useMemo(() => {
     const uncategorized = { id: "__none__", name: "Uncategorized", points: [] };
     const catMap = {};
@@ -114,10 +167,29 @@ export default function TrialPoints() {
     const children = childrenOf[p.id] || [];
     const hasChildren = children.length > 0;
     const isExpanded = expanded.has(p.id);
+    const isDragging = draggingId === p.id;
+    const isDropTarget = dropTargetId === p.id;
 
     return (
       <>
-        <div className={`flex items-start gap-3 px-4 py-3 border-b border-[#1e2a45] last:border-0 hover:bg-white/[0.02] transition-colors ${indent ? "pl-12 bg-[#0a0f1e]/40" : ""}`}>
+        <div
+          draggable
+          onDragStart={e => handleDragStart(e, p.id)}
+          onDragOver={e => handleDragOver(e, p.id)}
+          onDragLeave={handleDragLeave}
+          onDrop={e => handleDrop(e, p.id)}
+          onDragEnd={handleDragEnd}
+          className={`flex items-start gap-3 px-4 py-3 border-b border-[#1e2a45] last:border-0 transition-all cursor-default
+            ${indent ? "pl-12 bg-[#0a0f1e]/40" : ""}
+            ${isDragging ? "opacity-40" : ""}
+            ${isDropTarget && !isDragging ? "bg-cyan-500/10 border-l-2 border-l-cyan-400" : "hover:bg-white/[0.02]"}
+          `}
+        >
+          {/* Drag handle */}
+          <div className="w-4 flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400">
+            <GripVertical className="w-3.5 h-3.5" />
+          </div>
+
           {/* Expand toggle */}
           <div className="w-4 flex-shrink-0 mt-0.5">
             {hasChildren ? (
@@ -136,15 +208,18 @@ export default function TrialPoints() {
               {hasChildren && (
                 <span className="text-[10px] text-slate-500 italic">{children.length} subpoint{children.length !== 1 ? "s" : ""}</span>
               )}
+              {isDropTarget && !isDragging && (
+                <span className="text-[10px] text-cyan-400">Drop to make subpoint →</span>
+              )}
             </div>
             {p.notes && <p className="text-xs text-slate-500 mt-1">{p.notes}</p>}
           </div>
 
           {/* Actions */}
           <div className="flex gap-1 flex-shrink-0">
-            {!indent && (
-              <button title="Add subpoint" onClick={() => { setEditing({ ...EMPTY, parent_point_id: p.id, category_id: p.category_id || "" }); setOpen(true); }} className="p-1 text-slate-500 hover:text-cyan-400">
-                <Plus className="w-3.5 h-3.5" />
+            {indent && (
+              <button title="Promote to top-level" onClick={() => handleDrop({ preventDefault: () => {} }, "")} className="p-1 text-slate-500 hover:text-amber-400" onPointerDown={e => e.stopPropagation()}>
+                <X className="w-3 h-3" />
               </button>
             )}
             <button onClick={() => { setEditing({ ...p }); setOpen(true); }} className="p-1 text-slate-400 hover:text-cyan-400">
@@ -162,6 +237,21 @@ export default function TrialPoints() {
     );
   };
 
+  // Drop zone to promote a point back to top-level
+  const TopLevelDropZone = () => (
+    <div
+      onDragOver={e => { e.preventDefault(); setDropTargetId("__root__"); }}
+      onDragLeave={() => setDropTargetId(null)}
+      onDrop={e => handleDrop(e, "")}
+      className={`mt-2 border-2 border-dashed rounded-lg py-3 text-center text-xs transition-colors
+        ${draggingId ? "border-slate-600 text-slate-600 hover:border-cyan-500 hover:text-cyan-400" : "border-transparent text-transparent"}
+        ${dropTargetId === "__root__" ? "border-cyan-500 text-cyan-400 bg-cyan-500/5" : ""}
+      `}
+    >
+      Drop here to make top-level
+    </div>
+  );
+
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
   return (
@@ -170,7 +260,7 @@ export default function TrialPoints() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-white">Trial Points</h1>
-          <p className="text-sm text-slate-500">Key facts to prove at trial</p>
+          <p className="text-sm text-slate-500">Drag points onto each other to create subpoints</p>
         </div>
         <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={() => { setEditing({ ...EMPTY }); setOpen(true); }}>
           <Plus className="w-4 h-4 mr-2" /> Add Point
@@ -227,7 +317,12 @@ export default function TrialPoints() {
         ))}
       </div>
 
-      {/* Edit/Add Dialog */}
+      {/* Top-level drop zone — only visible while dragging a subpoint */}
+      {draggingId && points.find(p => p.id === draggingId)?.parent_point_id && (
+        <TopLevelDropZone />
+      )}
+
+      {/* Edit/Add Dialog — no "Sub-point of" dropdown anymore */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
           <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Add"} Trial Point</DialogTitle></DialogHeader>
@@ -255,34 +350,26 @@ export default function TrialPoints() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-slate-400 text-xs">Category</Label>
-                  <Select value={editing.category_id || "__none__"} onValueChange={v => setEditing({ ...editing, category_id: v === "__none__" ? "" : v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="None" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-slate-400 text-xs">Sub-point of</Label>
-                  <Select value={editing.parent_point_id || "__none__"} onValueChange={v => setEditing({ ...editing, parent_point_id: v === "__none__" ? "" : v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Top-level" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Top-level</SelectItem>
-                      {points.filter(p => !p.parent_point_id && p.id !== editing.id).map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.point_text.length > 50 ? p.point_text.slice(0, 50) + "…" : p.point_text}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label className="text-slate-400 text-xs">Category</Label>
+                <Select value={editing.category_id || "__none__"} onValueChange={v => setEditing({ ...editing, category_id: v === "__none__" ? "" : v })}>
+                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label className="text-slate-400 text-xs">Notes</Label>
                 <Textarea value={editing.notes || ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
               </div>
+              {editing.parent_point_id && (
+                <p className="text-xs text-slate-500 italic">
+                  Subpoint of: "{points.find(p => p.id === editing.parent_point_id)?.point_text?.slice(0, 60)}…"
+                  <button className="ml-2 text-red-400 hover:text-red-300" onClick={() => setEditing({ ...editing, parent_point_id: "" })}>Remove parent</button>
+                </p>
+              )}
             </div>
           )}
           <DialogFooter>
