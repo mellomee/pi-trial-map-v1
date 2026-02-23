@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, CheckCircle, Archive } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Archive, GripVertical } from "lucide-react";
+import TrialPointCategoriesManager from "@/components/settings/TrialPointCategoriesManager";
 
 export default function SettingsPage() {
   const { activeCase, switchCase, refresh } = useActiveCase();
@@ -69,7 +70,7 @@ export default function SettingsPage() {
   return (
     <div className="p-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-white mb-1">Settings</h1>
-      <p className="text-sm text-slate-500 mb-8">Manage cases</p>
+      <p className="text-sm text-slate-500 mb-8">Manage cases and app configuration</p>
 
       <Card className="bg-[#131a2e] border-[#1e2a45] mb-6">
         <CardHeader><CardTitle className="text-white text-base">Create New Case</CardTitle></CardHeader>
@@ -109,7 +110,7 @@ export default function SettingsPage() {
       </Card>
 
       {archivedCases.length > 0 && (
-        <Card className="bg-[#131a2e] border-[#1e2a45]">
+        <Card className="bg-[#131a2e] border-[#1e2a45] mb-6">
           <CardHeader><CardTitle className="text-white text-base">Archived</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {archivedCases.map(c => (
@@ -120,6 +121,11 @@ export default function SettingsPage() {
             ))}
           </CardContent>
         </Card>
+      )}
+
+      {/* Trial Point Categories — only show when a case is active */}
+      {activeCase && (
+        <TrialPointCategoriesManager caseId={activeCase.id} />
       )}
     </div>
   );
