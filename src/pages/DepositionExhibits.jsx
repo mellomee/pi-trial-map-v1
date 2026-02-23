@@ -321,6 +321,11 @@ export default function DepositionExhibits() {
               </button>
             </>
           ) : null}
+          {ex.external_link ? (
+            <a href={ex.external_link} target="_blank" rel="noopener noreferrer" title="Open external link (Dropbox, etc.)" className="p-1 text-blue-400 hover:text-blue-300">
+              <Link2 className="w-3.5 h-3.5" />
+            </a>
+          ) : null}
           <label title="Attach file" className="p-1 text-slate-400 hover:text-cyan-400 cursor-pointer">
             <Paperclip className="w-3.5 h-3.5" />
             <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.tiff,.bmp,.webp,.mp4,.mov,.avi,.webm" className="hidden"
