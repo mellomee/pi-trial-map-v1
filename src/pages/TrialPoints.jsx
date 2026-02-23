@@ -52,7 +52,6 @@ export default function TrialPoints() {
   const [draggingId, setDraggingId] = useState(null);
 
   const load = async () => {
-
     if (!activeCase) return;
     const [pts, cats] = await Promise.all([
       base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
