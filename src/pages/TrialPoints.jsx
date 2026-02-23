@@ -48,6 +48,8 @@ export default function TrialPoints() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
+  const [dragOverParentId, setDragOverParentId] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
 
   const load = async () => {
     if (!activeCase) return;
