@@ -113,27 +113,29 @@ export default function TrialPoints() {
   }, []);
 
   const onDragEnd = async (result) => {
-    const { source, destination, draggableId, type } = result;
+    const { source, destination, type } = result;
     if (!destination) return;
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     if (type === "parent") {
-      // Reordering top-level points within a category group
       const catId = source.droppableId.replace("cat-", "");
-      const catPoints = points.filter(p => !p.parent_point_id && (p.category_id || "") === (catId === "__none__" ? "" : catId));
+      const catKey = catId === "__none__" ? "" : catId;
+      const catPoints = points
+        .filter(p => !p.parent_point_id && (p.category_id || "") === catKey)
+        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
       const reordered = reorder(catPoints, source.index, destination.index);
-      // Optimistic update
       const reorderedIds = reordered.map(p => p.id);
       setPoints(prev => {
         const others = prev.filter(p => !reorderedIds.includes(p.id));
         const updated = reordered.map((p, i) => ({ ...p, order_index: i }));
-        return [...others, ...updated].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+        return [...others, ...updated];
       });
       await persistOrder(reorderedIds);
     } else if (type === "child") {
-      // Reordering children within a parent
       const parentId = source.droppableId.replace("children-", "");
-      const children = points.filter(p => p.parent_point_id === parentId);
+      const children = points
+        .filter(p => p.parent_point_id === parentId)
+        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
       const reordered = reorder(children, source.index, destination.index);
       const reorderedIds = reordered.map(p => p.id);
       setPoints(prev => {
