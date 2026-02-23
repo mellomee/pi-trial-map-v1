@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Plus, Pencil, Trash2, Tag, X, ChevronRight, ChevronDown, History, Paperclip, ExternalLink, Upload, ChevronsUpDown, ChevronUp, FileX } from "lucide-react";
 import FileViewerModal from "@/components/exhibits/FileViewerModal";
+import UploadProgressPanel from "@/components/exhibits/UploadProgressPanel";
 
 const sideColors = {
   Plaintiff: "bg-amber-500/20 text-amber-400",
