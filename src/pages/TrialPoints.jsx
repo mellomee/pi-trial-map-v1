@@ -143,10 +143,6 @@ export default function TrialPoints() {
     await persistOrder(reorderedIds);
   };
 
-  // Drag is only used for making a point a subpoint of another
-  const [dragOverParentId, setDragOverParentId] = useState(null);
-  const [draggingId, setDraggingId] = useState(null);
-
   const onNativeDragStart = (e, id) => {
     setDraggingId(id);
     e.dataTransfer.effectAllowed = "move";
