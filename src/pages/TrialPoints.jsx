@@ -189,10 +189,14 @@ export default function TrialPoints() {
       if (p.category_id && catMap[p.category_id]) catMap[p.category_id].points.push(p);
       else uncategorized.points.push(p);
     });
-    const result = Object.values(catMap).filter(c => c.points.length > 0);
+    let result = Object.values(catMap).filter(c => c.points.length > 0);
     if (uncategorized.points.length > 0) result.push(uncategorized);
+    // Apply category visibility filter
+    if (filterCategories.length > 0) {
+      result = result.filter(c => filterCategories.includes(c.id));
+    }
     return result;
-  }, [topLevelFiltered, categories]);
+  }, [topLevelFiltered, categories, filterCategories]);
 
   const handlePrint = () => {
     expandAll();
