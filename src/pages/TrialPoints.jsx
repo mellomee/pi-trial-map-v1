@@ -530,21 +530,52 @@ export default function TrialPoints() {
   );
 }
 
-// Separate component to avoid hooks-in-render issues
-function ParentRow({ p, drag, isDragging, children, expanded, toggleExpand, onEdit, onRemove }) {
+function ParentRow({
+  p, idx, total, children, expanded, toggleExpand,
+  onEdit, onRemove, onMoveUp, onMoveDown,
+  onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,
+  isDragOver, isDragging,
+  onEditChild, onRemoveChild, onMoveChildUp, onMoveChildDown,
+}) {
   const hasChildren = children.length > 0;
   const isExpanded = expanded.has(p.id);
 
   return (
     <div
-      ref={drag.innerRef}
-      {...drag.draggableProps}
-      className={`border-b border-[#1e2a45] last:border-0 ${isDragging ? "opacity-60 bg-cyan-900/20 rounded" : ""}`}
+      className={`border-b border-[#1e2a45] last:border-0 transition-colors ${isDragging ? "opacity-50" : ""} ${isDragOver ? "bg-cyan-900/30 border-cyan-500/50" : ""}`}
+      draggable={false}
+      onDragOver={(e) => onDragOver(e, p.id)}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => onDrop(e, p.id)}
     >
-      <div className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.02]">
-        {/* Drag handle */}
-        <div {...drag.dragHandleProps} className="w-4 flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400">
+      <div className="flex items-start gap-2 px-4 py-3 hover:bg-white/[0.02]">
+        {/* Drag handle — dragging this point to make it a subpoint of another */}
+        <div
+          draggable
+          onDragStart={(e) => onDragStart(e, p.id)}
+          onDragEnd={onDragEnd}
+          className="w-4 flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400"
+          title="Drag onto another point to make it a subpoint"
+        >
           <GripVertical className="w-3.5 h-3.5" />
+        </div>
+
+        {/* Up/Down arrows for reordering */}
+        <div className="flex flex-col flex-shrink-0 gap-0.5 no-print">
+          <button
+            onClick={onMoveUp}
+            disabled={idx === 0}
+            className="p-0.5 text-slate-600 hover:text-slate-300 disabled:opacity-20 disabled:cursor-not-allowed"
+          >
+            <ChevronUp className="w-3 h-3" />
+          </button>
+          <button
+            onClick={onMoveDown}
+            disabled={idx === total - 1}
+            className="p-0.5 text-slate-600 hover:text-slate-300 disabled:opacity-20 disabled:cursor-not-allowed"
+          >
+            <ChevronDown className="w-3 h-3" />
+          </button>
         </div>
 
         {/* Expand toggle */}
@@ -579,55 +610,56 @@ function ParentRow({ p, drag, isDragging, children, expanded, toggleExpand, onEd
         </div>
       </div>
 
+      {/* Drop hint */}
+      {isDragOver && (
+        <div className="text-xs text-cyan-400 text-center pb-2 italic">Drop to make a subpoint</div>
+      )}
+
       {/* Children */}
       {hasChildren && isExpanded && (
-        <ChildList parentId={p.id} children={children} onEdit={onEdit} onRemove={onRemove} />
-      )}
-    </div>
-  );
-}
-
-function ChildList({ parentId, children, onEdit, onRemove }) {
-  // Children are reordered by the parent DragDropContext
-  // We need a local DragDropContext for children
-  return (
-    <Droppable droppableId={`children-${parentId}`} type="child">
-      {(provided) => (
-        <div ref={provided.innerRef} {...provided.droppableProps}>
-          {children.map((child, idx) => (
-            <Draggable key={child.id} draggableId={child.id} index={idx}>
-              {(drag, snapshot) => (
-                <div
-                  ref={drag.innerRef}
-                  {...drag.draggableProps}
-                  className={`flex items-start gap-3 pl-12 pr-4 py-2.5 border-t border-[#1e2a45] bg-[#0a0f1e]/40 hover:bg-white/[0.02] ${snapshot.isDragging ? "opacity-60" : ""}`}
+        <div>
+          {children.map((child, cidx) => (
+            <div
+              key={child.id}
+              className="flex items-start gap-2 pl-12 pr-4 py-2.5 border-t border-[#1e2a45] bg-[#0a0f1e]/40 hover:bg-white/[0.02]"
+            >
+              {/* Up/Down for children */}
+              <div className="flex flex-col flex-shrink-0 gap-0.5 no-print">
+                <button
+                  onClick={() => onMoveChildUp(child.id)}
+                  disabled={cidx === 0}
+                  className="p-0.5 text-slate-600 hover:text-slate-300 disabled:opacity-20 disabled:cursor-not-allowed"
                 >
-                  <div {...drag.dragHandleProps} className="w-4 flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400">
-                    <GripVertical className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="w-4 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white">{child.point_text}</p>
-                    <div className="flex gap-2 mt-1 flex-wrap">
-                      <Badge variant="outline" className={`text-[10px] ${proofColors[child.status] || "text-slate-400 border-slate-600"}`}>{child.status}</Badge>
-                      <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-600">{child.priority}</Badge>
-                      {(child.elements || []).map(el => (
-                        <span key={el} className={`text-[10px] px-1.5 py-0.5 rounded border ${ELEMENT_COLORS[el] || "text-slate-400 border-slate-600"}`}>{el}</span>
-                      ))}
-                    </div>
-                    {child.notes && <p className="text-xs text-slate-500 mt-1">{child.notes}</p>}
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0 no-print">
-                    <button onClick={() => onEdit(child)} className="p-1 text-slate-400 hover:text-cyan-400"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => onRemove(child.id)} className="p-1 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
-                  </div>
+                  <ChevronUp className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => onMoveChildDown(child.id)}
+                  disabled={cidx === children.length - 1}
+                  className="p-0.5 text-slate-600 hover:text-slate-300 disabled:opacity-20 disabled:cursor-not-allowed"
+                >
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="w-4 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white">{child.point_text}</p>
+                <div className="flex gap-2 mt-1 flex-wrap">
+                  <Badge variant="outline" className={`text-[10px] ${proofColors[child.status] || "text-slate-400 border-slate-600"}`}>{child.status}</Badge>
+                  <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-600">{child.priority}</Badge>
+                  {(child.elements || []).map(el => (
+                    <span key={el} className={`text-[10px] px-1.5 py-0.5 rounded border ${ELEMENT_COLORS[el] || "text-slate-400 border-slate-600"}`}>{el}</span>
+                  ))}
                 </div>
-              )}
-            </Draggable>
+                {child.notes && <p className="text-xs text-slate-500 mt-1">{child.notes}</p>}
+              </div>
+              <div className="flex gap-1 flex-shrink-0 no-print">
+                <button onClick={() => onEditChild(child)} className="p-1 text-slate-400 hover:text-cyan-400"><Pencil className="w-3.5 h-3.5" /></button>
+                <button onClick={() => onRemoveChild(child.id)} className="p-1 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
+            </div>
           ))}
-          {provided.placeholder}
         </div>
       )}
-    </Droppable>
+    </div>
   );
 }
