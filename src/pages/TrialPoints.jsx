@@ -97,6 +97,13 @@ export default function TrialPoints() {
   const expandAll = () => {
     const parentIds = points.filter(p => !p.parent_point_id).map(p => p.id);
     setExpanded(new Set(parentIds));
+    return parentIds;
+  };
+
+  const toggleCategoryFilter = (catId) => {
+    setFilterCategories(prev =>
+      prev.includes(catId) ? prev.filter(c => c !== catId) : [...prev, catId]
+    );
   };
 
   const toggleElement = (el) => {
