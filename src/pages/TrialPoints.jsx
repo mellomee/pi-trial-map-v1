@@ -292,7 +292,7 @@ export default function TrialPoints() {
         <div className="flex items-center justify-between mb-5 no-print">
           <div>
             <h1 className="text-2xl font-bold text-white">Trial Points</h1>
-            <p className="text-sm text-slate-500">Drag grip to reorder • Use edit dialog to set a parent point</p>
+            <p className="text-sm text-slate-500">Drag to reorder • Drag a point onto another to make it a subpoint</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white" onClick={handlePrint}>
@@ -426,18 +426,6 @@ export default function TrialPoints() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-slate-400 text-xs">Parent Point (makes this a subpoint)</Label>
-                  <Select value={editing.parent_point_id || "__none__"} onValueChange={v => setEditing({ ...editing, parent_point_id: v === "__none__" ? "" : v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="None (top-level)" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">None (top-level)</SelectItem>
-                      {points.filter(p => !p.parent_point_id && p.id !== editing?.id).map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.point_text?.slice(0, 60)}{p.point_text?.length > 60 ? "…" : ""}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
                   <Label className="text-slate-400 text-xs">Category</Label>
                   <Select value={editing.category_id || "__none__"} onValueChange={v => setEditing({ ...editing, category_id: v === "__none__" ? "" : v })}>
                     <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="None" /></SelectTrigger>
@@ -469,7 +457,12 @@ export default function TrialPoints() {
                   <Label className="text-slate-400 text-xs">Notes</Label>
                   <Textarea value={editing.notes || ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
                 </div>
-
+                {editing.parent_point_id && (
+                  <p className="text-xs text-slate-500 italic">
+                    Subpoint of: "{points.find(p => p.id === editing.parent_point_id)?.point_text?.slice(0, 60)}…"
+                    <button className="ml-2 text-red-400 hover:text-red-300" onClick={() => setEditing({ ...editing, parent_point_id: "" })}>Remove parent</button>
+                  </p>
+                )}
               </div>
             )}
             <DialogFooter>
