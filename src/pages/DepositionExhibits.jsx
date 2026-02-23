@@ -219,11 +219,36 @@ export default function DepositionExhibits() {
 
   const getParty = (pid) => { const p = parties.find(x => x.id === pid); return p ? `${p.first_name || ""} ${p.last_name}`.trim() : ""; };
 
+  const MAX_FILE_SIZE_MB = 50;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
   const uploadFile = async (exhibitId, file) => {
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await base44.entities.DepositionExhibits.update(exhibitId, { file_url });
-    // Update in-place without full reload to preserve scroll position
-    setExhibits(prev => prev.map(e => e.id === exhibitId ? { ...e, file_url } : e));
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+      alert(`File "${file.name}" is ${sizeMB} MB. The maximum supported upload size is ${MAX_FILE_SIZE_MB} MB. Please compress the file or split it before uploading.`);
+      return;
+    }
+
+    const uid = `${exhibitId}-${Date.now()}`;
+    setUploadQueue(q => [...q, { id: uid, name: file.name, status: "uploading", progress: 0 }]);
+
+    // Simulate progress while uploading (real XHR progress not available via SDK)
+    let fakeProgress = 0;
+    const ticker = setInterval(() => {
+      fakeProgress = Math.min(fakeProgress + Math.random() * 12, 90);
+      setUploadQueue(q => q.map(u => u.id === uid ? { ...u, progress: Math.round(fakeProgress) } : u));
+    }, 400);
+
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      clearInterval(ticker);
+      setUploadQueue(q => q.map(u => u.id === uid ? { ...u, status: "done", progress: 100 } : u));
+      await base44.entities.DepositionExhibits.update(exhibitId, { file_url });
+      setExhibits(prev => prev.map(e => e.id === exhibitId ? { ...e, file_url } : e));
+    } catch (err) {
+      clearInterval(ticker);
+      setUploadQueue(q => q.map(u => u.id === uid ? { ...u, status: "error", error: err?.message || "Upload failed" } : u));
+    }
   };
 
   const deleteFile = async (exhibitId) => {
