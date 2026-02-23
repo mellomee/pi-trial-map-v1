@@ -199,8 +199,77 @@ export default function TrialPoints() {
   }, [topLevelFiltered, categories, filterCategories]);
 
   const handlePrint = () => {
-    expandAll();
-    setTimeout(() => window.print(), 300);
+    // Build full HTML for print in a new window so the entire list renders, not just viewport
+    const allParents = points
+      .filter(p => !p.parent_point_id)
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+    // Apply category filter
+    const visibleParents = filterCategories.length > 0
+      ? allParents.filter(p => filterCategories.includes(p.category_id || "__none__"))
+      : allParents;
+
+    // Build category groups
+    const catMap = {};
+    categories.forEach(c => { catMap[c.id] = c.name; });
+
+    const grouped = [];
+    const catGroupMap = {};
+    visibleParents.forEach(p => {
+      const catId = p.category_id || "__none__";
+      const catName = catMap[p.category_id] || "Uncategorized";
+      if (!catGroupMap[catId]) { catGroupMap[catId] = { name: catName, points: [] }; grouped.push(catGroupMap[catId]); }
+      catGroupMap[catId].points.push(p);
+    });
+
+    const childMap = {};
+    points.forEach(p => {
+      if (p.parent_point_id) {
+        if (!childMap[p.parent_point_id]) childMap[p.parent_point_id] = [];
+        childMap[p.parent_point_id].push(p);
+      }
+    });
+    Object.values(childMap).forEach(arr => arr.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)));
+
+    const renderPoint = (p, indent = false) => {
+      const children = childMap[p.id] || [];
+      const childrenHtml = children.map(c => renderPoint(c, true)).join("");
+      const els = (p.elements || []).join(", ");
+      return `
+        <div style="padding: ${indent ? "5px 0 5px 28px" : "8px 0"}; border-bottom: 1px solid #ddd; break-inside: avoid;">
+          <div style="font-size: 13px; font-weight: ${indent ? "normal" : "600"}; margin-bottom: 3px;">${p.point_text}</div>
+          <div style="font-size: 10px; color: #555;">
+            ${p.status} · ${p.priority}${els ? " · " + els : ""}${p.notes ? " — " + p.notes : ""}
+          </div>
+        </div>
+        ${childrenHtml}
+      `;
+    };
+
+    const bodyHtml = grouped.map(cat => `
+      <div style="margin-bottom: 20px; break-inside: avoid;">
+        <div style="background: #eee; padding: 6px 10px; font-size: 11px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 4px 4px 0 0; border: 1px solid #ccc;">
+          ${cat.name}
+        </div>
+        <div style="border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px; padding: 0 12px;">
+          ${cat.points.map(p => renderPoint(p)).join("")}
+        </div>
+      </div>
+    `).join("");
+
+    const html = `<!DOCTYPE html><html><head><title>${activeCase.name} — Trial Points</title>
+      <style>body{font-family:sans-serif;padding:20px;color:#111;} @media print{@page{margin:1cm;}}</style>
+    </head><body>
+      <h2 style="margin-bottom:4px;">${activeCase.name}</h2>
+      <h3 style="margin-top:0;margin-bottom:16px;color:#444;">Trial Points</h3>
+      ${bodyHtml}
+    </body></html>`;
+
+    const win = window.open("", "_blank");
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 400);
   };
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
