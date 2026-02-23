@@ -113,46 +113,98 @@ export default function TrialPoints() {
     });
   };
 
-  // Persist new order after drag
+  // Persist new order after reorder
   const persistOrder = useCallback(async (reorderedIds) => {
     await Promise.all(
       reorderedIds.map((id, idx) => base44.entities.TrialPoints.update(id, { order_index: idx }))
     );
   }, []);
 
-  const onDragEnd = async (result) => {
-    const { source, destination, type } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+  // Move a parent point up or down within its category
+  const moveParent = async (pointId, direction) => {
+    const pt = points.find(p => p.id === pointId);
+    if (!pt) return;
+    const catKey = pt.category_id || "";
+    const siblings = points
+      .filter(p => !p.parent_point_id && (p.category_id || "") === catKey)
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    const idx = siblings.findIndex(p => p.id === pointId);
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= siblings.length) return;
+    const reordered = [...siblings];
+    [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+    const reorderedIds = reordered.map(p => p.id);
+    setPoints(prev => {
+      const others = prev.filter(p => !reorderedIds.includes(p.id));
+      const updated = reordered.map((p, i) => ({ ...p, order_index: i }));
+      return [...others, ...updated];
+    });
+    await persistOrder(reorderedIds);
+  };
 
-    if (type === "parent") {
-      const catId = source.droppableId.replace("cat-", "");
-      const catKey = catId === "__none__" ? "" : catId;
-      const catPoints = points
-        .filter(p => !p.parent_point_id && (p.category_id || "") === catKey)
-        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-      const reordered = reorder(catPoints, source.index, destination.index);
-      const reorderedIds = reordered.map(p => p.id);
-      setPoints(prev => {
-        const others = prev.filter(p => !reorderedIds.includes(p.id));
-        const updated = reordered.map((p, i) => ({ ...p, order_index: i }));
-        return [...others, ...updated];
-      });
-      await persistOrder(reorderedIds);
-    } else if (type === "child") {
-      const parentId = source.droppableId.replace("children-", "");
-      const children = points
-        .filter(p => p.parent_point_id === parentId)
-        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-      const reordered = reorder(children, source.index, destination.index);
-      const reorderedIds = reordered.map(p => p.id);
-      setPoints(prev => {
-        const others = prev.filter(p => !reorderedIds.includes(p.id));
-        const updated = reordered.map((p, i) => ({ ...p, order_index: i }));
-        return [...others, ...updated];
-      });
-      await persistOrder(reorderedIds);
-    }
+  // Drag is only used for making a point a subpoint of another
+  const [dragOverParentId, setDragOverParentId] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
+
+  const onNativeDragStart = (e, id) => {
+    setDraggingId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", id);
+  };
+
+  const onNativeDragEnd = () => {
+    setDraggingId(null);
+    setDragOverParentId(null);
+  };
+
+  const onNativeDragOver = (e, parentId) => {
+    if (draggingId === parentId) return; // can't drop on itself
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverParentId(parentId);
+  };
+
+  const onNativeDragLeave = () => {
+    setDragOverParentId(null);
+  };
+
+  const onNativeDrop = async (e, parentId) => {
+    e.preventDefault();
+    const droppedId = e.dataTransfer.getData("text/plain");
+    if (!droppedId || droppedId === parentId) return;
+    setDragOverParentId(null);
+    setDraggingId(null);
+    // Make droppedId a subpoint of parentId
+    const droppedPt = points.find(p => p.id === droppedId);
+    if (!droppedPt) return;
+    // Get children of target parent to assign order_index
+    const existingChildren = points.filter(p => p.parent_point_id === parentId);
+    await base44.entities.TrialPoints.update(droppedId, {
+      parent_point_id: parentId,
+      order_index: existingChildren.length,
+    });
+    load();
+  };
+
+  // For child reordering (up/down)
+  const moveChild = async (childId, direction) => {
+    const child = points.find(p => p.id === childId);
+    if (!child) return;
+    const siblings = points
+      .filter(p => p.parent_point_id === child.parent_point_id)
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    const idx = siblings.findIndex(p => p.id === childId);
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= siblings.length) return;
+    const reordered = [...siblings];
+    [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+    const reorderedIds = reordered.map(p => p.id);
+    setPoints(prev => {
+      const others = prev.filter(p => !reorderedIds.includes(p.id));
+      const updated = reordered.map((p, i) => ({ ...p, order_index: i }));
+      return [...others, ...updated];
+    });
+    await persistOrder(reorderedIds);
   };
 
   const filtered = useMemo(() => points.filter(p => {
