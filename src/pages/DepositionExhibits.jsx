@@ -645,6 +645,12 @@ export default function DepositionExhibits() {
 
       {viewFile && <FileViewerModal url={viewFile.url} title={viewFile.title} onClose={() => setViewFile(null)} />}
 
+      <UploadProgressPanel
+        uploads={uploadQueue}
+        onClose={() => setUploadQueue([])}
+        onRemove={id => setUploadQueue(q => q.filter(u => u.id !== id))}
+      />
+
       {/* ── Mark as Joint Dialog ── */}
       <Dialog open={markDialog} onOpenChange={setMarkDialog}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg">
