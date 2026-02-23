@@ -555,6 +555,9 @@ export default function DepositionExhibits() {
               <div><Label className="text-slate-400 text-xs">Referenced Page</Label>
                 <Input value={editDialog.referenced_page || ""} onChange={e => setEditDialog({ ...editDialog, referenced_page: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. 42" />
               </div>
+              <div><Label className="text-slate-400 text-xs">External Link <span className="text-slate-600">(Dropbox, Google Drive, etc.)</span></Label>
+                <Input value={editDialog.external_link || ""} onChange={e => setEditDialog({ ...editDialog, external_link: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="https://www.dropbox.com/..." />
+              </div>
               <div><Label className="text-slate-400 text-xs">Notes</Label>
                 <Textarea value={editDialog.notes || ""} onChange={e => setEditDialog({ ...editDialog, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
               </div>
