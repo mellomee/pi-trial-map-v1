@@ -426,6 +426,18 @@ export default function TrialPoints() {
                   </div>
                 </div>
                 <div>
+                  <Label className="text-slate-400 text-xs">Parent Point (makes this a subpoint)</Label>
+                  <Select value={editing.parent_point_id || "__none__"} onValueChange={v => setEditing({ ...editing, parent_point_id: v === "__none__" ? "" : v })}>
+                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="None (top-level)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None (top-level)</SelectItem>
+                      {points.filter(p => !p.parent_point_id && p.id !== editing?.id).map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.point_text?.slice(0, 60)}{p.point_text?.length > 60 ? "…" : ""}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label className="text-slate-400 text-xs">Category</Label>
                   <Select value={editing.category_id || "__none__"} onValueChange={v => setEditing({ ...editing, category_id: v === "__none__" ? "" : v })}>
                     <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="None" /></SelectTrigger>
