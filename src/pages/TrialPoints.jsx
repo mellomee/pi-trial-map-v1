@@ -427,9 +427,7 @@ function ParentRow({ p, drag, isDragging, children, expanded, toggleExpand, onEd
 
       {/* Children */}
       {hasChildren && isExpanded && (
-        <DragDropContext onDragEnd={() => {}}>
-          <ChildList parentId={p.id} children={children} onEdit={onEdit} onRemove={onRemove} />
-        </DragDropContext>
+        <ChildList parentId={p.id} children={children} onEdit={onEdit} onRemove={onRemove} />
       )}
     </div>
   );
