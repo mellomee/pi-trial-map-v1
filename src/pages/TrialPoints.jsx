@@ -45,6 +45,7 @@ export default function TrialPoints() {
   const [search, setSearch] = useState("");
   const [filterProof, setFilterProof] = useState("all");
   const [filterElement, setFilterElement] = useState("all");
+  const [filterCategories, setFilterCategories] = useState([]); // empty = all
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(new Set());
