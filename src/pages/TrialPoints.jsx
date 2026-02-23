@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search, GripVertical, X, Printer } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronRight, ChevronDown, Search, GripVertical, X, Printer, ChevronUp } from "lucide-react";
 
 const ELEMENT_OPTIONS = ["Duty", "Breach", "Causation", "Damages", "Comparable Fault"];
 
