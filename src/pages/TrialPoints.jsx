@@ -548,12 +548,22 @@ function PointRow({
   const isDragOver = dragOverId === p.id;
   const isDragging = draggingId === p.id;
 
-  // Indentation: 16px per level, with a colored left border for depth > 0
+  // Indentation: 32px per level, distinct bg + left border per depth
   const indentPx = depth * 32;
-  const depthBorderColors = ["", "border-l-2 border-cyan-800/60", "border-l-2 border-indigo-800/60", "border-l-2 border-purple-800/60"];
-  const depthBg = ["", "bg-[#0c1220]/60", "bg-[#0a0f1c]/80", "bg-[#080d18]/90"];
+  const depthBorderColors = [
+    "",
+    "border-l-4 border-cyan-600/50",
+    "border-l-4 border-violet-500/50",
+    "border-l-4 border-amber-500/40",
+  ];
+  const depthBg = [
+    "",                        // parent: card default
+    "bg-[#0d1a2e]",            // child: noticeably darker blue
+    "bg-[#160d28]",            // grandchild: purple-tinted dark
+    "bg-[#1a1208]",            // great-grandchild: amber-tinted dark
+  ];
   const borderClass = depthBorderColors[Math.min(depth, 3)];
-  const bgClass = depthBg[Math.min(depth, 3)];
+  const bgClass = depth > 0 ? depthBg[Math.min(depth, 3)] : "";
 
   return (
     <div>
