@@ -425,12 +425,13 @@ export default function TrialPoints() {
                     idx={idx}
                     total={cat.points.length}
                     children={childrenOf[p.id] || []}
+                    allPoints={points}
                     expanded={expanded}
                     toggleExpand={toggleExpand}
-                    onEdit={() => { setEditing({ ...p, elements: p.elements || [] }); setOpen(true); }}
-                    onRemove={() => remove(p.id)}
-                    onMoveUp={() => moveParent(p.id, "up")}
-                    onMoveDown={() => moveParent(p.id, "down")}
+                    onEdit={(pt) => { setEditing({ ...(pt || p), elements: (pt || p).elements || [] }); setOpen(true); }}
+                    onRemove={(id) => remove(id || p.id)}
+                    onMoveUp={() => movePoint(p.id, "up")}
+                    onMoveDown={() => movePoint(p.id, "down")}
                     onDragStart={onNativeDragStart}
                     onDragEnd={onNativeDragEnd}
                     onDragOver={onNativeDragOver}
@@ -438,8 +439,8 @@ export default function TrialPoints() {
                     onDrop={onNativeDrop}
                     isDragOver={dragOverParentId === p.id}
                     isDragging={draggingId === p.id}
-                    onEditChild={(child) => { setEditing({ ...child, elements: child.elements || [] }); setOpen(true); }}
-                    onRemoveChild={(id) => remove(id)}
+                    dragOverId={dragOverParentId}
+                    draggingId={draggingId}
                     onMovePoint={(id, dir) => movePoint(id, dir)}
                   />
                 ))}
