@@ -579,7 +579,8 @@ function PointRow({
   return (
     <div>
       <div
-        className={`border-b border-[#1e2a45] last:border-0 transition-colors ${isDragging ? "opacity-40" : ""} ${isDragOver ? "bg-cyan-900/30" : bgClass} ${borderClass}`}
+        className={`border-b border-[#1e2a45] last:border-0 transition-colors ${isDragging ? "opacity-40" : ""}`}
+        style={{ ...rowStyle, ...(isDragOver ? { background: "#0e3a4a" } : {}) }}
         onDragOver={(e) => onDragOver(e, p.id)}
         onDragLeave={onDragLeave}
         onDrop={(e) => onDrop(e, p.id)}
