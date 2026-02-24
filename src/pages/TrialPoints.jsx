@@ -284,14 +284,30 @@ export default function TrialPoints() {
     });
     Object.values(childMap).forEach(arr => arr.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)));
 
-    const renderPoint = (p, indent = false) => {
+    const depthIndent = [0, 24, 48, 72];
+    const depthBorderLeft = [
+      "none",
+      "3px solid #0891b2",   // cyan
+      "3px solid #7c3aed",   // violet
+      "3px solid #d97706",   // amber
+    ];
+    const depthBg = ["#ffffff", "#f0f7ff", "#f5f0ff", "#fffbeb"];
+    const depthFontWeight = ["700", "500", "400", "400"];
+    const depthFontSize = ["13px", "12px", "11.5px", "11px"];
+
+    const renderPoint = (p, depth = 0) => {
       const children = childMap[p.id] || [];
-      const childrenHtml = children.map(c => renderPoint(c, true)).join("");
+      const childrenHtml = children.map(c => renderPoint(c, depth + 1)).join("");
       const els = (p.elements || []).join(", ");
+      const indent = depthIndent[Math.min(depth, 3)];
+      const borderLeft = depthBorderLeft[Math.min(depth, 3)];
+      const bg = depthBg[Math.min(depth, 3)];
+      const fw = depthFontWeight[Math.min(depth, 3)];
+      const fs = depthFontSize[Math.min(depth, 3)];
       return `
-        <div style="padding: ${indent ? "5px 0 5px 28px" : "8px 0"}; border-bottom: 1px solid #ddd; break-inside: avoid;">
-          <div style="font-size: 13px; font-weight: ${indent ? "normal" : "600"}; margin-bottom: 3px;">${p.point_text}</div>
-          <div style="font-size: 10px; color: #555;">
+        <div style="padding: 6px 0 6px ${indent}px; border-bottom: 1px solid #e5e7eb; border-left: ${borderLeft}; padding-left: ${indent + (depth > 0 ? 8 : 0)}px; background: ${bg}; break-inside: avoid;">
+          <div style="font-size: ${fs}; font-weight: ${fw}; margin-bottom: 2px; color: #111;">${p.point_text}</div>
+          <div style="font-size: 10px; color: #666;">
             ${p.status} · ${p.priority}${els ? " · " + els : ""}${p.notes ? " — " + p.notes : ""}
           </div>
         </div>
