@@ -183,14 +183,14 @@ export default function TrialPoints() {
     load();
   };
 
-  // For child reordering (up/down)
-  const moveChild = async (childId, direction) => {
-    const child = points.find(p => p.id === childId);
-    if (!child) return;
+  // Move any point up or down among its siblings (works for any depth)
+  const movePoint = async (pointId, direction) => {
+    const pt = points.find(p => p.id === pointId);
+    if (!pt) return;
     const siblings = points
-      .filter(p => p.parent_point_id === child.parent_point_id)
+      .filter(p => (p.parent_point_id || "") === (pt.parent_point_id || "") && (!pt.parent_point_id ? !(p.parent_point_id) : true))
       .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-    const idx = siblings.findIndex(p => p.id === childId);
+    const idx = siblings.findIndex(p => p.id === pointId);
     const newIdx = direction === "up" ? idx - 1 : idx + 1;
     if (newIdx < 0 || newIdx >= siblings.length) return;
     const reordered = [...siblings];
