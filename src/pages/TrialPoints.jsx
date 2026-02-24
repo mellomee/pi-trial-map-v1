@@ -440,8 +440,7 @@ export default function TrialPoints() {
                     isDragging={draggingId === p.id}
                     onEditChild={(child) => { setEditing({ ...child, elements: child.elements || [] }); setOpen(true); }}
                     onRemoveChild={(id) => remove(id)}
-                    onMoveChildUp={(id) => moveChild(id, "up")}
-                    onMoveChildDown={(id) => moveChild(id, "down")}
+                    onMovePoint={(id, dir) => movePoint(id, dir)}
                   />
                 ))}
               </div>
