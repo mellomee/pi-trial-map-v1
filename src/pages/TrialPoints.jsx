@@ -321,7 +321,7 @@ export default function TrialPoints() {
           ${cat.name}
         </div>
         <div style="border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px; padding: 0 12px;">
-          ${cat.points.map(p => renderPoint(p)).join("")}
+          ${cat.points.map(p => renderPoint(p, 0)).join("")}
         </div>
       </div>
     `).join("");
