@@ -187,8 +187,12 @@ export default function TrialPoints() {
   const movePoint = async (pointId, direction) => {
     const pt = points.find(p => p.id === pointId);
     if (!pt) return;
+    // For top-level points, also match category; for children, match parent_point_id
     const siblings = points
-      .filter(p => (p.parent_point_id || "") === (pt.parent_point_id || "") && (!pt.parent_point_id ? !(p.parent_point_id) : true))
+      .filter(p => {
+        if (pt.parent_point_id) return p.parent_point_id === pt.parent_point_id;
+        return !p.parent_point_id && (p.category_id || "") === (pt.category_id || "");
+      })
       .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
     const idx = siblings.findIndex(p => p.id === pointId);
     const newIdx = direction === "up" ? idx - 1 : idx + 1;
