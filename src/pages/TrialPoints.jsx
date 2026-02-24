@@ -564,22 +564,17 @@ function PointRow({
   const isDragOver = dragOverId === p.id;
   const isDragging = draggingId === p.id;
 
-  // Indentation: 32px per level, distinct bg + left border per depth
-  const indentPx = depth * 32;
-  const depthBorderColors = [
-    "",
-    "border-l-4 border-cyan-600/50",
-    "border-l-4 border-violet-500/50",
-    "border-l-4 border-amber-500/40",
+  const indentPx = depth * 36;
+
+  // Distinct visual treatment per depth level — using inline styles so Tailwind JIT doesn't strip them
+  const depthStyles = [
+    { background: "#131a2e", borderLeft: "none" },                           // parent: card default
+    { background: "#0a2a1a", borderLeft: "4px solid #22c55e" },             // child: green tint
+    { background: "#1a0a2e", borderLeft: "4px solid #a855f7" },             // grandchild: purple tint
+    { background: "#2a1a00", borderLeft: "4px solid #f97316" },             // great-grandchild: orange tint
   ];
-  const depthBg = [
-    "",                        // parent: card default
-    "bg-[#0d1a2e]",            // child: noticeably darker blue
-    "bg-[#160d28]",            // grandchild: purple-tinted dark
-    "bg-[#1a1208]",            // great-grandchild: amber-tinted dark
-  ];
-  const borderClass = depthBorderColors[Math.min(depth, 3)];
-  const bgClass = depth > 0 ? depthBg[Math.min(depth, 3)] : "";
+  const rowStyle = depthStyles[Math.min(depth, 3)];
+  const bgClass = "";
 
   return (
     <div>
