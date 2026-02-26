@@ -24,10 +24,11 @@ export default function QuestionDetail() {
   const [depoClips, setDepoClips] = useState([]);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [categories, setCategories] = useState([]);
 
   const load = async () => {
     if (!questionId || !activeCase) return;
-    const [qs, pts, ql, jts, de, dc, pa] = await Promise.all([
+    const [qs, pts, ql, jts, de, dc, pa, cats] = await Promise.all([
       base44.entities.Questions.filter({ id: questionId }),
       base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
       base44.entities.QuestionLinks.filter({ question_id: questionId, link_type: "TrialPoint" }),
@@ -35,6 +36,7 @@ export default function QuestionDetail() {
       base44.entities.DepositionExhibits.filter({ case_id: activeCase.id }),
       base44.entities.DepoClips.filter({ case_id: activeCase.id }),
       base44.entities.Parties.filter({ case_id: activeCase.id }),
+      base44.entities.TrialPointCategories.filter({ case_id: activeCase.id }),
     ]);
     setQuestion(qs[0] || null);
     setTrialPoints(pts);
