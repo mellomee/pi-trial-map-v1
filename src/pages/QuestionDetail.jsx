@@ -290,23 +290,27 @@ export default function QuestionDetail() {
               className="pl-9 bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
             />
           </div>
-          <div className="overflow-y-auto flex-1 space-y-1.5">
-            {availableTrialPoints.map(tp => (
-              <button
-                key={tp.id}
-                onClick={() => linkTrialPoint(tp.id)}
-                className="w-full text-left px-3 py-2.5 rounded bg-[#0f1629] hover:bg-cyan-600/20 border border-[#1e2a45] hover:border-cyan-500/40 transition-colors"
-              >
-                <p className="text-sm text-slate-200">{tp.point_text}</p>
-                <div className="flex gap-1 mt-1">
-                  <span className="text-[10px] text-slate-500">{tp.status}</span>
-                  {tp.theme && <span className="text-[10px] text-slate-500">· {tp.theme}</span>}
-                </div>
-              </button>
-            ))}
-            {availableTrialPoints.length === 0 && (
+          <div className="overflow-y-auto flex-1">
+            {treeData.cats.length === 0 && (
               <p className="text-slate-500 text-sm text-center py-6">No trial points available.</p>
             )}
+            {treeData.cats.map(({ cat, points }) => (
+              <div key={cat.id || "uncat"} className="mb-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-1 py-1 border-b border-[#1e2a45] mb-1">{cat.name}</p>
+                {points.map(tp => (
+                  <TPNode
+                    key={tp.id}
+                    tp={tp}
+                    depth={0}
+                    getChildren={treeData.getChildren}
+                    filteredIds={treeData.filteredIds}
+                    linkedTpIds={linkedTpIds}
+                    onLink={linkTrialPoint}
+                    searching={!!search}
+                  />
+                ))}
+              </div>
+            ))}
           </div>
           <DialogFooter>
             <Button variant="outline" className="border-slate-600 text-slate-300" onClick={() => { setLinkModalOpen(false); setSearch(""); }}>Cancel</Button>
