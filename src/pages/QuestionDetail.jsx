@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink } from "lucide-react";
+import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 export default function QuestionDetail() {
