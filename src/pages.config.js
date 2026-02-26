@@ -63,6 +63,7 @@ import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
 import TrialPoints from './pages/TrialPoints';
 import TrialPointDetail from './pages/TrialPointDetail';
+import ExhibitDetail from './pages/ExhibitDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -83,6 +84,7 @@ export const PAGES = {
     "Transcripts": Transcripts,
     "TrialPoints": TrialPoints,
     "TrialPointDetail": TrialPointDetail,
+    "ExhibitDetail": ExhibitDetail,
 }
 
 export const pagesConfig = {
