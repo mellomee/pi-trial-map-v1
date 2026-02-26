@@ -68,7 +68,7 @@ export default function TrialPointDetail() {
   const linkedIds = (type) => new Set(links.filter(l => l.entity_type === type).map(l => l.entity_id));
 
   const linkedClips = clips.filter(c => linkedIds("DepoClip").has(c.id));
-  const linkedExhibits = exhibits.filter(e => linkedIds("MasterExhibit").has(e.id));
+  const linkedExhibits = depoExhibits.filter(e => linkedIds("DepoExhibit").has(e.id));
   const linkedQuestions = questions.filter(q => linkedIds("Question").has(q.id));
 
   // For each MasterExhibit, find its primary JointExhibit (marked) if any
