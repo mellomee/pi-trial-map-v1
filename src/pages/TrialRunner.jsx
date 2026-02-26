@@ -143,6 +143,12 @@ export default function TrialRunner() {
                 <Badge variant="outline" className="text-slate-500 border-slate-700 text-[10px]">{current.status}</Badge>
               </div>
               <p className="text-2xl font-semibold text-white leading-relaxed mb-4">{current.question_text}</p>
+              <a
+                href={`${createPageUrl("QuestionDetail")}?id=${current.id}`}
+                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-cyan-400 mb-2"
+              >
+                <Link2 className="w-3 h-3" /> Manage Trial Point Links
+              </a>
               {current.goal && <p className="text-sm text-slate-500 mb-1">🎯 Goal: {current.goal}</p>}
               {current.expected_answer && <p className="text-sm text-slate-500">💬 Expected: {current.expected_answer}</p>}
             </div>
