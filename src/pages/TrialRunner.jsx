@@ -9,8 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-  Play, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle,
-  Bookmark, FileText, BookOpen, Target, ShieldAlert, X, Copy, ExternalLink
+  Play, ChevronLeft, ChevronRight,
+  FileText, BookOpen, Target, ShieldAlert, X, Copy, ExternalLink, Link2
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
