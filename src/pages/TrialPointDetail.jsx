@@ -71,55 +71,29 @@ export default function TrialPointDetail() {
   const linkedExhibits = depoExhibits.filter(e => linkedIds("DepoExhibit").has(e.id));
   const linkedQuestions = questions.filter(q => linkedIds("Question").has(q.id));
 
-  // For each MasterExhibit, find its primary JointExhibit (marked) if any
-  const getJointForExhibit = (masterId) => {
-    // DepositionExhibits that have joint_exhibit_id and belong to this master (via ExhibitLinks or direct depo_exhibit data)
-    // We look for a JointExhibit whose source includes a depo exhibit linked to this master
-    // Simpler: we look at depoExhibits that have a joint_exhibit_id, grouped by depo exhibit
-    // Actually: MasterExhibit → no direct joint link. We use JointExhibits.master_exhibit_id
-    return joints.find(j => j.master_exhibit_id === masterId || j.source_depo_exhibit_ids?.includes(masterId));
-  };
-
-  // Only show exhibits that are "Marked" (have at least one JointExhibit)
-  const markedExhibits = exhibits.filter(ex => {
-    // A MasterExhibit is "marked" if there's a JointExhibit pointing to it, or if any depo exhibit
-    // linked to it has a joint_exhibit_id
-    const joint = joints.find(j => j.master_exhibit_id === ex.id);
-    if (joint) return true;
-    // Also check via depo exhibits
-    const matchingDepos = depoExhibits.filter(de => de.joint_exhibit_id);
-    // We don't have a direct master→depo link here easily, so fallback: also include if dedupe_key or title matches
-    return false; // strict: only if JointExhibit.master_exhibit_id points here
-  });
-
   // Search candidates for link modal
   const modalItems = () => {
     const q = search.toLowerCase();
     if (linkModal === "DepoClip")
       return clips.filter(c => !linkedIds("DepoClip").has(c.id) && (c.clip_text?.toLowerCase().includes(q) || c.topic_tag?.toLowerCase().includes(q)));
-    if (linkModal === "MasterExhibit") {
-      // Only show exhibits that are Marked (have a JointExhibit entry), and not already linked
-      return markedExhibits.filter(e =>
-        !linkedIds("MasterExhibit").has(e.id) &&
-        (e.master_title?.toLowerCase().includes(q) || q === "")
+    if (linkModal === "DepoExhibit")
+      return depoExhibits.filter(e =>
+        !linkedIds("DepoExhibit").has(e.id) &&
+        ((e.display_title || e.depo_exhibit_title)?.toLowerCase().includes(q) ||
+          e.depo_exhibit_no?.toLowerCase().includes(q) ||
+          e.deponent_name?.toLowerCase().includes(q))
       );
-    }
     if (linkModal === "Question")
       return questions.filter(q2 => !linkedIds("Question").has(q2.id) && q2.question_text?.toLowerCase().includes(q));
     return [];
   };
 
-  const getExhibitLabel = (item) => {
-    const joint = joints.find(j => j.master_exhibit_id === item.id);
-    const jointNo = joint?.marked_no ? `[Exh. ${joint.marked_no}] ` : "";
-    const jointTitle = joint?.marked_title && joint.marked_title !== item.master_title ? ` → "${joint.marked_title}"` : "";
-    const side = item.provided_by_side && item.provided_by_side !== "Unknown" ? ` · ${item.provided_by_side}` : "";
-    return `${jointNo}${item.master_title}${jointTitle}${side}`;
-  };
-
   const itemLabel = (item) => {
     if (linkModal === "DepoClip") return item.topic_tag ? `[${item.topic_tag}] ${item.clip_text?.slice(0, 100)}` : item.clip_text?.slice(0, 120);
-    if (linkModal === "MasterExhibit") return getExhibitLabel(item);
+    if (linkModal === "DepoExhibit") {
+      const title = item.display_title || item.depo_exhibit_title;
+      return `${item.depo_exhibit_no ? `[${item.depo_exhibit_no}] ` : ""}${title}${item.deponent_name ? ` · ${item.deponent_name}` : ""}`;
+    }
     if (linkModal === "Question") return item.question_text?.slice(0, 120);
     return "";
   };
