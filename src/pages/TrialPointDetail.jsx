@@ -264,7 +264,11 @@ export default function TrialPointDetail() {
                       <span className="text-sm font-semibold text-cyan-300 self-start">{je.marked_no}</span>
                       <div className="min-w-0">
                         <p className="text-sm text-slate-200 leading-snug">{je.marked_title}</p>
-                        {je.marked_by_side && <p className="text-[10px] text-slate-500">{je.marked_by_side}</p>}
+                        <div className="flex gap-2 flex-wrap mt-0.5">
+                          {je.marked_by_side && <p className="text-[10px] text-slate-500">{je.marked_by_side}</p>}
+                          {je.pages && <p className="text-[10px] text-slate-400">Pg: {je.pages}</p>}
+                        </div>
+                        {je.notes && <p className="text-[10px] text-slate-500 italic mt-0.5 truncate">{je.notes}</p>}
                       </div>
                       <div className="min-w-0">
                         {depo ? (
