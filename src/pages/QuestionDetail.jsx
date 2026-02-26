@@ -102,10 +102,51 @@ export default function QuestionDetail() {
     load();
   };
 
-  const availableTrialPoints = trialPoints.filter(tp =>
-    !linkedTpIds.has(tp.id) &&
-    (!search || tp.point_text?.toLowerCase().includes(search.toLowerCase()))
-  );
+  // Build hierarchical tree for the modal
+  const treeData = useMemo(() => {
+    const searchLower = search.toLowerCase();
+    const allFiltered = trialPoints.filter(tp =>
+      !linkedTpIds.has(tp.id) &&
+      (!search || tp.point_text?.toLowerCase().includes(searchLower))
+    );
+    const filteredIds = new Set(allFiltered.map(tp => tp.id));
+
+    // When searching, include ancestors of matched nodes
+    const included = new Set(filteredIds);
+    if (search) {
+      trialPoints.forEach(tp => {
+        if (filteredIds.has(tp.id)) {
+          // walk up parent chain
+          let cur = tp;
+          while (cur?.parent_point_id) {
+            const parent = trialPoints.find(x => x.id === cur.parent_point_id);
+            if (parent) included.add(parent.id);
+            cur = parent;
+          }
+        }
+      });
+    }
+
+    const visiblePoints = trialPoints.filter(tp => included.has(tp.id));
+
+    // Group top-level by category
+    const sortedCats = [...categories].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    const topLevel = visiblePoints.filter(tp => !tp.parent_point_id).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+    const getChildren = (parentId) =>
+      visiblePoints.filter(tp => tp.parent_point_id === parentId).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+    const cats = [];
+    sortedCats.forEach(cat => {
+      const points = topLevel.filter(tp => tp.category_id === cat.id);
+      if (points.length > 0) cats.push({ cat, points });
+    });
+    // Uncategorized
+    const uncatPoints = topLevel.filter(tp => !tp.category_id);
+    if (uncatPoints.length > 0) cats.push({ cat: { id: null, name: "Uncategorized" }, points: uncatPoints });
+
+    return { cats, getChildren, filteredIds };
+  }, [trialPoints, categories, linkedTpIds, search]);
 
   if (!question) return <div className="p-8 text-slate-400">Loading…</div>;
 
