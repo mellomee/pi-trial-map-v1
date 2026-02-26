@@ -16,7 +16,7 @@ const NAV_SECTIONS = [
       { name: "Parties", icon: Users, page: "Parties" },
       { name: "Trial Points", icon: Target, page: "TrialPoints" },
       { name: "Questions", icon: HelpCircle, page: "Questions" },
-      { name: "Runner", icon: Play, page: "Runner" },
+      { name: "Runner (legacy)", icon: Play, page: "Runner" },
       { name: "Trial Runner ★", icon: Play, page: "TrialRunner" },
 
       { name: "Battle Cards", icon: Swords, page: "BattleCards" },
