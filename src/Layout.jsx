@@ -25,6 +25,7 @@ const NAV_SECTIONS = [
     label: "EXHIBITS",
     items: [
       { name: "Depo Exhibits", icon: BookOpen, page: "DepositionExhibits" },
+      { name: "Master Exhibits", icon: FileText, page: "MasterExhibits" },
       { name: "Joint List", icon: List, page: "JointExhibits" },
     ],
   },
