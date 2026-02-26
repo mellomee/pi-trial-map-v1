@@ -232,49 +232,16 @@ export default function TrialPointDetail() {
             />
           </div>
           <div className="overflow-y-auto flex-1 space-y-1.5">
-            {linkModal === "MasterExhibit" && (
-              <p className="text-[10px] text-slate-500 mb-2 italic">Showing only exhibits that have been marked / added to the joint list.</p>
-            )}
-            {modalItems().slice(0, 50).map(item => {
-              if (linkModal === "MasterExhibit") {
-                const joint = joints.find(j => j.master_exhibit_id === item.id);
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => addLink(linkModal, item.id)}
-                    className="w-full text-left px-3 py-2.5 rounded bg-[#0f1629] hover:bg-cyan-600/20 border border-[#1e2a45] hover:border-cyan-500/40 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      {joint?.marked_no && <span className="text-[11px] font-mono font-bold text-cyan-400 flex-shrink-0">Exh. {joint.marked_no}</span>}
-                      <span className="text-sm text-slate-200 truncate">{item.master_title}</span>
-                      {item.provided_by_side && item.provided_by_side !== "Unknown" && (
-                        <span className="text-[10px] text-slate-500 flex-shrink-0">{item.provided_by_side}</span>
-                      )}
-                    </div>
-                    {joint?.marked_title && joint.marked_title !== item.master_title && (
-                      <div className="text-[10px] text-slate-400 mt-0.5 ml-0.5">Trial title: {joint.marked_title}</div>
-                    )}
-                    {joint?.status && (
-                      <div className="text-[10px] text-slate-500 mt-0.5">Status: {joint.status}{joint.marked_by_side ? ` · ${joint.marked_by_side}` : ""}</div>
-                    )}
-                  </button>
-                );
-              }
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => addLink(linkModal, item.id)}
-                  className="w-full text-left px-3 py-2.5 rounded bg-[#0f1629] hover:bg-cyan-600/20 border border-[#1e2a45] hover:border-cyan-500/40 text-sm text-slate-300 transition-colors"
-                >
-                  {itemLabel(item)}
-                </button>
-              );
-            })}
-            {modalItems().length === 0 && (
-              <p className="text-slate-500 text-sm text-center py-6">
-                {linkModal === "MasterExhibit" ? "No marked exhibits found. Mark exhibits first from Depo Exhibits." : "No items found."}
-              </p>
-            )}
+            {modalItems().slice(0, 50).map(item => (
+              <button
+                key={item.id}
+                onClick={() => addLink(linkModal, item.id)}
+                className="w-full text-left px-3 py-2.5 rounded bg-[#0f1629] hover:bg-cyan-600/20 border border-[#1e2a45] hover:border-cyan-500/40 text-sm text-slate-300 transition-colors"
+              >
+                {itemLabel(item)}
+              </button>
+            ))}
+            {modalItems().length === 0 && <p className="text-slate-500 text-sm text-center py-6">No items found.</p>}
           </div>
           <DialogFooter>
             <Button variant="outline" className="border-slate-600 text-slate-300" onClick={() => { setLinkModal(null); setSearch(""); }}>Cancel</Button>
