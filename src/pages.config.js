@@ -64,6 +64,9 @@ import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
 import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
+import QuestionDetail from './pages/QuestionDetail';
+import TrialRunner from './pages/TrialRunner';
+import JointExhibitPrint from './pages/JointExhibitPrint';
 import __Layout from './Layout.jsx';
 
 
@@ -85,6 +88,9 @@ export const PAGES = {
     "Transcripts": Transcripts,
     "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
+    "QuestionDetail": QuestionDetail,
+    "TrialRunner": TrialRunner,
+    "JointExhibitPrint": JointExhibitPrint,
 }
 
 export const pagesConfig = {
