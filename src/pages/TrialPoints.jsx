@@ -316,11 +316,11 @@ export default function TrialPoints() {
     };
 
     const bodyHtml = grouped.map(cat => `
-      <div style="margin-bottom: 20px; break-inside: avoid;">
-        <div style="background: #eee; padding: 6px 10px; font-size: 11px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 4px 4px 0 0; border: 1px solid #ccc;">
+      <div style="margin-bottom: 28px; break-inside: avoid;">
+        <div style="background: #1a1a2e; color: #ffffff; padding: 14px 16px; font-size: 18px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 6px 6px 0 0; border: 2px solid #444; line-height: 1.3;">
           ${cat.name}
         </div>
-        <div style="border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px; padding: 0 12px;">
+        <div style="border: 2px solid #444; border-top: none; border-radius: 0 0 6px 6px; padding: 0 12px;">
           ${cat.points.map(p => renderPoint(p, 0)).join("")}
         </div>
       </div>
