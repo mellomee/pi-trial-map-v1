@@ -170,13 +170,16 @@ export default function TrialPointDetail() {
             {linkedExhibits.length === 0 && <p className="text-slate-500 text-sm text-center py-8">No exhibits linked yet.</p>}
             {linkedExhibits.map(e => {
               const lk = links.find(l => l.entity_id === e.id);
+              const title = e.display_title || e.depo_exhibit_title;
               return (
                 <div key={e.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-4 flex gap-3 items-center">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200">{e.master_title}</p>
-                    {e.master_description && <p className="text-xs text-slate-500 mt-0.5">{e.master_description}</p>}
+                    <div className="flex items-center gap-2">
+                      {e.depo_exhibit_no && <span className="text-[11px] font-mono text-slate-500">[{e.depo_exhibit_no}]</span>}
+                      <p className="text-sm font-medium text-slate-200">{title}</p>
+                    </div>
+                    {e.deponent_name && <p className="text-xs text-slate-500 mt-0.5">{e.deponent_name}</p>}
                   </div>
-                  <a href={`${createPageUrl("ExhibitDetail")}?id=${e.id}`} className="p-1 text-slate-500 hover:text-cyan-400 flex-shrink-0" title="View exhibit detail"><ExternalLink className="w-3.5 h-3.5" /></a>
                   <button onClick={() => removeLink(lk?.id)} className="text-slate-600 hover:text-red-400 flex-shrink-0"><Trash2 className="w-4 h-4" /></button>
                 </div>
               );
