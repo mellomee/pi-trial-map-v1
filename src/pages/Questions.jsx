@@ -110,7 +110,10 @@ export default function Questions() {
                 </div>
                 {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
               </div>
-              <div className="flex gap-1 flex-shrink-0">
+              <div className="flex gap-1 flex-shrink-0 items-center">
+                <Link to={`${createPageUrl("QuestionDetail")}?id=${q.id}`}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" title="Manage Links"><Link2 className="w-3 h-3" /></Button>
+                </Link>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); }}><Pencil className="w-3 h-3" /></Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
               </div>
