@@ -162,7 +162,7 @@ export default function TrialPointDetail() {
         {/* Exhibits */}
         <TabsContent value="exhibits">
           <div className="flex justify-end mb-3">
-            <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={() => { setLinkModal("MasterExhibit"); setSearch(""); }}>
+            <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={() => { setLinkModal("DepoExhibit"); setSearch(""); }}>
               <Link2 className="w-3.5 h-3.5 mr-1.5" /> Link Exhibit
             </Button>
           </div>
