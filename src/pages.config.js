@@ -51,6 +51,7 @@ import AdmittedExhibits from './pages/AdmittedExhibits';
 import BattleCards from './pages/BattleCards';
 import Dashboard from './pages/Dashboard';
 import DepositionExhibits from './pages/DepositionExhibits';
+import ExhibitDetail from './pages/ExhibitDetail';
 import Exhibits from './pages/Exhibits';
 import Export from './pages/Export';
 import Import from './pages/Import';
@@ -61,9 +62,8 @@ import Questions from './pages/Questions';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
-import TrialPoints from './pages/TrialPoints';
 import TrialPointDetail from './pages/TrialPointDetail';
-import ExhibitDetail from './pages/ExhibitDetail';
+import TrialPoints from './pages/TrialPoints';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +72,7 @@ export const PAGES = {
     "BattleCards": BattleCards,
     "Dashboard": Dashboard,
     "DepositionExhibits": DepositionExhibits,
+    "ExhibitDetail": ExhibitDetail,
     "Exhibits": Exhibits,
     "Export": Export,
     "Import": Import,
@@ -82,9 +83,8 @@ export const PAGES = {
     "Runner": Runner,
     "SettingsPage": SettingsPage,
     "Transcripts": Transcripts,
-    "TrialPoints": TrialPoints,
     "TrialPointDetail": TrialPointDetail,
-    "ExhibitDetail": ExhibitDetail,
+    "TrialPoints": TrialPoints,
 }
 
 export const pagesConfig = {
