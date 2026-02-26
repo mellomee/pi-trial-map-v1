@@ -643,6 +643,7 @@ function PointRow({
 
           {/* Actions */}
           <div className="flex gap-1 flex-shrink-0 no-print">
+            <a href={createPageUrl("TrialPointDetail") + `?id=${p.id}`} className="p-1 text-slate-400 hover:text-cyan-400" title="View evidence links"><Link2 className="w-3.5 h-3.5" /></a>
             <button onClick={() => onEdit(p)} className="p-1 text-slate-400 hover:text-cyan-400"><Pencil className="w-3.5 h-3.5" /></button>
             <button onClick={() => onRemove(p.id)} className="p-1 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
           </div>
