@@ -18,6 +18,7 @@ const NAV_SECTIONS = [
       { name: "Questions", icon: HelpCircle, page: "Questions" },
       { name: "Trial Runner", icon: Play, page: "TrialRunner" },
 
+
       { name: "Battle Cards", icon: Swords, page: "BattleCards" },
       { name: "Transcripts", icon: FileText, page: "Transcripts" },
     ],

@@ -55,18 +55,18 @@ import ExhibitDetail from './pages/ExhibitDetail';
 import Exhibits from './pages/Exhibits';
 import Export from './pages/Export';
 import Import from './pages/Import';
+import JointExhibitPrint from './pages/JointExhibitPrint';
 import JointExhibits from './pages/JointExhibits';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
+import QuestionDetail from './pages/QuestionDetail';
 import Questions from './pages/Questions';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
 import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
-import QuestionDetail from './pages/QuestionDetail';
 import TrialRunner from './pages/TrialRunner';
-import JointExhibitPrint from './pages/JointExhibitPrint';
 import __Layout from './Layout.jsx';
 
 
@@ -79,18 +79,18 @@ export const PAGES = {
     "Exhibits": Exhibits,
     "Export": Export,
     "Import": Import,
+    "JointExhibitPrint": JointExhibitPrint,
     "JointExhibits": JointExhibits,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
+    "QuestionDetail": QuestionDetail,
     "Questions": Questions,
     "Runner": Runner,
     "SettingsPage": SettingsPage,
     "Transcripts": Transcripts,
     "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
-    "QuestionDetail": QuestionDetail,
     "TrialRunner": TrialRunner,
-    "JointExhibitPrint": JointExhibitPrint,
 }
 
 export const pagesConfig = {
