@@ -25,23 +25,29 @@ export default function TrialPointDetail() {
   const [links, setLinks] = useState([]);
   const [clips, setClips] = useState([]);
   const [exhibits, setExhibits] = useState([]);
+  const [depoExhibits, setDepoExhibits] = useState([]);
+  const [joints, setJoints] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [linkModal, setLinkModal] = useState(null); // "DepoClip" | "MasterExhibit" | "Question"
   const [search, setSearch] = useState("");
 
   const load = async () => {
     if (!pointId || !activeCase) return;
-    const [pt, lks, cl, ex, qs] = await Promise.all([
+    const [pt, lks, cl, ex, de, jo, qs] = await Promise.all([
       base44.entities.TrialPoints.filter({ id: pointId }),
       base44.entities.TrialPointLinks.filter({ trial_point_id: pointId }),
       base44.entities.DepoClips.filter({ case_id: activeCase.id }),
       base44.entities.MasterExhibits.filter({ case_id: activeCase.id }),
+      base44.entities.DepositionExhibits.filter({ case_id: activeCase.id }),
+      base44.entities.JointExhibits.filter({ case_id: activeCase.id }),
       base44.entities.Questions.filter({ case_id: activeCase.id }),
     ]);
     setPoint(pt[0] || null);
     setLinks(lks);
     setClips(cl);
     setExhibits(ex);
+    setDepoExhibits(de);
+    setJoints(jo);
     setQuestions(qs);
   };
 
