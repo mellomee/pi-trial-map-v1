@@ -48,10 +48,12 @@ export default function TrialPointDetail() {
   useEffect(() => { load(); }, [pointId, activeCase]);
 
   const addLink = async (entityType, entityId) => {
+    // Map internal modal type to the entity_type enum value
+    const entityTypeMap = { DepoExhibit: "MasterExhibit", DepoClip: "DepoClip", Question: "Question" };
     await base44.entities.TrialPointLinks.create({
       case_id: activeCase.id,
       trial_point_id: pointId,
-      entity_type: entityType,
+      entity_type: entityTypeMap[entityType] || entityType,
       entity_id: entityId,
     });
     setLinkModal(null);
