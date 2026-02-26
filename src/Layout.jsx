@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Users, Target, HelpCircle, Play, Swords, FileText,
-  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu
+  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer
 } from "lucide-react";
 import FloatingChat from "@/components/chat/FloatingChat";
 import useActiveCase from "@/components/hooks/useActiveCase";
