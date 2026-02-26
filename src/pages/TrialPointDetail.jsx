@@ -168,6 +168,7 @@ export default function TrialPointDetail() {
                     <p className="text-sm font-medium text-slate-200">{e.master_title}</p>
                     {e.master_description && <p className="text-xs text-slate-500 mt-0.5">{e.master_description}</p>}
                   </div>
+                  <a href={`${createPageUrl("ExhibitDetail")}?id=${e.id}`} className="p-1 text-slate-500 hover:text-cyan-400 flex-shrink-0" title="View exhibit detail"><ExternalLink className="w-3.5 h-3.5" /></a>
                   <button onClick={() => removeLink(lk?.id)} className="text-slate-600 hover:text-red-400 flex-shrink-0"><Trash2 className="w-4 h-4" /></button>
                 </div>
               );
