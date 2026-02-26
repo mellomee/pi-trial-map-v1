@@ -220,7 +220,7 @@ export default function TrialPointDetail() {
       <Dialog open={!!linkModal} onOpenChange={() => { setLinkModal(null); setSearch(""); }}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Link {linkModal === "DepoClip" ? "Transcript Clip" : linkModal === "MasterExhibit" ? "Exhibit" : "Question"}</DialogTitle>
+            <DialogTitle>Link {linkModal === "DepoClip" ? "Transcript Clip" : linkModal === "DepoExhibit" ? "Depo Exhibit" : "Question"}</DialogTitle>
           </DialogHeader>
           <div className="relative mb-3">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
