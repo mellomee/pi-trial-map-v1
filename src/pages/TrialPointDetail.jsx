@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Link2, Trash2, FileText, BookOpen, HelpCircle, Search } from "lucide-react";
+import { ArrowLeft, Link2, Trash2, FileText, BookOpen, HelpCircle, Search, ExternalLink } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 const proofColors = {
