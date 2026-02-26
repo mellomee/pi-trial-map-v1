@@ -9,6 +9,47 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
+function TPNode({ tp, depth, getChildren, filteredIds, linkedTpIds, onLink, searching }) {
+  const children = getChildren(tp.id);
+  const isLinked = linkedTpIds.has(tp.id);
+  const isSelectable = !isLinked && (!searching || filteredIds.has(tp.id));
+
+  return (
+    <div style={{ paddingLeft: `${depth * 16}px` }}>
+      <button
+        disabled={isLinked}
+        onClick={() => isSelectable && onLink(tp.id)}
+        className={`w-full text-left px-3 py-2 rounded mb-0.5 border transition-colors text-sm
+          ${isLinked
+            ? "bg-cyan-600/10 border-cyan-600/20 text-cyan-600 cursor-default opacity-60"
+            : "bg-[#0f1629] border-[#1e2a45] text-slate-200 hover:bg-cyan-600/20 hover:border-cyan-500/40"
+          }`}
+      >
+        <div className="flex items-center gap-1">
+          {depth > 0 && <ChevronRight className="w-3 h-3 text-slate-600 flex-shrink-0" />}
+          <span className="flex-1">{tp.point_text}</span>
+          <div className="flex gap-1 flex-shrink-0">
+            <span className="text-[10px] text-slate-500">{tp.status}</span>
+            {tp.theme && <span className="text-[10px] text-slate-500">· {tp.theme}</span>}
+          </div>
+        </div>
+      </button>
+      {children.map(child => (
+        <TPNode
+          key={child.id}
+          tp={child}
+          depth={depth + 1}
+          getChildren={getChildren}
+          filteredIds={filteredIds}
+          linkedTpIds={linkedTpIds}
+          onLink={onLink}
+          searching={searching}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function QuestionDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const questionId = urlParams.get("id");
