@@ -376,38 +376,35 @@ function SegmentForm({ initial, clipText, onSave, onCancel, saving }) {
   const selectAll = () => setSelectedLines(new Set(clipLines.map((_, i) => i)));
   const clearAll = () => setSelectedLines(new Set());
 
-  const applySelection = () => {
-    if (selectedLines.size === 0) return;
+  // Derive form values from selected lines whenever selection changes
+  const derived = React.useMemo(() => {
+    if (selectedLines.size === 0) return null;
     const sorted = [...selectedLines].sort((a, b) => a - b);
     const chosen = sorted.map(i => clipLines[i]);
-    setForm(p => ({
-      ...p,
+    return {
       start_cite: chosen[0].cite,
       end_cite: chosen[chosen.length - 1].cite,
       segment_text: chosen.map(l => l.text).join("\n"),
-    }));
-  };
+    };
+  }, [selectedLines, clipLines]);
+
+  const saveData = derived
+    ? { ...form, ...derived }
+    : form;
 
   return (
     <div className="space-y-3">
       {/* Line picker */}
-      {clipLines.length > 0 && (
+      {clipLines.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-xs text-slate-400">Select lines from clip text</label>
+            <label className="text-xs text-slate-400">Click lines to select for this segment</label>
             <div className="flex gap-2">
               <button onClick={selectAll} className="text-[10px] text-cyan-400 hover:underline">All</button>
               <button onClick={clearAll} className="text-[10px] text-slate-500 hover:underline">Clear</button>
-              <button
-                onClick={applySelection}
-                disabled={selectedLines.size === 0}
-                className="px-2 py-0.5 rounded bg-violet-600/30 text-violet-400 text-[10px] disabled:opacity-40 hover:bg-violet-600/50"
-              >
-                Apply →
-              </button>
             </div>
           </div>
-          <div className="bg-[#0a0f1e] border border-[#1e2a45] rounded-lg max-h-44 overflow-y-auto divide-y divide-[#1e2a45]/50">
+          <div className="bg-[#0a0f1e] border border-[#1e2a45] rounded-lg max-h-56 overflow-y-auto divide-y divide-[#1e2a45]/50">
             {clipLines.map((line, i) => (
               <div
                 key={i}
@@ -421,27 +418,18 @@ function SegmentForm({ initial, clipText, onSave, onCancel, saving }) {
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-slate-600 mt-1">{selectedLines.size} line{selectedLines.size !== 1 ? "s" : ""} selected · click "Apply →" to fill the fields below</p>
+          <p className="text-[10px] text-slate-600 mt-1">{selectedLines.size} line{selectedLines.size !== 1 ? "s" : ""} selected</p>
+          {derived && (
+            <div className="mt-2 bg-[#0a0f1e] border border-violet-600/30 rounded-lg px-3 py-2 text-[11px] text-slate-400">
+              <span className="font-mono text-violet-400">{derived.start_cite}</span>
+              {derived.end_cite !== derived.start_cite && <> → <span className="font-mono text-violet-400">{derived.end_cite}</span></>}
+            </div>
+          )}
         </div>
+      ) : (
+        <p className="text-xs text-slate-500 italic">No clip text available to select from.</p>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-xs text-slate-400 mb-1 block">Start Cite *</label>
-          <Input value={form.start_cite} onChange={e => setForm(p => ({...p, start_cite: e.target.value}))}
-            className="bg-[#0a0f1e] border-[#1e2a45]" placeholder="HANSON-10-20" />
-        </div>
-        <div>
-          <label className="text-xs text-slate-400 mb-1 block">End Cite</label>
-          <Input value={form.end_cite} onChange={e => setForm(p => ({...p, end_cite: e.target.value}))}
-            className="bg-[#0a0f1e] border-[#1e2a45]" placeholder="HANSON-10-23" />
-        </div>
-      </div>
-      <div>
-        <label className="text-xs text-slate-400 mb-1 block">Segment Text *</label>
-        <Textarea value={form.segment_text} onChange={e => setForm(p => ({...p, segment_text: e.target.value}))}
-          className="bg-[#0a0f1e] border-[#1e2a45]" rows={4} placeholder="Paste the transcript excerpt…" />
-      </div>
       <div>
         <label className="text-xs text-slate-400 mb-1 block">Notes</label>
         <Input value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))}
@@ -449,7 +437,7 @@ function SegmentForm({ initial, clipText, onSave, onCancel, saving }) {
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" onClick={onCancel} className="border-[#1e2a45]">Cancel</Button>
-        <Button onClick={() => onSave(form)} disabled={saving || !form.start_cite || !form.segment_text}
+        <Button onClick={() => onSave(saveData)} disabled={saving || !saveData.start_cite || !saveData.segment_text}
           className="bg-violet-600 hover:bg-violet-700">
           <Save className="w-3 h-3 mr-1" /> Save
         </Button>
