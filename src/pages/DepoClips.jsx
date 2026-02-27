@@ -130,9 +130,11 @@ export default function DepoClips() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Deponents</SelectItem>
-              {depositions.map(d => (
-                <SelectItem key={d.id} value={d.id}>{getDepoName(d.id)}</SelectItem>
-              ))}
+              {depositions.map(d => {
+                const p = parties.find(x => x.id === d.party_id);
+                const label = p ? (p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim()) : d.sheet_name;
+                return <SelectItem key={d.id} value={d.id}>{label}</SelectItem>;
+              })}
             </SelectContent>
           </Select>
           <Select value={filterDirection} onValueChange={setFilterDirection}>
