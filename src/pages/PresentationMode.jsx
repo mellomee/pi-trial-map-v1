@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import {
   ChevronLeft, ChevronRight, Play, Pause, Square, SkipBack, SkipForward,
-  Maximize2, PanelLeftClose, PanelLeftOpen, Check, Film, FileText, Image, X
+  Maximize2, PanelLeftClose, PanelLeftOpen, Check, Film, FileText, Image, X,
+  ChevronDown, EyeOff, Eye
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
