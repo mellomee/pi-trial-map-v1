@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import {
-  ChevronLeft, ChevronRight, Play, Pause, Square, SkipBack, SkipForward,
-  Maximize2, PanelLeftClose, PanelLeftOpen, Check, Film, FileText, Image, X,
-  ChevronDown, EyeOff, Eye
+  ChevronLeft, Play, Pause, Square, SkipBack, SkipForward,
+  Maximize2, PanelLeftClose, PanelLeftOpen, Check, Film, FileText, Eye
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import ExhibitViewer from "@/components/presentation/ExhibitViewer";
 
 // ── Video Player ──────────────────────────────────────────────
 function VideoPlayer({ videoLinks, videoClips }) {
