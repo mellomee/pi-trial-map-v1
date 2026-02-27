@@ -267,7 +267,12 @@ export default function TrialRunner() {
                       )}
                       {hasLinks && (
                         <span className="text-[9px] px-1.5 py-0.5 rounded border bg-red-500/20 text-red-400 border-red-600/40 flex items-center gap-0.5">
-                          <Target className="w-2.5 h-2.5" /> {tpCount} pt{tpCount !== 1 ? "s" : ""}
+                          <Target className="w-2.5 h-2.5" /> {tpCount}
+                        </span>
+                      )}
+                      {branchCount > 0 && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-600 border-cyan-800/40 flex items-center gap-0.5">
+                          <GitBranch className="w-2.5 h-2.5" /> {branchCount}
                         </span>
                       )}
                       {q.exam_type && (
