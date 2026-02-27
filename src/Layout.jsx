@@ -20,7 +20,6 @@ const NAV_SECTIONS = [
 
 
       { name: "Battle Cards", icon: Swords, page: "BattleCards" },
-      { name: "Video", icon: Video, page: "VideoHub" },
       { name: "Transcripts", icon: FileText, page: "Transcripts" },
     ],
   },
@@ -30,6 +29,13 @@ const NAV_SECTIONS = [
       { name: "Depo Exhibits", icon: BookOpen, page: "DepositionExhibits" },
       { name: "Joint List", icon: List, page: "JointExhibits" },
       { name: "Joint List Print", icon: Printer, page: "JointExhibitPrint" },
+    ],
+  },
+  {
+    label: "VIDEO",
+    items: [
+      { name: "Video Hub", icon: Video, page: "VideoHub" },
+      { name: "Video Library", icon: Play, page: "VideoLibrary" },
     ],
   },
   {
