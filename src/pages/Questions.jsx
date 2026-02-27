@@ -107,6 +107,10 @@ export default function Questions() {
                   <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
                   <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
                   <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
+                  {q.importance && q.importance !== "Med" && (
+                    <Badge className={q.importance === "High" ? "bg-red-500/20 text-red-400" : "bg-slate-600/20 text-slate-500"}>{q.importance}</Badge>
+                  )}
+                  {q.is_branch_root && <Badge className="bg-violet-500/20 text-violet-400">Branch Root</Badge>}
                 </div>
                 {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
               </div>
