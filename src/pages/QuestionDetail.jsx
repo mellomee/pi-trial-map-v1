@@ -229,6 +229,9 @@ export default function QuestionDetail() {
           <TabsTrigger value="clips" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-slate-400">
             <FileText className="w-3.5 h-3.5 mr-1.5" /> Proof — Clips ({linkedDepoClips.length})
           </TabsTrigger>
+          <TabsTrigger value="branches" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400">
+            <GitBranch className="w-3.5 h-3.5 mr-1.5" /> Branches
+          </TabsTrigger>
         </TabsList>
 
         {/* Trial Points */}
