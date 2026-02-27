@@ -253,10 +253,10 @@ export default function VideoHub() {
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">Playlists · Video Library · Presentation Mode</p>
           </div>
-          <a href={createPageUrl("VideoLibrary")}
+          <Link to={createPageUrl("VideoLibrary")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#1e2a45] hover:bg-[#263450] text-slate-300 text-sm border border-[#2e3a55]">
             <Film className="w-4 h-4 text-cyan-400" /> Video Library
-          </a>
+          </Link>
         </div>
 
         <Tabs defaultValue="playlists">
