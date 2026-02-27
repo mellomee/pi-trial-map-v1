@@ -306,22 +306,40 @@ export default function PresentationMode() {
 
       const caseId = clips[0]?.case_id || pls[0]?.case_id;
       if (caseId) {
-        const [deps, parts, joints] = await Promise.all([
+        const [deps, parts, joints, depoExhibits] = await Promise.all([
           base44.entities.Depositions.filter({ case_id: caseId }),
           base44.entities.Parties.filter({ case_id: caseId }),
           base44.entities.JointExhibits.filter({ case_id: caseId }),
+          base44.entities.DepositionExhibits.filter({ case_id: caseId }),
         ]);
         setDepositions(deps);
         setParties(parts);
 
-        // Build exhibit map: depo_clip_id → joint exhibit
-        // DepoClips have linked_master_exhibit_id; map through joint exhibits
+        // Build exhibit map: depo_clip_id → { joint, fileUrl }
+        // JointExhibit file comes from primary_depo_exhibit_id → DepositionExhibit.file_url
         const jointById = {};
         joints.forEach(j => { jointById[j.id] = j; });
+        const depoExhibitById = {};
+        depoExhibits.forEach(de => { depoExhibitById[de.id] = de; });
+
         const em = {};
         clips.forEach(c => {
           if (c.linked_joint_exhibit_id) {
-            em[c.id] = jointById[c.linked_joint_exhibit_id] || null;
+            const joint = jointById[c.linked_joint_exhibit_id];
+            if (joint) {
+              const primaryDepoExhibit = joint.primary_depo_exhibit_id
+                ? depoExhibitById[joint.primary_depo_exhibit_id]
+                : null;
+              // fallback: check source_depo_exhibit_ids
+              const fallbackDepoExhibit = (!primaryDepoExhibit && joint.source_depo_exhibit_ids?.length)
+                ? depoExhibitById[joint.source_depo_exhibit_ids[0]]
+                : null;
+              const resolvedExhibit = primaryDepoExhibit || fallbackDepoExhibit;
+              em[c.id] = {
+                joint,
+                fileUrl: resolvedExhibit?.file_url || resolvedExhibit?.external_link || null,
+              };
+            }
           }
         });
         setExhibitMap(em);
