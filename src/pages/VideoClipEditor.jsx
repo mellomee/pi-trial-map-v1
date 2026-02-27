@@ -344,7 +344,7 @@ export default function VideoClipEditor() {
 }
 
 // ── Segment form sub-component ────────────────────────────────
-function SegmentForm({ initial, onSave, onCancel, saving }) {
+function SegmentForm({ initial, clipText, onSave, onCancel, saving }) {
   const [form, setForm] = useState({
     start_cite: initial?.start_cite || "",
     end_cite: initial?.end_cite || "",
@@ -352,8 +352,79 @@ function SegmentForm({ initial, onSave, onCancel, saving }) {
     notes: initial?.notes || "",
     ...(initial?.id ? { id: initial.id } : {}),
   });
+  const [selectedLines, setSelectedLines] = useState(new Set());
+
+  // Parse clip_text into lines: [{cite, text}]
+  const clipLines = React.useMemo(() => {
+    if (!clipText) return [];
+    return clipText.split("\n").filter(Boolean).map(line => {
+      const idx = line.indexOf("\t");
+      return idx >= 0
+        ? { cite: line.substring(0, idx), text: line.substring(idx + 1) }
+        : { cite: "", text: line };
+    });
+  }, [clipText]);
+
+  const toggleLine = (idx) => {
+    setSelectedLines(prev => {
+      const next = new Set(prev);
+      next.has(idx) ? next.delete(idx) : next.add(idx);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelectedLines(new Set(clipLines.map((_, i) => i)));
+  const clearAll = () => setSelectedLines(new Set());
+
+  const applySelection = () => {
+    if (selectedLines.size === 0) return;
+    const sorted = [...selectedLines].sort((a, b) => a - b);
+    const chosen = sorted.map(i => clipLines[i]);
+    setForm(p => ({
+      ...p,
+      start_cite: chosen[0].cite,
+      end_cite: chosen[chosen.length - 1].cite,
+      segment_text: chosen.map(l => l.text).join("\n"),
+    }));
+  };
+
   return (
     <div className="space-y-3">
+      {/* Line picker */}
+      {clipLines.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-slate-400">Select lines from clip text</label>
+            <div className="flex gap-2">
+              <button onClick={selectAll} className="text-[10px] text-cyan-400 hover:underline">All</button>
+              <button onClick={clearAll} className="text-[10px] text-slate-500 hover:underline">Clear</button>
+              <button
+                onClick={applySelection}
+                disabled={selectedLines.size === 0}
+                className="px-2 py-0.5 rounded bg-violet-600/30 text-violet-400 text-[10px] disabled:opacity-40 hover:bg-violet-600/50"
+              >
+                Apply →
+              </button>
+            </div>
+          </div>
+          <div className="bg-[#0a0f1e] border border-[#1e2a45] rounded-lg max-h-44 overflow-y-auto divide-y divide-[#1e2a45]/50">
+            {clipLines.map((line, i) => (
+              <div
+                key={i}
+                onClick={() => toggleLine(i)}
+                className={`flex gap-3 px-3 py-1.5 cursor-pointer transition-colors select-none ${
+                  selectedLines.has(i) ? "bg-violet-600/20" : "hover:bg-white/5"
+                }`}
+              >
+                <span className="text-[10px] font-mono text-slate-500 w-24 flex-shrink-0 pt-0.5">{line.cite}</span>
+                <span className="text-xs text-slate-300">{line.text}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-600 mt-1">{selectedLines.size} line{selectedLines.size !== 1 ? "s" : ""} selected · click "Apply →" to fill the fields below</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-slate-400 mb-1 block">Start Cite *</label>
@@ -369,7 +440,7 @@ function SegmentForm({ initial, onSave, onCancel, saving }) {
       <div>
         <label className="text-xs text-slate-400 mb-1 block">Segment Text *</label>
         <Textarea value={form.segment_text} onChange={e => setForm(p => ({...p, segment_text: e.target.value}))}
-          className="bg-[#0a0f1e] border-[#1e2a45]" rows={5} placeholder="Paste the transcript excerpt…" />
+          className="bg-[#0a0f1e] border-[#1e2a45]" rows={4} placeholder="Paste the transcript excerpt…" />
       </div>
       <div>
         <label className="text-xs text-slate-400 mb-1 block">Notes</label>
