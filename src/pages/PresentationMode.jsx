@@ -354,9 +354,34 @@ export default function PresentationMode() {
     ? (segMap[currentItem.depo_clip_id] || []).sort((a, b) => (a.segment_order || 0) - (b.segment_order || 0))
     : [];
   const currentLinks = currentItem ? (linkMap[currentItem.depo_clip_id] || []) : [];
-  const currentExhibitData = currentItem ? (exhibitMap[currentItem.depo_clip_id] || null) : null;
+  // Check override first, then fall back to the linked exhibit from the clip
+  const overrideKey = currentItem?.depo_clip_id;
+  const hasOverride = overrideKey && overrideKey in exhibitOverrides;
+  const currentExhibitData = hasOverride
+    ? exhibitOverrides[overrideKey]
+    : (currentItem ? (exhibitMap[currentItem.depo_clip_id] || null) : null);
   const currentExhibit = currentExhibitData?.joint || null;
   const currentExhibitFileUrl = currentExhibitData?.fileUrl || null;
+
+  const resolveJoint = (joint) => {
+    const primaryDepoExhibit = joint.primary_depo_exhibit_id ? depoExhibitById[joint.primary_depo_exhibit_id] : null;
+    const fallbackDepoExhibit = (!primaryDepoExhibit && joint.source_depo_exhibit_ids?.length)
+      ? depoExhibitById[joint.source_depo_exhibit_ids[0]] : null;
+    const resolvedExhibit = primaryDepoExhibit || fallbackDepoExhibit;
+    return { joint, fileUrl: resolvedExhibit?.file_url || resolvedExhibit?.external_link || null };
+  };
+
+  const selectExhibitOverride = (joint) => {
+    if (!overrideKey) return;
+    setExhibitOverrides(prev => ({ ...prev, [overrideKey]: resolveJoint(joint) }));
+    setExhibitPickerOpen(false);
+    setShowExhibitPane(true);
+  };
+
+  const clearExhibitOverride = () => {
+    if (!overrideKey) return;
+    setExhibitOverrides(prev => { const n = { ...prev }; delete n[overrideKey]; return n; });
+  };
 
   const clipMeta = {};
   items.forEach(item => {
