@@ -42,6 +42,9 @@ export default function TrialRunner() {
   const [depoExhibits, setDepoExhibits] = useState([]);
   const [depoClips, setDepoClips] = useState([]);
   const [depositions, setDepositions] = useState([]);
+  const [branches, setBranches] = useState([]); // all QuestionBranches for case
+  const [suggestedNext, setSuggestedNext] = useState(null); // { question, branch }
+  const [witnessMode, setWitnessMode] = useState(null); // WITNESS_DENIES etc
 
   const [detailModal, setDetailModal] = useState(null); // { type: 'tp'|'exhibit'|'clip', data: ... }
 
