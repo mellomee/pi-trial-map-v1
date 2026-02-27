@@ -90,6 +90,7 @@ export default function QuestionDetail() {
     setDepoClips(dc);
     setParties(pa);
     setCategories(cats);
+    setAllQuestions(allQs);
 
     // Load TrialPointLinks for all linked trial points
     const linkedTpIds = ql.map(l => l.link_id);
