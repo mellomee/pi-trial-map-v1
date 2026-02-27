@@ -1,25 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Play, ChevronLeft, ChevronRight,
-  FileText, BookOpen, Target, ShieldAlert, X, Copy, ExternalLink, Link2
+  Target, FileText, BookOpen, Link2, ExternalLink, Copy,
+  ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, SkipForward, MessageSquare
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
-const STATUS_OPTS = ["NotAsked", "Asked", "NeedsFollowUp", "Skipped"];
+const STATUS_OPTS = [
+  { value: "NotAsked", label: "Not Asked", color: "bg-slate-600/30 text-slate-400 border-slate-600" },
+  { value: "Asked", label: "Asked", color: "bg-green-600/30 text-green-400 border-green-600" },
+  { value: "NeedsFollowUp", label: "Follow Up", color: "bg-amber-600/30 text-amber-400 border-amber-600" },
+  { value: "Skipped", label: "Skipped", color: "bg-slate-700/30 text-slate-500 border-slate-700" },
+];
+
 const QUALITY_OPTS = [
-  { value: "AsExpected", label: "As Expected", color: "bg-green-500/20 text-green-400" },
-  { value: "Unexpected", label: "Unexpected", color: "bg-amber-500/20 text-amber-400" },
-  { value: "Harmful", label: "Harmful", color: "bg-red-500/20 text-red-400" },
-  { value: "GreatAdmission", label: "Great Admission", color: "bg-cyan-500/20 text-cyan-400" },
+  { value: "AsExpected", label: "As Expected", color: "bg-green-500/20 text-green-400 border-green-600/40" },
+  { value: "Unexpected", label: "Unexpected", color: "bg-amber-500/20 text-amber-400 border-amber-600/40" },
+  { value: "Harmful", label: "Harmful", color: "bg-red-500/20 text-red-400 border-red-600/40" },
+  { value: "GreatAdmission", label: "Great Admission", color: "bg-cyan-500/20 text-cyan-400 border-cyan-600/40" },
 ];
 
 export default function TrialRunner() {
@@ -27,16 +33,17 @@ export default function TrialRunner() {
   const [parties, setParties] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [selectedParty, setSelectedParty] = useState("all");
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [proofOpen, setProofOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
-  // Proof data
-  const [questionLinks, setQuestionLinks] = useState([]); // all QuestionLinks for current case
+  const [questionLinks, setQuestionLinks] = useState([]);
   const [trialPoints, setTrialPoints] = useState([]);
   const [trialPointLinks, setTrialPointLinks] = useState([]);
   const [jointExhibits, setJointExhibits] = useState([]);
   const [depoExhibits, setDepoExhibits] = useState([]);
   const [depoClips, setDepoClips] = useState([]);
+  const [depositions, setDepositions] = useState([]);
+
+  const [detailModal, setDetailModal] = useState(null); // { type: 'tp'|'exhibit'|'clip', data: ... }
 
   useEffect(() => {
     if (!activeCase) return;
@@ -50,20 +57,29 @@ export default function TrialRunner() {
       base44.entities.JointExhibits.filter({ case_id: cid }),
       base44.entities.DepositionExhibits.filter({ case_id: cid }),
       base44.entities.DepoClips.filter({ case_id: cid }),
-    ]).then(([p, q, ql, tp, tpl, je, de, dc]) => {
+      base44.entities.Depositions.filter({ case_id: cid }),
+    ]).then(([p, q, ql, tp, tpl, je, de, dc, deps]) => {
       setParties(p);
-      setQuestions(q.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)));
+      const sorted = q.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      setQuestions(sorted);
+      if (sorted.length > 0) setSelectedId(sorted[0].id);
       setQuestionLinks(ql);
       setTrialPoints(tp);
       setTrialPointLinks(tpl);
       setJointExhibits(je);
       setDepoExhibits(de);
       setDepoClips(dc);
+      setDepositions(deps);
     });
   }, [activeCase]);
 
-  const filtered = questions.filter(q => selectedParty === "all" || q.party_id === selectedParty);
-  const current = filtered[currentIdx] || null;
+  const filtered = useMemo(
+    () => questions.filter(q => selectedParty === "all" || q.party_id === selectedParty),
+    [questions, selectedParty]
+  );
+
+  const current = filtered.find(q => q.id === selectedId) || filtered[0] || null;
+  const currentIdx = filtered.findIndex(q => q.id === current?.id);
 
   const updateQuestion = async (field, value) => {
     if (!current) return;
@@ -73,137 +89,243 @@ export default function TrialRunner() {
 
   const getPartyName = (pid) => {
     const p = parties.find(x => x.id === pid);
-    return p ? `${p.first_name || ""} ${p.last_name || ""}`.trim() : "";
+    return p ? (p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim()) : "";
   };
 
-  // Compute proof for current question
-  const proofData = React.useMemo(() => {
-    if (!current) return { trialPoints: [], exhibits: [], clips: [] };
+  // Linked TP ids per question (for list highlighting)
+  const linkedTpIdsByQuestion = useMemo(() => {
+    const map = {};
+    questionLinks.forEach(l => {
+      if (l.link_type === "TrialPoint") {
+        if (!map[l.question_id]) map[l.question_id] = [];
+        map[l.question_id].push(l.link_id);
+      }
+    });
+    return map;
+  }, [questionLinks]);
 
-    const linkedTpIds = new Set(
-      questionLinks.filter(l => l.question_id === current.id && l.link_type === "TrialPoint").map(l => l.link_id)
-    );
-    const linkedTPs = trialPoints.filter(tp => linkedTpIds.has(tp.id));
+  // Proof for current question
+  const proofData = useMemo(() => {
+    if (!current) return { tps: [], exhibits: [], clips: [] };
 
-    const relevantTPLinks = trialPointLinks.filter(l => linkedTpIds.has(l.trial_point_id));
+    const tpIds = new Set(linkedTpIdsByQuestion[current.id] || []);
+    const linkedTPs = trialPoints.filter(tp => tpIds.has(tp.id));
 
+    const relevantTPLinks = trialPointLinks.filter(l => tpIds.has(l.trial_point_id));
     const exhibitIds = new Set(relevantTPLinks.filter(l => l.entity_type === "MasterExhibit").map(l => l.entity_id));
     const clipIds = new Set(relevantTPLinks.filter(l => l.entity_type === "DepoClip").map(l => l.entity_id));
 
-    return {
-      trialPoints: linkedTPs,
-      exhibits: jointExhibits.filter(je => exhibitIds.has(je.id)),
-      clips: depoClips.filter(c => clipIds.has(c.id)),
-    };
-  }, [current, questionLinks, trialPoints, trialPointLinks, jointExhibits, depoClips]);
+    // Filter clips to this witness' depositions only
+    let witnessDepoIds = new Set();
+    if (current.party_id) {
+      depositions.filter(d => d.party_id === current.party_id).forEach(d => witnessDepoIds.add(d.id));
+    }
 
-  const needsProof = current?.answer_quality === "Unexpected" || current?.answer_quality === "Harmful";
+    const allClips = depoClips.filter(c => clipIds.has(c.id));
+    const witnessClips = current.party_id
+      ? allClips.filter(c => witnessDepoIds.has(c.deposition_id))
+      : allClips;
 
-  const getDepoInfo = (je) => {
+    const exhibits = jointExhibits.filter(je => exhibitIds.has(je.id));
+
+    return { tps: linkedTPs, exhibits, clips: witnessClips };
+  }, [current, linkedTpIdsByQuestion, trialPoints, trialPointLinks, jointExhibits, depoClips, depositions]);
+
+  const hasProof = proofData.tps.length > 0 || proofData.exhibits.length > 0 || proofData.clips.length > 0;
+
+  const getDepoExhibitInfo = (je) => {
     const depoId = je.primary_depo_exhibit_id || (je.source_depo_exhibit_ids || [])[0];
     return depoExhibits.find(d => d.id === depoId) || null;
+  };
+
+  const getDepositionName = (depoId) => {
+    const d = depositions.find(x => x.id === depoId);
+    if (!d) return null;
+    const p = parties.find(x => x.id === d.party_id);
+    const pName = p ? (p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim()) : d.sheet_name;
+    return pName;
   };
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
   return (
-    <div className="flex h-full">
-      {/* Main Runner */}
-      <div className={`flex-1 flex flex-col p-6 transition-all ${proofOpen ? "mr-96" : ""}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Trial Runner</h1>
-            <p className="text-sm text-slate-500">
-              {filtered.length > 0 ? `Question ${currentIdx + 1} of ${filtered.length}` : "No questions"}
-            </p>
-          </div>
-          <Select value={selectedParty} onValueChange={v => { setSelectedParty(v); setCurrentIdx(0); }}>
-            <SelectTrigger className="w-48 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+    <div className="flex h-screen bg-[#0a0f1e] overflow-hidden">
+      {/* ── Left: Question List ─────────────────────────────────── */}
+      <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col bg-[#0f1629]">
+        <div className="p-3 border-b border-[#1e2a45] space-y-2">
+          <h2 className="text-sm font-bold text-white">Trial Runner</h2>
+          <Select value={selectedParty} onValueChange={v => { setSelectedParty(v); }}>
+            <SelectTrigger className="w-full h-8 bg-[#131a2e] border-[#1e2a45] text-slate-200 text-xs">
+              <SelectValue placeholder="All Witnesses" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Witnesses</SelectItem>
-              {parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}
+              {parties.map(p => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim()}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          <p className="text-[10px] text-slate-500">{filtered.length} question{filtered.length !== 1 ? "s" : ""}</p>
         </div>
 
-        {!current ? (
-          <p className="text-center text-slate-500 py-16">No questions found.</p>
-        ) : (
-          <div className="flex-1 space-y-4 max-w-3xl mx-auto w-full">
-            {/* Question Card */}
-            <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Badge className={current.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
-                  {current.exam_type}
-                </Badge>
-                {current.party_id && (
-                  <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(current.party_id)}</Badge>
-                )}
-                <Badge variant="outline" className="text-slate-500 border-slate-700 text-[10px]">{current.status}</Badge>
+        <div className="flex-1 overflow-y-auto">
+          {filtered.map((q, idx) => {
+            const tpCount = (linkedTpIdsByQuestion[q.id] || []).length;
+            const hasLinks = tpCount > 0;
+            const isActive = q.id === current?.id;
+            const statusColor = STATUS_OPTS.find(s => s.value === q.status)?.color || "";
+
+            return (
+              <button
+                key={q.id}
+                onClick={() => setSelectedId(q.id)}
+                className={`w-full text-left px-3 py-2.5 border-b border-[#1e2a45] transition-colors relative
+                  ${isActive ? "bg-cyan-600/15 border-l-2 border-l-cyan-400" : "hover:bg-white/5 border-l-2 border-l-transparent"}
+                  ${hasLinks && !isActive ? "bg-red-950/30" : ""}
+                `}
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-[10px] text-slate-600 mt-0.5 flex-shrink-0">{idx + 1}.</span>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs leading-snug line-clamp-2 ${hasLinks ? "text-red-200" : "text-slate-300"}`}>
+                      {q.question_text}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1 flex-wrap">
+                      {q.status && q.status !== "NotAsked" && (
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded border ${statusColor}`}>{q.status}</span>
+                      )}
+                      {hasLinks && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border bg-red-500/20 text-red-400 border-red-600/40 flex items-center gap-0.5">
+                          <Target className="w-2.5 h-2.5" /> {tpCount} pt{tpCount !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {q.exam_type && (
+                        <span className={`text-[9px] px-1 py-0.5 rounded ${q.exam_type === "Direct" ? "text-green-500" : "text-orange-400"}`}>
+                          {q.exam_type}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Right: Question Detail ───────────────────────────────── */}
+      {!current ? (
+        <div className="flex-1 flex items-center justify-center text-slate-500">No questions found.</div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto space-y-4">
+
+            {/* Navigation row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentIdx <= 0}
+                  onClick={() => setSelectedId(filtered[currentIdx - 1]?.id)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-xs text-slate-500">{currentIdx + 1} / {filtered.length}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentIdx >= filtered.length - 1}
+                  onClick={() => setSelectedId(filtered[currentIdx + 1]?.id)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
-              <p className="text-2xl font-semibold text-white leading-relaxed mb-4">{current.question_text}</p>
               <a
                 href={`${createPageUrl("QuestionDetail")}?id=${current.id}`}
-                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-cyan-400 mb-2"
+                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-cyan-400"
               >
-                <Link2 className="w-3 h-3" /> Manage Trial Point Links
+                <Link2 className="w-3 h-3" /> Manage Links
               </a>
-              {current.goal && <p className="text-sm text-slate-500 mb-1">🎯 Goal: {current.goal}</p>}
-              {current.expected_answer && <p className="text-sm text-slate-500">💬 Expected: {current.expected_answer}</p>}
             </div>
 
-            {/* Status Controls */}
-            <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Status</p>
-              <div className="flex gap-2 flex-wrap">
-                {STATUS_OPTS.map(s => (
-                  <button
-                    key={s}
-                    onClick={() => updateQuestion("status", s)}
-                    className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
-                      current.status === s
-                        ? "bg-cyan-600 border-cyan-500 text-white"
-                        : "bg-[#0f1629] border-[#1e2a45] text-slate-400 hover:border-slate-500"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Answer Quality */}
-            <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Answer Quality</p>
-              <div className="flex gap-2 flex-wrap">
-                {QUALITY_OPTS.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => updateQuestion("answer_quality", current.answer_quality === opt.value ? "" : opt.value)}
-                    className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
-                      current.answer_quality === opt.value
-                        ? `${opt.color} border-current`
-                        : "bg-[#0f1629] border-[#1e2a45] text-slate-400 hover:border-slate-500"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            {/* Question card — red background if linked */}
+            <div className={`rounded-xl p-5 border ${
+              hasProof
+                ? "bg-red-950/40 border-red-700/50"
+                : "bg-[#131a2e] border-[#1e2a45]"
+            }`}>
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <Badge className={current.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-orange-500/20 text-orange-400"}>
+                  {current.exam_type || "—"}
+                </Badge>
+                {current.party_id && (
+                  <Badge variant="outline" className="text-slate-300 border-slate-600">{getPartyName(current.party_id)}</Badge>
+                )}
+                {hasProof && (
+                  <Badge className="bg-red-500/20 text-red-400 border border-red-600/40">
+                    <Target className="w-3 h-3 mr-1" /> {proofData.tps.length} trial point{proofData.tps.length !== 1 ? "s" : ""}
+                  </Badge>
+                )}
               </div>
 
-              {needsProof && (
-                <button
-                  onClick={() => setProofOpen(true)}
-                  className="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-medium w-full justify-center"
-                >
-                  <ShieldAlert className="w-4 h-4" /> Pull Proof
-                </button>
+              <p className="text-xl font-semibold text-white leading-relaxed">{current.question_text}</p>
+
+              {(current.goal || current.expected_answer) && (
+                <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
+                  {current.goal && (
+                    <p className="text-sm text-slate-400"><span className="text-slate-500">🎯 Goal:</span> {current.goal}</p>
+                  )}
+                  {current.expected_answer && (
+                    <p className="text-sm text-slate-300"><span className="text-slate-500">💬 Expected:</span> {current.expected_answer}</p>
+                  )}
+                </div>
               )}
             </div>
 
+            {/* Status + Quality + Admission row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Status</p>
+                <div className="flex gap-2 flex-wrap">
+                  {STATUS_OPTS.map(s => (
+                    <button
+                      key={s.value}
+                      onClick={() => updateQuestion("status", s.value)}
+                      className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+                        current.status === s.value ? s.color : "bg-[#0f1629] border-[#1e2a45] text-slate-500 hover:border-slate-500"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Answer Quality</p>
+                <div className="flex gap-2 flex-wrap">
+                  {QUALITY_OPTS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => updateQuestion("answer_quality", current.answer_quality === opt.value ? null : opt.value)}
+                      className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+                        current.answer_quality === opt.value ? opt.color : "bg-[#0f1629] border-[#1e2a45] text-slate-500 hover:border-slate-500"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Admission + Notes */}
-            <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 space-y-3">
+            <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <Switch
                   checked={current.admission_obtained || false}
@@ -212,132 +334,245 @@ export default function TrialRunner() {
                 <Label className="text-sm text-slate-300">Admission Obtained</Label>
               </div>
               <div>
-                <p className="text-xs text-slate-500 mb-1">Live Notes</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Live Notes</p>
                 <Textarea
                   value={current.live_notes || ""}
                   onChange={e => updateQuestion("live_notes", e.target.value)}
                   placeholder="Notes during examination…"
                   className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm"
-                  rows={3}
+                  rows={2}
                 />
               </div>
             </div>
 
-            {/* Navigation */}
-            <div className="flex justify-between items-center pt-2">
-              <Button
-                variant="outline"
-                className="border-slate-600 text-slate-300"
-                disabled={currentIdx === 0}
-                onClick={() => setCurrentIdx(i => i - 1)}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" /> Previous
-              </Button>
-              <span className="text-slate-500 text-sm">{currentIdx + 1} / {filtered.length}</span>
-              <Button
-                variant="outline"
-                className="border-slate-600 text-slate-300"
-                disabled={currentIdx >= filtered.length - 1}
-                onClick={() => setCurrentIdx(i => i + 1)}
-              >
-                Next <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+            {/* ── PROOF SECTION ─────────────────────────────────── */}
+            {hasProof && (
+              <div className="space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" /> Proof
+                </p>
 
-      {/* Proof Drawer */}
-      {proofOpen && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-[#0f1629] border-l border-[#1e2a45] flex flex-col z-40 shadow-2xl">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2a45]">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-red-400" />
-              <span className="text-sm font-semibold text-white">Proof Panel</span>
-            </div>
-            <button onClick={() => setProofOpen(false)} className="text-slate-500 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <Tabs defaultValue="trialpoints" className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="bg-transparent border-b border-[#1e2a45] rounded-none px-2 flex-shrink-0">
-              <TabsTrigger value="trialpoints" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-400 text-slate-500 text-xs">
-                <Target className="w-3 h-3 mr-1" /> Points ({proofData.trialPoints.length})
-              </TabsTrigger>
-              <TabsTrigger value="exhibits" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-400 text-slate-500 text-xs">
-                <BookOpen className="w-3 h-3 mr-1" /> Exhibits ({proofData.exhibits.length})
-              </TabsTrigger>
-              <TabsTrigger value="clips" className="data-[state=active]:bg-cyan-600/20 data-[state=active]:text-cyan-400 text-slate-500 text-xs">
-                <FileText className="w-3 h-3 mr-1" /> Clips ({proofData.clips.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="trialpoints" className="flex-1 overflow-y-auto p-3 space-y-2 mt-0">
-              {proofData.trialPoints.length === 0 && <p className="text-slate-500 text-xs text-center py-6">No trial points linked.</p>}
-              {proofData.trialPoints.map(tp => (
-                <div key={tp.id} className="bg-[#131a2e] border border-[#1e2a45] rounded p-3">
-                  <p className="text-sm text-slate-200">{tp.point_text}</p>
-                  <div className="flex gap-1 mt-1">
-                    <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">{tp.status}</Badge>
-                    {tp.theme && <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">{tp.theme}</Badge>}
-                  </div>
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="exhibits" className="flex-1 overflow-y-auto p-3 space-y-2 mt-0">
-              {proofData.exhibits.length === 0 && <p className="text-slate-500 text-xs text-center py-6">No exhibits found.</p>}
-              {proofData.exhibits.map(je => {
-                const depo = getDepoInfo(je);
-                return (
-                  <div key={je.id} className="bg-[#131a2e] border border-[#1e2a45] rounded p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-bold text-cyan-300">Exh. {je.marked_no}</p>
-                        <p className="text-sm text-slate-200">{je.marked_title}</p>
-                        {je.pages && <p className="text-[10px] text-slate-500">Pg: {je.pages}</p>}
-                        {depo && (
-                          <p className="text-[10px] text-slate-500 mt-0.5">
-                            {depo.depo_exhibit_no && `[${depo.depo_exhibit_no}] `}{depo.deponent_name}
-                          </p>
-                        )}
-                      </div>
-                      <a href={createPageUrl("JointExhibits")} className="text-slate-500 hover:text-cyan-400 flex-shrink-0">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                {/* Trial Points */}
+                {proofData.tps.length > 0 && (
+                  <div className="bg-[#0f1629] border border-[#1e2a45] rounded-xl overflow-hidden">
+                    <div className="px-4 py-2 border-b border-[#1e2a45] flex items-center gap-2">
+                      <Target className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Trial Points</span>
+                    </div>
+                    <div className="divide-y divide-[#1e2a45]">
+                      {proofData.tps.map(tp => (
+                        <div key={tp.id} className="flex items-start justify-between px-4 py-3 gap-3">
+                          <div className="flex-1">
+                            <p className="text-sm text-slate-200">{tp.point_text}</p>
+                            <div className="flex gap-1 mt-1">
+                              <Badge variant="outline" className="text-[9px] text-slate-500 border-slate-700">{tp.status}</Badge>
+                              {tp.theme && <Badge variant="outline" className="text-[9px] text-slate-500 border-slate-700">{tp.theme}</Badge>}
+                              {tp.priority && <Badge variant="outline" className="text-[9px] text-slate-500 border-slate-700">{tp.priority}</Badge>}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setDetailModal({ type: "tp", data: tp })}
+                            className="text-slate-600 hover:text-cyan-400 flex-shrink-0 mt-0.5"
+                            title="View detail"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                );
-              })}
-            </TabsContent>
+                )}
 
-            <TabsContent value="clips" className="flex-1 overflow-y-auto p-3 space-y-2 mt-0">
-              {proofData.clips.length === 0 && <p className="text-slate-500 text-xs text-center py-6">No depo clips found.</p>}
-              {proofData.clips.map(c => (
-                <div key={c.id} className="bg-[#131a2e] border border-[#1e2a45] rounded p-3">
-                  {c.topic_tag && <p className="text-xs text-cyan-400 font-medium mb-1">{c.topic_tag}</p>}
-                  <p className="text-sm text-slate-200 leading-relaxed">{c.clip_text}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    {c.start_cite && (
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {c.start_cite}{c.end_cite ? ` – ${c.end_cite}` : ""}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => navigator.clipboard?.writeText(c.clip_text)}
-                      className="text-slate-500 hover:text-cyan-400 ml-auto"
-                      title="Copy text"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
+                {/* Exhibits */}
+                {proofData.exhibits.length > 0 && (
+                  <div className="bg-[#0f1629] border border-[#1e2a45] rounded-xl overflow-hidden">
+                    <div className="px-4 py-2 border-b border-[#1e2a45] flex items-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Exhibits</span>
+                    </div>
+                    <div className="divide-y divide-[#1e2a45]">
+                      {proofData.exhibits.map(je => {
+                        const depo = getDepoExhibitInfo(je);
+                        return (
+                          <div key={je.id} className="flex items-start justify-between px-4 py-3 gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-xs font-bold text-amber-300">Exh. {je.marked_no}</span>
+                                <span className="text-sm text-slate-200">{je.marked_title}</span>
+                              </div>
+                              {je.pages && (
+                                <p className="text-[10px] text-slate-400 mt-0.5">Pages: {je.pages}</p>
+                              )}
+                              {je.notes && (
+                                <p className="text-[10px] text-slate-500 mt-0.5 italic">{je.notes}</p>
+                              )}
+                              {depo && (
+                                <p className="text-[10px] text-slate-500 mt-0.5">
+                                  {depo.depo_exhibit_no && `Depo Exh. ${depo.depo_exhibit_no} · `}
+                                  {depo.deponent_name || ""}
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => setDetailModal({ type: "exhibit", data: je, depo })}
+                              className="text-slate-600 hover:text-amber-400 flex-shrink-0 mt-0.5"
+                              title="View detail"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </TabsContent>
-          </Tabs>
+                )}
+
+                {/* Depo Clips */}
+                {proofData.clips.length > 0 && (
+                  <div className="bg-[#0f1629] border border-[#1e2a45] rounded-xl overflow-hidden">
+                    <div className="px-4 py-2 border-b border-[#1e2a45] flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-violet-400" />
+                      <span className="text-xs font-semibold text-violet-400 uppercase tracking-wider">
+                        Depo Clips {current.party_id ? `(${getPartyName(current.party_id)})` : ""}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-[#1e2a45]">
+                      {proofData.clips.map(c => (
+                        <div key={c.id} className="px-4 py-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              {c.topic_tag && (
+                                <p className="text-[10px] text-violet-400 font-medium mb-1">{c.topic_tag}</p>
+                              )}
+                              {c.start_cite && (
+                                <p className="text-[10px] font-mono text-slate-500 mb-1">
+                                  {c.start_cite}{c.end_cite ? ` – ${c.end_cite}` : ""}
+                                  {c.deposition_id && getDepositionName(c.deposition_id) ? ` · ${getDepositionName(c.deposition_id)}` : ""}
+                                </p>
+                              )}
+                              <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line">{c.clip_text}</p>
+                            </div>
+                            <div className="flex flex-col gap-1 flex-shrink-0">
+                              <button
+                                onClick={() => navigator.clipboard?.writeText(c.clip_text)}
+                                className="text-slate-600 hover:text-violet-400"
+                                title="Copy"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setDetailModal({ type: "clip", data: c })}
+                                className="text-slate-600 hover:text-violet-400"
+                                title="View detail"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* No proof */}
+            {!hasProof && (
+              <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 text-center">
+                <p className="text-xs text-slate-600">No trial points linked to this question.</p>
+                <a
+                  href={`${createPageUrl("QuestionDetail")}?id=${current.id}`}
+                  className="inline-flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-400 mt-1"
+                >
+                  <Link2 className="w-3 h-3" /> Link Trial Points
+                </a>
+              </div>
+            )}
+
+          </div>
         </div>
       )}
+
+      {/* ── Detail Modal ─────────────────────────────────────────── */}
+      <Dialog open={!!detailModal} onOpenChange={() => setDetailModal(null)}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg">
+          {detailModal?.type === "tp" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-cyan-400 flex items-center gap-2">
+                  <Target className="w-4 h-4" /> Trial Point
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-base text-white">{detailModal.data.point_text}</p>
+                <div className="flex flex-wrap gap-2">
+                  {detailModal.data.status && <Badge variant="outline" className="text-slate-400 border-slate-600">{detailModal.data.status}</Badge>}
+                  {detailModal.data.theme && <Badge variant="outline" className="text-slate-400 border-slate-600">{detailModal.data.theme}</Badge>}
+                  {detailModal.data.priority && <Badge variant="outline" className="text-slate-400 border-slate-600">{detailModal.data.priority}</Badge>}
+                </div>
+                {detailModal.data.notes && <p className="text-sm text-slate-400 italic">{detailModal.data.notes}</p>}
+              </div>
+            </>
+          )}
+          {detailModal?.type === "exhibit" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-amber-400 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" /> Exhibit {detailModal.data.marked_no}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-base text-white">{detailModal.data.marked_title}</p>
+                {detailModal.data.pages && <p className="text-sm text-slate-400">Pages: {detailModal.data.pages}</p>}
+                {detailModal.data.notes && <p className="text-sm text-slate-400 italic">{detailModal.data.notes}</p>}
+                {detailModal.depo && (
+                  <div className="bg-[#0f1629] rounded p-3 text-xs text-slate-400 space-y-0.5">
+                    {detailModal.depo.depo_exhibit_no && <p>Depo Exh. #{detailModal.depo.depo_exhibit_no}</p>}
+                    {detailModal.depo.deponent_name && <p>Deponent: {detailModal.depo.deponent_name}</p>}
+                    {detailModal.depo.referenced_page && <p>Referenced Page: {detailModal.depo.referenced_page}</p>}
+                    {detailModal.depo.notes && <p className="italic">{detailModal.depo.notes}</p>}
+                  </div>
+                )}
+                {detailModal.data.status && (
+                  <Badge variant="outline" className="text-slate-400 border-slate-600">{detailModal.data.status}</Badge>
+                )}
+              </div>
+            </>
+          )}
+          {detailModal?.type === "clip" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-violet-400 flex items-center gap-2">
+                  <FileText className="w-4 h-4" /> Depo Clip
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                {detailModal.data.topic_tag && <p className="text-xs text-violet-400 font-medium">{detailModal.data.topic_tag}</p>}
+                {detailModal.data.start_cite && (
+                  <p className="text-xs font-mono text-slate-500">
+                    {detailModal.data.start_cite}{detailModal.data.end_cite ? ` – ${detailModal.data.end_cite}` : ""}
+                    {detailModal.data.deposition_id && getDepositionName(detailModal.data.deposition_id)
+                      ? ` · ${getDepositionName(detailModal.data.deposition_id)}` : ""}
+                  </p>
+                )}
+                <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line">{detailModal.data.clip_text}</p>
+                {detailModal.data.notes && <p className="text-xs text-slate-500 italic">{detailModal.data.notes}</p>}
+                <div className="flex gap-2">
+                  {detailModal.data.direction && (
+                    <Badge className={detailModal.data.direction === "HelpsUs" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
+                      {detailModal.data.direction}
+                    </Badge>
+                  )}
+                  {detailModal.data.impeachment_ready && (
+                    <Badge className="bg-amber-500/20 text-amber-400">Impeachment Ready</Badge>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
