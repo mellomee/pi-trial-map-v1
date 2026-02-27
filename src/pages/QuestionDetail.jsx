@@ -329,6 +329,7 @@ export default function QuestionDetail() {
         </TabsContent>
       </Tabs>
 
+      {/* (old Tabs closed above, branches tab added) */}
       {/* Link Trial Point Modal */}
       <Dialog open={linkModalOpen} onOpenChange={() => { setLinkModalOpen(false); setSearch(""); }}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-h-[75vh] flex flex-col">
