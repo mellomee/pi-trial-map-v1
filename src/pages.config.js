@@ -50,6 +50,7 @@
 import AdmittedExhibits from './pages/AdmittedExhibits';
 import BattleCards from './pages/BattleCards';
 import Dashboard from './pages/Dashboard';
+import DepoClips from './pages/DepoClips';
 import DepositionExhibits from './pages/DepositionExhibits';
 import ExhibitDetail from './pages/ExhibitDetail';
 import Exhibits from './pages/Exhibits';
@@ -71,7 +72,6 @@ import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
-import DepoClips from './pages/DepoClips';
 import __Layout from './Layout.jsx';
 
 
@@ -79,6 +79,7 @@ export const PAGES = {
     "AdmittedExhibits": AdmittedExhibits,
     "BattleCards": BattleCards,
     "Dashboard": Dashboard,
+    "DepoClips": DepoClips,
     "DepositionExhibits": DepositionExhibits,
     "ExhibitDetail": ExhibitDetail,
     "Exhibits": Exhibits,
@@ -100,7 +101,6 @@ export const PAGES = {
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
-    "DepoClips": DepoClips,
 }
 
 export const pagesConfig = {
