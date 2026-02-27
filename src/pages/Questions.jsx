@@ -14,7 +14,7 @@ import { Plus, Pencil, Trash2, Search, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-const EMPTY = { party_id: "", exam_type: "Direct", order_index: 0, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "", importance: "Med", ask_if_time: true, is_branch_root: false, branch_prompt: "" };
+const EMPTY = { party_id: "", exam_type: "Direct", order_index: 0, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "" };
 
 export default function Questions() {
   const { activeCase } = useActiveCase();
@@ -107,10 +107,6 @@ export default function Questions() {
                   <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
                   <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
                   <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
-                  {q.importance && q.importance !== "Med" && (
-                    <Badge className={q.importance === "High" ? "bg-red-500/20 text-red-400" : "bg-slate-600/20 text-slate-500"}>{q.importance}</Badge>
-                  )}
-                  {q.is_branch_root && <Badge className="bg-violet-500/20 text-violet-400">Branch Root</Badge>}
                 </div>
                 {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
               </div>
@@ -170,32 +166,6 @@ export default function Questions() {
                 <Label className="text-xs text-slate-400">Admission Obtained</Label>
               </div>
               <div><Label className="text-slate-400 text-xs">Live Notes</Label><Textarea value={editing.live_notes || ""} onChange={e => setEditing({ ...editing, live_notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-slate-400 text-xs">Importance</Label>
-                  <Select value={editing.importance || "Med"} onValueChange={v => setEditing({ ...editing, importance: v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Med">Med</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex flex-col gap-2 justify-end">
-                  <div className="flex items-center gap-2">
-                    <Switch checked={editing.ask_if_time !== false} onCheckedChange={v => setEditing({ ...editing, ask_if_time: v })} />
-                    <Label className="text-xs text-slate-400">Ask if time</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={editing.is_branch_root || false} onCheckedChange={v => setEditing({ ...editing, is_branch_root: v })} />
-                    <Label className="text-xs text-slate-400">Branch root</Label>
-                  </div>
-                </div>
-              </div>
-              {editing.is_branch_root && (
-                <div><Label className="text-slate-400 text-xs">Branch Prompt</Label><Input value={editing.branch_prompt || ""} onChange={e => setEditing({ ...editing, branch_prompt: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. If they deny, go to impeachment branch" /></div>
-              )}
             </div>
           )}
           <DialogFooter>

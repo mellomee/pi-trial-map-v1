@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Target, FileText, BookOpen, Link2, ExternalLink, Copy,
-  ChevronLeft, ChevronRight, AlertTriangle, GitBranch
+  ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, SkipForward, MessageSquare
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
@@ -42,9 +42,6 @@ export default function TrialRunner() {
   const [depoExhibits, setDepoExhibits] = useState([]);
   const [depoClips, setDepoClips] = useState([]);
   const [depositions, setDepositions] = useState([]);
-  const [questionBranches, setQuestionBranches] = useState([]);
-  const [witnessSignal, setWitnessSignal] = useState(null); // WITNESS_DENIES | WITNESS_CANT_RECALL | WITNESS_BLAMES_OTHER
-  const [branchSuggestion, setBranchSuggestion] = useState(null); // { branch, question }
 
   const [detailModal, setDetailModal] = useState(null); // { type: 'tp'|'exhibit'|'clip', data: ... }
 
@@ -61,8 +58,7 @@ export default function TrialRunner() {
       base44.entities.DepositionExhibits.filter({ case_id: cid }),
       base44.entities.DepoClips.filter({ case_id: cid }),
       base44.entities.Depositions.filter({ case_id: cid }),
-      base44.entities.QuestionBranches.filter({ case_id: cid }),
-    ]).then(([p, q, ql, tp, tpl, je, de, dc, deps, qb]) => {
+    ]).then(([p, q, ql, tp, tpl, je, de, dc, deps]) => {
       setParties(p);
       const sorted = q.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
       setQuestions(sorted);
@@ -74,7 +70,6 @@ export default function TrialRunner() {
       setDepoExhibits(de);
       setDepoClips(dc);
       setDepositions(deps);
-      setQuestionBranches(qb);
     });
   }, [activeCase]);
 
@@ -86,58 +81,10 @@ export default function TrialRunner() {
   const current = filtered.find(q => q.id === selectedId) || filtered[0] || null;
   const currentIdx = filtered.findIndex(q => q.id === current?.id);
 
-  // Reset branch suggestion when question changes
-  useEffect(() => { setBranchSuggestion(null); setWitnessSignal(null); }, [selectedId]);
-
   const updateQuestion = async (field, value) => {
     if (!current) return;
-    const updated = { [field]: value };
-    await base44.entities.Questions.update(current.id, updated);
-    setQuestions(prev => prev.map(x => x.id === current.id ? { ...x, ...updated } : x));
-    // recompute branch suggestion when quality/admission changes
-    if (field === "answer_quality" || field === "admission_obtained") {
-      computeBranchSuggestion(
-        current.id,
-        field === "answer_quality" ? value : current.answer_quality,
-        field === "admission_obtained" ? value : current.admission_obtained,
-        witnessSignal
-      );
-    }
-  };
-
-  const computeBranchSuggestion = (questionId, quality, admission, wSignal) => {
-    const branches = questionBranches.filter(b => b.from_question_id === questionId);
-    if (branches.length === 0) { setBranchSuggestion(null); return; }
-
-    const sorted = [...branches].sort((a, b) => (a.priority || 1) - (b.priority || 1));
-
-    // Build candidate match keys in priority order
-    const candidates = [];
-    if (wSignal) candidates.push(wSignal);
-    if (admission) candidates.push("ADMISSION_YES");
-    else candidates.push("ADMISSION_NO");
-    if (quality === "GreatAdmission") candidates.push("ANSWER_GREAT");
-    else if (quality === "Harmful") candidates.push("ANSWER_HARMFUL");
-    else if (quality === "Unexpected") candidates.push("ANSWER_UNEXPECTED");
-    else if (quality === "AsExpected") candidates.push("ANSWER_EXPECTED");
-
-    let best = null;
-    for (const key of candidates) {
-      best = sorted.find(b => b.condition_type === key);
-      if (best) break;
-    }
-    if (!best) best = sorted[0]; // fallback: first rule
-
-    const nextQ = filtered.find(q => q.id === best.to_question_id) ||
-      questions.find(q => q.id === best.to_question_id);
-    setBranchSuggestion(best && nextQ ? { branch: best, question: nextQ } : null);
-  };
-
-  const handleWitnessSignal = (signal) => {
-    setWitnessSignal(prev => prev === signal ? null : signal);
-    const q = current;
-    if (!q) return;
-    computeBranchSuggestion(q.id, q.answer_quality, q.admission_obtained, witnessSignal === signal ? null : signal);
+    await base44.entities.Questions.update(current.id, { [field]: value });
+    setQuestions(prev => prev.map(x => x.id === current.id ? { ...x, [field]: value } : x));
   };
 
   const getPartyName = (pid) => {
@@ -340,28 +287,6 @@ export default function TrialRunner() {
               )}
             </div>
 
-            {/* Witness behavior quick signals */}
-            <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-3">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Witness Behavior</p>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  { key: "WITNESS_DENIES", label: "Denies", color: "bg-red-500/20 text-red-400 border-red-600/40" },
-                  { key: "WITNESS_CANT_RECALL", label: "Can't Recall", color: "bg-amber-500/20 text-amber-400 border-amber-600/40" },
-                  { key: "WITNESS_BLAMES_OTHER", label: "Blames Other", color: "bg-orange-500/20 text-orange-400 border-orange-600/40" },
-                ].map(opt => (
-                  <button
-                    key={opt.key}
-                    onClick={() => handleWitnessSignal(opt.key)}
-                    className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
-                      witnessSignal === opt.key ? opt.color : "bg-[#0f1629] border-[#1e2a45] text-slate-500 hover:border-slate-500"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Status + Quality + Admission row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
@@ -549,37 +474,6 @@ export default function TrialRunner() {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Branch Suggestion */}
-            {branchSuggestion && (
-              <div className="bg-violet-950/40 border border-violet-700/50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <GitBranch className="w-4 h-4 text-violet-400" />
-                  <span className="text-xs font-semibold text-violet-300 uppercase tracking-wider">Suggested Next Question</span>
-                </div>
-                <p className="text-sm text-slate-200 mb-3">{branchSuggestion.question.question_text}</p>
-                {branchSuggestion.question.goal && (
-                  <p className="text-xs text-slate-500 mb-3">🎯 {branchSuggestion.question.goal}</p>
-                )}
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    size="sm"
-                    className="bg-violet-600 hover:bg-violet-700 text-white h-7 text-xs"
-                    onClick={() => { setSelectedId(branchSuggestion.question.id); setBranchSuggestion(null); setWitnessSignal(null); }}
-                  >
-                    Go to Suggested
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-violet-700 text-violet-400 h-7 text-xs hover:bg-violet-500/10"
-                    onClick={() => { setBranchSuggestion(null); setWitnessSignal(null); }}
-                  >
-                    Ignore
-                  </Button>
-                </div>
               </div>
             )}
 

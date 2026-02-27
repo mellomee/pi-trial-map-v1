@@ -6,9 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight, GitBranch } from "lucide-react";
+import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight } from "lucide-react";
 import { createPageUrl } from "@/utils";
-import BranchBuilder from "@/components/questions/BranchBuilder";
 
 function TPNode({ tp, depth, getChildren, filteredIds, linkedTpIds, onLink, searching }) {
   const children = getChildren(tp.id);
@@ -64,14 +63,13 @@ export default function QuestionDetail() {
   const [jointExhibits, setJointExhibits] = useState([]);
   const [depoExhibits, setDepoExhibits] = useState([]);
   const [depoClips, setDepoClips] = useState([]);
-  const [allQuestions, setAllQuestions] = useState([]);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
 
   const load = async () => {
     if (!questionId || !activeCase) return;
-    const [qs, pts, ql, jts, de, dc, pa, cats, allQs] = await Promise.all([
+    const [qs, pts, ql, jts, de, dc, pa, cats] = await Promise.all([
       base44.entities.Questions.filter({ id: questionId }),
       base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
       base44.entities.QuestionLinks.filter({ question_id: questionId, link_type: "TrialPoint" }),
@@ -80,7 +78,6 @@ export default function QuestionDetail() {
       base44.entities.DepoClips.filter({ case_id: activeCase.id }),
       base44.entities.Parties.filter({ case_id: activeCase.id }),
       base44.entities.TrialPointCategories.filter({ case_id: activeCase.id }),
-      base44.entities.Questions.filter({ case_id: activeCase.id }),
     ]);
     setQuestion(qs[0] || null);
     setTrialPoints(pts);
@@ -90,7 +87,6 @@ export default function QuestionDetail() {
     setDepoClips(dc);
     setParties(pa);
     setCategories(cats);
-    setAllQuestions(allQs);
 
     // Load TrialPointLinks for all linked trial points
     const linkedTpIds = ql.map(l => l.link_id);
@@ -229,9 +225,6 @@ export default function QuestionDetail() {
           <TabsTrigger value="clips" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-slate-400">
             <FileText className="w-3.5 h-3.5 mr-1.5" /> Proof — Clips ({linkedDepoClips.length})
           </TabsTrigger>
-          <TabsTrigger value="branches" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400">
-            <GitBranch className="w-3.5 h-3.5 mr-1.5" /> Branches
-          </TabsTrigger>
         </TabsList>
 
         {/* Trial Points */}
@@ -321,13 +314,9 @@ export default function QuestionDetail() {
             ))}
           </div>
         </TabsContent>
-
-        {/* Branches */}
-        <TabsContent value="branches">
-          <BranchBuilder question={question} caseId={activeCase.id} allQuestions={allQuestions} />
-        </TabsContent>
       </Tabs>
 
+      {/* Link Trial Point Modal */}
       <Dialog open={linkModalOpen} onOpenChange={() => { setLinkModalOpen(false); setSearch(""); }}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-h-[75vh] flex flex-col">
           <DialogHeader>
