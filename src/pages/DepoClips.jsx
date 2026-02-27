@@ -26,12 +26,15 @@ export default function DepoClips() {
   const [parties, setParties] = useState([]);
   const [videoLinkCounts, setVideoLinkCounts] = useState({});
   const [segCounts, setSegCounts] = useState({});
+  const [jointExhibits, setJointExhibits] = useState([]);
   const [search, setSearch] = useState("");
   const [filterDepo, setFilterDepo] = useState("all");
   const [filterDirection, setFilterDirection] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
   const [editClip, setEditClip] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [linkExhibitClip, setLinkExhibitClip] = useState(null); // clip to link exhibit to
+  const [exhibitSearch, setExhibitSearch] = useState("");
 
   useEffect(() => {
     if (!activeCase) return;
