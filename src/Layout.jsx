@@ -20,6 +20,7 @@ const NAV_SECTIONS = [
 
 
       { name: "Battle Cards", icon: Swords, page: "BattleCards" },
+      { name: "Video", icon: Video, page: "VideoHub" },
       { name: "Transcripts", icon: FileText, page: "Transcripts" },
     ],
   },
