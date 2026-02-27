@@ -362,7 +362,9 @@ export default function PresentationMode() {
     ? (segMap[currentItem.depo_clip_id] || []).sort((a, b) => (a.segment_order || 0) - (b.segment_order || 0))
     : [];
   const currentLinks = currentItem ? (linkMap[currentItem.depo_clip_id] || []) : [];
-  const currentExhibit = currentItem ? (exhibitMap[currentItem.depo_clip_id] || null) : null;
+  const currentExhibitData = currentItem ? (exhibitMap[currentItem.depo_clip_id] || null) : null;
+  const currentExhibit = currentExhibitData?.joint || null;
+  const currentExhibitFileUrl = currentExhibitData?.fileUrl || null;
 
   const clipMeta = {};
   items.forEach(item => {
