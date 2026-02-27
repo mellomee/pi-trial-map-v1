@@ -74,6 +74,7 @@ export default function TrialRunner() {
       setDepoExhibits(de);
       setDepoClips(dc);
       setDepositions(deps);
+      setQuestionBranches(qb);
     });
   }, [activeCase]);
 
