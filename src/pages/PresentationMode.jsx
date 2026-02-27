@@ -5,6 +5,7 @@ import {
   Maximize2, PanelLeftClose, PanelLeftOpen, Check, Film, FileText, ChevronDown
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
 
 // ── Video Player ──────────────────────────────────────────────
 function VideoPlayer({ videoLinks, videoClips }) {
