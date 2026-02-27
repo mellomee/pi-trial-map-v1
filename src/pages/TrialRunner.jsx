@@ -549,6 +549,37 @@ export default function TrialRunner() {
               </div>
             )}
 
+            {/* Branch Suggestion */}
+            {branchSuggestion && (
+              <div className="bg-violet-950/40 border border-violet-700/50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <GitBranch className="w-4 h-4 text-violet-400" />
+                  <span className="text-xs font-semibold text-violet-300 uppercase tracking-wider">Suggested Next Question</span>
+                </div>
+                <p className="text-sm text-slate-200 mb-3">{branchSuggestion.question.question_text}</p>
+                {branchSuggestion.question.goal && (
+                  <p className="text-xs text-slate-500 mb-3">🎯 {branchSuggestion.question.goal}</p>
+                )}
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    className="bg-violet-600 hover:bg-violet-700 text-white h-7 text-xs"
+                    onClick={() => { setSelectedId(branchSuggestion.question.id); setBranchSuggestion(null); setWitnessSignal(null); }}
+                  >
+                    Go to Suggested
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-violet-700 text-violet-400 h-7 text-xs hover:bg-violet-500/10"
+                    onClick={() => { setBranchSuggestion(null); setWitnessSignal(null); }}
+                  >
+                    Ignore
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* No proof */}
             {!hasProof && (
               <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 text-center">
