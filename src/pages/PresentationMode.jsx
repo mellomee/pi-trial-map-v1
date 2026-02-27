@@ -181,18 +181,6 @@ function TranscriptPane({ depoClip, segments }) {
 
   return (
     <div className="h-full overflow-y-auto px-6 py-4 space-y-4">
-      <div className="flex items-center gap-3 pb-2 border-b border-[#1e2a45]">
-        <FileText className="w-4 h-4 text-violet-400" />
-        <div>
-          <p className="text-sm font-semibold text-white">
-            {depoClip.clip_title || depoClip.topic_tag || depoClip.start_cite}
-          </p>
-          <p className="text-[10px] text-slate-500">
-            {depoClip.start_cite}{depoClip.end_cite ? ` – ${depoClip.end_cite}` : ""}
-          </p>
-        </div>
-      </div>
-
       {segments.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-slate-600 text-sm">No transcript segments defined.</p>
