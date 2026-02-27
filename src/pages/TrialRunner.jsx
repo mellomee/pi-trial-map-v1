@@ -374,23 +374,79 @@ export default function TrialRunner() {
                 </div>
               </div>
 
-              <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Answer Quality</p>
-                <div className="flex gap-2 flex-wrap">
-                  {QUALITY_OPTS.map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => updateQuestion("answer_quality", current.answer_quality === opt.value ? null : opt.value)}
-                      className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
-                        current.answer_quality === opt.value ? opt.color : "bg-[#0f1629] border-[#1e2a45] text-slate-500 hover:border-slate-500"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 space-y-3">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Answer Quality</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {QUALITY_OPTS.map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => updateQuestion("answer_quality", current.answer_quality === opt.value ? null : opt.value)}
+                        className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+                          current.answer_quality === opt.value ? opt.color : "bg-[#0f1629] border-[#1e2a45] text-slate-500 hover:border-slate-500"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Witness Behavior</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { key: "WITNESS_DENIES", label: "Denies", color: "bg-red-600/20 text-red-400 border-red-600/40" },
+                      { key: "WITNESS_CANT_RECALL", label: "Can't Recall", color: "bg-amber-600/20 text-amber-400 border-amber-600/40" },
+                      { key: "WITNESS_BLAMES_OTHER", label: "Blames Other", color: "bg-orange-600/20 text-orange-400 border-orange-600/40" },
+                    ].map(b => (
+                      <button
+                        key={b.key}
+                        onClick={() => applyWitnessMode(b.key)}
+                        className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+                          witnessMode === b.key ? b.color : "bg-[#0f1629] border-[#1e2a45] text-slate-500 hover:border-slate-500"
+                        }`}
+                      >
+                        {b.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Branch Suggestion Panel */}
+            {suggestedNext && (
+              <div className="bg-cyan-950/40 border border-cyan-700/50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <GitBranch className="w-4 h-4 text-cyan-400" />
+                  <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Suggested Next Question</span>
+                </div>
+                <p className="text-sm text-white mb-3 leading-snug">{suggestedNext.question.question_text}</p>
+                {suggestedNext.branch.condition_text && (
+                  <p className="text-[10px] text-cyan-600 italic mb-2">{suggestedNext.branch.condition_text}</p>
+                )}
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={jumpToSuggested}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-medium"
+                  >
+                    <Zap className="w-3 h-3" /> Go to Suggested
+                  </button>
+                  <button
+                    onClick={() => setSuggestedNext(null)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0f1629] border border-[#1e2a45] text-slate-400 hover:text-slate-200 text-xs"
+                  >
+                    Ignore
+                  </button>
+                  <button
+                    onClick={() => setDetailModal({ type: "branchList", currentQ: current })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0f1629] border border-[#1e2a45] text-slate-400 hover:text-slate-200 text-xs"
+                  >
+                    <ArrowRight className="w-3 h-3" /> All Branches
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Admission + Notes */}
             <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 flex flex-col gap-3">
