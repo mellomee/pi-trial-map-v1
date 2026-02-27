@@ -106,14 +106,14 @@ export default function DepoClips() {
             <p className="text-xs text-slate-500 mt-0.5">{filtered.length} of {clips.length} clips</p>
           </div>
           <div className="flex gap-2">
-            <a href={createPageUrl("Transcripts")}
+            <Link to={createPageUrl("Transcripts")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 border border-violet-600/40 text-xs">
               <Plus className="w-3.5 h-3.5" /> Create from Transcript
-            </a>
-            <a href={createPageUrl("VideoHub")}
+            </Link>
+            <Link to={createPageUrl("VideoHub")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 border border-cyan-600/40 text-xs">
               <Video className="w-3.5 h-3.5" /> Video Hub
-            </a>
+            </Link>
           </div>
         </div>
 
