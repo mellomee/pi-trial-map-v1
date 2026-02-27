@@ -92,6 +92,69 @@ export default function TrialRunner() {
     setQuestions(prev => prev.map(x => x.id === current.id ? { ...x, [field]: value } : x));
   };
 
+  // Branch evaluation
+  const evaluateBranch = (question, quality, admission, witnessBehavior) => {
+    if (!question) return null;
+    const fromBranches = branches
+      .filter(b => b.from_question_id === question.id && b.to_question_id)
+      .sort((a, b) => (a.priority || 1) - (b.priority || 1));
+    if (fromBranches.length === 0) return null;
+
+    // Build priority match keys
+    const candidates = [];
+    // Witness behavior takes priority if set
+    if (witnessBehavior) candidates.push(witnessBehavior);
+    if (admission) candidates.push("ADMISSION_YES");
+    else candidates.push("ADMISSION_NO");
+    if (quality === "GreatAdmission") candidates.push("ANSWER_GREAT");
+    else if (quality === "Harmful") candidates.push("ANSWER_HARMFUL");
+    else if (quality === "Unexpected") candidates.push("ANSWER_UNEXPECTED");
+    else if (quality === "AsExpected") candidates.push("ANSWER_EXPECTED");
+
+    for (const key of candidates) {
+      const match = fromBranches.find(b => b.condition_type === key && b.auto_jump !== false);
+      if (match) {
+        const nextQ = questions.find(q => q.id === match.to_question_id);
+        return nextQ ? { question: nextQ, branch: match } : null;
+      }
+    }
+    // fallback: first branch rule
+    const first = fromBranches[0];
+    const nextQ = questions.find(q => q.id === first.to_question_id);
+    return nextQ ? { question: nextQ, branch: first } : null;
+  };
+
+  const updateQuestion = async (field, value) => {
+    if (!current) return;
+    const updated = { ...current, [field]: value };
+    await base44.entities.Questions.update(current.id, { [field]: value });
+    setQuestions(prev => prev.map(x => x.id === current.id ? updated : x));
+    // Re-evaluate branch suggestion whenever quality/admission changes
+    if (field === "answer_quality" || field === "admission_obtained") {
+      const suggestion = evaluateBranch(
+        updated,
+        field === "answer_quality" ? value : updated.answer_quality,
+        field === "admission_obtained" ? value : updated.admission_obtained,
+        witnessMode
+      );
+      setSuggestedNext(suggestion);
+    }
+  };
+
+  const applyWitnessMode = (mode) => {
+    const next = witnessMode === mode ? null : mode;
+    setWitnessMode(next);
+    const suggestion = evaluateBranch(current, current?.answer_quality, current?.admission_obtained, next);
+    setSuggestedNext(suggestion);
+  };
+
+  const jumpToSuggested = () => {
+    if (!suggestedNext) return;
+    setSelectedId(suggestedNext.question.id);
+    setSuggestedNext(null);
+    setWitnessMode(null);
+  };
+
   const getPartyName = (pid) => {
     const p = parties.find(x => x.id === pid);
     return p ? (p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim()) : "";
