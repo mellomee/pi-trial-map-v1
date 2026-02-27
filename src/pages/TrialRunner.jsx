@@ -61,7 +61,8 @@ export default function TrialRunner() {
       base44.entities.DepositionExhibits.filter({ case_id: cid }),
       base44.entities.DepoClips.filter({ case_id: cid }),
       base44.entities.Depositions.filter({ case_id: cid }),
-    ]).then(([p, q, ql, tp, tpl, je, de, dc, deps]) => {
+      base44.entities.QuestionBranches.filter({ case_id: cid }),
+    ]).then(([p, q, ql, tp, tpl, je, de, dc, deps, br]) => {
       setParties(p);
       const sorted = q.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
       setQuestions(sorted);
