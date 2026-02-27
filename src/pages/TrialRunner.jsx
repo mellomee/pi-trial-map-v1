@@ -86,12 +86,6 @@ export default function TrialRunner() {
   const current = filtered.find(q => q.id === selectedId) || filtered[0] || null;
   const currentIdx = filtered.findIndex(q => q.id === current?.id);
 
-  const updateQuestion = async (field, value) => {
-    if (!current) return;
-    await base44.entities.Questions.update(current.id, { [field]: value });
-    setQuestions(prev => prev.map(x => x.id === current.id ? { ...x, [field]: value } : x));
-  };
-
   // Branch evaluation
   const evaluateBranch = (question, quality, admission, witnessBehavior) => {
     if (!question) return null;
