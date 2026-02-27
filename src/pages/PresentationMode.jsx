@@ -310,32 +310,28 @@ export default function PresentationMode() {
         ]);
         setDepositions(deps);
         setParties(parts);
+        setAllJointExhibits(joints);
 
         // Build exhibit map: depo_clip_id → { joint, fileUrl }
-        // JointExhibit file comes from primary_depo_exhibit_id → DepositionExhibit.file_url
         const jointById = {};
         joints.forEach(j => { jointById[j.id] = j; });
-        const depoExhibitById = {};
-        depoExhibits.forEach(de => { depoExhibitById[de.id] = de; });
+        const deb = {};
+        depoExhibits.forEach(de => { deb[de.id] = de; });
+        setDepoExhibitById(deb);
+
+        const resolveExhibit = (joint) => {
+          const primaryDepoExhibit = joint.primary_depo_exhibit_id ? deb[joint.primary_depo_exhibit_id] : null;
+          const fallbackDepoExhibit = (!primaryDepoExhibit && joint.source_depo_exhibit_ids?.length)
+            ? deb[joint.source_depo_exhibit_ids[0]] : null;
+          const resolvedExhibit = primaryDepoExhibit || fallbackDepoExhibit;
+          return { joint, fileUrl: resolvedExhibit?.file_url || resolvedExhibit?.external_link || null };
+        };
 
         const em = {};
         clips.forEach(c => {
           if (c.linked_joint_exhibit_id) {
             const joint = jointById[c.linked_joint_exhibit_id];
-            if (joint) {
-              const primaryDepoExhibit = joint.primary_depo_exhibit_id
-                ? depoExhibitById[joint.primary_depo_exhibit_id]
-                : null;
-              // fallback: check source_depo_exhibit_ids
-              const fallbackDepoExhibit = (!primaryDepoExhibit && joint.source_depo_exhibit_ids?.length)
-                ? depoExhibitById[joint.source_depo_exhibit_ids[0]]
-                : null;
-              const resolvedExhibit = primaryDepoExhibit || fallbackDepoExhibit;
-              em[c.id] = {
-                joint,
-                fileUrl: resolvedExhibit?.file_url || resolvedExhibit?.external_link || null,
-              };
-            }
+            if (joint) em[c.id] = resolveExhibit(joint);
           }
         });
         setExhibitMap(em);
