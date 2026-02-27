@@ -337,6 +337,28 @@ export default function TrialRunner() {
               )}
             </div>
 
+            {/* Witness behavior quick signals */}
+            <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-3">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Witness Behavior</p>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { key: "WITNESS_DENIES", label: "Denies", color: "bg-red-500/20 text-red-400 border-red-600/40" },
+                  { key: "WITNESS_CANT_RECALL", label: "Can't Recall", color: "bg-amber-500/20 text-amber-400 border-amber-600/40" },
+                  { key: "WITNESS_BLAMES_OTHER", label: "Blames Other", color: "bg-orange-500/20 text-orange-400 border-orange-600/40" },
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => handleWitnessSignal(opt.key)}
+                    className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+                      witnessSignal === opt.key ? opt.color : "bg-[#0f1629] border-[#1e2a45] text-slate-500 hover:border-slate-500"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Status + Quality + Admission row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
