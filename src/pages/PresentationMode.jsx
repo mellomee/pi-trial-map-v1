@@ -264,6 +264,12 @@ export default function PresentationMode() {
   const [depositions, setDepositions] = useState([]);
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [allJointExhibits, setAllJointExhibits] = useState([]);
+  const [depoExhibitById, setDepoExhibitById] = useState({});
+  // Per-clip exhibit override: depo_clip_id → { joint, fileUrl } | null
+  const [exhibitOverrides, setExhibitOverrides] = useState({});
+  const [showExhibitPane, setShowExhibitPane] = useState(true);
+  const [exhibitPickerOpen, setExhibitPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!playlistId) return;
