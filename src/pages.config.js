@@ -59,14 +59,15 @@ import JointExhibitPrint from './pages/JointExhibitPrint';
 import JointExhibits from './pages/JointExhibits';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
+import QuestionDetail from './pages/QuestionDetail';
+import Questions from './pages/Questions';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
 import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
-import Questions from './pages/Questions';
 import TrialRunner from './pages/TrialRunner';
-import QuestionDetail from './pages/QuestionDetail';
+import VideoLibrary from './pages/VideoLibrary';
 import __Layout from './Layout.jsx';
 
 
@@ -83,14 +84,15 @@ export const PAGES = {
     "JointExhibits": JointExhibits,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
+    "QuestionDetail": QuestionDetail,
+    "Questions": Questions,
     "Runner": Runner,
     "SettingsPage": SettingsPage,
     "Transcripts": Transcripts,
     "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
-    "Questions": Questions,
     "TrialRunner": TrialRunner,
-    "QuestionDetail": QuestionDetail,
+    "VideoLibrary": VideoLibrary,
 }
 
 export const pagesConfig = {
