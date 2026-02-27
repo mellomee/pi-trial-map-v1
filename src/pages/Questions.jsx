@@ -166,6 +166,32 @@ export default function Questions() {
                 <Label className="text-xs text-slate-400">Admission Obtained</Label>
               </div>
               <div><Label className="text-slate-400 text-xs">Live Notes</Label><Textarea value={editing.live_notes || ""} onChange={e => setEditing({ ...editing, live_notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-slate-400 text-xs">Importance</Label>
+                  <Select value={editing.importance || "Med"} onValueChange={v => setEditing({ ...editing, importance: v })}>
+                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Med">Med</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-2 justify-end">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editing.ask_if_time !== false} onCheckedChange={v => setEditing({ ...editing, ask_if_time: v })} />
+                    <Label className="text-xs text-slate-400">Ask if time</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editing.is_branch_root || false} onCheckedChange={v => setEditing({ ...editing, is_branch_root: v })} />
+                    <Label className="text-xs text-slate-400">Branch root</Label>
+                  </div>
+                </div>
+              </div>
+              {editing.is_branch_root && (
+                <div><Label className="text-slate-400 text-xs">Branch Prompt</Label><Input value={editing.branch_prompt || ""} onChange={e => setEditing({ ...editing, branch_prompt: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. If they deny, go to impeachment branch" /></div>
+              )}
             </div>
           )}
           <DialogFooter>
