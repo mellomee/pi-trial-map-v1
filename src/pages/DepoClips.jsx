@@ -131,7 +131,7 @@ export default function DepoClips() {
             <SelectContent>
               <SelectItem value="all">All Deponents</SelectItem>
               {depositions.map(d => (
-                <SelectItem key={d.id} value={d.id}>{getDepoName(d.id ? d.id : d.party_id)}</SelectItem>
+                <SelectItem key={d.id} value={d.id}>{getDepoName(d.id)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
