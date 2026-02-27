@@ -10,6 +10,7 @@ import {
   ExternalLink, Check, X, Edit2
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
