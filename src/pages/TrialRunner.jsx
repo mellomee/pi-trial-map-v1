@@ -42,6 +42,9 @@ export default function TrialRunner() {
   const [depoExhibits, setDepoExhibits] = useState([]);
   const [depoClips, setDepoClips] = useState([]);
   const [depositions, setDepositions] = useState([]);
+  const [questionBranches, setQuestionBranches] = useState([]);
+  const [witnessSignal, setWitnessSignal] = useState(null); // WITNESS_DENIES | WITNESS_CANT_RECALL | WITNESS_BLAMES_OTHER
+  const [branchSuggestion, setBranchSuggestion] = useState(null); // { branch, question }
 
   const [detailModal, setDetailModal] = useState(null); // { type: 'tp'|'exhibit'|'clip', data: ... }
 
