@@ -14,7 +14,7 @@ import { Plus, Pencil, Trash2, Search, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-const EMPTY = { party_id: "", exam_type: "Direct", order_index: 0, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "" };
+const EMPTY = { party_id: "", exam_type: "Direct", order_index: 0, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "", importance: "Med", ask_if_time: true, is_branch_root: false, branch_prompt: "" };
 
 export default function Questions() {
   const { activeCase } = useActiveCase();
