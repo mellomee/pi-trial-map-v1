@@ -268,6 +268,59 @@ export default function DepoClips() {
         })}
       </div>
 
+      {/* Link Exhibit Dialog */}
+      <Dialog open={!!linkExhibitClip} onOpenChange={() => { setLinkExhibitClip(null); setExhibitSearch(""); }}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-amber-400 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" /> Link Exhibit to Clip
+            </DialogTitle>
+          </DialogHeader>
+          {linkExhibitClip && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-400">
+                Clip: <span className="text-slate-200">{linkExhibitClip.clip_title || linkExhibitClip.topic_tag || linkExhibitClip.start_cite}</span>
+              </p>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <Input value={exhibitSearch} onChange={e => setExhibitSearch(e.target.value)}
+                  placeholder="Search joint exhibits…"
+                  className="pl-8 bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs" />
+              </div>
+              {linkExhibitClip.linked_joint_exhibit_id && (
+                <button
+                  onClick={() => linkExhibit(linkExhibitClip, null)}
+                  className="w-full text-left px-3 py-2 rounded bg-red-900/20 border border-red-800/30 text-red-400 text-xs hover:bg-red-900/30 flex items-center gap-2">
+                  <X className="w-3.5 h-3.5" /> Remove linked exhibit
+                </button>
+              )}
+              <div className="max-h-64 overflow-y-auto divide-y divide-[#1e2a45] border border-[#1e2a45] rounded-lg">
+                {jointExhibits
+                  .filter(j => !exhibitSearch || (j.marked_no + " " + (j.marked_title || "")).toLowerCase().includes(exhibitSearch.toLowerCase()))
+                  .map(j => {
+                    const isLinked = linkExhibitClip.linked_joint_exhibit_id === j.id;
+                    return (
+                      <button key={j.id} onClick={() => linkExhibit(linkExhibitClip, j)}
+                        className={`w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors ${isLinked ? "bg-amber-600/10" : ""}`}>
+                        <div className="flex items-center gap-2">
+                          {isLinked && <Check className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                          <div>
+                            <span className="text-xs font-mono text-amber-300">{j.marked_no}</span>
+                            {j.marked_title && <span className="text-xs text-slate-300 ml-2">{j.marked_title}</span>}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                {jointExhibits.length === 0 && (
+                  <p className="text-xs text-slate-600 text-center py-4">No joint exhibits in this case.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog */}
       <Dialog open={!!editClip} onOpenChange={() => setEditClip(null)}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
