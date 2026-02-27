@@ -88,8 +88,53 @@ export default function TrialRunner() {
 
   const updateQuestion = async (field, value) => {
     if (!current) return;
-    await base44.entities.Questions.update(current.id, { [field]: value });
-    setQuestions(prev => prev.map(x => x.id === current.id ? { ...x, [field]: value } : x));
+    const updated = { [field]: value };
+    await base44.entities.Questions.update(current.id, updated);
+    setQuestions(prev => prev.map(x => x.id === current.id ? { ...x, ...updated } : x));
+    // recompute branch suggestion when quality/admission changes
+    if (field === "answer_quality" || field === "admission_obtained") {
+      computeBranchSuggestion(
+        current.id,
+        field === "answer_quality" ? value : current.answer_quality,
+        field === "admission_obtained" ? value : current.admission_obtained,
+        witnessSignal
+      );
+    }
+  };
+
+  const computeBranchSuggestion = (questionId, quality, admission, wSignal) => {
+    const branches = questionBranches.filter(b => b.from_question_id === questionId);
+    if (branches.length === 0) { setBranchSuggestion(null); return; }
+
+    const sorted = [...branches].sort((a, b) => (a.priority || 1) - (b.priority || 1));
+
+    // Build candidate match keys in priority order
+    const candidates = [];
+    if (wSignal) candidates.push(wSignal);
+    if (admission) candidates.push("ADMISSION_YES");
+    else candidates.push("ADMISSION_NO");
+    if (quality === "GreatAdmission") candidates.push("ANSWER_GREAT");
+    else if (quality === "Harmful") candidates.push("ANSWER_HARMFUL");
+    else if (quality === "Unexpected") candidates.push("ANSWER_UNEXPECTED");
+    else if (quality === "AsExpected") candidates.push("ANSWER_EXPECTED");
+
+    let best = null;
+    for (const key of candidates) {
+      best = sorted.find(b => b.condition_type === key);
+      if (best) break;
+    }
+    if (!best) best = sorted[0]; // fallback: first rule
+
+    const nextQ = filtered.find(q => q.id === best.to_question_id) ||
+      questions.find(q => q.id === best.to_question_id);
+    setBranchSuggestion(best && nextQ ? { branch: best, question: nextQ } : null);
+  };
+
+  const handleWitnessSignal = (signal) => {
+    setWitnessSignal(prev => prev === signal ? null : signal);
+    const q = current;
+    if (!q) return;
+    computeBranchSuggestion(q.id, q.answer_quality, q.admission_obtained, witnessSignal === signal ? null : signal);
   };
 
   const getPartyName = (pid) => {
