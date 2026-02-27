@@ -664,6 +664,51 @@ export default function TrialRunner() {
               </div>
             </>
           )}
+          {detailModal?.type === "branchList" && detailModal.currentQ && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-cyan-400 flex items-center gap-2">
+                  <GitBranch className="w-4 h-4" /> All Branch Rules
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2">
+                {branches
+                  .filter(b => b.from_question_id === detailModal.currentQ.id)
+                  .sort((a, b) => (a.priority || 1) - (b.priority || 1))
+                  .map(b => {
+                    const nextQ = questions.find(q => q.id === b.to_question_id);
+                    const COND_LABELS = {
+                      ANSWER_EXPECTED: "As Expected", ANSWER_UNEXPECTED: "Unexpected",
+                      ANSWER_HARMFUL: "Harmful", ANSWER_GREAT: "Great Admission",
+                      ADMISSION_YES: "Admission Yes", ADMISSION_NO: "Admission No",
+                      WITNESS_DENIES: "Witness Denies", WITNESS_CANT_RECALL: "Can't Recall",
+                      WITNESS_BLAMES_OTHER: "Blames Other", CUSTOM: "Custom",
+                    };
+                    return (
+                      <div key={b.id} className="bg-[#0f1629] border border-[#1e2a45] rounded p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] text-amber-400 font-medium">{COND_LABELS[b.condition_type] || b.condition_type}</span>
+                          <ArrowRight className="w-3 h-3 text-slate-600" />
+                          <span className="text-xs text-cyan-300">{nextQ?.question_text?.slice(0, 60) || "—"}</span>
+                        </div>
+                        {b.condition_text && <p className="text-[10px] text-slate-500 italic">{b.condition_text}</p>}
+                        {nextQ && (
+                          <button
+                            onClick={() => { setSelectedId(nextQ.id); setSuggestedNext(null); setDetailModal(null); }}
+                            className="mt-2 px-2 py-1 rounded bg-cyan-600/20 text-cyan-400 text-[10px] hover:bg-cyan-600/40"
+                          >
+                            Jump to this question
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                {branches.filter(b => b.from_question_id === detailModal.currentQ.id).length === 0 && (
+                  <p className="text-slate-500 text-xs text-center py-4">No branch rules set for this question.</p>
+                )}
+              </div>
+            </>
+          )}
           {detailModal?.type === "clip" && (
             <>
               <DialogHeader>
