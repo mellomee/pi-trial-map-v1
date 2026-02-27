@@ -445,7 +445,7 @@ export default function PresentationMode() {
           {/* Bottom ~35%: transcript + exhibit side-by-side */}
           <div style={{ flex: "0 0 35%" }} className="min-h-0 flex overflow-hidden bg-[#080d1a]">
             {/* Transcript */}
-            <div className={`flex flex-col border-r border-[#1e2a45] overflow-hidden ${showExhibitPane && currentExhibit ? "w-1/2" : "w-full"}`}>
+            <div className={`flex flex-col border-r border-[#1e2a45] overflow-hidden ${showExhibitPane ? "w-1/2" : "w-full"}`}>
               <div className="px-3 py-1.5 border-b border-[#1e2a45] flex-shrink-0 flex items-center gap-1">
                 <FileText className="w-3 h-3 text-violet-400" />
                 <span className="text-[10px] text-violet-400 uppercase tracking-wider font-medium">Transcript</span>
