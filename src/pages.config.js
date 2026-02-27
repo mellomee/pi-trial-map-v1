@@ -59,6 +59,7 @@ import JointExhibitPrint from './pages/JointExhibitPrint';
 import JointExhibits from './pages/JointExhibits';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
+import PresentationMode from './pages/PresentationMode';
 import QuestionDetail from './pages/QuestionDetail';
 import Questions from './pages/Questions';
 import Runner from './pages/Runner';
@@ -67,10 +68,10 @@ import Transcripts from './pages/Transcripts';
 import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
 import TrialRunner from './pages/TrialRunner';
-import VideoLibrary from './pages/VideoLibrary';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
-import PresentationMode from './pages/PresentationMode';
+import VideoLibrary from './pages/VideoLibrary';
+import DepoClips from './pages/DepoClips';
 import __Layout from './Layout.jsx';
 
 
@@ -87,6 +88,7 @@ export const PAGES = {
     "JointExhibits": JointExhibits,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
+    "PresentationMode": PresentationMode,
     "QuestionDetail": QuestionDetail,
     "Questions": Questions,
     "Runner": Runner,
@@ -95,10 +97,10 @@ export const PAGES = {
     "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
     "TrialRunner": TrialRunner,
-    "VideoLibrary": VideoLibrary,
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
-    "PresentationMode": PresentationMode,
+    "VideoLibrary": VideoLibrary,
+    "DepoClips": DepoClips,
 }
 
 export const pagesConfig = {
