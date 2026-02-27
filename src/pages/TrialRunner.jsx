@@ -86,6 +86,9 @@ export default function TrialRunner() {
   const current = filtered.find(q => q.id === selectedId) || filtered[0] || null;
   const currentIdx = filtered.findIndex(q => q.id === current?.id);
 
+  // Reset branch suggestion when question changes
+  useEffect(() => { setBranchSuggestion(null); setWitnessSignal(null); }, [selectedId]);
+
   const updateQuestion = async (field, value) => {
     if (!current) return;
     const updated = { [field]: value };
