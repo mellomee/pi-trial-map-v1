@@ -456,73 +456,24 @@ export default function PresentationMode() {
             </div>
 
             {/* Exhibit column */}
-            {showExhibitPane && currentExhibit ? (
-              <div className="w-1/2 flex flex-col overflow-hidden relative">
-                {/* Exhibit header with controls */}
-                <div className="px-3 py-1.5 border-b border-[#1e2a45] flex-shrink-0 flex items-center gap-2">
-                  <Image className="w-3 h-3 text-amber-400 flex-shrink-0" />
-                  {/* Exhibit picker dropdown */}
-                  <div className="relative flex-1 min-w-0">
-                    <button
-                      onClick={() => setExhibitPickerOpen(p => !p)}
-                      className="flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 font-medium uppercase tracking-wider max-w-full"
-                    >
-                      <span className="truncate">
-                        {currentExhibit.marked_no}
-                        {currentExhibit.marked_title ? ` – ${currentExhibit.marked_title}` : ""}
-                      </span>
-                      <ChevronDown className="w-3 h-3 flex-shrink-0" />
-                    </button>
-                    {exhibitPickerOpen && (
-                      <div className="absolute top-full left-0 z-50 w-72 bg-[#131a2e] border border-[#1e2a45] rounded-lg shadow-xl max-h-64 overflow-y-auto">
-                        <div className="px-2 py-1.5 border-b border-[#1e2a45] flex items-center justify-between">
-                          <span className="text-[10px] text-slate-500 uppercase tracking-wider">Select Exhibit</span>
-                          <button onClick={() => setExhibitPickerOpen(false)} className="text-slate-600 hover:text-white">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        {/* Default / linked exhibit */}
-                        {exhibitMap[overrideKey] && (
-                          <button
-                            onClick={() => { clearExhibitOverride(); setExhibitPickerOpen(false); }}
-                            className="w-full text-left px-3 py-2 hover:bg-white/5 border-b border-[#1e2a45]"
-                          >
-                            <span className="text-[10px] text-cyan-400 block">Clip's linked exhibit</span>
-                            <span className="text-xs text-slate-300">{exhibitMap[overrideKey].joint.marked_no} – {exhibitMap[overrideKey].joint.marked_title}</span>
-                          </button>
-                        )}
-                        {allJointExhibits.map(j => {
-                          const isActive = currentExhibit?.id === j.id;
-                          return (
-                            <button key={j.id} onClick={() => selectExhibitOverride(j)}
-                              className={`w-full text-left px-3 py-2 hover:bg-white/5 ${isActive ? "bg-amber-600/10" : ""}`}>
-                              <span className="text-[10px] font-mono text-amber-400">{j.marked_no}</span>
-                              {j.marked_title && <span className="text-xs text-slate-300 ml-2">{j.marked_title}</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  {/* Hide exhibit pane */}
-                  <button onClick={() => setShowExhibitPane(false)}
-                    className="text-slate-600 hover:text-slate-300 flex-shrink-0" title="Hide exhibit">
-                    <EyeOff className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  <ExhibitPane exhibit={currentExhibit} fileUrl={currentExhibitFileUrl} />
-                </div>
+            {showExhibitPane ? (
+              <div className="w-1/2 flex flex-col overflow-hidden">
+                <ExhibitViewer
+                  exhibit={currentExhibit}
+                  fileUrl={currentExhibitFileUrl}
+                  allExhibits={allJointExhibits}
+                  onSelectExhibit={selectExhibitOverride}
+                  onHide={() => setShowExhibitPane(false)}
+                />
               </div>
             ) : (
-              /* Show exhibit button when hidden */
               <button
                 onClick={() => setShowExhibitPane(true)}
                 className="flex-shrink-0 self-start mt-1.5 ml-1 flex items-center gap-1 px-2 py-1 rounded bg-amber-600/10 text-amber-500 hover:bg-amber-600/20 text-[10px]"
                 title="Show exhibit"
               >
                 <Eye className="w-3 h-3" />
-                {currentExhibit ? `${currentExhibit.marked_no}` : "Exhibit"}
+                {currentExhibit ? currentExhibit.marked_no : "Exhibit"}
               </button>
             )}
           </div>
