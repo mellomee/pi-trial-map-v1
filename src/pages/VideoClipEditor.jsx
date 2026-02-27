@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Plus, Trash2, GripVertical, Play, Film, FileText, X, Save } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
 import useActiveCase from "@/components/hooks/useActiveCase";
 
 // ── Mini inline video player ──────────────────────────────────
