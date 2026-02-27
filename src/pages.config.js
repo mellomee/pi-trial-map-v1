@@ -69,6 +69,7 @@ import TrialPoints from './pages/TrialPoints';
 import TrialRunner from './pages/TrialRunner';
 import VideoLibrary from './pages/VideoLibrary';
 import VideoClipEditor from './pages/VideoClipEditor';
+import VideoHub from './pages/VideoHub';
 import __Layout from './Layout.jsx';
 
 
@@ -95,6 +96,7 @@ export const PAGES = {
     "TrialRunner": TrialRunner,
     "VideoLibrary": VideoLibrary,
     "VideoClipEditor": VideoClipEditor,
+    "VideoHub": VideoHub,
 }
 
 export const pagesConfig = {
