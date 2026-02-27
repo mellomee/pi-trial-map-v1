@@ -70,6 +70,7 @@ import TrialRunner from './pages/TrialRunner';
 import VideoLibrary from './pages/VideoLibrary';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
+import PresentationMode from './pages/PresentationMode';
 import __Layout from './Layout.jsx';
 
 
@@ -97,6 +98,7 @@ export const PAGES = {
     "VideoLibrary": VideoLibrary,
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
+    "PresentationMode": PresentationMode,
 }
 
 export const pagesConfig = {
