@@ -10,7 +10,6 @@ import {
   ExternalLink, Check, X, Edit2
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
-import { Link } from "react-router-dom";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
@@ -94,12 +93,12 @@ function PlaylistEditor({ playlist, activeCase, onClose, depositions, parties })
             <Badge className={`mt-0.5 text-[10px] ${STATUS_COLORS[playlist.status]}`}>{playlist.status}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              to={`${createPageUrl("PresentationMode")}?playlist=${playlist.id}`}
+            <a
+              href={`${createPageUrl("PresentationMode")}?playlist=${playlist.id}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-medium"
             >
               <Play className="w-3.5 h-3.5" /> Present
-            </Link>
+            </a>
             <button onClick={onClose} className="text-slate-500 hover:text-white p-1"><X className="w-4 h-4"/></button>
           </div>
         </div>
@@ -253,10 +252,10 @@ export default function VideoHub() {
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">Playlists · Video Library · Presentation Mode</p>
           </div>
-          <Link to={createPageUrl("VideoLibrary")}
+          <a href={createPageUrl("VideoLibrary")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#1e2a45] hover:bg-[#263450] text-slate-300 text-sm border border-[#2e3a55]">
             <Film className="w-4 h-4 text-cyan-400" /> Video Library
-          </Link>
+          </a>
         </div>
 
         <Tabs defaultValue="playlists">
@@ -309,10 +308,10 @@ export default function VideoHub() {
                     {pl.description && <p className="text-xs text-slate-500 mt-0.5">{pl.description}</p>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Link to={`${createPageUrl("PresentationMode")}?playlist=${pl.id}`}
+                    <a href={`${createPageUrl("PresentationMode")}?playlist=${pl.id}`}
                       className="flex items-center gap-1 px-2 py-1 rounded bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 text-xs">
                       <Play className="w-3 h-3" /> Present
-                    </Link>
+                    </a>
                     <button onClick={() => setSelectedPlaylist(pl)}
                       className="flex items-center gap-1 px-2 py-1 rounded bg-[#1e2a45] hover:bg-[#263450] text-slate-300 text-xs">
                       <Edit2 className="w-3 h-3" /> Edit
@@ -330,10 +329,10 @@ export default function VideoHub() {
             <div className="bg-[#0f1629] border border-[#1e2a45] rounded-xl p-8 text-center">
               <Film className="w-10 h-10 mx-auto mb-3 text-cyan-400 opacity-50" />
               <p className="text-slate-400 mb-3">Manage your uploaded video files</p>
-              <Link to={createPageUrl("VideoLibrary")}
+              <a href={createPageUrl("VideoLibrary")}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm">
                 <ExternalLink className="w-4 h-4" /> Open Video Library
-              </Link>
+              </a>
             </div>
           </TabsContent>
         </Tabs>
