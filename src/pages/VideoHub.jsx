@@ -94,12 +94,12 @@ function PlaylistEditor({ playlist, activeCase, onClose, depositions, parties })
             <Badge className={`mt-0.5 text-[10px] ${STATUS_COLORS[playlist.status]}`}>{playlist.status}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <a
-              href={`${createPageUrl("PresentationMode")}?playlist=${playlist.id}`}
+            <Link
+              to={`${createPageUrl("PresentationMode")}?playlist=${playlist.id}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-medium"
             >
               <Play className="w-3.5 h-3.5" /> Present
-            </a>
+            </Link>
             <button onClick={onClose} className="text-slate-500 hover:text-white p-1"><X className="w-4 h-4"/></button>
           </div>
         </div>
