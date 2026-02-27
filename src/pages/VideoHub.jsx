@@ -309,10 +309,10 @@ export default function VideoHub() {
                     {pl.description && <p className="text-xs text-slate-500 mt-0.5">{pl.description}</p>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <a href={`${createPageUrl("PresentationMode")}?playlist=${pl.id}`}
+                    <Link to={`${createPageUrl("PresentationMode")}?playlist=${pl.id}`}
                       className="flex items-center gap-1 px-2 py-1 rounded bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 text-xs">
                       <Play className="w-3 h-3" /> Present
-                    </a>
+                    </Link>
                     <button onClick={() => setSelectedPlaylist(pl)}
                       className="flex items-center gap-1 px-2 py-1 rounded bg-[#1e2a45] hover:bg-[#263450] text-slate-300 text-xs">
                       <Edit2 className="w-3 h-3" /> Edit
