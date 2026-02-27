@@ -436,18 +436,35 @@ export default function PresentationMode() {
         />
 
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top 60%: video */}
-          <div className="flex-[3] min-h-0 border-b border-[#1e2a45]">
+          {/* Top ~65%: video */}
+          <div style={{ flex: "0 0 65%" }} className="min-h-0 border-b border-[#1e2a45]">
             <VideoPlayer videoLinks={currentLinks} videoClips={videoClips} />
           </div>
 
-          {/* Bottom 40%: transcript / exhibit */}
-          <div className="flex-[2] min-h-0 bg-[#080d1a] overflow-hidden">
-            <TranscriptPane
-              depoClip={currentClip}
-              segments={currentSegs}
-              linkedExhibit={currentExhibit}
-            />
+          {/* Bottom ~35%: transcript + exhibit side-by-side */}
+          <div style={{ flex: "0 0 35%" }} className="min-h-0 flex overflow-hidden bg-[#080d1a]">
+            {/* Transcript */}
+            <div className={`flex flex-col border-r border-[#1e2a45] overflow-hidden ${currentExhibit ? "w-1/2" : "w-full"}`}>
+              <div className="px-3 py-1.5 border-b border-[#1e2a45] flex-shrink-0 flex items-center gap-1">
+                <FileText className="w-3 h-3 text-violet-400" />
+                <span className="text-[10px] text-violet-400 uppercase tracking-wider font-medium">Transcript</span>
+              </div>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <TranscriptPane segments={currentSegs} />
+              </div>
+            </div>
+            {/* Exhibit (only if linked) */}
+            {currentExhibit && (
+              <div className="w-1/2 flex flex-col overflow-hidden">
+                <div className="px-3 py-1.5 border-b border-[#1e2a45] flex-shrink-0 flex items-center gap-1">
+                  <Image className="w-3 h-3 text-amber-400" />
+                  <span className="text-[10px] text-amber-400 uppercase tracking-wider font-medium">Exhibit</span>
+                </div>
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <ExhibitPane exhibit={currentExhibit} fileUrl={currentExhibitFileUrl} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
