@@ -141,72 +141,61 @@ function VideoPlayer({ videoLinks, videoClips }) {
   );
 }
 
-// ── Transcript + Exhibit Pane ─────────────────────────────────
-function TranscriptPane({ depoClip, segments, linkedExhibit }) {
-  const [showExhibit, setShowExhibit] = useState(false);
-
-  if (!depoClip) return (
-    <div className="flex-1 flex items-center justify-center text-slate-600 text-sm">
-      Select a clip from the playlist
+// ── Transcript Pane ───────────────────────────────────────────
+function TranscriptPane({ segments }) {
+  if (segments.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-slate-600 text-xs">No transcript segments.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="h-full overflow-y-auto px-4 py-3 space-y-3">
+      {segments.map((seg, idx) => (
+        <div key={seg.id} className="space-y-1">
+          <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+            {seg.start_cite}{seg.end_cite ? ` → ${seg.end_cite}` : ""}
+          </p>
+          <p className="text-sm text-slate-100 leading-relaxed whitespace-pre-line font-serif">
+            {seg.segment_text}
+          </p>
+          {seg.notes && <p className="text-[10px] text-slate-600 italic">{seg.notes}</p>}
+          {idx < segments.length - 1 && <div className="border-b border-[#1e2a45] pt-2" />}
+        </div>
+      ))}
     </div>
   );
+}
 
-  const exhibitFile = linkedExhibit?.file_url;
-
+// ── Exhibit Pane ──────────────────────────────────────────────
+function ExhibitPane({ exhibit, fileUrl }) {
+  if (!exhibit) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-slate-600 text-xs">No exhibit linked.</p>
+      </div>
+    );
+  }
   return (
-    <div className="h-full overflow-y-auto px-6 py-4 space-y-4">
-      {/* Tab bar if exhibit attached */}
-      {linkedExhibit && (
-        <div className="flex gap-1 border-b border-[#1e2a45] pb-2">
-          <button
-            onClick={() => setShowExhibit(false)}
-            className={`px-3 py-1 rounded-t text-xs font-medium transition-colors ${!showExhibit ? "bg-violet-600/20 text-violet-300" : "text-slate-500 hover:text-slate-300"}`}>
-            <FileText className="w-3 h-3 inline mr-1" />Transcript
-          </button>
-          <button
-            onClick={() => setShowExhibit(true)}
-            className={`px-3 py-1 rounded-t text-xs font-medium transition-colors ${showExhibit ? "bg-amber-600/20 text-amber-300" : "text-slate-500 hover:text-slate-300"}`}>
-            <Image className="w-3 h-3 inline mr-1" />Exhibit {linkedExhibit.marked_no}
-          </button>
-        </div>
-      )}
-
-      {showExhibit && linkedExhibit ? (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold text-amber-300">{linkedExhibit.marked_title || linkedExhibit.marked_no}</p>
-          {exhibitFile ? (
-            exhibitFile.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-              <img src={exhibitFile} alt="Exhibit" className="max-w-full rounded border border-[#1e2a45]" />
-            ) : (
-              <iframe src={exhibitFile} className="w-full h-64 rounded border border-[#1e2a45]" title="Exhibit" />
-            )
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="px-3 py-2 border-b border-[#1e2a45] flex-shrink-0">
+        <span className="text-[10px] font-mono text-amber-400">{exhibit.marked_no}</span>
+        {exhibit.marked_title && <span className="text-xs text-slate-300 ml-2">{exhibit.marked_title}</span>}
+      </div>
+      <div className="flex-1 min-h-0 overflow-auto p-2">
+        {fileUrl ? (
+          fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+            <img src={fileUrl} alt="Exhibit" className="max-w-full max-h-full object-contain mx-auto" />
           ) : (
-            <p className="text-slate-500 text-sm italic">No file attached to this exhibit.</p>
-          )}
-          {linkedExhibit.notes && <p className="text-xs text-slate-500 italic">{linkedExhibit.notes}</p>}
-        </div>
-      ) : (
-        <>
-          {segments.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-slate-600 text-sm">No transcript segments defined.</p>
-            </div>
-          ) : (
-            segments.map((seg, idx) => (
-              <div key={seg.id} className="space-y-1">
-                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                  {seg.start_cite}{seg.end_cite ? ` → ${seg.end_cite}` : ""}
-                </p>
-                <p className="text-base text-slate-100 leading-relaxed whitespace-pre-line font-serif">
-                  {seg.segment_text}
-                </p>
-                {seg.notes && <p className="text-[10px] text-slate-600 italic">{seg.notes}</p>}
-                {idx < segments.length - 1 && <div className="border-b border-[#1e2a45] pt-2" />}
-              </div>
-            ))
-          )}
-        </>
-      )}
+            <iframe src={fileUrl} className="w-full h-full rounded border border-[#1e2a45]" title="Exhibit" />
+          )
+        ) : (
+          <div className="h-full flex items-center justify-center">
+            <p className="text-slate-600 text-xs italic">No file attached to this exhibit.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
