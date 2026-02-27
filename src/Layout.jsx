@@ -34,6 +34,7 @@ const NAV_SECTIONS = [
   {
     label: "VIDEO",
     items: [
+      { name: "Depo Clips", icon: FileText, page: "DepoClips" },
       { name: "Video Hub", icon: Video, page: "VideoHub" },
       { name: "Video Library", icon: Play, page: "VideoLibrary" },
     ],
