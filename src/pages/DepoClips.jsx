@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Search, Film, FileText, Video, Trash2, Edit2, ChevronRight,
-  Check, Zap, Plus
+  Check, Zap, Plus, BookOpen, X
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
