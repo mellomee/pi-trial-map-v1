@@ -330,10 +330,10 @@ export default function VideoHub() {
             <div className="bg-[#0f1629] border border-[#1e2a45] rounded-xl p-8 text-center">
               <Film className="w-10 h-10 mx-auto mb-3 text-cyan-400 opacity-50" />
               <p className="text-slate-400 mb-3">Manage your uploaded video files</p>
-              <a href={createPageUrl("VideoLibrary")}
+              <Link to={createPageUrl("VideoLibrary")}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm">
                 <ExternalLink className="w-4 h-4" /> Open Video Library
-              </a>
+              </Link>
             </div>
           </TabsContent>
         </Tabs>
