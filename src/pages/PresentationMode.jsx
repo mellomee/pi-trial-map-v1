@@ -393,15 +393,18 @@ export default function PresentationMode() {
           <Link to={createPageUrl("VideoHub")} className="text-slate-500 hover:text-white">
             <ChevronLeft className="w-4 h-4" />
           </Link>
-          <div>
+          <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-white">{playlist?.name}</span>
             {currentClip && (
-              <Link
-                to={createPageUrl("DepoClips")}
-                className="text-xs text-slate-500 ml-2 hover:text-cyan-400 transition-colors"
-              >
-                {currentClip.clip_title || currentClip.topic_tag || currentClip.start_cite}
-              </Link>
+              <>
+                <span className="text-slate-600 text-xs">›</span>
+                <Link
+                  to={createPageUrl("DepoClips")}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline transition-colors font-medium"
+                >
+                  {currentClip.clip_title || currentClip.topic_tag || currentClip.start_cite}
+                </Link>
+              </>
             )}
           </div>
         </div>
