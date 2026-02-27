@@ -11,6 +11,7 @@ import {
   Check, Zap, Plus
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
 import useActiveCase from "@/components/hooks/useActiveCase";
 
 const DIRECTION_COLORS = {
