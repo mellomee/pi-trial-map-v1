@@ -91,6 +91,15 @@ export default function DepoClips() {
     setSaving(false);
   };
 
+  const linkExhibit = async (clip, jointExhibit) => {
+    const updated = await base44.entities.DepoClips.update(clip.id, {
+      linked_joint_exhibit_id: jointExhibit ? jointExhibit.id : null,
+    });
+    setClips(prev => prev.map(c => c.id === updated.id ? updated : c));
+    setLinkExhibitClip(null);
+    setExhibitSearch("");
+  };
+
   const deleteClip = async (clip) => {
     if (!confirm(`Delete clip "${clip.clip_title || clip.topic_tag || clip.start_cite}"?`)) return;
     await base44.entities.DepoClips.delete(clip.id);
