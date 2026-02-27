@@ -64,6 +64,7 @@ export default function QuestionDetail() {
   const [jointExhibits, setJointExhibits] = useState([]);
   const [depoExhibits, setDepoExhibits] = useState([]);
   const [depoClips, setDepoClips] = useState([]);
+  const [allQuestions, setAllQuestions] = useState([]);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
