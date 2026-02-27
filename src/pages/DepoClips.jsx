@@ -44,8 +44,10 @@ export default function DepoClips() {
       base44.entities.Parties.filter({ case_id: activeCase.id }),
       base44.entities.DepoClipVideoLinks.filter({ case_id: activeCase.id }),
       base44.entities.DepoClipTranscriptSegments.filter({ case_id: activeCase.id }),
-    ]).then(([cls, deps, pts, vlinks, segs]) => {
+      base44.entities.JointExhibits.filter({ case_id: activeCase.id }),
+    ]).then(([cls, deps, pts, vlinks, segs, joints]) => {
       setClips(cls);
+      setJointExhibits(joints);
       setDepositions(deps);
       setParties(pts);
       const vc = {}; vlinks.forEach(l => { vc[l.depo_clip_id] = (vc[l.depo_clip_id] || 0) + 1; });
