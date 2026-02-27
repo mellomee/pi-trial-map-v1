@@ -301,7 +301,7 @@ export default function VideoClipEditor() {
 
       {/* Segment Modal */}
       <Dialog open={!!segModal} onOpenChange={() => setSegModal(null)}>
-        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-violet-400">
               {segModal?.seg?.id ? "Edit Segment" : "Add Segment"}
@@ -309,6 +309,7 @@ export default function VideoClipEditor() {
           </DialogHeader>
           <SegmentForm
             initial={segModal?.seg}
+            clipText={clip?.clip_text}
             onSave={saveSeg}
             onCancel={() => setSegModal(null)}
             saving={saving}
