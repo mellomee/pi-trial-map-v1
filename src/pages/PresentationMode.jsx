@@ -169,37 +169,7 @@ function TranscriptPane({ segments }) {
   );
 }
 
-// ── Exhibit Pane ──────────────────────────────────────────────
-function ExhibitPane({ exhibit, fileUrl }) {
-  if (!exhibit) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-slate-600 text-xs">No exhibit linked.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="px-3 py-2 border-b border-[#1e2a45] flex-shrink-0">
-        <span className="text-[10px] font-mono text-amber-400">{exhibit.marked_no}</span>
-        {exhibit.marked_title && <span className="text-xs text-slate-300 ml-2">{exhibit.marked_title}</span>}
-      </div>
-      <div className="flex-1 min-h-0 overflow-auto p-2">
-        {fileUrl ? (
-          fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-            <img src={fileUrl} alt="Exhibit" className="max-w-full max-h-full object-contain mx-auto" />
-          ) : (
-            <iframe src={fileUrl} className="w-full h-full rounded border border-[#1e2a45]" title="Exhibit" />
-          )
-        ) : (
-          <div className="h-full flex items-center justify-center">
-            <p className="text-slate-600 text-xs italic">No file attached to this exhibit.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+// ExhibitPane removed — using ExhibitViewer component
 
 // ── Playlist sidebar ──────────────────────────────────────────
 function PlaylistSidebar({ items, clipMeta, currentIdx, onSelect, playedSet }) {
