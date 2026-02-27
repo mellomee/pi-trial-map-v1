@@ -202,10 +202,10 @@ export default function DepoClips() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <a href={`${createPageUrl("VideoClipEditor")}?id=${clip.id}`}
+                  <Link to={`${createPageUrl("VideoClipEditor")}?id=${clip.id}`}
                     className="flex items-center gap-1 px-2 py-1 rounded bg-cyan-600/15 text-cyan-400 hover:bg-cyan-600/25 text-[10px]">
                     <Film className="w-3 h-3" /> Video Editor
-                  </a>
+                  </Link>
                   <button onClick={() => setEditClip({ ...clip })} className="p-1.5 text-slate-500 hover:text-slate-200">
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
