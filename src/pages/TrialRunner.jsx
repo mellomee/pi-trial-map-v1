@@ -244,6 +244,7 @@ export default function TrialRunner() {
             const hasLinks = tpCount > 0;
             const isActive = q.id === current?.id;
             const statusColor = STATUS_OPTS.find(s => s.value === q.status)?.color || "";
+            const branchCount = branches.filter(b => b.from_question_id === q.id).length;
 
             return (
               <button
