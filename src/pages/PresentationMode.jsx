@@ -395,9 +395,9 @@ export default function PresentationMode() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-[#0f1629] border-b border-[#1e2a45] flex-shrink-0">
         <div className="flex items-center gap-3">
-          <a href={createPageUrl("VideoHub")} className="text-slate-500 hover:text-white">
+          <Link to={createPageUrl("VideoHub")} className="text-slate-500 hover:text-white">
             <ChevronLeft className="w-4 h-4" />
-          </a>
+          </Link>
           <div>
             <span className="text-sm font-bold text-white">{playlist?.name}</span>
             {currentClip && (
