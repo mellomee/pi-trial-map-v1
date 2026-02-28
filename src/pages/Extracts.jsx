@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Edit2, Trash2, Upload, BookOpen, FileText, Link2 } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Upload, BookOpen, FileText, Link2, StickyNote } from "lucide-react";
+import { createPageUrl } from "@/utils";
 import useActiveCase from "@/components/hooks/useActiveCase";
 
 const EMPTY = {
