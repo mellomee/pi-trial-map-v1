@@ -291,6 +291,14 @@ export default function JointExhibits() {
                           <span className="text-[10px] text-slate-600 block">{admRec.admitted_by_side}</span>
                         </div>
                       ) : (
+                        <a
+                          href={`${createPageUrl("JointExhibitDetail")}?id=${j.id}&tab=annotations`}
+                          onClick={e => e.stopPropagation()}
+                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10 transition-colors"
+                          title="Open annotation editor"
+                        >
+                          <StickyNote className="w-3 h-3" /> Annotate
+                        </a>
                         <button
                           className="flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"
                           onClick={e => { e.stopPropagation(); openAdmit(j); }}
