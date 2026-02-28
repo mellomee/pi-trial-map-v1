@@ -77,14 +77,35 @@ export default function DepositionExhibits() {
   const load = async () => {
     if (!activeCase) return;
     const cid = activeCase.id;
-    const [ex, pa, jo] = await Promise.all([
+    const [ex, pa, jo, exts] = await Promise.all([
       base44.entities.DepositionExhibits.filter({ case_id: cid }),
       base44.entities.Parties.filter({ case_id: cid }),
       base44.entities.JointExhibits.filter({ case_id: cid }),
+      base44.entities.ExhibitExtracts.filter({ case_id: cid }),
     ]);
     setExhibits(ex);
     setParties(pa);
     setJoints(jo);
+    setExtracts(exts);
+  };
+
+  // Helper: get extracts for a given depo exhibit id
+  const extractsForExhibit = (depoExhibitId) =>
+    extracts.filter(e => e.source_depo_exhibit_id === depoExhibitId);
+
+  // Main "Mark as Joint" entry point — handles 0/1/>1 extracts
+  const initiateMarkAsJoint = (ex) => {
+    const exts = extractsForExhibit(ex.id);
+    if (exts.length === 0) {
+      // No extracts — create one first, then mark
+      setExtractModalTarget({ exhibit: ex, thenMark: true });
+    } else if (exts.length === 1) {
+      // Exactly one extract — go straight to mark modal
+      setMarkJointTarget({ exhibit: ex, extract: exts[0] });
+    } else {
+      // Multiple extracts — pick one
+      setSelectExtractTarget({ exhibit: ex, extracts: exts });
+    }
   };
 
   useEffect(() => { load(); }, [activeCase]);
