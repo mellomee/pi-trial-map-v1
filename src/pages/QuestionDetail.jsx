@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight } from "lucide-react";
+import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight, StickyNote, Highlighter } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 function TPNode({ tp, depth, getChildren, filteredIds, linkedTpIds, onLink, searching }) {
