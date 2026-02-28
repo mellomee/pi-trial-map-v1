@@ -66,6 +66,10 @@ export default function QuestionDetail() {
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
+  const [annLinks, setAnnLinks] = useState([]);
+  const [annotations, setAnnotations] = useState([]);
+  const [extractsById, setExtractsById] = useState({});
+  const [jointsById, setJointsById] = useState({});
 
   const load = async () => {
     if (!questionId || !activeCase) return;
