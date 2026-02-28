@@ -133,7 +133,7 @@ export default function ExhibitViewer({
           <button onClick={() => setShowPicker(p => !p)}
             className="flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 font-medium uppercase tracking-wider max-w-full truncate">
             <span className="truncate">
-              {exhibit.marked_no}{exhibit.marked_title ? ` – ${exhibit.marked_title}` : ""}
+              {exhibitDisplayNo(exhibit)}{exhibit.marked_title ? ` – ${exhibit.marked_title}` : ""}
             </span>
             <List className="w-3 h-3 flex-shrink-0" />
           </button>
