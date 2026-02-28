@@ -145,6 +145,9 @@ export default function TrialPointDetail() {
           <TabsTrigger value="questions" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-slate-400">
             <HelpCircle className="w-3.5 h-3.5 mr-1.5" /> Questions ({linkedQuestions.length})
           </TabsTrigger>
+          <TabsTrigger value="annotations" className="data-[state=active]:bg-yellow-600/40 data-[state=active]:text-yellow-300 text-slate-400">
+            <StickyNote className="w-3.5 h-3.5 mr-1.5" /> Annotations ({annLinks.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* Clips */}
