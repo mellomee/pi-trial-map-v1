@@ -32,13 +32,16 @@ export default function TrialPointDetail() {
 
   const load = async () => {
     if (!pointId || !activeCase) return;
-    const [pt, lks, cl, de, je, qs] = await Promise.all([
+    const [pt, lks, cl, de, je, qs, al, anns, exts] = await Promise.all([
       base44.entities.TrialPoints.filter({ id: pointId }),
       base44.entities.TrialPointLinks.filter({ trial_point_id: pointId }),
       base44.entities.DepoClips.filter({ case_id: activeCase.id }),
       base44.entities.DepositionExhibits.filter({ case_id: activeCase.id }),
       base44.entities.JointExhibits.filter({ case_id: activeCase.id }),
       base44.entities.Questions.filter({ case_id: activeCase.id }),
+      base44.entities.AnnotationLinks.filter({ case_id: activeCase.id, link_type: "TrialPoint" }),
+      base44.entities.ExhibitAnnotations.filter({ case_id: activeCase.id }),
+      base44.entities.ExhibitExtracts.filter({ case_id: activeCase.id }),
     ]);
     setPoint(pt[0] || null);
     setLinks(lks);
@@ -46,6 +49,12 @@ export default function TrialPointDetail() {
     setDepoExhibits(de);
     setJointExhibits(je);
     setQuestions(qs);
+    setAnnLinks(al.filter(l => l.link_id === pointId));
+    setAnnotations(anns);
+    const em = {}; exts.forEach(e => { em[e.id] = e; });
+    setExtractsById(em);
+    const jm = {}; je.forEach(j => { jm[j.id] = j; });
+    setJointsById(jm);
   };
 
   useEffect(() => { load(); }, [pointId, activeCase]);
