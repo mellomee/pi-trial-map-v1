@@ -343,7 +343,6 @@ export default function PresentationMode() {
   const selectExhibitOverride = (joint) => {
     if (!overrideKey) return;
     setExhibitOverrides(prev => ({ ...prev, [overrideKey]: resolveJoint(joint) }));
-    setExhibitPickerOpen(false);
     setShowExhibitPane(true);
   };
 
