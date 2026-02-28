@@ -254,7 +254,7 @@ export default function JointExhibits() {
                           : j.pages ? <p className="text-xs text-slate-600">pp. {j.pages}</p> : null;
                       })()}
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <Badge className={`text-[10px] ${statusColors[j.status]}`}>{j.status}</Badge>
+                        <Badge className={`text-[10px] ${exhibitStatusColor(j.status)}`}>{exhibitDisplayNo(j)}</Badge>
                         <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">{j.marked_by_side}</Badge>
                       </div>
                     </div>
