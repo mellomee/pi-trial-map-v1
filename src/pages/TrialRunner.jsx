@@ -47,6 +47,10 @@ export default function TrialRunner() {
   const [witnessMode, setWitnessMode] = useState(null); // WITNESS_DENIES etc
 
   const [detailModal, setDetailModal] = useState(null); // { type: 'tp'|'exhibit'|'clip', data: ... }
+  const [annLinks, setAnnLinks] = useState([]);
+  const [annotations, setAnnotations] = useState([]);
+  const [extractsById, setExtractsById] = useState({});
+  const [jointsById, setJointsById] = useState({});
 
   useEffect(() => {
     if (!activeCase) return;
