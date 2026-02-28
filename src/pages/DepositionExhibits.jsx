@@ -377,11 +377,11 @@ export default function DepositionExhibits() {
         <div className="flex items-center gap-1 flex-shrink-0">
           <button title="Edit deponent / details" onClick={() => setEditDialog({ ...ex })} className="p-1 text-slate-400 hover:text-cyan-400"><Pencil className="w-3.5 h-3.5" /></button>
           {wasRenamed && <button title="Revert name" onClick={() => revertName(ex)} className="p-1 text-slate-400 hover:text-amber-400"><History className="w-3.5 h-3.5" /></button>}
+          <button title="Create Extract" onClick={() => setExtractModalTarget({ exhibit: ex, thenMark: false })} className="p-1 text-slate-400 hover:text-emerald-400"><Layers className="w-3.5 h-3.5" /></button>
           {isMarked
             ? <button title="Remove from Joint List" onClick={() => removeMark(ex)} className="p-1 text-cyan-500 hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
-            : null
+            : <button title="Mark as Joint Exhibit" onClick={() => initiateMarkAsJoint(ex)} className="p-1 text-slate-400 hover:text-cyan-400"><Tag className="w-3.5 h-3.5" /></button>
           }
-          <button title="Add to Joint List (new entry)" onClick={() => { setSelectedIds(new Set([ex.id])); setMarkForm({ marked_no: "", marked_title: ex.display_title || ex.depo_exhibit_title, marked_by_side: "Plaintiff", pages: "", primary_depo_exhibit_id: ex.id, notes: "" }); setMarkDialog(true); }} className="p-1 text-slate-400 hover:text-cyan-400"><Tag className="w-3.5 h-3.5" /></button>
           <button title="Delete" onClick={() => del(ex.id)} className="p-1 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
