@@ -367,8 +367,12 @@ export default function JointExhibits() {
                           );
                         })()}
                       </div>
-                      <div className="flex gap-2 mt-3">
+                      <div className="flex gap-2 mt-3 flex-wrap">
                         <button className="text-[10px] text-slate-400 hover:text-cyan-400" onClick={() => setEditJoint({ ...j })}>Edit marking</button>
+                        <span className="text-slate-700">·</span>
+                        <a href={`${createPageUrl("JointExhibitDetail")}?id=${j.id}&tab=annotations`} className="text-[10px] text-yellow-500 hover:text-yellow-300 flex items-center gap-0.5">
+                          <StickyNote className="w-3 h-3" /> Annotate
+                        </a>
                         <span className="text-slate-700">·</span>
                         <button className="text-[10px] text-slate-400 hover:text-red-400" onClick={() => removeJoint(j)}>Remove from list</button>
                       </div>
