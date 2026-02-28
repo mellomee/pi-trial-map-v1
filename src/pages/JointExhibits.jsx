@@ -260,6 +260,15 @@ export default function JointExhibits() {
                         })()}
                       </div>
                       {(() => {
+                        const extract = j.exhibit_extract_id ? extractsById[j.exhibit_extract_id] : null;
+                        if (extract) {
+                          return (
+                            <p className="text-xs text-slate-600">
+                              Extract: {extract.extract_title_internal || extract.extract_title_official}
+                              {(extract.extract_page_start || extract.extract_page_end) ? ` · pp. ${extract.extract_page_start}–${extract.extract_page_end}` : ""}
+                            </p>
+                          );
+                        }
                         const allDepos = deposByJointId[j.id] || [];
                         const primary = allDepos.find(d => d.id === j.primary_depo_exhibit_id) || allDepos[0];
                         return primary && primary.depo_exhibit_title !== j.marked_title
