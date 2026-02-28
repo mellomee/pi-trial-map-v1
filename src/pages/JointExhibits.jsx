@@ -12,15 +12,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown, ExternalLink, ChevronsUpDown, ChevronUp } from "lucide-react";
 import FileViewerModal from "@/components/exhibits/FileViewerModal";
 import { format } from "date-fns";
+import { exhibitDisplayNo, exhibitStatusColor } from "@/components/exhibitHelpers";
 
-const statusColors = {
-  Marked: "bg-cyan-500/20 text-cyan-400",
-  Offered: "bg-blue-500/20 text-blue-400",
-  Admitted: "bg-green-500/20 text-green-400",
-  Excluded: "bg-red-500/20 text-red-400",
-  Withdrawn: "bg-yellow-500/20 text-yellow-400",
-  NotUsed: "bg-slate-500/20 text-slate-400",
-};
+// Use exhibitStatusColor from helpers
 
 const fmtDate = (d) => { try { return format(new Date(d), "MMM d, yyyy"); } catch { return d || "—"; } };
 
