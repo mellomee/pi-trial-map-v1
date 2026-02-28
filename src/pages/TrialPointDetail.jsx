@@ -29,6 +29,10 @@ export default function TrialPointDetail() {
   const [questions, setQuestions] = useState([]);
   const [linkModal, setLinkModal] = useState(null); // "DepoClip" | "JointExhibit" | "Question"
   const [search, setSearch] = useState("");
+  const [annLinks, setAnnLinks] = useState([]);
+  const [annotations, setAnnotations] = useState([]);
+  const [extractsById, setExtractsById] = useState({});
+  const [jointsById, setJointsById] = useState({});
 
   const load = async () => {
     if (!pointId || !activeCase) return;
