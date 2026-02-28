@@ -238,6 +238,9 @@ export default function QuestionDetail() {
           <TabsTrigger value="clips" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-slate-400">
             <FileText className="w-3.5 h-3.5 mr-1.5" /> Proof — Clips ({linkedDepoClips.length})
           </TabsTrigger>
+          <TabsTrigger value="annotations" className="data-[state=active]:bg-yellow-600/40 data-[state=active]:text-yellow-300 text-slate-400">
+            <StickyNote className="w-3.5 h-3.5 mr-1.5" /> Annotations ({annLinks.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* Trial Points */}
