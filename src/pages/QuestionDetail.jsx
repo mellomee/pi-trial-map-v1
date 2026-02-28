@@ -373,10 +373,10 @@ export default function QuestionDetail() {
               );
             })}
           </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          </Tabs>
 
-      {/* Link Trial Point Modal */}
+          {/* Link Trial Point Modal */}
       <Dialog open={linkModalOpen} onOpenChange={() => { setLinkModalOpen(false); setSearch(""); }}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-h-[75vh] flex flex-col">
           <DialogHeader>
