@@ -697,6 +697,43 @@ export default function DepositionExhibits() {
 
       {viewFile && <FileViewerModal url={viewFile.url} title={viewFile.title} onClose={() => setViewFile(null)} />}
 
+      {/* Extract Creation Modal */}
+      <ExtractModal
+        open={!!extractModalTarget}
+        onClose={() => setExtractModalTarget(null)}
+        caseId={activeCase?.id}
+        sourceDepoExhibit={extractModalTarget?.exhibit}
+        onSaved={(newExtract) => {
+          setExtracts(prev => [...prev.filter(e => e.id !== newExtract.id), newExtract]);
+          if (extractModalTarget?.thenMark) {
+            // After creating extract, immediately open mark modal
+            setMarkJointTarget({ exhibit: extractModalTarget.exhibit, extract: newExtract });
+          }
+          setExtractModalTarget(null);
+        }}
+      />
+
+      {/* Select Extract Modal (when >1 extract exists) */}
+      <SelectExtractModal
+        open={!!selectExtractTarget}
+        onClose={() => setSelectExtractTarget(null)}
+        extracts={selectExtractTarget?.extracts || []}
+        onSelected={(extract) => {
+          setMarkJointTarget({ exhibit: selectExtractTarget.exhibit, extract });
+          setSelectExtractTarget(null);
+        }}
+      />
+
+      {/* Mark as Joint Modal */}
+      <MarkJointModal
+        open={!!markJointTarget}
+        onClose={() => setMarkJointTarget(null)}
+        caseId={activeCase?.id}
+        extract={markJointTarget?.extract}
+        sourceExhibit={markJointTarget?.exhibit}
+        onSaved={() => { setMarkJointTarget(null); load(); }}
+      />
+
       <UploadProgressPanel
         uploads={uploadQueue}
         onClose={() => setUploadQueue([])}
