@@ -26,6 +26,7 @@ export default function Extracts() {
   const [depoExhibits, setDepoExhibits] = useState([]);
   const [parties, setParties] = useState([]);
   const [depositions, setDepositions] = useState([]);
+  const [joints, setJoints] = useState([]);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null); // null | EMPTY | extract obj
   const [saving, setSaving] = useState(false);
@@ -38,13 +39,27 @@ export default function Extracts() {
       base44.entities.DepositionExhibits.filter({ case_id: activeCase.id }),
       base44.entities.Parties.filter({ case_id: activeCase.id }),
       base44.entities.Depositions.filter({ case_id: activeCase.id }),
-    ]).then(([exs, depo, pts, deps]) => {
+      base44.entities.JointExhibits.filter({ case_id: activeCase.id }),
+    ]).then(([exs, depo, pts, deps, jo]) => {
       setExtracts(exs);
       setDepoExhibits(depo);
       setParties(pts);
       setDepositions(deps);
+      setJoints(jo);
     });
   }, [activeCase]);
+
+  // Map extract_id → joint exhibits
+  const jointsByExtractId = useMemo(() => {
+    const m = {};
+    joints.forEach(j => {
+      if (j.exhibit_extract_id) {
+        if (!m[j.exhibit_extract_id]) m[j.exhibit_extract_id] = [];
+        m[j.exhibit_extract_id].push(j);
+      }
+    });
+    return m;
+  }, [joints]);
 
   const depoExhibitLabel = (id) => {
     const de = depoExhibits.find(x => x.id === id);
