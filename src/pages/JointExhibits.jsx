@@ -241,15 +241,20 @@ export default function JointExhibits() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-white font-medium">{j.marked_title}</p>
                         {(() => {
-                          const allDepos = deposByJointId[j.id] || [];
-                          const primary = allDepos.find(d => d.id === j.primary_depo_exhibit_id) || allDepos[0];
-                          return primary?.file_url ? (
+                          // Prefer extract file, fall back to raw depo exhibit file
+                          const extract = j.exhibit_extract_id ? extractsById[j.exhibit_extract_id] : null;
+                          const fileUrl = extract?.extract_file_url || (() => {
+                            const allDepos = deposByJointId[j.id] || [];
+                            const primary = allDepos.find(d => d.id === j.primary_depo_exhibit_id) || allDepos[0];
+                            return primary?.file_url || primary?.external_link;
+                          })();
+                          return fileUrl ? (
                             <button
-                              onClick={e => { e.stopPropagation(); setViewFile({ url: primary.file_url, title: j.marked_title }); }}
-                              className="flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 rounded px-1.5 py-0.5"
-                              title="View attached file"
+                              onClick={e => { e.stopPropagation(); setViewFile({ url: fileUrl, title: j.marked_title }); }}
+                              className={`flex items-center gap-1 text-[10px] border rounded px-1.5 py-0.5 ${extract ? "text-emerald-400 border-emerald-500/30 hover:text-emerald-300" : "text-cyan-400 border-cyan-500/30 hover:text-cyan-300"}`}
+                              title={extract ? "View extract file" : "View raw file"}
                             >
-                              <ExternalLink className="w-3 h-3" /> View File
+                              <ExternalLink className="w-3 h-3" /> {extract ? "View Extract" : "View File"}
                             </button>
                           ) : null;
                         })()}
