@@ -332,6 +332,51 @@ export default function QuestionDetail() {
         </TabsContent>
       </Tabs>
 
+        {/* Annotations linked to this question */}
+        <TabsContent value="annotations">
+          <p className="text-[10px] text-slate-500 italic mb-3">Exhibit annotations linked directly to this question (internal only).</p>
+          <div className="space-y-2">
+            {annLinks.length === 0 && (
+              <p className="text-slate-500 text-sm text-center py-8">No annotations linked. Open a Joint Exhibit annotation and link it to this question.</p>
+            )}
+            {annLinks.map(al => {
+              const ann = annotations.find(a => a.id === al.annotation_id);
+              if (!ann) return null;
+              const jt = jointsById[ann.joint_exhibit_id];
+              const ext = jt?.exhibit_extract_id ? extractsById[jt.exhibit_extract_id] : null;
+              return (
+                <div key={al.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-3 flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    {ann.kind === "Highlight"
+                      ? <Highlighter className="w-4 h-4 text-yellow-500" />
+                      : <StickyNote className="w-4 h-4 text-cyan-500" />
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-200">{ann.label_internal}</p>
+                    {ann.note_text && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{ann.note_text}</p>}
+                    <div className="flex gap-2 mt-1 flex-wrap">
+                      {jt && <Badge className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Exh. {jt.marked_no}</Badge>}
+                      <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">p.{ann.page_in_extract}</Badge>
+                      {ext && <span className="text-[10px] text-slate-600">{ext.extract_title_internal || ext.extract_title_official}</span>}
+                    </div>
+                  </div>
+                  {jt && (
+                    <a
+                      href={`${createPageUrl("JointExhibitDetail")}?id=${jt.id}&tab=annotations`}
+                      className="text-slate-500 hover:text-yellow-400 flex-shrink-0"
+                      title="Open in annotation editor"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
+
       {/* Link Trial Point Modal */}
       <Dialog open={linkModalOpen} onOpenChange={() => { setLinkModalOpen(false); setSearch(""); }}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-h-[75vh] flex flex-col">
