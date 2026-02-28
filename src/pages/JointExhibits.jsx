@@ -50,17 +50,25 @@ export default function JointExhibits() {
       : <ChevronDown className="w-3 h-3 ml-1 text-cyan-400 inline" />;
   };
 
+  const [extracts, setExtracts] = useState([]);
+  const [extractsById, setExtractsById] = useState({});
+
   const load = async () => {
     if (!activeCase) return;
     const cid = activeCase.id;
-    const [jo, ad, de] = await Promise.all([
+    const [jo, ad, de, exts] = await Promise.all([
       base44.entities.JointExhibits.filter({ case_id: cid }),
       base44.entities.AdmittedExhibits.filter({ case_id: cid }),
       base44.entities.DepositionExhibits.filter({ case_id: cid }),
+      base44.entities.ExhibitExtracts.filter({ case_id: cid }),
     ]);
     setJoints(jo);
     setAdmitted(ad);
     setDepoExhibits(de);
+    setExtracts(exts);
+    const em = {};
+    exts.forEach(e => { em[e.id] = e; });
+    setExtractsById(em);
   };
 
   useEffect(() => { load(); }, [activeCase]);
