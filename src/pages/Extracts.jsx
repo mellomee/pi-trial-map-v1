@@ -197,6 +197,15 @@ export default function Extracts() {
               </div>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
+              {(jointsByExtractId[ex.id] || [])[0] && (
+                <a
+                  href={`${createPageUrl("JointExhibitDetail")}?id=${(jointsByExtractId[ex.id] || [])[0].id}&tab=annotations`}
+                  className="p-1.5 text-slate-500 hover:text-yellow-400"
+                  title="Open Joint Exhibit annotations"
+                >
+                  <StickyNote className="w-3.5 h-3.5" />
+                </a>
+              )}
               <button onClick={() => openEdit(ex)} className="p-1.5 text-slate-500 hover:text-slate-200">
                 <Edit2 className="w-3.5 h-3.5" />
               </button>
