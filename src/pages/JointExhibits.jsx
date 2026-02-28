@@ -314,6 +314,31 @@ export default function JointExhibits() {
                         <p><span className="text-slate-500">Status:</span> {j.status}</p>
                         {j.pages && <p><span className="text-slate-500">Pages:</span> {j.pages}</p>}
                         {j.notes && <p className="text-slate-500 italic">{j.notes}</p>}
+                        {/* Extract info */}
+                        {j.exhibit_extract_id && extractsById[j.exhibit_extract_id] && (() => {
+                          const ext = extractsById[j.exhibit_extract_id];
+                          return (
+                            <div className="mt-2 pt-2 border-t border-[#1e2a45]">
+                              <p className="text-[10px] font-semibold text-emerald-500 uppercase tracking-wider mb-1">Extract</p>
+                              <p className="text-emerald-400 text-xs">{ext.extract_title_official}</p>
+                              {ext.extract_title_internal && <p className="text-slate-500 text-[10px] italic">"{ext.extract_title_internal}"</p>}
+                              {(ext.extract_page_start || ext.extract_page_end) && (
+                                <p className="text-slate-500 text-[10px]">Raw pp. {ext.extract_page_start}–{ext.extract_page_end}</p>
+                              )}
+                              {ext.extract_file_url && (
+                                <button onClick={() => setViewFile({ url: ext.extract_file_url, title: ext.extract_title_official })}
+                                  className="text-[10px] text-emerald-400 hover:underline mt-0.5 flex items-center gap-1">
+                                  <ExternalLink className="w-3 h-3" /> View extract file
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        {!j.exhibit_extract_id && (
+                          <div className="mt-2 pt-2 border-t border-[#1e2a45]">
+                            <p className="text-[10px] text-amber-500/70 italic">⚠ No extract attached — consider adding an extract.</p>
+                          </div>
+                        )}
                         {(() => {
                           const allDepos = deposByJointId[j.id] || (depoByJointId[j.id] ? [depoByJointId[j.id]] : []);
                           if (!allDepos.length) return null;
