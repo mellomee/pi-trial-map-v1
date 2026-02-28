@@ -189,6 +189,11 @@ export default function Extracts() {
                     <Link2 className="w-3 h-3" /> View File
                   </a>
                 )}
+                {(jointsByExtractId[ex.id] || []).map(j => (
+                  <Badge key={j.id} className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+                    Joint #{j.marked_no}
+                  </Badge>
+                ))}
               </div>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
