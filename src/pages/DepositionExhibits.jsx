@@ -209,13 +209,16 @@ export default function DepositionExhibits() {
     load();
   };
 
-  // Mark as joint — creates ONE joint exhibit for all selected, linking them as a group
+  // Legacy saveMark kept for bulk-selection group mark (bypasses extract flow for now, but uses the first available extract)
   const saveMark = async () => {
     const selectedExhibits = [...selectedIds].map(id => exhibits.find(e => e.id === id)).filter(Boolean);
     const primaryId = markForm.primary_depo_exhibit_id || selectedExhibits[0]?.id || "";
     const primaryEx = selectedExhibits.find(e => e.id === primaryId) || selectedExhibits[0];
+    // Use a linked extract if one exists for the primary exhibit
+    const linkedExtract = extractsForExhibit(primaryId)[0] || null;
     const joint = await base44.entities.JointExhibits.create({
       case_id: activeCase.id,
+      exhibit_extract_id: linkedExtract?.id || null,
       master_exhibit_id: primaryId,
       primary_depo_exhibit_id: primaryId,
       source_depo_exhibit_ids: selectedExhibits.map(e => e.id),
