@@ -330,7 +330,6 @@ export default function QuestionDetail() {
             ))}
           </div>
         </TabsContent>
-      </Tabs>
 
         {/* Annotations linked to this question */}
         <TabsContent value="annotations">
