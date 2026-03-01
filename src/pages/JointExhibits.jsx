@@ -72,6 +72,12 @@ export default function JointExhibits() {
     const em = {};
     exts.forEach(e => { em[e.id] = e; });
     setExtractsById(em);
+
+    // Load annotation counts per extract
+    const anns = await base44.entities.ExhibitAnnotations.filter({ case_id: cid });
+    const counts = {};
+    anns.forEach(a => { counts[a.extract_id] = (counts[a.extract_id] || 0) + 1; });
+    setAnnotationCounts(counts);
   };
 
   useEffect(() => { load(); }, [activeCase]);
