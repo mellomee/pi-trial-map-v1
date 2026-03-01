@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft, ChevronRight, Trash2, Pencil, Check, X,
-  Eye, EyeOff, Plus, StickyNote, ZoomIn, ZoomOut
+  Eye, EyeOff, Plus, StickyNote, ZoomIn, ZoomOut, Highlighter, Search
 } from "lucide-react";
+import { createPageUrl } from "@/utils";
 
 function isPdf(url) { return url?.toLowerCase().includes(".pdf"); }
 
