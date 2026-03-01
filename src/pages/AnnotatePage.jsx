@@ -253,7 +253,7 @@ export default function AnnotatePage() {
               highlights={visibleAnns}
               mode={mode}
               activeId={activeId}
-              onCreateRect={handleCreateRect}
+              onCreateAnnotation={handleCreateAnnotation}
               onSelect={(id) => { setActiveId(id); }}
               onNumPages={handleNumPages}
             />
