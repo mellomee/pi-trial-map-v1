@@ -295,31 +295,20 @@ export default function Present() {
               <div className="flex items-center justify-center h-full text-slate-600">No file attached to this exhibit.</div>
             )}
             {fileUrl && (
-              /* Wrapper: position:relative so spotlight can overlay correctly */
               <div style={{ position: "relative", display: "inline-block" }}>
-                <PdfPageWithOverlay
+                <PdfViewer
                   fileUrl={fileUrl}
-                  pageIndex={currentPage}
+                  currentPage={currentPage}
                   scale={scale}
-                  highlights={showOverlay && !showSpotlight ? annotations : (showOverlay ? annotations : [])}
-                  mode="view"
-                  activeId={activeAnnotationId}
-                  onSelect={(id) => setActiveAnnotationId(id)}
                   onNumPages={setNumPages}
-                  onPageRender={handlePageRender}
                 />
-                {/* Spotlight overlay */}
-                {showSpotlight && (
-                  <SpotlightView
-                    pageCanvasEl={spotlightCanvas}
-                    annotation={activeAnn}
-                    pdfViewport={spotlightViewport}
-                    canvasPixelW={spotlightVpSize?.width}
-                    canvasPixelH={spotlightVpSize?.height}
-                    padding={Number(spotlightPadding)}
-                    visible={true}
-                  />
-                )}
+                {/* Quote Spotlight overlay — text-anchored, never drifts */}
+                <QuoteSpotlight
+                  annotation={activeAnn}
+                  exhibitNo={displayNumber}
+                  visible={showSpotlight}
+                  onClose={() => setSpotlightOn(false)}
+                />
               </div>
             )}
           </div>
