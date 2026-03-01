@@ -18,25 +18,6 @@ function getColor(color) {
 
 function isPdf(url) { return url?.toLowerCase().includes(".pdf"); }
 
-/**
- * PdfPageWithOverlay
- *
- * Renders a single PDF page (or image) with annotation overlays.
- * SAVE:   uses pdf.js viewport.convertToPdfPoint  → stores rect_pdf (PDF user units)
- * RENDER: uses pdf.js viewport.convertToViewportPoint → correct pixel position at any scale
- * Legacy fallback: annotations with only rect_norm_x/y/w/h render via normalized-to-pixel mapping.
- *
- * Props:
- *   fileUrl      – URL to PDF or image
- *   pageIndex    – 1-based page number (default 1)
- *   scale        – pdf.js render scale (default 1.25)
- *   highlights   – annotation objects (ExhibitAnnotations)
- *   mode         – "view" | "annotate"
- *   activeId     – selected annotation id (for ring highlight)
- *   onCreateAnnotation – callback({ rect_pdf, rect_norm, source_type, page_number, page_rotation, viewport_meta })
- *   onSelect     – callback(id) when a highlight is clicked
- *   onNumPages   – callback(n) with total page count
- */
 export default function PdfPageWithOverlay({
   fileUrl,
   pageIndex = 1,
@@ -45,34 +26,44 @@ export default function PdfPageWithOverlay({
   mode = "view",
   activeId = null,
   onCreateAnnotation,
-  // legacy compat: old callers used onCreateRect(rectNorm, vpW, vpH, scale)
   onCreateRect,
   onSelect,
   onNumPages,
-  // Called after each page render with { canvas, viewport, vpSize }
   onPageRender,
 }) {
   const canvasRef = useRef(null);
   const overlayRef = useRef(null);
 
-  // viewport dimensions (pixels) after render
-  const [vpSize, setVpSize] = useState(null); // { width, height }
-  // pdf.js viewport object (kept for coordinate conversion)
+  const [vpSize, setVpSize] = useState(null);
   const pdfViewportRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // For image source
+  // Cache the loaded PDF document so page changes don't reload the whole file
+  const pdfDocRef = useRef(null);
+  const pdfUrlRef = useRef(null);
+
   const [imgNaturalSize, setImgNaturalSize] = useState(null);
   const imgRef = useRef(null);
 
-  // Drag state
   const dragRef = useRef(null);
-  const [dragging, setDragging] = useState(null); // { x, y, w, h } in px (display)
+  const [dragging, setDragging] = useState(null);
 
   const isImageFile = !isPdf(fileUrl);
 
-  // ── Render PDF page ──────────────────────────────────────────────────────
+  // ── Load PDF document (only when fileUrl changes) ────────────────────────
+  useEffect(() => {
+    if (!fileUrl || isImageFile) return;
+    if (pdfUrlRef.current === fileUrl) return; // already loaded
+    pdfUrlRef.current = fileUrl;
+    pdfDocRef.current = null;
+    pdfjs.getDocument(fileUrl).promise.then(pdf => {
+      pdfDocRef.current = pdf;
+      if (onNumPages) onNumPages(pdf.numPages);
+    });
+  }, [fileUrl, isImageFile]);
+
+  // ── Render a single page whenever fileUrl, pageIndex, or scale changes ───
   useEffect(() => {
     if (!fileUrl || isImageFile) return;
     let cancelled = false;
@@ -80,42 +71,51 @@ export default function PdfPageWithOverlay({
     setError(null);
     pdfViewportRef.current = null;
 
-    pdfjs.getDocument(fileUrl).promise
-      .then(pdf => {
-        if (!cancelled && onNumPages) onNumPages(pdf.numPages);
-        return pdf.getPage(pageIndex);
-      })
-      .then(page => {
+    const renderPage = (pdf) => {
+      pdf.getPage(pageIndex).then(page => {
         if (cancelled) return;
         const vp = page.getViewport({ scale, rotation: 0 });
         pdfViewportRef.current = vp;
         const canvas = canvasRef.current;
         if (!canvas) return;
-        // Use devicePixelRatio for sharp rendering on hi-DPI screens.
-        // The canvas physical size is vp.width*dpr but CSS size stays vp.width.
+        // Set CSS size = viewport size; use devicePixelRatio for sharpness
         const dpr = window.devicePixelRatio || 1;
-        canvas.width  = Math.round(vp.width  * dpr);
-        canvas.height = Math.round(vp.height * dpr);
         canvas.style.width  = `${vp.width}px`;
         canvas.style.height = `${vp.height}px`;
+        canvas.width  = Math.round(vp.width  * dpr);
+        canvas.height = Math.round(vp.height * dpr);
         const ctx = canvas.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        return page.render({ canvasContext: ctx, viewport: vp }).promise.then(() => {
-          if (!cancelled) {
-            // vpSize always tracks the CSS (layout) dimensions, not physical canvas pixels
-            const vpSizeVal = { width: vp.width, height: vp.height };
-            setVpSize(vpSizeVal);
-            setLoading(false);
-            if (onPageRender) {
-              // Pass physical canvas, viewport, and CSS layout size
-              onPageRender({ canvas: canvasRef.current, viewport: vp, vpSize: vpSizeVal });
-            }
+        page.render({ canvasContext: ctx, viewport: vp }).promise.then(() => {
+          if (cancelled) return;
+          const vpSizeVal = { width: vp.width, height: vp.height };
+          setVpSize(vpSizeVal);
+          setLoading(false);
+          if (onPageRender) {
+            onPageRender({ canvas: canvasRef.current, viewport: vp, vpSize: vpSizeVal });
           }
         });
-      })
-      .catch(err => {
+      }).catch(err => {
         if (!cancelled) { setError(err.message); setLoading(false); }
       });
+    };
+
+    // If doc is already cached, use it; otherwise wait for it
+    if (pdfDocRef.current) {
+      renderPage(pdfDocRef.current);
+    } else {
+      // Doc may still be loading — poll briefly or load fresh
+      pdfjs.getDocument(fileUrl).promise.then(pdf => {
+        if (!pdfDocRef.current) {
+          pdfDocRef.current = pdf;
+          pdfUrlRef.current = fileUrl;
+          if (onNumPages) onNumPages(pdf.numPages);
+        }
+        if (!cancelled) renderPage(pdfDocRef.current);
+      }).catch(err => {
+        if (!cancelled) { setError(err.message); setLoading(false); }
+      });
+    }
 
     return () => { cancelled = true; };
   }, [fileUrl, pageIndex, scale, isImageFile]);
@@ -163,10 +163,8 @@ export default function PdfPageWithOverlay({
     const domRect = { left, top, width, height };
 
     if (!isImageFile && pdfViewportRef.current) {
-      // ── PDF: convert to PDF page units ──────────────────────────────────
       const vp = pdfViewportRef.current;
       const rect_pdf = domRectToPdf(domRect, vp);
-
       const payload = {
         source_type: "pdf",
         page_number: pageIndex,
@@ -174,20 +172,16 @@ export default function PdfPageWithOverlay({
         rect_pdf,
         viewport_meta: { scale, renderW: vp.width, renderH: vp.height },
       };
-
       if (onCreateAnnotation) {
         onCreateAnnotation(payload);
       } else if (onCreateRect) {
-        // legacy compat: callers that still use onCreateRect(rectNorm, vpW, vpH, scale)
         const vpW = vp.width, vpH = vp.height;
         const rectNorm = { x: left/vpW, y: top/vpH, w: width/vpW, h: height/vpH };
         onCreateRect(rectNorm, vpW, vpH, scale);
       }
     } else if (isImageFile && imgRef.current) {
-      // ── Image: convert to normalized 0..1 ─────────────────────────────
       const el = imgRef.current;
       const rect_norm = domRectToNorm(left, top, width, height, el.clientWidth, el.clientHeight);
-
       const payload = {
         source_type: "image",
         page_number: 1,
@@ -195,7 +189,6 @@ export default function PdfPageWithOverlay({
         rect_norm,
         viewport_meta: { scale: 1, renderW: el.clientWidth, renderH: el.clientHeight },
       };
-
       if (onCreateAnnotation) {
         onCreateAnnotation(payload);
       } else if (onCreateRect) {
@@ -204,7 +197,7 @@ export default function PdfPageWithOverlay({
     }
   }, [pageIndex, scale, isImageFile, getRelPx, onCreateAnnotation, onCreateRect]);
 
-  // ── Click to select in view mode ──────────────────────────────────────────
+  // ── Click to select ───────────────────────────────────────────────────────
   const handleOverlayClick = useCallback((e) => {
     if (mode !== "view" || !onSelect) return;
     const overlayRect = overlayRef.current.getBoundingClientRect();
@@ -232,13 +225,11 @@ export default function PdfPageWithOverlay({
       return normRectToPixels(h.rect_norm, W, H);
     }
 
-    // legacy: rect_norm_x/y/w/h fields
     if (h.rect_norm_x != null && vpSize) {
       return { left: h.rect_norm_x * vpSize.width, top: h.rect_norm_y * vpSize.height,
                width: h.rect_norm_w * vpSize.width, height: h.rect_norm_h * vpSize.height };
     }
 
-    // legacy: geometry_json (0-100%)
     if (h.geometry_json?.type === "rect" && vpSize) {
       return { left: (h.geometry_json.x/100) * vpSize.width, top: (h.geometry_json.y/100) * vpSize.height,
                width: (h.geometry_json.w/100) * vpSize.width, height: (h.geometry_json.h/100) * vpSize.height };
@@ -247,27 +238,22 @@ export default function PdfPageWithOverlay({
     return null;
   }, [vpSize, imgNaturalSize]);
 
-  // Filter highlights for current page
   const pageHighlights = highlights.filter(h => {
     const pg = h.page_number ?? h.extract_page_number ?? 1;
     return pg === pageIndex;
   });
 
-  // Stable ref for click handler closure
   const pageHighlightsForClick = () => pageHighlights;
 
   const overlayW = vpSize?.width ?? 0;
   const overlayH = vpSize?.height ?? 0;
 
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div style={{ position: "relative", display: "inline-block", lineHeight: 0,
                   width: overlayW || undefined, height: overlayH || undefined }}>
 
-      {/* PDF canvas */}
       {!isImageFile && <canvas ref={canvasRef} style={{ display: "block" }} />}
 
-      {/* Image */}
       {isImageFile && (
         <img
           ref={imgRef}
@@ -298,7 +284,6 @@ export default function PdfPageWithOverlay({
         </div>
       )}
 
-      {/* Overlay — positioned exactly over canvas/image */}
       {!loading && vpSize && (
         <div
           ref={overlayRef}
@@ -312,7 +297,6 @@ export default function PdfPageWithOverlay({
           onMouseLeave={() => { dragRef.current = null; setDragging(null); }}
           onClick={handleOverlayClick}
         >
-          {/* Existing highlights */}
           {pageHighlights.map(h => {
             const cm = coordMode(h);
             const px = getHighlightPixels(h);
@@ -343,7 +327,6 @@ export default function PdfPageWithOverlay({
                     outline: isLegacy ? "1.5px dashed rgba(234,179,8,0.7)" : "none",
                   }}
                 />
-                {/* Legacy warning badge */}
                 {isLegacy && (
                   <div style={{
                     position: "absolute",
@@ -358,7 +341,6 @@ export default function PdfPageWithOverlay({
             );
           })}
 
-          {/* In-progress drag rect */}
           {dragging && dragging.w > 2 && (
             <div style={{
               position: "absolute",
