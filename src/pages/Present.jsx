@@ -17,6 +17,39 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 function isPdf(url) { return url?.toLowerCase().includes(".pdf"); }
 function isImage(url) { return /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url || ""); }
 
+// ── Simple PDF viewer (no annotation overlay needed — text-based now) ────────
+function PdfViewer({ fileUrl, currentPage, scale, onNumPages }) {
+  const canvasRef = React.useRef(null);
+  const [pdfDoc, setPdfDoc] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!fileUrl) return;
+    if (fileUrl.toLowerCase().includes(".pdf")) {
+      pdfjs.getDocument(fileUrl).promise.then(doc => {
+        setPdfDoc(doc);
+        if (onNumPages) onNumPages(doc.numPages);
+      });
+    }
+  }, [fileUrl]);
+
+  React.useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
+    pdfDoc.getPage(currentPage).then(page => {
+      const vp = page.getViewport({ scale });
+      const canvas = canvasRef.current;
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      page.render({ canvasContext: canvas.getContext("2d"), viewport: vp });
+    });
+  }, [pdfDoc, currentPage, scale]);
+
+  const isImage = /\.(jpe?g|png|webp|gif)(\?|$)/i.test(fileUrl || "");
+  if (isImage) {
+    return <img src={fileUrl} alt="Exhibit" style={{ transform: `scale(${scale})`, transformOrigin: "top left", display: "block", maxWidth: "100%" }} draggable={false} />;
+  }
+  return <canvas ref={canvasRef} style={{ display: "block" }} />;
+}
+
 // ── Present page ─────────────────────────────────────────────────────────────
 export default function Present() {
   const { activeCase } = useActiveCase();
