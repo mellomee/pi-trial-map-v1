@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import QuoteSpotlight from "@/components/presents/QuoteSpotlight";
 
-// Remove unused import warning suppression
-const _unused = { Select, SelectContent, SelectItem, SelectTrigger, SelectValue };
+
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
