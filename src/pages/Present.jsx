@@ -8,8 +8,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import PdfPageWithOverlay from "@/components/PdfPageWithOverlay";
-import SpotlightView from "@/components/presents/SpotlightView";
+import QuoteSpotlight from "@/components/presents/QuoteSpotlight";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
