@@ -140,7 +140,7 @@ export default function Present() {
     : null;
 
   const activeAnn = annotations.find(a => a.id === activeAnnotationId) || null;
-  const showSpotlight = spotlightOn && activeAnn && spotlightCanvas;
+  const showSpotlight = spotlightOn && activeAnn;
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
