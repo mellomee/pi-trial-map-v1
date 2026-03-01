@@ -130,34 +130,62 @@ export default function AnnotatePage() {
     setEditModalAnn({ ...ann });
   };
 
-  const saveEditModal = async () => {
-    if (!editModalAnn) return;
+  // Called by AnnotationEditorModal with the local form state
+  const saveEditModal = async (formData) => {
+    if (!formData?.id) return;
     setEditSaving(true);
-    const pg = Number(editModalAnn.page_number ?? editModalAnn.extract_page_number ?? 1);
-    // Build payload — keep empty strings as empty strings (not null) so fields persist
+    const pg = Number(formData.page_number ?? 1);
     const payload = {
-      kind: editModalAnn.kind || "QUOTE_SPOTLIGHT",
-      color: editModalAnn.color || "yellow",
-      opacity: editModalAnn.opacity ?? 0.35,
-      label_text: (editModalAnn.label_text ?? "").trim() || null,
-      label: (editModalAnn.label_text ?? "").trim() || null,
-      note_text: (editModalAnn.note_text ?? "").trim() || null,
-      quote_text: (editModalAnn.quote_text ?? "").trim() || null,
-      anchor_text: (editModalAnn.anchor_text ?? "").trim() || null,
-      extracted_text: (editModalAnn.extracted_text ?? "").trim() || null,
-      show_quote_in_present: editModalAnn.show_quote_in_present !== false,
-      page_number: pg,
-      extract_page_number: pg,
-      jury_safe: !!editModalAnn.jury_safe,
-      group_id: editModalAnn.group_id || null,
+      kind:                  formData.kind || "QUOTE_SPOTLIGHT",
+      color:                 formData.color || "yellow",
+      opacity:               formData.opacity ?? 0.35,
+      label_text:            (formData.label_text ?? "").trim() || null,
+      label:                 (formData.label_text ?? "").trim() || null,
+      note_text:             (formData.note_text ?? "").trim() || null,
+      quote_text:            (formData.quote_text ?? "").trim() || null,
+      anchor_text:           (formData.anchor_text ?? "").trim() || null,
+      extracted_text:        (formData.extracted_text ?? "").trim() || null,
+      show_quote_in_present: formData.show_quote_in_present !== false,
+      page_number:           pg,
+      extract_page_number:   pg,
+      jury_safe:             !!formData.jury_safe,
+      group_id:              formData.group_id || null,
     };
-    await base44.entities.ExhibitAnnotations.update(editModalAnn.id, payload);
-    // Re-fetch to confirm persistence
+    await base44.entities.ExhibitAnnotations.update(formData.id, payload);
+    // Re-fetch to confirm persistence from DB
     const fresh = await base44.entities.ExhibitAnnotations.filter({ extract_id: extractId });
     setAnnotations(fresh);
     setEditModalAnn(null);
     setEditSaving(false);
   };
+
+  // Re-extract text from PDF text layer for a given annotation's rect_norm
+  const handleReextract = useCallback(async (formData, callback) => {
+    if (!pdfDoc || !formData.rect_norm) return;
+    const pg = Number(formData.page_number ?? 1);
+    const page = await pdfDoc.getPage(pg);
+    const viewport = page.getViewport({ scale: 1 });
+    const textContent = await page.getTextContent();
+    const rn = formData.rect_norm;
+    const x1 = rn.x * viewport.width;
+    const y1 = rn.y * viewport.height;
+    const x2 = (rn.x + rn.w) * viewport.width;
+    const y2 = (rn.y + rn.h) * viewport.height;
+    const extracted = textContent.items
+      .filter(item => {
+        const [, , , , tx, ty] = item.transform;
+        const itemX = tx;
+        const itemY = viewport.height - ty; // flip Y
+        const itemW = item.width ?? 0;
+        const itemH = Math.abs(item.transform[3]) || 10;
+        return itemX < x2 && itemX + itemW > x1 && itemY - itemH < y2 && itemY > y1;
+      })
+      .map(item => item.str)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    callback(extracted);
+  }, [pdfDoc]);
 
   const startInlineEdit = (ann) => {
     setEditingId(ann.id);
