@@ -41,6 +41,7 @@ export default function PdfPageWithOverlay({
   activeId = null,
   onCreateRect,
   onSelect,
+  onNumPages,
 }) {
   const canvasRef = useRef(null);
   const overlayRef = useRef(null);
