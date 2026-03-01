@@ -108,6 +108,29 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
             </div>
           )}
 
+          {/* Quote Text */}
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">Quote Text <span className="text-slate-600">(paste excerpt to show in Spotlight)</span></label>
+            <Textarea
+              value={editing.quote_text ?? ""}
+              onChange={e => setEditing(p => ({ ...p, quote_text: e.target.value }))}
+              className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs"
+              rows={3}
+              placeholder="Paste the exact text to display in the Spotlight overlay…"
+            />
+          </div>
+
+          {/* Anchor Text */}
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">Anchor Text <span className="text-slate-600">(optional — surrounding sentence for search)</span></label>
+            <Input
+              value={editing.anchor_text ?? ""}
+              onChange={e => setEditing(p => ({ ...p, anchor_text: e.target.value }))}
+              className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 h-8 text-xs"
+              placeholder="Surrounding sentence for future auto-locate…"
+            />
+          </div>
+
           {/* Note */}
           <div>
             <label className="text-xs text-slate-400 block mb-1">Internal Note</label>
