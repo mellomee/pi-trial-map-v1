@@ -380,23 +380,42 @@ export default function Present() {
                         {pageAnns.map(a => {
                           const isActive = activeAnnotationId === a.id;
                           return (
-                            <button key={a.id}
-                              onClick={() => { selectAnnotation(a); setSpotlightOn(true); }}
-                              className={`w-full text-left px-2 py-1.5 rounded transition-colors flex items-start gap-1.5 ${
-                                isActive ? "bg-green-600/20 border border-green-600/40" : "hover:bg-white/5 border border-transparent"
-                              }`}>
-                              <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">✦</span>
-                              <div className="min-w-0">
-                                {a.label_text
-                                  ? <p className={`text-[11px] font-medium leading-tight ${isActive ? "text-green-300" : "text-slate-300"}`}>{a.label_text}</p>
-                                  : <p className={`text-[10px] leading-tight italic ${isActive ? "text-green-400" : "text-slate-500"}`}>p.{pg} quote</p>
-                                }
-                                {a.quote_text && (
-                                  <p className="text-[10px] text-slate-500 italic mt-0.5 line-clamp-2">"{a.quote_text}"</p>
-                                )}
-                              </div>
-                              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0 mt-1.5" />}
-                            </button>
+                            <div key={a.id} className={`rounded border transition-colors ${
+                              isActive ? "bg-green-600/15 border-green-600/40" : "border-transparent hover:bg-white/5 hover:border-[#1e2a45]"
+                            }`}>
+                              {/* Row: click to select (no auto-spotlight) */}
+                              <button
+                                onClick={() => selectAnnotation(a)}
+                                className="w-full text-left px-2 py-1.5 flex items-start gap-1.5"
+                              >
+                                <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">✦</span>
+                                <div className="min-w-0 flex-1">
+                                  {a.label_text
+                                    ? <p className={`text-[11px] font-medium leading-tight ${isActive ? "text-green-300" : "text-slate-300"}`}>{a.label_text}</p>
+                                    : <p className={`text-[10px] leading-tight italic ${isActive ? "text-green-400" : "text-slate-500"}`}>p.{pg} quote</p>
+                                  }
+                                </div>
+                                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0 mt-1.5" />}
+                              </button>
+                              {/* Quote preview + spotlight button when active */}
+                              {isActive && (
+                                <div className="px-2 pb-2 space-y-1.5">
+                                  {a.quote_text ? (
+                                    <p className="text-[10px] text-yellow-200/70 italic leading-snug line-clamp-4 bg-yellow-500/5 border border-yellow-500/20 rounded px-2 py-1.5">
+                                      "{a.quote_text}"
+                                    </p>
+                                  ) : (
+                                    <p className="text-[9px] text-slate-600 italic">No quote text stored.</p>
+                                  )}
+                                  <button
+                                    onClick={() => { selectAnnotation(a); setSpotlightOn(true); }}
+                                    className="w-full py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors"
+                                  >
+                                    ✦ Spotlight
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
