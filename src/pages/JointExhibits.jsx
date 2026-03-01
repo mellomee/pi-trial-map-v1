@@ -180,6 +180,24 @@ export default function JointExhibits() {
     load();
   };
 
+  const withdrawJoint = async (j) => {
+    if (!confirm(`Withdraw Exhibit #${j.marked_no}? Status will be set to Withdrawn. The record is NOT deleted.`)) return;
+    await base44.entities.JointExhibits.update(j.id, { status: "Withdrawn" });
+    load();
+  };
+
+  const openSwap = (j) => {
+    setSwapExtractId(j.exhibit_extract_id || "");
+    setSwapDialog(j);
+  };
+
+  const saveSwap = async () => {
+    if (!swapDialog) return;
+    await base44.entities.JointExhibits.update(swapDialog.id, { exhibit_extract_id: swapExtractId || null });
+    setSwapDialog(null);
+    load();
+  };
+
   if (!activeCase) return <div className="p-8 text-slate-400">No active case selected.</div>;
 
   const admittedCount = joints.filter(j => admittedByJointId[j.id]).length;
