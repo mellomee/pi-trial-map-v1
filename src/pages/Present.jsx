@@ -73,9 +73,8 @@ export default function Present() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Spotlight state
+  // Spotlight state — OFF by default so user sees exhibit first
   const [spotlightOn, setSpotlightOn] = useState(false);
-  // "Spotlight Only" (default) vs "Spotlight + Try Locate" (uses anchor text search)
   const [spotlightMode, setSpotlightMode] = useState("only"); // "only" | "locate"
 
   useEffect(() => {
