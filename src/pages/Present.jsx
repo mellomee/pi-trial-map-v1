@@ -346,6 +346,7 @@ export default function Present() {
                   annotation={activeAnn}
                   exhibitNo={displayNumber}
                   visible={showSpotlight}
+                  mode={spotlightMode}
                   onClose={() => setSpotlightOn(false)}
                 />
               </div>
