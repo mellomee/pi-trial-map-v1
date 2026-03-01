@@ -30,18 +30,38 @@ export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPag
     }
   }, [open, defaultPage]);
 
+  const pasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setAnchorText(text.trim());
+    } catch {
+      alert("Clipboard access denied. Please paste manually.");
+    }
+  };
+
+  const autoCaptureSelection = () => {
+    const sel = window.getSelection();
+    const text = sel ? sel.toString().trim() : "";
+    if (text) {
+      setAnchorText(text);
+    } else {
+      alert("No text selected in the PDF. Select text first, then click this button. (Scanned PDFs may not support text selection — use Paste from Clipboard instead.)");
+    }
+  };
+
   const handleSave = async () => {
     if (!quoteText.trim()) return;
     setSaving(true);
-    const anchorTrimmed = anchorText.trim();
+    const quoteTrimmed = quoteText.trim();
+    const anchorTrimmed = anchorText.trim() || quoteTrimmed; // fallback to quote
     await onSave({
       kind: "QUOTE_SPOTLIGHT",
       page_number: Number(pageNumber),
-      quote_text: quoteText.trim(),
-      anchor_text: anchorTrimmed || null,
-      anchor_prefix: anchorTrimmed ? anchorTrimmed.slice(0, 40) : null,
-      anchor_suffix: anchorTrimmed ? anchorTrimmed.slice(-40) : null,
-      label_text: labelText.trim() || quoteText.trim().slice(0, 60),
+      quote_text: quoteTrimmed,
+      anchor_text: anchorTrimmed,
+      anchor_prefix: anchorTrimmed.slice(0, 40),
+      anchor_suffix: anchorTrimmed.slice(-40),
+      label_text: labelText.trim() || quoteTrimmed.slice(0, 60),
       jury_safe: jurySafe,
       group_id: groupId || null,
     });
