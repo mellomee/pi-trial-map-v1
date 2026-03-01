@@ -29,6 +29,31 @@ export default function AnnotatePage() {
   const [editLabel, setEditLabel] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // ── Picker mode (no extractId) ───────────────────────────────────────────
+  const { activeCase } = useActiveCase();
+  const [allExtracts, setAllExtracts] = useState([]);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerSelected, setPickerSelected] = useState("");
+  const [pickerLoading, setPickerLoading] = useState(false);
+
+  useEffect(() => {
+    if (extractId) return; // not in picker mode
+    if (!activeCase) return;
+    setPickerLoading(true);
+    base44.entities.ExhibitExtracts.filter({ case_id: activeCase.id })
+      .then(setAllExtracts)
+      .finally(() => setPickerLoading(false));
+  }, [extractId, activeCase]);
+
+  const filteredPicker = useMemo(() => {
+    if (!pickerSearch) return allExtracts;
+    const q = pickerSearch.toLowerCase();
+    return allExtracts.filter(e =>
+      (e.extract_title_official || "").toLowerCase().includes(q) ||
+      (e.extract_title_internal || "").toLowerCase().includes(q)
+    );
+  }, [allExtracts, pickerSearch]);
+
   useEffect(() => {
     if (!extractId) return;
     Promise.all([
