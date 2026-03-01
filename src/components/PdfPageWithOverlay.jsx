@@ -220,9 +220,11 @@ export default function PdfPageWithOverlay({
   const getHighlightPixels = useCallback((h) => {
     const cm = coordMode(h);
 
-    if (cm === "pdf" && pdfViewportRef.current) {
+    // Only use pdfViewportRef if it was rendered for the current page
+    if (cm === "pdf" && pdfViewportRef.current && renderedPageRef.current === pageIndex) {
       return pdfRectToPixels(h.rect_pdf, pdfViewportRef.current);
     }
+    if (cm === "pdf") return null; // viewport not ready yet for this page
 
     if (cm === "norm") {
       const { width: W, height: H } = vpSize || imgNaturalSize || { width: 1, height: 1 };
