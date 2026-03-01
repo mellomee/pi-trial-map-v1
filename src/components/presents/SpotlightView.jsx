@@ -29,10 +29,11 @@ export default function SpotlightView({
   useEffect(() => {
     if (!visible || !pageCanvasEl || !annotation) { setCropInfo(null); return; }
 
-    // Resolve pixel rect in viewport (CSS) pixel space, then scale to physical canvas pixels.
-    const vpW = canvasPixelW || pageCanvasEl.offsetWidth || pageCanvasEl.width;
-    const vpH = canvasPixelH || pageCanvasEl.offsetHeight || pageCanvasEl.height;
-    // Physical canvas size may be larger than CSS size due to devicePixelRatio
+    // Resolve pixel rect of the annotation at the CANVAS resolution
+    // Canvas physical pixels may differ from viewport pixels due to devicePixelRatio.
+    // We compute in viewport-pixel space, then scale to canvas pixels.
+    const vpW = canvasPixelW || pageCanvasEl.width;
+    const vpH = canvasPixelH || pageCanvasEl.height;
     const scaleToCanvas = pageCanvasEl.width / vpW;
 
     let px = null;

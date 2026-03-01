@@ -11,18 +11,31 @@ const COLOR_MAP = {
   blue:   { fill: "rgba(59,130,246,0.28)", stroke: "rgba(59,130,246,0.85)" },
   none:   { fill: "rgba(251,146,60,0.32)", stroke: "rgba(251,146,60,0.85)" },
 };
-function getColor(c) { return COLOR_MAP[c] || COLOR_MAP.yellow; }
+
+function getColor(color) {
+  return COLOR_MAP[color] || COLOR_MAP.yellow;
+}
+
 function isPdf(url) { return url?.toLowerCase().includes(".pdf"); }
 
 /**
  * PdfPageWithOverlay
  *
- * The key invariant:
- *   `renderedState` is an atomic { viewport, pageIndex, width, height } object
- *   set in a SINGLE setState call after render completes.
- *   The overlay is only shown when renderedState.pageIndex === pageIndex prop,
- *   guaranteeing the viewport used for coordinate conversion always matches the
- *   page currently painted on the canvas — eliminating drift completely.
+ * Renders a single PDF page (or image) with annotation overlays.
+ * SAVE:   uses pdf.js viewport.convertToPdfPoint  → stores rect_pdf (PDF user units)
+ * RENDER: uses pdf.js viewport.convertToViewportPoint → correct pixel position at any scale
+ * Legacy fallback: annotations with only rect_norm_x/y/w/h render via normalized-to-pixel mapping.
+ *
+ * Props:
+ *   fileUrl      – URL to PDF or image
+ *   pageIndex    – 1-based page number (default 1)
+ *   scale        – pdf.js render scale (default 1.25)
+ *   highlights   – annotation objects (ExhibitAnnotations)
+ *   mode         – "view" | "annotate"
+ *   activeId     – selected annotation id (for ring highlight)
+ *   onCreateAnnotation – callback({ rect_pdf, rect_norm, source_type, page_number, page_rotation, viewport_meta })
+ *   onSelect     – callback(id) when a highlight is clicked
+ *   onNumPages   – callback(n) with total page count
  */
 export default function PdfPageWithOverlay({
   fileUrl,
@@ -32,140 +45,77 @@ export default function PdfPageWithOverlay({
   mode = "view",
   activeId = null,
   onCreateAnnotation,
+  // legacy compat: old callers used onCreateRect(rectNorm, vpW, vpH, scale)
   onCreateRect,
   onSelect,
   onNumPages,
+  // Called after each page render with { canvas, viewport, vpSize }
   onPageRender,
-  debug = false,
 }) {
-  const canvasRef  = useRef(null);
+  const canvasRef = useRef(null);
   const overlayRef = useRef(null);
 
-  // ATOMIC rendered state — viewport + page index + CSS size all in one object.
-  // The overlay only renders when renderedState.pageIndex === pageIndex prop.
-  const [renderedState, setRenderedState] = useState(null);
-
-  // Cached PDF doc to avoid re-downloading on page/scale changes
-  const pdfDocRef = useRef(null);
-  const pdfUrlRef = useRef(null);
-
+  // viewport dimensions (pixels) after render
+  const [vpSize, setVpSize] = useState(null); // { width, height }
+  // pdf.js viewport object (kept for coordinate conversion)
+  const pdfViewportRef = useRef(null);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
 
-  // Image support
-  const [imgVpSize, setImgVpSize]   = useState(null);
+  // For image source
+  const [imgNaturalSize, setImgNaturalSize] = useState(null);
   const imgRef = useRef(null);
 
-  // Drag state for annotate mode
-  const dragRef    = useRef(null);
-  const [dragging, setDragging] = useState(null);
+  // Drag state
+  const dragRef = useRef(null);
+  const [dragging, setDragging] = useState(null); // { x, y, w, h } in px (display)
 
   const isImageFile = !isPdf(fileUrl);
 
-  // ── Load / cache PDF document ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!fileUrl || isImageFile) return;
-    if (pdfUrlRef.current === fileUrl && pdfDocRef.current) return;
-    pdfUrlRef.current = fileUrl;
-    pdfDocRef.current = null;
-    pdfjs.getDocument(fileUrl).promise.then(pdf => {
-      pdfDocRef.current = pdf;
-      if (onNumPages) onNumPages(pdf.numPages);
-    });
-  }, [fileUrl, isImageFile]);
-
-  // ── Render page ───────────────────────────────────────────────────────────
+  // ── Render PDF page ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!fileUrl || isImageFile) return;
     let cancelled = false;
-
-    // Immediately wipe old rendered state so overlay disappears while loading
-    setRenderedState(null);
     setLoading(true);
     setError(null);
+    pdfViewportRef.current = null;
 
-    const doRender = (pdf) => {
-      pdf.getPage(pageIndex).then(page => {
+    pdfjs.getDocument(fileUrl).promise
+      .then(pdf => {
+        if (!cancelled && onNumPages) onNumPages(pdf.numPages);
+        return pdf.getPage(pageIndex);
+      })
+      .then(page => {
         if (cancelled) return;
-
-        const vp  = page.getViewport({ scale, rotation: 0 });
+        const vp = page.getViewport({ scale, rotation: 0 });
+        pdfViewportRef.current = vp;
         const canvas = canvasRef.current;
-        if (!canvas || cancelled) return;
-
-        const dpr = window.devicePixelRatio || 1;
-        canvas.style.width  = `${vp.width}px`;
-        canvas.style.height = `${vp.height}px`;
-        canvas.width  = Math.round(vp.width  * dpr);
-        canvas.height = Math.round(vp.height * dpr);
-
+        if (!canvas) return;
+        canvas.width = vp.width;
+        canvas.height = vp.height;
         const ctx = canvas.getContext("2d");
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        page.render({ canvasContext: ctx, viewport: vp }).promise.then(() => {
-          if (cancelled) return;
-
-          // Set all three together so React never renders the overlay with
-          // a viewport that belongs to a different page.
-          const rs = { viewport: vp, pageIndex, width: vp.width, height: vp.height };
-          setRenderedState(rs);
-          setLoading(false);
-
-          if (debug) console.log("[PdfPageWithOverlay] rendered", { pageIndex, w: vp.width, h: vp.height, dpr });
-          if (onPageRender) onPageRender({ canvas, viewport: vp, vpSize: { width: vp.width, height: vp.height } });
+        return page.render({ canvasContext: ctx, viewport: vp }).promise.then(() => {
+          if (!cancelled) {
+            const vpSizeVal = { width: vp.width, height: vp.height };
+            setVpSize(vpSizeVal);
+            setLoading(false);
+            if (onPageRender) {
+              onPageRender({ canvas: canvasRef.current, viewport: vp, vpSize: vpSizeVal });
+            }
+          }
         });
-      }).catch(err => {
+      })
+      .catch(err => {
         if (!cancelled) { setError(err.message); setLoading(false); }
       });
-    };
 
-    const run = () => {
-      if (pdfDocRef.current) { doRender(pdfDocRef.current); return; }
-      pdfjs.getDocument(fileUrl).promise.then(pdf => {
-        if (!pdfDocRef.current) { pdfDocRef.current = pdf; pdfUrlRef.current = fileUrl; if (onNumPages) onNumPages(pdf.numPages); }
-        if (!cancelled) doRender(pdfDocRef.current);
-      }).catch(err => { if (!cancelled) { setError(err.message); setLoading(false); } });
-    };
-
-    run();
     return () => { cancelled = true; };
   }, [fileUrl, pageIndex, scale, isImageFile]);
 
-  // ── Coordinate resolution ─────────────────────────────────────────────────
-  // renderedState is only non-null when its .pageIndex === current pageIndex prop,
-  // so there's no page-mismatch possible here.
-  const resolvePixels = useCallback((h) => {
-    const cm = coordMode(h);
-
-    if (cm === "pdf") {
-      if (!renderedState) return null;
-      return pdfRectToPixels(h.rect_pdf, renderedState.viewport);
-    }
-
-    if (cm === "norm") {
-      const W = renderedState?.width  || imgVpSize?.width  || 1;
-      const H = renderedState?.height || imgVpSize?.height || 1;
-      return normRectToPixels(h.rect_norm, W, H);
-    }
-
-    // Legacy flat fields
-    const W = renderedState?.width  || imgVpSize?.width;
-    const H = renderedState?.height || imgVpSize?.height;
-    if (!W || !H) return null;
-
-    if (h.rect_norm_x != null) {
-      return { left: h.rect_norm_x * W, top: h.rect_norm_y * H, width: h.rect_norm_w * W, height: h.rect_norm_h * H };
-    }
-    if (h.geometry_json?.type === "rect") {
-      return { left: (h.geometry_json.x / 100) * W, top: (h.geometry_json.y / 100) * H,
-               width: (h.geometry_json.w / 100) * W, height: (h.geometry_json.h / 100) * H };
-    }
-    return null;
-  }, [renderedState, imgVpSize]);
-
-  // ── Drag helpers ──────────────────────────────────────────────────────────
+  // ── Drag helpers ─────────────────────────────────────────────────────────
   const getRelPx = useCallback((e) => {
-    const r = overlayRef.current.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    const rect = overlayRef.current.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }, []);
 
   const onMouseDown = useCallback((e) => {
@@ -178,86 +128,153 @@ export default function PdfPageWithOverlay({
 
   const onMouseMove = useCallback((e) => {
     if (!dragRef.current) return;
-    const { startX, startY } = dragRef.current;
     const pos = getRelPx(e);
-    setDragging({ x: Math.min(pos.x, startX), y: Math.min(pos.y, startY),
-                  w: Math.abs(pos.x - startX), h: Math.abs(pos.y - startY) });
+    const { startX, startY } = dragRef.current;
+    setDragging({
+      x: Math.min(pos.x, startX),
+      y: Math.min(pos.y, startY),
+      w: Math.abs(pos.x - startX),
+      h: Math.abs(pos.y - startY),
+    });
   }, [getRelPx]);
 
   const onMouseUp = useCallback((e) => {
     if (!dragRef.current) return;
-    const { startX, startY } = dragRef.current;
     const pos = getRelPx(e);
+    const { startX, startY } = dragRef.current;
     dragRef.current = null;
-    setDragging(null);
 
-    const left = Math.min(pos.x, startX), top = Math.min(pos.y, startY);
-    const width = Math.abs(pos.x - startX), height = Math.abs(pos.y - startY);
+    const left   = Math.min(pos.x, startX);
+    const top    = Math.min(pos.y, startY);
+    const width  = Math.abs(pos.x - startX);
+    const height = Math.abs(pos.y - startY);
+
+    setDragging(null);
     if (width < 5 || height < 5) return;
 
-    if (!isImageFile && renderedState) {
-      const vp = renderedState.viewport;
-      const rect_pdf = domRectToPdf({ left, top, width, height }, vp);
+    const domRect = { left, top, width, height };
+
+    if (!isImageFile && pdfViewportRef.current) {
+      // ── PDF: convert to PDF page units ──────────────────────────────────
+      const vp = pdfViewportRef.current;
+      const rect_pdf = domRectToPdf(domRect, vp);
+
       const payload = {
-        source_type: "pdf", page_number: pageIndex, page_rotation: 0, rect_pdf,
-        pdf_page_w: vp.width / scale, pdf_page_h: vp.height / scale,
-        created_from: "annotate",
+        source_type: "pdf",
+        page_number: pageIndex,
+        page_rotation: 0,
+        rect_pdf,
         viewport_meta: { scale, renderW: vp.width, renderH: vp.height },
       };
-      if (onCreateAnnotation) onCreateAnnotation(payload);
-      else if (onCreateRect) onCreateRect({ x: left/vp.width, y: top/vp.height, w: width/vp.width, h: height/vp.height }, vp.width, vp.height, scale);
 
+      if (onCreateAnnotation) {
+        onCreateAnnotation(payload);
+      } else if (onCreateRect) {
+        // legacy compat: callers that still use onCreateRect(rectNorm, vpW, vpH, scale)
+        const vpW = vp.width, vpH = vp.height;
+        const rectNorm = { x: left/vpW, y: top/vpH, w: width/vpW, h: height/vpH };
+        onCreateRect(rectNorm, vpW, vpH, scale);
+      }
     } else if (isImageFile && imgRef.current) {
+      // ── Image: convert to normalized 0..1 ─────────────────────────────
       const el = imgRef.current;
       const rect_norm = domRectToNorm(left, top, width, height, el.clientWidth, el.clientHeight);
-      const payload = { source_type: "image", page_number: 1, page_rotation: 0, rect_norm,
-                        viewport_meta: { scale: 1, renderW: el.clientWidth, renderH: el.clientHeight } };
-      if (onCreateAnnotation) onCreateAnnotation(payload);
-      else if (onCreateRect) onCreateRect(rect_norm, el.clientWidth, el.clientHeight, 1);
-    }
-  }, [pageIndex, scale, isImageFile, renderedState, getRelPx, onCreateAnnotation, onCreateRect]);
 
-  // ── Click-to-select ───────────────────────────────────────────────────────
+      const payload = {
+        source_type: "image",
+        page_number: 1,
+        page_rotation: 0,
+        rect_norm,
+        viewport_meta: { scale: 1, renderW: el.clientWidth, renderH: el.clientHeight },
+      };
+
+      if (onCreateAnnotation) {
+        onCreateAnnotation(payload);
+      } else if (onCreateRect) {
+        onCreateRect(rect_norm, el.clientWidth, el.clientHeight, 1);
+      }
+    }
+  }, [pageIndex, scale, isImageFile, getRelPx, onCreateAnnotation, onCreateRect]);
+
+  // ── Click to select in view mode ──────────────────────────────────────────
   const handleOverlayClick = useCallback((e) => {
     if (mode !== "view" || !onSelect) return;
-    const r = overlayRef.current.getBoundingClientRect();
-    const cx = e.clientX - r.left, cy = e.clientY - r.top;
-    const pageAnns = highlights.filter(h => (h.page_number ?? h.extract_page_number ?? 1) === pageIndex);
-    const hit = [...pageAnns].reverse().find(h => {
-      const px = resolvePixels(h);
-      return px && cx >= px.left && cx <= px.left + px.width && cy >= px.top && cy <= px.top + px.height;
+    const overlayRect = overlayRef.current.getBoundingClientRect();
+    const cx = e.clientX - overlayRect.left;
+    const cy = e.clientY - overlayRect.top;
+
+    const hit = [...pageHighlightsForClick()].reverse().find(h => {
+      const px = getHighlightPixels(h);
+      if (!px) return false;
+      return cx >= px.left && cx <= px.left + px.width && cy >= px.top && cy <= px.top + px.height;
     });
     if (hit) { e.stopPropagation(); onSelect(hit.id); }
-  }, [mode, onSelect, highlights, pageIndex, resolvePixels]);
+  }, [mode, onSelect]); // eslint-disable-line
 
-  // ── Overlay dimensions — from renderedState (PDF) or imgVpSize (image) ────
-  const overlayW = renderedState?.width  || imgVpSize?.width  || 0;
-  const overlayH = renderedState?.height || imgVpSize?.height || 0;
+  // ── Coordinate resolution ────────────────────────────────────────────────
+  const getHighlightPixels = useCallback((h) => {
+    const cm = coordMode(h);
 
-  // Annotations for this page only
-  const pageHighlights = highlights.filter(h => (h.page_number ?? h.extract_page_number ?? 1) === pageIndex);
+    if (cm === "pdf" && pdfViewportRef.current) {
+      return pdfRectToPixels(h.rect_pdf, pdfViewportRef.current);
+    }
 
-  // Only show overlay when renderedState is for the current page (PDF) or image is loaded
-  const overlayReady = isImageFile ? !!imgVpSize : (renderedState?.pageIndex === pageIndex);
+    if (cm === "norm") {
+      const { width: W, height: H } = vpSize || imgNaturalSize || { width: 1, height: 1 };
+      return normRectToPixels(h.rect_norm, W, H);
+    }
 
+    // legacy: rect_norm_x/y/w/h fields
+    if (h.rect_norm_x != null && vpSize) {
+      return { left: h.rect_norm_x * vpSize.width, top: h.rect_norm_y * vpSize.height,
+               width: h.rect_norm_w * vpSize.width, height: h.rect_norm_h * vpSize.height };
+    }
+
+    // legacy: geometry_json (0-100%)
+    if (h.geometry_json?.type === "rect" && vpSize) {
+      return { left: (h.geometry_json.x/100) * vpSize.width, top: (h.geometry_json.y/100) * vpSize.height,
+               width: (h.geometry_json.w/100) * vpSize.width, height: (h.geometry_json.h/100) * vpSize.height };
+    }
+
+    return null;
+  }, [vpSize, imgNaturalSize]);
+
+  // Filter highlights for current page
+  const pageHighlights = highlights.filter(h => {
+    const pg = h.page_number ?? h.extract_page_number ?? 1;
+    return pg === pageIndex;
+  });
+
+  // Stable ref for click handler closure
+  const pageHighlightsForClick = () => pageHighlights;
+
+  const overlayW = vpSize?.width ?? 0;
+  const overlayH = vpSize?.height ?? 0;
+
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div style={{ position: "relative", display: "inline-block", lineHeight: 0,
-                  width: overlayW || undefined, height: overlayH || undefined,
-                  outline: debug ? "2px solid lime" : "none" }}>
+                  width: overlayW || undefined, height: overlayH || undefined }}>
 
       {/* PDF canvas */}
       {!isImageFile && <canvas ref={canvasRef} style={{ display: "block" }} />}
 
       {/* Image */}
       {isImageFile && (
-        <img ref={imgRef} src={fileUrl} alt="Extract"
-          style={{ display: "block", maxWidth: "100%" }} draggable={false}
+        <img
+          ref={imgRef}
+          src={fileUrl}
+          alt="Extract"
+          style={{ display: "block", maxWidth: "100%" }}
+          draggable={false}
           onLoad={e => {
             const el = e.currentTarget;
-            setImgVpSize({ width: el.clientWidth, height: el.clientHeight });
+            setVpSize({ width: el.clientWidth, height: el.clientHeight });
+            setImgNaturalSize({ width: el.naturalWidth, height: el.naturalHeight });
             setLoading(false);
             if (onNumPages) onNumPages(1);
-          }} />
+          }}
+        />
       )}
 
       {loading && (
@@ -273,41 +290,59 @@ export default function PdfPageWithOverlay({
         </div>
       )}
 
-      {/* Overlay — only rendered when viewport matches the painted page */}
-      {overlayReady && overlayW > 0 && (
-        <div ref={overlayRef}
-          style={{ position: "absolute", top: 0, left: 0, width: overlayW, height: overlayH,
-                   cursor: mode === "annotate" ? "crosshair" : "default", userSelect: "none",
-                   outline: debug ? "2px solid red" : "none" }}
-          onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp}
+      {/* Overlay — positioned exactly over canvas/image */}
+      {!loading && vpSize && (
+        <div
+          ref={overlayRef}
+          style={{ position: "absolute", top: 0, left: 0,
+                   width: overlayW, height: overlayH,
+                   cursor: mode === "annotate" ? "crosshair" : "default",
+                   userSelect: "none" }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
           onMouseLeave={() => { dragRef.current = null; setDragging(null); }}
-          onClick={handleOverlayClick}>
-
+          onClick={handleOverlayClick}
+        >
+          {/* Existing highlights */}
           {pageHighlights.map(h => {
-            const cm  = coordMode(h);
-            const px  = resolvePixels(h);
+            const cm = coordMode(h);
+            const px = getHighlightPixels(h);
             if (!px) return null;
-            const isActive    = activeId === h.id;
+
+            const isActive = activeId === h.id;
             const { fill, stroke } = getColor(h.color || "yellow");
             const isRedaction = h.kind === "redaction";
-            const isLegacy    = cm === "legacy";
+            const isLegacy = cm === "legacy";
+
             return (
               <React.Fragment key={h.id}>
-                <div title={h.label_text || h.label || ""} style={{
-                  position: "absolute", left: px.left, top: px.top, width: px.width, height: px.height,
-                  backgroundColor: isRedaction ? "rgba(0,0,0,0.92)" : fill,
-                  border: isRedaction ? "1px solid #333" : `1.5px solid ${isActive ? stroke : stroke.replace("0.85","0.45")}`,
-                  borderRadius: 2,
-                  boxShadow: isActive ? `0 0 0 2.5px ${stroke}` : "none",
-                  transition: "box-shadow 0.15s",
-                  pointerEvents: mode === "annotate" ? "none" : "auto",
-                  cursor: mode === "view" ? "pointer" : "crosshair",
-                  outline: isLegacy ? "1.5px dashed rgba(234,179,8,0.7)" : "none",
-                }} />
+                <div
+                  title={h.label_text || h.label || ""}
+                  style={{
+                    position: "absolute",
+                    left: px.left, top: px.top,
+                    width: px.width, height: px.height,
+                    backgroundColor: isRedaction ? "rgba(0,0,0,0.92)" : fill,
+                    border: isRedaction
+                      ? "1px solid #333"
+                      : `1.5px solid ${isActive ? stroke : stroke.replace("0.85","0.45")}`,
+                    borderRadius: 2,
+                    boxShadow: isActive ? `0 0 0 2.5px ${stroke}` : "none",
+                    transition: "box-shadow 0.15s",
+                    pointerEvents: mode === "annotate" ? "none" : "auto",
+                    cursor: mode === "view" ? "pointer" : "crosshair",
+                    outline: isLegacy ? "1.5px dashed rgba(234,179,8,0.7)" : "none",
+                  }}
+                />
+                {/* Legacy warning badge */}
                 {isLegacy && (
-                  <div style={{ position: "absolute", left: px.left, top: px.top - 14,
-                                fontSize: 9, color: "#ca8a04", background: "rgba(0,0,0,0.7)",
-                                padding: "0 3px", borderRadius: 2, pointerEvents: "none", whiteSpace: "nowrap" }}>
+                  <div style={{
+                    position: "absolute",
+                    left: px.left, top: px.top - 14,
+                    fontSize: 9, color: "#ca8a04", background: "rgba(0,0,0,0.7)",
+                    padding: "0 3px", borderRadius: 2, pointerEvents: "none", whiteSpace: "nowrap",
+                  }}>
                     Legacy — re-save to fix
                   </div>
                 )}
@@ -315,11 +350,16 @@ export default function PdfPageWithOverlay({
             );
           })}
 
+          {/* In-progress drag rect */}
           {dragging && dragging.w > 2 && (
-            <div style={{ position: "absolute", left: dragging.x, top: dragging.y,
-                          width: dragging.w, height: dragging.h,
-                          backgroundColor: "rgba(251,146,60,0.22)", border: "2px dashed rgba(251,146,60,0.85)",
-                          borderRadius: 2, pointerEvents: "none" }} />
+            <div style={{
+              position: "absolute",
+              left: dragging.x, top: dragging.y,
+              width: dragging.w, height: dragging.h,
+              backgroundColor: "rgba(251,146,60,0.22)",
+              border: "2px dashed rgba(251,146,60,0.85)",
+              borderRadius: 2, pointerEvents: "none",
+            }} />
           )}
         </div>
       )}

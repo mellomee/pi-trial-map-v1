@@ -6,12 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Edit2, Trash2, Upload, BookOpen, FileText, ExternalLink, ChevronDown, ChevronRight, Highlighter } from "lucide-react";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { Search, Plus, Edit2, Trash2, Upload, BookOpen, FileText, Link2, ChevronDown, ChevronRight } from "lucide-react";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import AnnotationsSection from "@/components/exhibits/AnnotationsSection";
-import FileViewerModal from "@/components/exhibits/FileViewerModal";
 
 const EMPTY = {
   extract_title_official: "",
@@ -36,7 +33,6 @@ export default function Extracts() {
   const [editing, setEditing] = useState(null); // null | EMPTY | extract obj
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [viewFile, setViewFile] = useState(null); // { url, title }
 
   useEffect(() => {
     if (!activeCase) return;
@@ -198,11 +194,11 @@ export default function Extracts() {
                     </span>
                   )}
                   {ex.extract_file_url && (
-                    <button
-                      onClick={e => { e.stopPropagation(); setViewFile({ url: ex.extract_file_url, title: ex.extract_title_official }); }}
+                    <a href={ex.extract_file_url} target="_blank" rel="noreferrer"
+                      onClick={e => e.stopPropagation()}
                       className="text-[10px] text-emerald-400 hover:underline flex items-center gap-0.5">
-                      <ExternalLink className="w-3 h-3" /> View File
-                    </button>
+                      <Link2 className="w-3 h-3" /> View File
+                    </a>
                   )}
                   {(jointsByExtractId[ex.id] || []).map(j => (
                     <Badge key={j.id} className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
@@ -212,14 +208,6 @@ export default function Extracts() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <Link
-                  to={createPageUrl(`AnnotatePage?extractId=${ex.id}`)}
-                  onClick={e => e.stopPropagation()}
-                  title="Annotate this extract"
-                  className="p-1.5 text-slate-500 hover:text-orange-400 transition-colors"
-                >
-                  <Highlighter className="w-3.5 h-3.5" />
-                </Link>
                 <button onClick={() => openEdit(ex)} className="p-1.5 text-slate-500 hover:text-slate-200">
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
@@ -237,8 +225,6 @@ export default function Extracts() {
           </div>
         ))}
       </div>
-
-      {viewFile && <FileViewerModal url={viewFile.url} title={viewFile.title} onClose={() => setViewFile(null)} />}
 
       {/* Edit Dialog */}
       <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
