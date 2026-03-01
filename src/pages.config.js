@@ -57,22 +57,22 @@ import Exhibits from './pages/Exhibits';
 import Export from './pages/Export';
 import Import from './pages/Import';
 import JointExhibitPrint from './pages/JointExhibitPrint';
-import JointExhibits from './pages/JointExhibits';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
 import PresentationMode from './pages/PresentationMode';
-import QuestionDetail from './pages/QuestionDetail';
 import Questions from './pages/Questions';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
-import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
-import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
+import TrialRunner from './pages/TrialRunner';
 import Extracts from './pages/Extracts';
+import QuestionDetail from './pages/QuestionDetail';
+import TrialPointDetail from './pages/TrialPointDetail';
+import JointExhibits from './pages/JointExhibits';
 import __Layout from './Layout.jsx';
 
 
@@ -87,22 +87,22 @@ export const PAGES = {
     "Export": Export,
     "Import": Import,
     "JointExhibitPrint": JointExhibitPrint,
-    "JointExhibits": JointExhibits,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
     "PresentationMode": PresentationMode,
-    "QuestionDetail": QuestionDetail,
     "Questions": Questions,
     "Runner": Runner,
     "SettingsPage": SettingsPage,
     "Transcripts": Transcripts,
-    "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
-    "TrialRunner": TrialRunner,
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
+    "TrialRunner": TrialRunner,
     "Extracts": Extracts,
+    "QuestionDetail": QuestionDetail,
+    "TrialPointDetail": TrialPointDetail,
+    "JointExhibits": JointExhibits,
 }
 
 export const pagesConfig = {

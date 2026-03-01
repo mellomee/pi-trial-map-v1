@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Edit2, Trash2, Upload, BookOpen, FileText, Link2 } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Upload, BookOpen, FileText, Link2, ChevronDown, ChevronRight } from "lucide-react";
 import useActiveCase from "@/components/hooks/useActiveCase";
+import AnnotationsSection from "@/components/exhibits/AnnotationsSection";
 
 const EMPTY = {
   extract_title_official: "",
