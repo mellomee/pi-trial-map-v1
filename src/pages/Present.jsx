@@ -40,12 +40,6 @@ export default function Present() {
 
   // Spotlight state
   const [spotlightOn, setSpotlightOn] = useState(false);
-  const [spotlightPadding, setSpotlightPadding] = useState("0.4");
-
-  // Spotlight canvas data captured from PdfPageWithOverlay
-  const [spotlightCanvas, setSpotlightCanvas] = useState(null);
-  const [spotlightViewport, setSpotlightViewport] = useState(null);
-  const [spotlightVpSize, setSpotlightVpSize] = useState(null);
 
   useEffect(() => {
     if (!activeCase) return;
