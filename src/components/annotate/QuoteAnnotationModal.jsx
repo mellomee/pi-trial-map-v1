@@ -92,17 +92,30 @@ export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPag
 
           {/* Quote text */}
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
-              Quote Text <span className="text-orange-400">*</span>
-              <span className="text-slate-600 ml-1">— shown to jury in spotlight</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-slate-400">
+                Quote Text <span className="text-orange-400">*</span>
+                <span className="text-slate-600 ml-1">— shown to jury in spotlight</span>
+              </label>
+              {seedQuoteText && !quoteText && (
+                <button onClick={() => setQuoteText(seedQuoteText)}
+                  className="text-[9px] text-cyan-400 border border-cyan-500/30 rounded px-1.5 py-0.5 hover:bg-cyan-500/10">
+                  Use auto-extracted
+                </button>
+              )}
+            </div>
             <Textarea
               value={quoteText}
               onChange={e => setQuoteText(e.target.value)}
-              placeholder="Type or paste the exact quote…"
+              placeholder={seedQuoteText ? "Auto-extracted text filled above — edit if needed…" : "Type or paste the exact quote…"}
               className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm"
               rows={3}
             />
+            {!quoteText && !seedQuoteText && (
+              <p className="text-[10px] text-slate-600 mt-1">
+                No selectable text detected. Paste quote manually, or use Anchor Text for scanned PDFs.
+              </p>
+            )}
           </div>
 
           {/* Anchor text */}
