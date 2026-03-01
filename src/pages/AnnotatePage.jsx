@@ -407,12 +407,21 @@ export default function AnnotatePage() {
         </div>
       </div>
 
-      {/* Quote Modal */}
+      {/* Quote Modal (new QUOTE_SPOTLIGHT annotations) */}
       <QuoteAnnotationModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveQuote}
         defaultPage={pageIndex}
+        groups={groups}
+      />
+
+      {/* Full Edit Modal (edit existing annotation with all fields) */}
+      <AnnotationEditorModal
+        editing={editModalAnn}
+        setEditing={setEditModalAnn}
+        onSave={saveEditModal}
+        saving={editSaving}
         groups={groups}
       />
     </div>
