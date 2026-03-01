@@ -169,11 +169,17 @@ export default function PdfPageWithOverlay({
     if (!isImageFile && pdfViewportRef.current) {
       const vp = pdfViewportRef.current;
       const rect_pdf = domRectToPdf(domRect, vp);
+      // pdf_page_w/h are the intrinsic PDF page dimensions (at scale=1).
+      // These are stored for debugging — the rect_pdf coords are already
+      // in PDF user units so they do NOT depend on scale at render time.
       const payload = {
         source_type: "pdf",
         page_number: pageIndex,
         page_rotation: 0,
         rect_pdf,
+        pdf_page_w: vp.width / scale,
+        pdf_page_h: vp.height / scale,
+        created_from: "annotate",
         viewport_meta: { scale, renderW: vp.width, renderH: vp.height },
       };
       if (onCreateAnnotation) {
