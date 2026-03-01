@@ -1,6 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Highlighter, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Eye, EyeOff } from "lucide-react";
+import {
+  ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Eye, EyeOff,
+  MousePointer, Highlighter, Square, ArrowUpRight
+} from "lucide-react";
+import AnnotationOverlayLayer from "@/components/exhibits/AnnotationOverlayLayer";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 
@@ -9,198 +13,169 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 function isPdf(url) { return url?.toLowerCase().includes(".pdf"); }
 function isImage(url) { return /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url || ""); }
 
-// ── Highlight overlays for a single page ────────────────────────────────────
-function HighlightLayer({ annotations, currentPage, flashId, drawMode, onDrawComplete, presentMode }) {
-  const containerRef = useRef(null);
-  const [drawing, setDrawing] = useState(null); // {startX, startY, x, y, w, h}
+const TOOLS = [
+  { id: "select", icon: MousePointer, label: "Select" },
+  { id: "highlight", icon: Highlighter, label: "Highlight" },
+  { id: "redaction", icon: Square, label: "Redact" },
+  { id: "callout", icon: ArrowUpRight, label: "Callout" },
+];
 
-  const pageAnnotations = annotations.filter(a => {
-    const boxes = a.highlight_boxes || [];
-    return boxes.some(b => b.page === currentPage);
-  });
+const COLORS = ["yellow", "red", "green", "blue"];
+const COLOR_CLASS = { yellow: "bg-yellow-400", red: "bg-red-500", green: "bg-green-500", blue: "bg-blue-500" };
 
-  const getRelPos = (e) => {
-    const rect = containerRef.current.getBoundingClientRect();
-    return {
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    };
-  };
-
-  const onMouseDown = (e) => {
-    if (!drawMode) return;
-    e.preventDefault();
-    const pos = getRelPos(e);
-    setDrawing({ startX: pos.x, startY: pos.y, x: pos.x, y: pos.y, w: 0, h: 0 });
-  };
-
-  const onMouseMove = (e) => {
-    if (!drawing) return;
-    const pos = getRelPos(e);
-    const x = Math.min(pos.x, drawing.startX);
-    const y = Math.min(pos.y, drawing.startY);
-    const w = Math.abs(pos.x - drawing.startX);
-    const h = Math.abs(pos.y - drawing.startY);
-    setDrawing(prev => ({ ...prev, x, y, w, h }));
-  };
-
-  const onMouseUp = () => {
-    if (!drawing || drawing.w < 1 || drawing.h < 1) { setDrawing(null); return; }
-    onDrawComplete({ page: currentPage, x: drawing.x, y: drawing.y, width: drawing.w, height: drawing.h });
-    setDrawing(null);
-  };
-
-  return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0"
-      style={{ cursor: drawMode ? "crosshair" : "default", userSelect: drawMode ? "none" : "auto" }}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-    >
-      {/* Existing highlights */}
-      {pageAnnotations.map(a => {
-        const boxes = (a.highlight_boxes || []).filter(b => b.page === currentPage);
-        return boxes.map((box, i) => {
-          const isFlashing = flashId === a.id;
-          return (
-            <div
-              key={`${a.id}-${i}`}
-              title={!presentMode ? `${a.label ? a.label + ": " : ""}${a.note_text}` : ""}
-              style={{
-                position: "absolute",
-                left: `${box.x}%`,
-                top: `${box.y}%`,
-                width: `${box.width}%`,
-                height: `${box.height}%`,
-                backgroundColor: isFlashing ? "rgba(251,191,36,0.55)" : "rgba(251,191,36,0.28)",
-                border: isFlashing ? "2px solid rgba(251,191,36,0.9)" : "1.5px solid rgba(251,191,36,0.45)",
-                borderRadius: "2px",
-                pointerEvents: presentMode ? "none" : "auto",
-                transition: "background-color 0.3s, border-color 0.3s",
-                animation: isFlashing ? "ann-flash 0.6s ease-in-out 3" : "none",
-              }}
-            />
-          );
-        });
-      })}
-
-      {/* In-progress draw rect */}
-      {drawing && drawing.w > 0 && (
-        <div style={{
-          position: "absolute",
-          left: `${drawing.x}%`,
-          top: `${drawing.y}%`,
-          width: `${drawing.w}%`,
-          height: `${drawing.h}%`,
-          backgroundColor: "rgba(251,191,36,0.3)",
-          border: "2px dashed rgba(251,191,36,0.8)",
-          borderRadius: "2px",
-          pointerEvents: "none",
-        }} />
-      )}
-    </div>
-  );
-}
-
-// ── Main annotated viewer ─────────────────────────────────────────────────────
 export default function AnnotatedFileViewer({
   fileUrl,
   annotations = [],
-  onDrawComplete, // (box) => void  – called with a new box for the NEW annotation flow
   presentMode = false,
   flashAnnotationId = null,
-  activeDrawAnnotationId = null, // which annotation are we drawing for?
+  selectedAnnotationId = null,
+  onDrawComplete,   // (geometry_json, page_number) => void
+  onSelectAnnotation, // (id) => void
+  // Present-mode step nav
+  onPrevAnnotation,
+  onNextAnnotation,
+  currentPresentStep,
+  totalPresentSteps,
 }) {
   const [numPages, setNumPages] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.0);
-  const [drawMode, setDrawMode] = useState(false);
   const [showOverlays, setShowOverlays] = useState(true);
+  const [activeTool, setActiveTool] = useState("select");
+  const [activeColor, setActiveColor] = useState("yellow");
+  const [activeOpacity, setActiveOpacity] = useState(0.35);
+  const scrollRef = useRef(null);
 
-  // Reset page when URL changes
   useEffect(() => { setCurrentPage(1); }, [fileUrl]);
 
-  // When a flash target changes page, navigate to it
+  // Navigate to flash target page
   useEffect(() => {
     if (!flashAnnotationId) return;
     const ann = annotations.find(a => a.id === flashAnnotationId);
     if (!ann) return;
-    const page = ann.extract_page_number || (ann.highlight_boxes?.[0]?.page);
-    if (page) setCurrentPage(page);
+    const pg = ann.page_number ?? ann.extract_page_number ?? (ann.highlight_boxes?.[0]?.page);
+    if (pg && pg !== currentPage) setCurrentPage(pg);
   }, [flashAnnotationId]);
 
-  const handleDrawComplete = useCallback((box) => {
-    if (onDrawComplete) onDrawComplete(box);
-    setDrawMode(false);
-  }, [onDrawComplete]);
+  // Navigate to selected annotation page
+  useEffect(() => {
+    if (!selectedAnnotationId) return;
+    const ann = annotations.find(a => a.id === selectedAnnotationId);
+    if (!ann) return;
+    const pg = ann.page_number ?? ann.extract_page_number;
+    if (pg && pg !== currentPage) setCurrentPage(pg);
+  }, [selectedAnnotationId]);
+
+  const handleDrawComplete = useCallback((geometry, page) => {
+    if (onDrawComplete) onDrawComplete(geometry, page, activeColor, activeOpacity);
+    setActiveTool("select");
+  }, [onDrawComplete, activeColor, activeOpacity]);
 
   if (!fileUrl) return (
-    <div className="flex items-center justify-center h-40 text-slate-600 text-sm italic">No file attached to this extract.</div>
+    <div className="flex items-center justify-center h-40 text-slate-600 text-sm italic">
+      No file attached to this extract.
+    </div>
   );
 
   const isPdfFile = isPdf(fileUrl);
   const isImgFile = isImage(fileUrl);
 
   return (
-    <div className="flex flex-col gap-0 bg-[#0a0f1e] rounded-xl border border-[#1e2a45] overflow-hidden">
-      <style>{`@keyframes ann-flash { 0%,100%{background-color:rgba(251,191,36,0.28)} 50%{background-color:rgba(251,191,36,0.7)} }`}</style>
+    <div className="flex flex-col bg-[#0a0f1e] rounded-xl border border-[#1e2a45] overflow-hidden">
+      <style>{`
+        @keyframes ann-flash-pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(251,191,36,0.8); }
+          50%  { box-shadow: 0 0 0 8px rgba(251,191,36,0); }
+          100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+        }
+      `}</style>
 
-      {/* Toolbar */}
+      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
       {!presentMode && (
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1e2a45] bg-[#0f1629]">
+        <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-[#1e2a45] bg-[#0f1629]">
+          {/* Page nav for PDF */}
           {isPdfFile && (
             <>
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage <= 1}
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}
                 className="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-30">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                {currentPage} / {numPages || "…"}
-              </span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(numPages || p, p + 1))}
-                disabled={currentPage >= (numPages || 1)}
+              <span className="text-[10px] text-slate-400 w-10 text-center">{currentPage}/{numPages || "…"}</span>
+              <button onClick={() => setCurrentPage(p => Math.min(numPages || p, p + 1))} disabled={currentPage >= (numPages || 1)}
                 className="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-30">
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <div className="w-px h-4 bg-[#1e2a45] mx-1" />
+              <div className="w-px h-4 bg-[#1e2a45]" />
             </>
           )}
-          <button onClick={() => setScale(s => Math.min(3, s + 0.25))} className="p-1 text-slate-400 hover:text-slate-200">
-            <ZoomIn className="w-4 h-4" />
-          </button>
+
+          {/* Zoom */}
           <button onClick={() => setScale(s => Math.max(0.5, s - 0.25))} className="p-1 text-slate-400 hover:text-slate-200">
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="text-[10px] text-slate-600">{Math.round(scale * 100)}%</span>
-          <div className="w-px h-4 bg-[#1e2a45] mx-1" />
-          <button
-            onClick={() => setShowOverlays(v => !v)}
-            className={`p-1 ${showOverlays ? "text-yellow-400" : "text-slate-500"} hover:text-yellow-300`}
-            title={showOverlays ? "Hide highlights" : "Show highlights"}>
-            {showOverlays ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          <span className="text-[10px] text-slate-500 w-8 text-center">{Math.round(scale * 100)}%</span>
+          <button onClick={() => setScale(s => Math.min(3, s + 0.25))} className="p-1 text-slate-400 hover:text-slate-200">
+            <ZoomIn className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setDrawMode(v => !v)}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-              drawMode
-                ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
-                : "bg-slate-700/30 text-slate-400 border border-slate-700/50 hover:text-slate-200"
-            }`}
-            title="Draw a highlight box on the document">
-            <Highlighter className="w-3.5 h-3.5" />
-            {drawMode ? "Drawing…" : "Highlight"}
+          <button onClick={() => setScale(1.0)} className="p-1 text-slate-500 hover:text-slate-200" title="Fit to width">
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-px h-4 bg-[#1e2a45]" />
+
+          {/* Tools */}
+          {TOOLS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTool(t.id)}
+              title={t.label}
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                activeTool === t.id
+                  ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}>
+              <t.icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t.label}</span>
+            </button>
+          ))}
+          <div className="w-px h-4 bg-[#1e2a45]" />
+
+          {/* Color picker */}
+          {activeTool !== "select" && activeTool !== "redaction" && (
+            <>
+              {COLORS.map(c => (
+                <button key={c} onClick={() => setActiveColor(c)}
+                  className={`w-4 h-4 rounded border-2 transition-all ${COLOR_CLASS[c]} ${
+                    activeColor === c ? "border-white scale-110" : "border-transparent opacity-50"
+                  }`} />
+              ))}
+              <div className="w-px h-4 bg-[#1e2a45]" />
+            </>
+          )}
+
+          {/* Opacity slider */}
+          {activeTool !== "select" && activeTool !== "redaction" && (
+            <>
+              <input type="range" min="10" max="80" step="5"
+                value={Math.round(activeOpacity * 100)}
+                onChange={e => setActiveOpacity(Number(e.target.value) / 100)}
+                className="w-20 accent-yellow-400" title={`Opacity: ${Math.round(activeOpacity * 100)}%`}
+              />
+              <div className="w-px h-4 bg-[#1e2a45]" />
+            </>
+          )}
+
+          {/* Toggle overlays */}
+          <button onClick={() => setShowOverlays(v => !v)}
+            className={`p-1 ${showOverlays ? "text-yellow-400" : "text-slate-600"} hover:text-yellow-300`}
+            title={showOverlays ? "Hide overlays" : "Show overlays"}>
+            {showOverlays ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
           </button>
         </div>
       )}
 
-      {/* Document area */}
-      <div className="overflow-auto max-h-[70vh] flex justify-center bg-[#080d1a] p-4">
+      {/* ── Document canvas ───────────────────────────────────────────────── */}
+      <div ref={scrollRef} className="overflow-auto flex justify-center bg-[#080d1a] p-4"
+        style={{ maxHeight: presentMode ? "80vh" : "65vh" }}>
         {isPdfFile && (
           <div className="relative inline-block">
             <Document
@@ -217,34 +192,37 @@ export default function AnnotatedFileViewer({
               />
             </Document>
             {showOverlays && (
-              <HighlightLayer
+              <AnnotationOverlayLayer
                 annotations={annotations}
                 currentPage={currentPage}
+                activeTool={presentMode ? "select" : activeTool}
+                activeColor={activeColor}
+                activeOpacity={activeOpacity}
                 flashId={flashAnnotationId}
-                drawMode={drawMode}
-                onDrawComplete={handleDrawComplete}
+                selectedId={selectedAnnotationId}
                 presentMode={presentMode}
+                onDrawComplete={handleDrawComplete}
+                onSelect={onSelectAnnotation}
               />
             )}
           </div>
         )}
 
         {isImgFile && (
-          <div className="relative inline-block">
-            <img
-              src={fileUrl}
-              alt="Extract"
-              style={{ transform: `scale(${scale})`, transformOrigin: "top left", display: "block" }}
-              draggable={false}
-            />
+          <div className="relative inline-block" style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
+            <img src={fileUrl} alt="Extract" style={{ display: "block", maxWidth: "100%" }} draggable={false} />
             {showOverlays && (
-              <HighlightLayer
+              <AnnotationOverlayLayer
                 annotations={annotations}
                 currentPage={1}
+                activeTool={presentMode ? "select" : activeTool}
+                activeColor={activeColor}
+                activeOpacity={activeOpacity}
                 flashId={flashAnnotationId}
-                drawMode={drawMode}
-                onDrawComplete={handleDrawComplete}
+                selectedId={selectedAnnotationId}
                 presentMode={presentMode}
+                onDrawComplete={handleDrawComplete}
+                onSelect={onSelectAnnotation}
               />
             )}
           </div>
@@ -258,14 +236,27 @@ export default function AnnotatedFileViewer({
         )}
       </div>
 
-      {/* Present-mode page nav */}
-      {presentMode && isPdfFile && (
-        <div className="flex items-center justify-center gap-3 py-2 border-t border-[#1e2a45]">
-          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}
-            className="p-1 text-slate-400 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
-          <span className="text-xs text-slate-400">{currentPage} / {numPages || "…"}</span>
-          <button onClick={() => setCurrentPage(p => Math.min(numPages || p, p + 1))} disabled={currentPage >= (numPages || 1)}
-            className="p-1 text-slate-400 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+      {/* ── Present mode nav ─────────────────────────────────────────────── */}
+      {presentMode && (
+        <div className="flex items-center justify-between px-4 py-2 border-t border-[#1e2a45] bg-[#0f1629]">
+          <div className="flex items-center gap-2">
+            {isPdfFile && (
+              <>
+                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}
+                  className="p-1 text-slate-400 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+                <span className="text-xs text-slate-400">p.{currentPage}/{numPages || "…"}</span>
+                <button onClick={() => setCurrentPage(p => Math.min(numPages || p, p + 1))} disabled={currentPage >= (numPages || 1)}
+                  className="p-1 text-slate-400 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+              </>
+            )}
+          </div>
+          {totalPresentSteps > 0 && (
+            <div className="flex items-center gap-2">
+              <button onClick={onPrevAnnotation} className="px-2 py-1 text-xs text-slate-400 hover:text-slate-200 border border-[#1e2a45] rounded">← Prev</button>
+              <span className="text-[10px] text-slate-600">{(currentPresentStep || 0) + 1}/{totalPresentSteps}</span>
+              <button onClick={onNextAnnotation} className="px-2 py-1 text-xs text-slate-400 hover:text-slate-200 border border-[#1e2a45] rounded">Next →</button>
+            </div>
+          )}
         </div>
       )}
     </div>
