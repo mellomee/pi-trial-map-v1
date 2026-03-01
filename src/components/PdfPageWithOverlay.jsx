@@ -96,8 +96,12 @@ export default function PdfPageWithOverlay({
         const ctx = canvas.getContext("2d");
         return page.render({ canvasContext: ctx, viewport: vp }).promise.then(() => {
           if (!cancelled) {
-            setVpSize({ width: vp.width, height: vp.height });
+            const vpSizeVal = { width: vp.width, height: vp.height };
+            setVpSize(vpSizeVal);
             setLoading(false);
+            if (onPageRender) {
+              onPageRender({ canvas: canvasRef.current, viewport: vp, vpSize: vpSizeVal });
+            }
           }
         });
       })
