@@ -1,34 +1,85 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StickyNote } from "lucide-react";
+import { StickyNote, RefreshCw } from "lucide-react";
 
-const COLOR_OPTIONS = ["yellow", "red", "green", "blue", "none"];
-const KIND_OPTIONS  = ["highlight", "redaction", "callout"];
+const COLOR_OPTIONS = ["yellow", "red", "green", "blue"];
+const KIND_OPTIONS  = ["QUOTE_SPOTLIGHT", "highlight", "redaction", "callout", "NOTE"];
 
-export default function AnnotationEditorModal({ editing, setEditing, onSave, saving, groups }) {
-  if (!editing) return null;
+/**
+ * Edit modal for annotations.
+ * Uses LOCAL controlled state so all fields persist properly.
+ * Parent passes `editing` (annotation object) and `setEditing` to close.
+ * `onSave` is called with the local state values.
+ */
+export default function AnnotationEditorModal({ editing, setEditing, onSave, saving, groups, onReextract }) {
+  const [form, setForm] = useState(null);
 
-  const isNew = !editing.id;
+  // Initialize local state each time a new annotation is opened
+  useEffect(() => {
+    if (!editing) { setForm(null); return; }
+    setForm({
+      kind:                 editing.kind || "QUOTE_SPOTLIGHT",
+      color:                editing.color || "yellow",
+      opacity:              editing.opacity ?? 0.35,
+      page_number:          editing.page_number ?? editing.extract_page_number ?? 1,
+      label_text:           editing.label_text ?? editing.label ?? "",
+      quote_text:           editing.quote_text ?? "",
+      anchor_text:          editing.anchor_text ?? "",
+      extracted_text:       editing.extracted_text ?? "",
+      note_text:            editing.note_text ?? "",
+      show_quote_in_present: editing.show_quote_in_present !== false,
+      jury_safe:            !!editing.jury_safe,
+      group_id:             editing.group_id || "",
+      // preserve geometry fields
+      geometry_json:        editing.geometry_json || null,
+      rect_norm:            editing.rect_norm || null,
+      id:                   editing.id,
+    });
+  }, [editing?.id, editing ? JSON.stringify({
+    quote_text: editing.quote_text,
+    anchor_text: editing.anchor_text,
+    label_text: editing.label_text,
+  }) : null]);
+
+  if (!editing || !form) return null;
+
+  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleSave = () => {
+    // Pass local form state back to parent's save handler
+    onSave(form);
+  };
+
+  const handleReextract = () => {
+    if (onReextract) onReextract(form, (newText) => {
+      setForm(prev => ({
+        ...prev,
+        extracted_text: newText,
+        quote_text: prev.quote_text || newText,
+      }));
+    });
+  };
 
   return (
-    <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
-      <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-md">
+    <Dialog open={!!editing} onOpenChange={(v) => { if (!v) setEditing(null); }}>
+      <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-yellow-400 flex items-center gap-2 text-sm">
             <StickyNote className="w-4 h-4" />
-            {isNew ? "New Annotation" : "Edit Annotation"}
+            Edit Annotation
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          {/* Kind + color row */}
+
+          {/* Kind + Color */}
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="text-xs text-slate-400 block mb-1">Kind</label>
-              <Select value={editing.kind || "highlight"} onValueChange={v => setEditing(p => ({ ...p, kind: v }))}>
+              <Select value={form.kind} onValueChange={v => set("kind", v)}>
                 <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
@@ -37,16 +88,14 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
                 </SelectContent>
               </Select>
             </div>
-            {editing.kind !== "redaction" && (
+            {form.kind !== "redaction" && (
               <div className="flex-1">
                 <label className="text-xs text-slate-400 block mb-1">Color</label>
                 <div className="flex gap-1.5 mt-1.5">
-                  {COLOR_OPTIONS.filter(c => c !== "none").map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setEditing(p => ({ ...p, color: c }))}
+                  {COLOR_OPTIONS.map(c => (
+                    <button key={c} onClick={() => set("color", c)}
                       className={`w-5 h-5 rounded border-2 transition-all ${
-                        editing.color === c ? "border-white scale-110" : "border-transparent opacity-60"
+                        form.color === c ? "border-white scale-110" : "border-transparent opacity-60"
                       } ${
                         c === "yellow" ? "bg-yellow-400" :
                         c === "red" ? "bg-red-500" :
@@ -60,89 +109,114 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
           </div>
 
           {/* Opacity */}
-          {editing.kind !== "redaction" && (
+          {form.kind !== "redaction" && (
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Opacity: {Math.round((editing.opacity ?? 0.35) * 100)}%</label>
-              <input
-                type="range" min="10" max="80" step="5"
-                value={Math.round((editing.opacity ?? 0.35) * 100)}
-                onChange={e => setEditing(p => ({ ...p, opacity: Number(e.target.value) / 100 }))}
+              <label className="text-xs text-slate-400 block mb-1">
+                Opacity: {Math.round((form.opacity ?? 0.35) * 100)}%
+              </label>
+              <input type="range" min="10" max="80" step="5"
+                value={Math.round((form.opacity ?? 0.35) * 100)}
+                onChange={e => set("opacity", Number(e.target.value) / 100)}
                 className="w-full accent-yellow-400"
               />
             </div>
           )}
 
-          {/* Page (read-only when from draw) */}
+          {/* Page + Label */}
           <div className="flex gap-2">
-            <div className="flex-1">
+            <div className="w-20">
               <label className="text-xs text-slate-400 block mb-1">Page #</label>
-              <Input
-                type="number"
-                value={editing.page_number ?? editing.extract_page_number ?? ""}
-                onChange={e => setEditing(p => ({ ...p, page_number: e.target.value ? Number(e.target.value) : null }))}
+              <Input type="number"
+                value={form.page_number}
+                onChange={e => set("page_number", e.target.value ? Number(e.target.value) : "")}
                 className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 h-8 text-xs"
                 placeholder="1"
               />
             </div>
             <div className="flex-1">
-              <label className="text-xs text-slate-400 block mb-1">Label (hover)</label>
+              <label className="text-xs text-slate-400 block mb-1">Short Label</label>
               <Input
-                value={editing.label_text ?? editing.label ?? ""}
-                onChange={e => setEditing(p => ({ ...p, label_text: e.target.value }))}
+                value={form.label_text}
+                onChange={e => set("label_text", e.target.value)}
                 className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 h-8 text-xs"
-                placeholder="Key admission"
+                placeholder="e.g. Sightlines blocked"
               />
             </div>
           </div>
 
-          {/* Callout text */}
-          {editing.kind === "callout" && (
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">Callout Text</label>
-              <Input
-                value={editing.geometry_json?.text ?? ""}
-                onChange={e => setEditing(p => ({ ...p, geometry_json: { ...(p.geometry_json || {}), text: e.target.value } }))}
-                className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 h-8 text-xs"
-                placeholder="Shows on arrow label…"
-              />
-            </div>
-          )}
-
-          {/* Quote Text — for Spotlight */}
+          {/* Quote Text */}
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
-              Quote Text <span className="text-slate-600">— shown in Present Spotlight overlay</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-slate-400">
+                Quote Text <span className="text-orange-400">★</span>
+                <span className="text-slate-600 ml-1">— shown in Present Spotlight</span>
+              </label>
+              {form.extracted_text && !form.quote_text && (
+                <button onClick={() => set("quote_text", form.extracted_text)}
+                  className="text-[9px] text-cyan-400 border border-cyan-500/30 rounded px-1.5 py-0.5 hover:bg-cyan-500/10">
+                  Use extracted
+                </button>
+              )}
+            </div>
             <Textarea
-              value={editing.quote_text || ""}
-              onChange={e => setEditing(p => ({ ...p, quote_text: e.target.value }))}
+              value={form.quote_text}
+              onChange={e => set("quote_text", e.target.value)}
               className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs"
               rows={3}
-              placeholder="Paste the exact excerpt to display in Spotlight (works for scanned PDFs too)…"
+              placeholder="Paste the exact excerpt to display in Spotlight…"
             />
           </div>
 
+          {/* Extracted text (read-only preview + re-extract) */}
+          {(form.extracted_text || onReextract) && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-slate-400">
+                  Auto-extracted Text
+                  <span className="text-slate-600 ml-1">(from PDF text layer)</span>
+                </label>
+                {onReextract && form.rect_norm && (
+                  <button onClick={handleReextract}
+                    className="flex items-center gap-1 text-[9px] text-violet-400 border border-violet-500/30 rounded px-1.5 py-0.5 hover:bg-violet-500/10">
+                    <RefreshCw className="w-2.5 h-2.5" /> Re-extract
+                  </button>
+                )}
+              </div>
+              {form.extracted_text ? (
+                <div className="bg-[#0a0f1e] border border-[#1e2a45] rounded px-2 py-1.5 text-[11px] text-slate-400 italic max-h-20 overflow-y-auto">
+                  "{form.extracted_text}"
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-600 italic">
+                  No selectable text detected in highlight area. Paste quote manually above.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Anchor Text */}
           <div>
-            <label className="text-xs text-slate-400 block mb-1">Anchor Text <span className="text-slate-600">(optional — for text search)</span></label>
+            <label className="text-xs text-slate-400 block mb-1">
+              Anchor Text <span className="text-slate-600">(optional — surrounding passage for search)</span>
+            </label>
             <Textarea
-              value={editing.anchor_text || ""}
-              onChange={e => setEditing(p => ({ ...p, anchor_text: e.target.value }))}
+              value={form.anchor_text}
+              onChange={e => set("anchor_text", e.target.value)}
               className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs"
               rows={2}
               placeholder="Surrounding sentence for future auto-locate…"
             />
           </div>
 
-          {/* Note */}
+          {/* Internal Note */}
           <div>
             <label className="text-xs text-slate-400 block mb-1">Internal Note</label>
             <Textarea
-              value={editing.note_text ?? ""}
-              onChange={e => setEditing(p => ({ ...p, note_text: e.target.value }))}
+              value={form.note_text}
+              onChange={e => set("note_text", e.target.value)}
               className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs"
               rows={2}
-              placeholder="Internal note…"
+              placeholder="Internal note (not shown to jury)…"
             />
           </div>
 
@@ -150,47 +224,41 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
           {groups?.length > 0 && (
             <div>
               <label className="text-xs text-slate-400 block mb-1">Group (optional)</label>
-              <Select value={editing.group_id || "none"} onValueChange={v => setEditing(p => ({ ...p, group_id: v === "none" ? null : v }))}>
+              <Select value={form.group_id || "none"} onValueChange={v => set("group_id", v === "none" ? "" : v)}>
                 <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs h-8">
                   <SelectValue placeholder="Assign to group…" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— No group —</SelectItem>
-                  {groups.map(g => <SelectItem key={g.id} value={g.id}>{g.name} ({g.audience})</SelectItem>)}
+                  {groups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {/* Show quote in present toggle */}
+          {/* Toggles */}
           <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={editing.show_quote_in_present !== false}
-              onChange={e => setEditing(p => ({ ...p, show_quote_in_present: e.target.checked }))}
+            <input type="checkbox"
+              checked={form.show_quote_in_present}
+              onChange={e => set("show_quote_in_present", e.target.checked)}
               className="accent-yellow-400"
             />
             Show quote in Present Spotlight
           </label>
-
-          {/* Jury safe toggle */}
           <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={!!editing.jury_safe}
-              onChange={e => setEditing(p => ({ ...p, jury_safe: e.target.checked }))}
+            <input type="checkbox"
+              checked={form.jury_safe}
+              onChange={e => set("jury_safe", e.target.checked)}
               className="accent-green-400"
             />
-            Jury-safe (show in present mode even without JurySafe group)
+            Jury-safe (visible in Present mode)
           </label>
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" onClick={() => setEditing(null)} className="border-[#1e2a45] text-xs h-8">Cancel</Button>
-            <Button
-              onClick={onSave}
-              disabled={saving}
-              className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs h-8"
-            >
+            <Button variant="outline" onClick={() => setEditing(null)} className="border-[#1e2a45] text-xs h-8">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs h-8">
               {saving ? "Saving…" : "Save"}
             </Button>
           </div>
