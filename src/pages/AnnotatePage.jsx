@@ -37,6 +37,9 @@ export default function AnnotatePage() {
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
+  // Full edit modal state (for editing existing annotations with quote/anchor fields)
+  const [editModalAnn, setEditModalAnn] = useState(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   // ── Picker mode (no extractId) ───────────────────────────────────────────
   const { activeCase } = useActiveCase();
