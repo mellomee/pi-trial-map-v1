@@ -75,6 +75,8 @@ export default function Present() {
 
   // Spotlight state
   const [spotlightOn, setSpotlightOn] = useState(false);
+  // "Spotlight Only" (default) vs "Spotlight + Try Locate" (uses anchor text search)
+  const [spotlightMode, setSpotlightMode] = useState("only"); // "only" | "locate"
 
   useEffect(() => {
     if (!activeCase) return;
