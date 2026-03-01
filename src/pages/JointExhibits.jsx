@@ -52,6 +52,9 @@ export default function JointExhibits() {
 
   const [extracts, setExtracts] = useState([]);
   const [extractsById, setExtractsById] = useState({});
+  const [annotationCounts, setAnnotationCounts] = useState({}); // extractId → count
+  const [swapDialog, setSwapDialog] = useState(null); // joint obj
+  const [swapExtractId, setSwapExtractId] = useState("");
 
   const load = async () => {
     if (!activeCase) return;
