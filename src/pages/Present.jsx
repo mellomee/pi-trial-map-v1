@@ -287,7 +287,7 @@ export default function Present() {
             <button onClick={() => setScale(s => Math.min(3, s + 0.25))} className="p-1 text-slate-400 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
             <div className="w-px h-4 bg-[#1e2a45]" />
 
-            {/* Spotlight toggle */}
+            {/* Spotlight toggle + mode */}
             <button onClick={() => setSpotlightOn(v => !v)} title="Spotlight quote"
               disabled={!activeAnnotationId}
               className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors disabled:opacity-30 ${
@@ -297,6 +297,15 @@ export default function Present() {
               }`}>
               ✦ Spotlight
             </button>
+            <select
+              value={spotlightMode}
+              onChange={e => setSpotlightMode(e.target.value)}
+              title="Spotlight mode"
+              className="text-[9px] bg-[#0a0f1e] border border-[#1e2a45] text-slate-400 rounded px-1 py-0.5 h-5"
+            >
+              <option value="only">Spotlight Only</option>
+              <option value="locate">+ Try Locate</option>
+            </select>
             <div className="w-px h-4 bg-[#1e2a45]" />
             <button onClick={() => window.print()} className="p-1 text-slate-400 hover:text-white" title="Print"><Printer className="w-4 h-4" /></button>
             <button onClick={() => setFullscreen(v => !v)} className="p-1 text-slate-400 hover:text-white" title="Fullscreen">
