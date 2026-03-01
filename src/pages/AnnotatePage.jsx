@@ -126,6 +126,36 @@ export default function AnnotatePage() {
   };
 
   const startEdit = (ann) => {
+    // Open full edit modal with all fields loaded
+    setEditModalAnn({ ...ann });
+  };
+
+  const saveEditModal = async () => {
+    if (!editModalAnn) return;
+    setEditSaving(true);
+    const pg = editModalAnn.page_number ?? editModalAnn.extract_page_number ?? 1;
+    const payload = {
+      kind: editModalAnn.kind || "QUOTE_SPOTLIGHT",
+      color: editModalAnn.color || "yellow",
+      opacity: editModalAnn.opacity ?? 0.35,
+      label_text: editModalAnn.label_text || null,
+      label: editModalAnn.label_text || null,
+      note_text: editModalAnn.note_text || null,
+      quote_text: editModalAnn.quote_text || null,
+      anchor_text: editModalAnn.anchor_text || null,
+      show_quote_in_present: editModalAnn.show_quote_in_present !== false,
+      page_number: Number(pg),
+      extract_page_number: Number(pg),
+      jury_safe: !!editModalAnn.jury_safe,
+      group_id: editModalAnn.group_id || null,
+    };
+    const updated = await base44.entities.ExhibitAnnotations.update(editModalAnn.id, payload);
+    setAnnotations(prev => prev.map(a => a.id === updated.id ? { ...a, ...payload } : a));
+    setEditModalAnn(null);
+    setEditSaving(false);
+  };
+
+  const startInlineEdit = (ann) => {
     setEditingId(ann.id);
     setEditLabel(ann.label_text || ann.label || "");
   };
