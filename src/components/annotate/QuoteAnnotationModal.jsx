@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Clipboard, MousePointer2 } from "lucide-react";
 
 /**
  * Modal for creating/editing a QUOTE_SPOTLIGHT annotation.
