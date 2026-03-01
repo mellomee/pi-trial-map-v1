@@ -159,6 +159,17 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
             </div>
           )}
 
+          {/* Show quote in present toggle */}
+          <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={editing.show_quote_in_present !== false}
+              onChange={e => setEditing(p => ({ ...p, show_quote_in_present: e.target.checked }))}
+              className="accent-yellow-400"
+            />
+            Show quote in Present Spotlight
+          </label>
+
           {/* Jury safe toggle */}
           <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
             <input
