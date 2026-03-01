@@ -318,6 +318,18 @@ export default function AnnotatePage() {
             <StickyNote className="w-3.5 h-3.5 inline mr-1" />
             {annotations.length} annotations
           </span>
+          {isPdf && pdfDoc && (
+            <button
+              onClick={() => setShowFindOnPage(v => !v)}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border transition-colors ${
+                showFindOnPage
+                  ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/30"
+                  : "text-slate-500 border-[#1e2a45] hover:text-slate-300"
+              }`}
+            >
+              <ZoomIn className="w-3.5 h-3.5" /> Find
+            </button>
+          )}
           <button
             onClick={() => setModalOpen(true)}
             className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/40 hover:bg-orange-500/30 transition-colors"
