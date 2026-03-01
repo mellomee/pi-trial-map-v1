@@ -258,9 +258,16 @@ export default function JointExhibits() {
               <AccordionItem value={j.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg">
                 <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:hidden">
                   <div className="flex items-center gap-3 w-full text-left">
-                    {/* Exhibit number */}
+                    {/* Exhibit number — admitted takes priority */}
                     <div className="flex-shrink-0 text-center w-16">
-                      <span className="text-lg font-bold text-cyan-400">#{j.marked_no}</span>
+                      {j.admitted_no || admRec?.admitted_no ? (
+                        <div>
+                          <span className="text-lg font-bold text-green-400">#{j.admitted_no || admRec?.admitted_no}</span>
+                          <span className="text-[9px] text-slate-600 block">Admitted</span>
+                        </div>
+                      ) : (
+                        <span className="text-lg font-bold text-cyan-400">#{j.marked_no}</span>
+                      )}
                     </div>
 
                     {/* Title + source */}
