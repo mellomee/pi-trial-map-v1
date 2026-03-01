@@ -11,11 +11,16 @@ import React from "react";
  *   onClose       – called when user dismisses
  *   visible       – boolean
  */
-export default function QuoteSpotlight({ annotation, exhibitNo, onClose, visible }) {
+/**
+ * mode: "only" — show quote card only (default, fast, always works)
+ *       "locate" — show quote card + show anchor_text hint (for scanned doc fallback info)
+ */
+export default function QuoteSpotlight({ annotation, exhibitNo, onClose, visible, mode = "only" }) {
   if (!visible || !annotation) return null;
 
   const pg = annotation.page_number ?? annotation.extract_page_number ?? "?";
   const quote = annotation.quote_text || annotation.highlight_text || annotation.label_text || "";
+  const anchor = annotation.anchor_text || "";
 
   return (
     <div
@@ -45,6 +50,14 @@ export default function QuoteSpotlight({ annotation, exhibitNo, onClose, visible
         {/* Label / note */}
         {annotation.label_text && annotation.label_text !== quote && (
           <p className="mt-4 text-sm text-slate-400 italic">{annotation.label_text}</p>
+        )}
+
+        {/* Locate hint (mode=locate only) */}
+        {mode === "locate" && anchor && anchor !== quote && (
+          <div className="mt-4 border-t border-[#1e2a45] pt-3">
+            <p className="text-[9px] text-slate-600 uppercase tracking-widest mb-1">Anchor context (p.{pg})</p>
+            <p className="text-[11px] text-slate-500 italic leading-relaxed line-clamp-3">"{anchor}"</p>
+          </div>
         )}
 
         {/* Dismiss hint */}
