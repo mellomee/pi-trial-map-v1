@@ -37,6 +37,7 @@ export default function AnnotatePage() {
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalSeedText, setModalSeedText] = useState(""); // auto-extracted text to seed modal
   // Full edit modal state (for editing existing annotations with quote/anchor fields)
   const [editModalAnn, setEditModalAnn] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
