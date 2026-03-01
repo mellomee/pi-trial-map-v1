@@ -256,26 +256,15 @@ export default function Present() {
               {showOverlay ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
             {/* Spotlight toggle */}
-            <button onClick={() => setSpotlightOn(v => !v)} title="Spotlight mode"
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
+            <button onClick={() => setSpotlightOn(v => !v)} title="Spotlight quote"
+              disabled={!activeAnnotationId}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors disabled:opacity-30 ${
                 spotlightOn
                   ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
                   : "text-slate-500 border-[#1e2a45] hover:text-slate-200"
               }`}>
               ✦ Spotlight
             </button>
-            {spotlightOn && (
-              <Select value={spotlightPadding} onValueChange={setSpotlightPadding}>
-                <SelectTrigger className="h-6 w-20 text-[10px] bg-[#0f1629] border-[#1e2a45] text-slate-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0.2">Tight</SelectItem>
-                  <SelectItem value="0.4">Medium</SelectItem>
-                  <SelectItem value="0.8">Loose</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
             <div className="w-px h-4 bg-[#1e2a45]" />
             <button onClick={() => window.print()} className="p-1 text-slate-400 hover:text-white" title="Print"><Printer className="w-4 h-4" /></button>
             <button onClick={() => setFullscreen(v => !v)} className="p-1 text-slate-400 hover:text-white" title="Fullscreen">
