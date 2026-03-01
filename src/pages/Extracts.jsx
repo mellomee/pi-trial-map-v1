@@ -219,7 +219,7 @@ export default function Extracts() {
             {/* Expanded annotations section */}
             {expandedId === ex.id && (
               <div className="px-4 pb-4">
-                <AnnotationsSection extractId={ex.id} />
+                <AnnotationsSection extractId={ex.id} extractFileUrl={ex.extract_file_url} />
               </div>
             )}
           </div>
