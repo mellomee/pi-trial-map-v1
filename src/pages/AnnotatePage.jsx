@@ -425,7 +425,19 @@ export default function AnnotatePage() {
             </button>
           )}
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={async () => {
+              // Try auto-extracting selected text from PDF first
+              if (isPdf && pdfDoc) {
+                const sel = window.getSelection();
+                const selText = sel ? sel.toString().trim() : "";
+                if (selText) {
+                  setModalSeedText(selText);
+                } else {
+                  setModalSeedText("");
+                }
+              }
+              setModalOpen(true);
+            }}
             className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/40 hover:bg-orange-500/30 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" /> Add Quote
