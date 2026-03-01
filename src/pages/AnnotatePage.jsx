@@ -338,6 +338,9 @@ export default function AnnotatePage() {
           </button>
         </div>
 
+        {showFindOnPage && pdfDoc && (
+          <FindOnPage pdfDoc={pdfDoc} pageIndex={pageIndex} />
+        )}
         <div className="flex-1 overflow-auto flex justify-center items-start bg-[#050809] p-6">
           {!fileUrl ? (
             <div className="text-slate-500 text-sm mt-16">No file attached to this extract.</div>
