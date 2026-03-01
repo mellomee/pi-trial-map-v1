@@ -470,10 +470,11 @@ export default function AnnotatePage() {
       {/* Quote Modal (new QUOTE_SPOTLIGHT annotations) */}
       <QuoteAnnotationModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setModalSeedText(""); }}
         onSave={handleSaveQuote}
         defaultPage={pageIndex}
         groups={groups}
+        seedQuoteText={modalSeedText}
       />
 
       {/* Full Edit Modal (edit existing annotation with all fields) */}
