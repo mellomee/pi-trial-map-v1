@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight, StickyNote, Highlighter } from "lucide-react";
+import { ArrowLeft, Link2, Trash2, Search, Target, BookOpen, FileText, ExternalLink, ChevronRight } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 function TPNode({ tp, depth, getChildren, filteredIds, linkedTpIds, onLink, searching }) {
@@ -66,14 +66,10 @@ export default function QuestionDetail() {
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
-  const [annLinks, setAnnLinks] = useState([]);
-  const [annotations, setAnnotations] = useState([]);
-  const [extractsById, setExtractsById] = useState({});
-  const [jointsById, setJointsById] = useState({});
 
   const load = async () => {
     if (!questionId || !activeCase) return;
-    const [qs, pts, ql, jts, de, dc, pa, cats, al, anns, exts] = await Promise.all([
+    const [qs, pts, ql, jts, de, dc, pa, cats] = await Promise.all([
       base44.entities.Questions.filter({ id: questionId }),
       base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
       base44.entities.QuestionLinks.filter({ question_id: questionId, link_type: "TrialPoint" }),
@@ -82,9 +78,6 @@ export default function QuestionDetail() {
       base44.entities.DepoClips.filter({ case_id: activeCase.id }),
       base44.entities.Parties.filter({ case_id: activeCase.id }),
       base44.entities.TrialPointCategories.filter({ case_id: activeCase.id }),
-      base44.entities.AnnotationLinks.filter({ case_id: activeCase.id, link_type: "Question" }),
-      base44.entities.ExhibitAnnotations.filter({ case_id: activeCase.id }),
-      base44.entities.ExhibitExtracts.filter({ case_id: activeCase.id }),
     ]);
     setQuestion(qs[0] || null);
     setTrialPoints(pts);
@@ -94,12 +87,6 @@ export default function QuestionDetail() {
     setDepoClips(dc);
     setParties(pa);
     setCategories(cats);
-    setAnnLinks(al.filter(l => l.link_id === questionId));
-    setAnnotations(anns);
-    const em = {}; exts.forEach(e => { em[e.id] = e; });
-    setExtractsById(em);
-    const jm = {}; jts.forEach(j => { jm[j.id] = j; });
-    setJointsById(jm);
 
     // Load TrialPointLinks for all linked trial points
     const linkedTpIds = ql.map(l => l.link_id);
@@ -238,9 +225,6 @@ export default function QuestionDetail() {
           <TabsTrigger value="clips" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white text-slate-400">
             <FileText className="w-3.5 h-3.5 mr-1.5" /> Proof — Clips ({linkedDepoClips.length})
           </TabsTrigger>
-          <TabsTrigger value="annotations" className="data-[state=active]:bg-yellow-600/40 data-[state=active]:text-yellow-300 text-slate-400">
-            <StickyNote className="w-3.5 h-3.5 mr-1.5" /> Annotations ({annLinks.length})
-          </TabsTrigger>
         </TabsList>
 
         {/* Trial Points */}
@@ -328,50 +312,6 @@ export default function QuestionDetail() {
                 )}
               </div>
             ))}
-          </div>
-        </TabsContent>
-
-        {/* Annotations linked to this question */}
-        <TabsContent value="annotations">
-          <p className="text-[10px] text-slate-500 italic mb-3">Exhibit annotations linked directly to this question (internal only).</p>
-          <div className="space-y-2">
-            {annLinks.length === 0 && (
-              <p className="text-slate-500 text-sm text-center py-8">No annotations linked. Open a Joint Exhibit annotation and link it to this question.</p>
-            )}
-            {annLinks.map(al => {
-              const ann = annotations.find(a => a.id === al.annotation_id);
-              if (!ann) return null;
-              const jt = jointsById[ann.joint_exhibit_id];
-              const ext = jt?.exhibit_extract_id ? extractsById[jt.exhibit_extract_id] : null;
-              return (
-                <div key={al.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-3 flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
-                    {ann.kind === "Highlight"
-                      ? <Highlighter className="w-4 h-4 text-yellow-500" />
-                      : <StickyNote className="w-4 h-4 text-cyan-500" />
-                    }
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200">{ann.label_internal}</p>
-                    {ann.note_text && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{ann.note_text}</p>}
-                    <div className="flex gap-2 mt-1 flex-wrap">
-                      {jt && <Badge className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Exh. {jt.marked_no}</Badge>}
-                      <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">p.{ann.page_in_extract}</Badge>
-                      {ext && <span className="text-[10px] text-slate-600">{ext.extract_title_internal || ext.extract_title_official}</span>}
-                    </div>
-                  </div>
-                  {jt && (
-                    <a
-                      href={`${createPageUrl("JointExhibitDetail")}?id=${jt.id}&tab=annotations`}
-                      className="text-slate-500 hover:text-yellow-400 flex-shrink-0"
-                      title="Open in annotation editor"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </TabsContent>
       </Tabs>

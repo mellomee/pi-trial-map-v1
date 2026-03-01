@@ -9,8 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown, ExternalLink, ChevronsUpDown, ChevronUp, StickyNote } from "lucide-react";
-import { createPageUrl } from "@/utils";
+import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown, ExternalLink, ChevronsUpDown, ChevronUp } from "lucide-react";
 import FileViewerModal from "@/components/exhibits/FileViewerModal";
 import { format } from "date-fns";
 import { exhibitDisplayNo, exhibitStatusColor } from "@/components/exhibitHelpers";
@@ -291,14 +290,6 @@ export default function JointExhibits() {
                           <span className="text-[10px] text-slate-600 block">{admRec.admitted_by_side}</span>
                         </div>
                       ) : (
-                        <a
-                          href={`${createPageUrl("JointExhibitDetail")}?id=${j.id}&tab=annotations`}
-                          onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10 transition-colors"
-                          title="Open annotation editor"
-                        >
-                          <StickyNote className="w-3 h-3" /> Annotate
-                        </a>
                         <button
                           className="flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"
                           onClick={e => { e.stopPropagation(); openAdmit(j); }}
@@ -375,12 +366,8 @@ export default function JointExhibits() {
                           );
                         })()}
                       </div>
-                      <div className="flex gap-2 mt-3 flex-wrap">
+                      <div className="flex gap-2 mt-3">
                         <button className="text-[10px] text-slate-400 hover:text-cyan-400" onClick={() => setEditJoint({ ...j })}>Edit marking</button>
-                        <span className="text-slate-700">·</span>
-                        <a href={`${createPageUrl("JointExhibitDetail")}?id=${j.id}&tab=annotations`} className="text-[10px] text-yellow-500 hover:text-yellow-300 flex items-center gap-0.5">
-                          <StickyNote className="w-3 h-3" /> Annotate
-                        </a>
                         <span className="text-slate-700">·</span>
                         <button className="text-[10px] text-slate-400 hover:text-red-400" onClick={() => removeJoint(j)}>Remove from list</button>
                       </div>
