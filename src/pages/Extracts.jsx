@@ -29,6 +29,7 @@ export default function Extracts() {
   const [depositions, setDepositions] = useState([]);
   const [joints, setJoints] = useState([]);
   const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
   const [editing, setEditing] = useState(null); // null | EMPTY | extract obj
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
