@@ -74,6 +74,7 @@ import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
 import Present from './pages/Present';
+import AnnotatePage from './pages/AnnotatePage';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +106,7 @@ export const PAGES = {
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
     "Present": Present,
+    "AnnotatePage": AnnotatePage,
 }
 
 export const pagesConfig = {
