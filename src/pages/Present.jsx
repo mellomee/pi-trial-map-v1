@@ -399,9 +399,9 @@ export default function Present() {
                               {/* Quote preview + spotlight button when active */}
                               {isActive && (
                                 <div className="px-2 pb-2 space-y-1.5">
-                                  {a.quote_text ? (
+                                  {(a.quote_text || a.extracted_text) ? (
                                     <p className="text-[10px] text-yellow-200/70 italic leading-snug line-clamp-4 bg-yellow-500/5 border border-yellow-500/20 rounded px-2 py-1.5">
-                                      "{a.quote_text}"
+                                      "{a.quote_text || a.extracted_text}"
                                     </p>
                                   ) : (
                                     <p className="text-[9px] text-slate-600 italic">No quote text stored.</p>
