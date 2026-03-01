@@ -124,8 +124,68 @@ export default function AnnotatePage() {
 
   const pageAnns = visibleAnns.filter(a => (a.page_number ?? a.extract_page_number ?? 1) === pageIndex);
 
+  // ── Picker UI ────────────────────────────────────────────────────────────
   if (!extractId) {
-    return <div className="p-8 text-slate-400">No extractId in URL. Use ?extractId=...</div>;
+    return (
+      <div className="min-h-screen bg-[#0a0f1e] text-slate-200 flex flex-col items-center justify-center p-8">
+        <div className="w-full max-w-lg">
+          <div className="flex items-center gap-3 mb-6">
+            <Highlighter className="w-6 h-6 text-orange-400" />
+            <div>
+              <h1 className="text-xl font-bold text-white">Annotate an Extract</h1>
+              <p className="text-xs text-slate-500">Select an extract to open the annotation editor</p>
+            </div>
+          </div>
+
+          <div className="bg-[#0f1629] border border-[#1e2a45] rounded-xl p-5 space-y-4">
+            <div className="relative">
+              <input
+                value={pickerSearch}
+                onChange={e => setPickerSearch(e.target.value)}
+                placeholder="Search extracts…"
+                className="w-full h-9 pl-3 pr-3 rounded-md bg-[#0a0f1e] border border-[#1e2a45] text-slate-200 text-sm outline-none focus:border-orange-500/50"
+              />
+            </div>
+
+            {pickerLoading && <p className="text-xs text-slate-500 text-center py-4">Loading extracts…</p>}
+            {!pickerLoading && filteredPicker.length === 0 && (
+              <p className="text-xs text-slate-600 italic text-center py-4">
+                {allExtracts.length === 0 ? "No extracts found. Create one in the Extracts page first." : "No extracts match your search."}
+              </p>
+            )}
+
+            <div className="space-y-1 max-h-72 overflow-y-auto">
+              {filteredPicker.map(ex => (
+                <button
+                  key={ex.id}
+                  onClick={() => setPickerSelected(ex.id)}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg border transition-colors ${
+                    pickerSelected === ex.id
+                      ? "bg-orange-500/15 border-orange-500/40 text-orange-200"
+                      : "border-transparent hover:bg-white/5 hover:border-[#1e2a45] text-slate-300"
+                  }`}
+                >
+                  <p className="text-sm font-medium leading-snug">{ex.extract_title_official}</p>
+                  {ex.extract_title_internal && (
+                    <p className="text-[11px] text-slate-500 italic mt-0.5">"{ex.extract_title_internal}"</p>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <Button
+              disabled={!pickerSelected}
+              onClick={() => {
+                window.location.href = createPageUrl(`AnnotatePage?extractId=${pickerSelected}`);
+              }}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-40"
+            >
+              Open in Annotation Editor
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
