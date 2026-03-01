@@ -67,7 +67,7 @@ export default function Present() {
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(null);
   const [scale, setScale] = useState(1.2);
-  const [showOverlay, setShowOverlay] = useState(true);
+
   const [panelOpen, setPanelOpen] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [search, setSearch] = useState("");
