@@ -303,6 +303,7 @@ export default function AnnotatePage() {
                           <button onClick={() => setEditingId(null)} className="text-slate-500 hover:text-slate-300"><X className="w-3 h-3" /></button>
                         </div>
                       ) : (
+                        /* The pencil icon now opens the full modal; clicking the label opens inline edit */
                         <>
                           <p className={`text-[11px] leading-tight ${isActive ? "text-orange-200" : "text-slate-300"}`}>
                             {ann.label_text || ann.label || <em className="text-slate-600">no label</em>}
