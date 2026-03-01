@@ -403,21 +403,28 @@ export default function JointExhibits() {
                         })()}
                       </div>
                       {/* Annotation count + Annotate button */}
-                      {j.exhibit_extract_id && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="flex items-center gap-1 text-[10px] text-yellow-400/80">
-                            <StickyNote className="w-3 h-3" />
-                            {annotationCounts[j.exhibit_extract_id] || 0} annotations
-                          </span>
-                          <Link
-                            to={createPageUrl(`AnnotatePage?extractId=${j.exhibit_extract_id}`)}
-                            onClick={e => e.stopPropagation()}
-                            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors"
-                          >
+                      <div className="mt-2 flex items-center gap-2">
+                        {j.exhibit_extract_id ? (
+                          <>
+                            <span className="flex items-center gap-1 text-[10px] text-yellow-400/80">
+                              <StickyNote className="w-3 h-3" />
+                              {annotationCounts[j.exhibit_extract_id] || 0} annotations
+                            </span>
+                            <Link
+                              to={createPageUrl(`AnnotatePage?extractId=${j.exhibit_extract_id}`)}
+                              onClick={e => e.stopPropagation()}
+                              className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors"
+                            >
+                              <Highlighter className="w-3 h-3" /> Annotate
+                            </Link>
+                          </>
+                        ) : (
+                          <span title="Create/attach an Extract first"
+                            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-slate-700 text-slate-600 cursor-not-allowed">
                             <Highlighter className="w-3 h-3" /> Annotate
-                          </Link>
-                        </div>
-                      )}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex flex-wrap gap-2 mt-3">
                         <button className="text-[10px] text-slate-400 hover:text-cyan-400" onClick={() => setEditJoint({ ...j })}>Edit marking</button>
                         <span className="text-slate-700">·</span>
