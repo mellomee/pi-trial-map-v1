@@ -79,6 +79,7 @@ export default function PdfPageWithOverlay({
         if (cancelled) return;
         const vp = page.getViewport({ scale, rotation: 0 });
         pdfViewportRef.current = vp;
+        renderedPageRef.current = pageIndex;
         const canvas = canvasRef.current;
         if (!canvas) return;
         // Set CSS size = viewport size; use devicePixelRatio for sharpness
