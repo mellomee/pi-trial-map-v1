@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Target, FileText, BookOpen, Link2, ExternalLink, Copy,
-  ChevronLeft, ChevronRight, AlertTriangle, GitBranch, ArrowRight, Zap
+  ChevronLeft, ChevronRight, AlertTriangle, GitBranch, ArrowRight, Zap, Monitor
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
