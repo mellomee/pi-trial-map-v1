@@ -118,6 +118,32 @@ export default function AnnotatePage() {
     setActiveId(ann.id);
   }, [extractId, annotations.length]);
 
+  // Extract text from PDF text layer for a rect_norm region
+  const extractTextFromRect = useCallback(async (pageNum, rectNorm) => {
+    if (!pdfDoc || !rectNorm) return "";
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 1 });
+    const textContent = await page.getTextContent();
+    const { x, y, w, h } = rectNorm;
+    const x1 = x * viewport.width;
+    const y1 = y * viewport.height;
+    const x2 = (x + w) * viewport.width;
+    const y2 = (y + h) * viewport.height;
+    return textContent.items
+      .filter(item => {
+        const [, , , , tx, ty] = item.transform;
+        const itemX = tx;
+        const itemY = viewport.height - ty;
+        const itemW = item.width ?? 0;
+        const itemH = Math.abs(item.transform[3]) || 10;
+        return itemX < x2 && itemX + itemW > x1 && itemY - itemH < y2 && itemY > y1;
+      })
+      .map(item => item.str)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }, [pdfDoc]);
+
   const deleteAnnotation = async (id) => {
     if (!confirm("Delete this annotation?")) return;
     await base44.entities.ExhibitAnnotations.delete(id);
