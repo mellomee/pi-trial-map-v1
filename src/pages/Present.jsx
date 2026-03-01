@@ -369,16 +369,20 @@ export default function Present() {
                         {pageAnns.map(a => {
                           const isActive = activeAnnotationId === a.id;
                           return (
-                            <button key={a.id} onClick={() => selectAnnotation(a)}
+                            <button key={a.id}
+                              onClick={() => { selectAnnotation(a); setSpotlightOn(true); }}
                               className={`w-full text-left px-2 py-1.5 rounded transition-colors flex items-start gap-1.5 ${
                                 isActive ? "bg-green-600/20 border border-green-600/40" : "hover:bg-white/5 border border-transparent"
                               }`}>
-                              <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">▪</span>
+                              <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">✦</span>
                               <div className="min-w-0">
                                 {a.label_text
                                   ? <p className={`text-[11px] font-medium leading-tight ${isActive ? "text-green-300" : "text-slate-300"}`}>{a.label_text}</p>
-                                  : <p className={`text-[10px] leading-tight italic ${isActive ? "text-green-400" : "text-slate-500"}`}>p.{pg} highlight</p>
+                                  : <p className={`text-[10px] leading-tight italic ${isActive ? "text-green-400" : "text-slate-500"}`}>p.{pg} quote</p>
                                 }
+                                {a.quote_text && (
+                                  <p className="text-[10px] text-slate-500 italic mt-0.5 line-clamp-2">"{a.quote_text}"</p>
+                                )}
                               </div>
                               {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0 mt-1.5" />}
                             </button>
