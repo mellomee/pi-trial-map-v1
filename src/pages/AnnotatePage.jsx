@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import useActiveCase from "@/components/hooks/useActiveCase";
 import PdfPageWithOverlay from "@/components/PdfPageWithOverlay";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
