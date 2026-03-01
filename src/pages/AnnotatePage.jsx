@@ -322,7 +322,7 @@ export default function AnnotatePage() {
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={e => e.stopPropagation()}>
                       <button onClick={() => toggleJurySafe(ann)} title="Toggle jury-safe"
                         className="p-0.5 text-slate-500 hover:text-green-400"><Eye className="w-3 h-3" /></button>
-                      <button onClick={() => startEdit(ann)} title="Edit label"
+                      <button onClick={(e) => { e.stopPropagation(); startEdit(ann); }} title="Edit annotation (quote, anchor, etc.)"
                         className="p-0.5 text-slate-500 hover:text-cyan-400"><Pencil className="w-3 h-3" /></button>
                       <button onClick={() => deleteAnnotation(ann.id)} title="Delete"
                         className="p-0.5 text-slate-500 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
