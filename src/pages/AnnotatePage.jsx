@@ -133,24 +133,28 @@ export default function AnnotatePage() {
   const saveEditModal = async () => {
     if (!editModalAnn) return;
     setEditSaving(true);
-    const pg = editModalAnn.page_number ?? editModalAnn.extract_page_number ?? 1;
+    const pg = Number(editModalAnn.page_number ?? editModalAnn.extract_page_number ?? 1);
+    // Build payload — keep empty strings as empty strings (not null) so fields persist
     const payload = {
       kind: editModalAnn.kind || "QUOTE_SPOTLIGHT",
       color: editModalAnn.color || "yellow",
       opacity: editModalAnn.opacity ?? 0.35,
-      label_text: editModalAnn.label_text || null,
-      label: editModalAnn.label_text || null,
-      note_text: editModalAnn.note_text || null,
-      quote_text: editModalAnn.quote_text || null,
-      anchor_text: editModalAnn.anchor_text || null,
+      label_text: (editModalAnn.label_text ?? "").trim() || null,
+      label: (editModalAnn.label_text ?? "").trim() || null,
+      note_text: (editModalAnn.note_text ?? "").trim() || null,
+      quote_text: (editModalAnn.quote_text ?? "").trim() || null,
+      anchor_text: (editModalAnn.anchor_text ?? "").trim() || null,
+      extracted_text: (editModalAnn.extracted_text ?? "").trim() || null,
       show_quote_in_present: editModalAnn.show_quote_in_present !== false,
-      page_number: Number(pg),
-      extract_page_number: Number(pg),
+      page_number: pg,
+      extract_page_number: pg,
       jury_safe: !!editModalAnn.jury_safe,
       group_id: editModalAnn.group_id || null,
     };
-    const updated = await base44.entities.ExhibitAnnotations.update(editModalAnn.id, payload);
-    setAnnotations(prev => prev.map(a => a.id === updated.id ? { ...a, ...payload } : a));
+    await base44.entities.ExhibitAnnotations.update(editModalAnn.id, payload);
+    // Re-fetch to confirm persistence
+    const fresh = await base44.entities.ExhibitAnnotations.filter({ extract_id: extractId });
+    setAnnotations(fresh);
     setEditModalAnn(null);
     setEditSaving(false);
   };
