@@ -544,6 +544,38 @@ export default function JointExhibits() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Swap Extract Dialog ── */}
+      <Dialog open={!!swapDialog} onOpenChange={v => !v && setSwapDialog(null)}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-400"><RefreshCw className="w-4 h-4" /> Swap Extract</DialogTitle>
+            {swapDialog && <p className="text-xs text-slate-500 mt-1">Exhibit #{swapDialog.marked_no} — {swapDialog.marked_title}</p>}
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-slate-400 text-xs">Select Extract</Label>
+            <p className="text-[10px] text-slate-600">Annotations remain attached to the old extract. Only the link on this Joint Exhibit changes.</p>
+            <Select value={swapExtractId || "none"} onValueChange={v => setSwapExtractId(v === "none" ? "" : v)}>
+              <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200">
+                <SelectValue placeholder="Choose extract…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— No Extract —</SelectItem>
+                {extracts.map(e => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.extract_title_official}
+                    {e.extract_title_internal ? ` (${e.extract_title_internal})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSwapDialog(null)} className="border-slate-600 text-slate-300">Cancel</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={saveSwap}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Edit Admitted Dialog ── */}
       <Dialog open={!!editAdmit} onOpenChange={v => !v && setEditAdmit(null)}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
