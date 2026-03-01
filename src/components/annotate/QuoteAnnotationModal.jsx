@@ -9,7 +9,7 @@ import { Clipboard, MousePointer2 } from "lucide-react";
  * Modal for creating/editing a QUOTE_SPOTLIGHT annotation.
  * No coordinate storage — just text and metadata.
  */
-export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPage, groups = [] }) {
+export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPage, groups = [], seedQuoteText = "" }) {
   const [pageNumber, setPageNumber] = useState(defaultPage || 1);
   const [quoteText, setQuoteText] = useState("");
   const [anchorText, setAnchorText] = useState("");
@@ -18,17 +18,17 @@ export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPag
   const [groupId, setGroupId] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Reset when opened
+  // Reset when opened; seed auto-extracted text if provided
   useEffect(() => {
     if (open) {
       setPageNumber(defaultPage || 1);
-      setQuoteText("");
+      setQuoteText(seedQuoteText || "");
       setAnchorText("");
       setLabelText("");
       setJurySafe(true);
       setGroupId("");
     }
-  }, [open, defaultPage]);
+  }, [open, defaultPage, seedQuoteText]);
 
   const pasteFromClipboard = async () => {
     try {
