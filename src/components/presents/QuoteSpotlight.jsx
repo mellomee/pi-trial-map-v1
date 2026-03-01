@@ -19,11 +19,11 @@ export default function QuoteSpotlight({ annotation, exhibitNo, onClose, visible
   if (!visible || !annotation) return null;
 
   const pg = annotation.page_number ?? annotation.extract_page_number ?? "?";
-  // Priority: quote_text (if show_quote_in_present not false) → label_text → label → highlight_text
-  const showStoredQuote = !!annotation.quote_text && annotation.show_quote_in_present !== false;
-  const quote = showStoredQuote
-    ? annotation.quote_text
-    : (annotation.label_text || annotation.label || annotation.highlight_text || annotation.quote_text || "");
+  // Priority: quote_text → extracted_text → label_text → label
+  const quote =
+    (annotation.show_quote_in_present !== false && annotation.quote_text)
+      ? annotation.quote_text
+      : (annotation.extracted_text || annotation.label_text || annotation.label || annotation.highlight_text || "");
   const anchor = annotation.anchor_text || "";
 
   return (
