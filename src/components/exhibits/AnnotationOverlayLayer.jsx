@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 
-// Color map for highlight/callout kinds
+// Color map
 const COLOR_MAP = {
   yellow: { fill: "rgba(251,191,36,VAR)", stroke: "rgba(251,191,36,0.8)" },
   red:    { fill: "rgba(239,68,68,VAR)",  stroke: "rgba(239,68,68,0.8)" },
@@ -11,23 +11,41 @@ const COLOR_MAP = {
 
 function resolveColor(color, opacity) {
   const c = COLOR_MAP[color] || COLOR_MAP.yellow;
-  return {
-    fill: c.fill.replace("VAR", opacity ?? 0.35),
-    stroke: c.stroke,
-  };
+  return { fill: c.fill.replace("VAR", opacity ?? 0.35), stroke: c.stroke };
 }
 
-// Arrow SVG callout
-function CalloutArrow({ ann, isFlashing, presentMode }) {
+/**
+ * Get the normalized rect (0-100%) for an annotation.
+ * geometry_json.x/y/w/h are ALWAYS stored as % of page dimensions (0-100).
+ * rect_norm.x/y/w/h are fractional (0-1), converted here to %.
+ */
+export function getAnnRectPct(a) {
+  const g = a.geometry_json;
+  if (!g || g.type !== "rect") return null;
+
+  // If rect_norm exists (0-1 range), use it
+  if (a.rect_norm) {
+    return {
+      x: a.rect_norm.x * 100,
+      y: a.rect_norm.y * 100,
+      w: a.rect_norm.w * 100,
+      h: a.rect_norm.h * 100,
+    };
+  }
+
+  // geometry_json x/y/w/h are already stored as % (0-100)
+  return { x: g.x, y: g.y, w: g.w, h: g.h };
+}
+
+// Arrow SVG callout (coords are always 0-100 %)
+function CalloutArrow({ ann, presentMode }) {
   const g = ann.geometry_json;
   if (!g || g.type !== "arrow") return null;
   const { from, to, textBox, text } = g;
-  const color = ann.color || "yellow";
-  const { fill, stroke } = resolveColor(color, ann.opacity ?? 0.6);
+  const { fill, stroke } = resolveColor(ann.color || "yellow", ann.opacity ?? 0.6);
 
   return (
     <>
-      {/* SVG arrow line */}
       <svg
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         viewBox="0 0 100 100"
@@ -38,31 +56,22 @@ function CalloutArrow({ ann, isFlashing, presentMode }) {
             <polygon points="0 0, 6 3, 0 6" fill={stroke} />
           </marker>
         </defs>
-        <line
-          x1={from.x} y1={from.y} x2={to.x} y2={to.y}
-          stroke={stroke}
-          strokeWidth="0.8"
-          markerEnd={`url(#arrowhead-${ann.id})`}
-        />
+        <line x1={from.x} y1={from.y} x2={to.x} y2={to.y}
+          stroke={stroke} strokeWidth="0.8"
+          markerEnd={`url(#arrowhead-${ann.id})`} />
       </svg>
-      {/* Text box */}
       {textBox && (
-        <div
-          style={{
-            position: "absolute",
-            left: `${textBox.x}%`, top: `${textBox.y}%`,
-            width: `${textBox.w}%`, minHeight: `${textBox.h}%`,
-            backgroundColor: fill,
-            border: `1.5px solid ${stroke}`,
-            borderRadius: "3px",
-            padding: "1px 4px",
-            fontSize: "clamp(8px, 1.2vw, 12px)",
-            color: "#fff",
-            pointerEvents: presentMode ? "none" : "auto",
-            wordBreak: "break-word",
-          }}
-          title={!presentMode ? ann.note_text : ""}
-        >
+        <div style={{
+          position: "absolute",
+          left: `${textBox.x}%`, top: `${textBox.y}%`,
+          width: `${textBox.w}%`, minHeight: `${textBox.h}%`,
+          backgroundColor: fill,
+          border: `1.5px solid ${stroke}`,
+          borderRadius: "3px", padding: "1px 4px",
+          fontSize: "clamp(8px, 1.2vw, 12px)", color: "#fff",
+          pointerEvents: presentMode ? "none" : "auto",
+          wordBreak: "break-word",
+        }} title={!presentMode ? ann.note_text : ""}>
           {text || ann.label_text || ann.label || ""}
         </div>
       )}
@@ -72,20 +81,20 @@ function CalloutArrow({ ann, isFlashing, presentMode }) {
 
 // ── Main overlay layer ────────────────────────────────────────────────────────
 export default function AnnotationOverlayLayer({
-  annotations = [],       // all anns for this extract
+  annotations = [],
   currentPage = 1,
-  activeTool = "select",  // "select" | "highlight" | "redaction" | "callout"
+  activeTool = "select",
   activeColor = "yellow",
   activeOpacity = 0.35,
   flashId = null,
   selectedId = null,
   presentMode = false,
-  onDrawComplete,         // (geometry_json, page) => void
-  onSelect,               // (annId) => void
+  onDrawComplete,   // (geometry_json, page) => void  — coords are 0-100%
+  onSelect,
 }) {
   const containerRef = useRef(null);
   const [drawing, setDrawing] = useState(null);
-  const [arrowStart, setArrowStart] = useState(null); // for callout first click
+  const [arrowStart, setArrowStart] = useState(null);
 
   const pageAnns = annotations.filter(a => {
     const pg = a.page_number ?? a.extract_page_number;
@@ -107,9 +116,7 @@ export default function AnnotationOverlayLayer({
     e.preventDefault();
     const pos = getRelPos(e);
     if (activeTool === "callout") {
-      if (!arrowStart) {
-        setArrowStart(pos);
-      }
+      if (!arrowStart) setArrowStart(pos);
       return;
     }
     setDrawing({ startX: pos.x, startY: pos.y, x: pos.x, y: pos.y, w: 0, h: 0 });
@@ -132,8 +139,7 @@ export default function AnnotationOverlayLayer({
       const pos = getRelPos(e);
       const geometry = {
         type: "arrow",
-        from: arrowStart,
-        to: pos,
+        from: arrowStart, to: pos,
         textBox: { x: pos.x + 1, y: pos.y - 8, w: 20, h: 8 },
         text: "",
       };
@@ -142,48 +148,44 @@ export default function AnnotationOverlayLayer({
       return;
     }
     if (!drawing || drawing.w < 1 || drawing.h < 1) { setDrawing(null); return; }
+    // geometry stored as % of overlay container (= % of rendered page)
     const geometry = { type: "rect", x: drawing.x, y: drawing.y, w: drawing.w, h: drawing.h };
     onDrawComplete && onDrawComplete(geometry, currentPage);
     setDrawing(null);
   };
 
-  const cursor = isDrawing ? "crosshair" : "default";
-
   return (
     <div
       ref={containerRef}
       className="absolute inset-0"
-      style={{ cursor, userSelect: isDrawing ? "none" : "auto" }}
+      style={{ cursor: isDrawing ? "crosshair" : "default", userSelect: isDrawing ? "none" : "auto" }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={() => { setDrawing(null); setArrowStart(null); }}
     >
-      {/* Render existing annotations */}
       {pageAnns.map(a => {
         const isFlash = flashId === a.id;
         const isSel = selectedId === a.id;
         const kind = a.kind || "highlight";
-        const g = a.geometry_json;
 
         if (kind === "callout") {
-          return <CalloutArrow key={a.id} ann={a} isFlashing={isFlash} presentMode={presentMode} />;
+          return <CalloutArrow key={a.id} ann={a} presentMode={presentMode} />;
         }
 
-        // highlight or redaction
-        if (!g || g.type !== "rect") return null;
+        const rect = getAnnRectPct(a);
+        if (!rect) return null;
         const isRedaction = kind === "redaction";
         const { fill, stroke } = resolveColor(a.color || "yellow", isRedaction ? 1 : (a.opacity ?? 0.35));
 
         return (
-          <div
-            key={a.id}
+          <div key={a.id}
             title={!presentMode ? `${a.label_text || a.label || ""}${a.note_text ? ": " + a.note_text : ""}` : ""}
             onClick={(e) => { e.stopPropagation(); onSelect && onSelect(a.id); }}
             style={{
               position: "absolute",
-              left: `${g.x}%`, top: `${g.y}%`,
-              width: `${g.w}%`, height: `${g.h}%`,
+              left: `${rect.x}%`, top: `${rect.y}%`,
+              width: `${rect.w}%`, height: `${rect.h}%`,
               backgroundColor: isRedaction ? "#000" : fill,
               border: isRedaction
                 ? (presentMode ? "none" : "1px solid #333")
@@ -205,14 +207,12 @@ export default function AnnotationOverlayLayer({
           position: "absolute",
           left: `${drawing.x}%`, top: `${drawing.y}%`,
           width: `${drawing.w}%`, height: `${drawing.h}%`,
-          backgroundColor: activeTool === "redaction" ? "rgba(0,0,0,0.7)" : `rgba(251,191,36,0.3)`,
+          backgroundColor: activeTool === "redaction" ? "rgba(0,0,0,0.7)" : "rgba(251,191,36,0.3)",
           border: `2px dashed ${activeTool === "redaction" ? "#666" : "rgba(251,191,36,0.8)"}`,
-          borderRadius: "2px",
-          pointerEvents: "none",
+          borderRadius: "2px", pointerEvents: "none",
         }} />
       )}
 
-      {/* Callout first-point marker */}
       {arrowStart && (
         <div style={{
           position: "absolute",
@@ -220,8 +220,7 @@ export default function AnnotationOverlayLayer({
           width: "10px", height: "10px",
           marginLeft: "-5px", marginTop: "-5px",
           backgroundColor: "rgba(251,191,36,0.9)",
-          borderRadius: "50%",
-          pointerEvents: "none",
+          borderRadius: "50%", pointerEvents: "none",
         }} />
       )}
     </div>
