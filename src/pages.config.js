@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AdmittedExhibits from './pages/AdmittedExhibits';
+import AnnotatePage from './pages/AnnotatePage';
 import BattleCards from './pages/BattleCards';
 import Dashboard from './pages/Dashboard';
 import DepoClips from './pages/DepoClips';
@@ -61,6 +62,7 @@ import JointExhibitPrint from './pages/JointExhibitPrint';
 import JointExhibits from './pages/JointExhibits';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
+import Present from './pages/Present';
 import PresentationMode from './pages/PresentationMode';
 import QuestionDetail from './pages/QuestionDetail';
 import Questions from './pages/Questions';
@@ -73,13 +75,12 @@ import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
-import Present from './pages/Present';
-import AnnotatePage from './pages/AnnotatePage';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AdmittedExhibits": AdmittedExhibits,
+    "AnnotatePage": AnnotatePage,
     "BattleCards": BattleCards,
     "Dashboard": Dashboard,
     "DepoClips": DepoClips,
@@ -93,6 +94,7 @@ export const PAGES = {
     "JointExhibits": JointExhibits,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
+    "Present": Present,
     "PresentationMode": PresentationMode,
     "QuestionDetail": QuestionDetail,
     "Questions": Questions,
@@ -105,8 +107,6 @@ export const PAGES = {
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
-    "Present": Present,
-    "AnnotatePage": AnnotatePage,
 }
 
 export const pagesConfig = {

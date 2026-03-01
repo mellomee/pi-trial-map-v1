@@ -41,33 +41,18 @@ export default function AnnotatePage() {
   // We track it via onNumPages callback from PdfPageWithOverlay
   const handleNumPages = useCallback((n) => setNumPages(n), []);
 
-  const handleCreateRect = useCallback(async (rectNorm, vpW, vpH, createdScale) => {
+  const handleCreateAnnotation = useCallback(async (coordPayload) => {
     if (!extractId) return;
-    const label = `p.${pageIndex}`;
+    const label = `p.${coordPayload.page_number ?? pageIndex}`;
     const ann = await base44.entities.ExhibitAnnotations.create({
       extract_id: extractId,
-      page_number: pageIndex,
       kind: "highlight",
       color: "yellow",
       opacity: 0.35,
       label_text: label,
       jury_safe: true,
       sort_index: annotations.length,
-      rect_norm_x: rectNorm.x,
-      rect_norm_y: rectNorm.y,
-      rect_norm_w: rectNorm.w,
-      rect_norm_h: rectNorm.h,
-      created_viewport_w: vpW,
-      created_viewport_h: vpH,
-      created_scale: createdScale,
-      // also store in geometry_json for legacy compat (0-100% format)
-      geometry_json: {
-        type: "rect",
-        x: rectNorm.x * 100,
-        y: rectNorm.y * 100,
-        w: rectNorm.w * 100,
-        h: rectNorm.h * 100,
-      },
+      ...coordPayload, // source_type, page_number, page_rotation, rect_pdf | rect_norm, viewport_meta
     });
     setAnnotations(prev => [...prev, ann]);
     setActiveId(ann.id);
