@@ -108,25 +108,28 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
             </div>
           )}
 
-          {/* Quote Text */}
+          {/* Quote Text — for Spotlight */}
           <div>
-            <label className="text-xs text-slate-400 block mb-1">Quote Text <span className="text-slate-600">(paste excerpt to show in Spotlight)</span></label>
+            <label className="text-xs text-slate-400 block mb-1">
+              Quote Text <span className="text-slate-600">— shown in Present Spotlight overlay</span>
+            </label>
             <Textarea
-              value={editing.quote_text ?? ""}
+              value={editing.quote_text || ""}
               onChange={e => setEditing(p => ({ ...p, quote_text: e.target.value }))}
               className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs"
               rows={3}
-              placeholder="Paste the exact text to display in the Spotlight overlay…"
+              placeholder="Paste the exact excerpt to display in Spotlight (works for scanned PDFs too)…"
             />
           </div>
 
           {/* Anchor Text */}
           <div>
-            <label className="text-xs text-slate-400 block mb-1">Anchor Text <span className="text-slate-600">(optional — surrounding sentence for search)</span></label>
-            <Input
-              value={editing.anchor_text ?? ""}
+            <label className="text-xs text-slate-400 block mb-1">Anchor Text <span className="text-slate-600">(optional — for text search)</span></label>
+            <Textarea
+              value={editing.anchor_text || ""}
               onChange={e => setEditing(p => ({ ...p, anchor_text: e.target.value }))}
-              className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 h-8 text-xs"
+              className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs"
+              rows={2}
               placeholder="Surrounding sentence for future auto-locate…"
             />
           </div>
