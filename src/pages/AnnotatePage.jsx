@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import PdfPageWithOverlay from "@/components/PdfPageWithOverlay";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ChevronLeft, ChevronRight, Trash2, Pencil, Check, X,
-  Eye, EyeOff, Plus, StickyNote, ZoomIn, ZoomOut
+  Eye, EyeOff, Plus, StickyNote, ZoomIn, ZoomOut, Highlighter
 } from "lucide-react";
+import useActiveCase from "@/components/hooks/useActiveCase";
+import { createPageUrl } from "@/utils";
 
 function isPdf(url) { return url?.toLowerCase().includes(".pdf"); }
 
