@@ -96,8 +96,81 @@ export default function AnnotatePage() {
 
   const pageAnns = visibleAnns.filter(a => (a.page_number ?? a.extract_page_number ?? 1) === pageIndex);
 
+  // ── No-extractId picker state ──────────────────────────────────────────
+  const [allExtracts, setAllExtracts] = useState([]);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerSelected, setPickerSelected] = useState("");
+  const { activeCase } = (function() {
+    // inline hook call — must be called unconditionally so we hoist it here
+    // but we only use it in the picker branch; harmless when extractId is set
+    const [ac, setAc] = useState(null);
+    useEffect(() => {
+      base44.entities.AppSettings.list().then(async settings => {
+        if (!settings.length || !settings[0].active_case_id) return;
+        const cases = await base44.entities.Cases.filter({ id: settings[0].active_case_id });
+        setAc(cases[0] || null);
+      });
+    }, []);
+    return { activeCase: ac };
+  })();
+
+  useEffect(() => {
+    if (extractId || !activeCase) return;
+    base44.entities.ExhibitExtracts.filter({ case_id: activeCase.id }).then(setAllExtracts);
+  }, [extractId, activeCase]);
+
   if (!extractId) {
-    return <div className="p-8 text-slate-400">No extractId in URL. Use ?extractId=...</div>;
+    const filtered = allExtracts.filter(e => {
+      const q = pickerSearch.toLowerCase();
+      return !q || [e.extract_title_official, e.extract_title_internal].some(v => v?.toLowerCase().includes(q));
+    });
+    return (
+      <div className="min-h-screen bg-[#0a0f1e] text-slate-200 flex items-center justify-center p-8">
+        <div className="bg-[#0f1629] border border-[#1e2a45] rounded-xl p-8 w-full max-w-lg">
+          <div className="flex items-center gap-2 mb-6">
+            <Highlighter className="w-5 h-5 text-orange-400" />
+            <h1 className="text-lg font-bold text-white">Select an Extract to Annotate</h1>
+          </div>
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+            <Input
+              value={pickerSearch}
+              onChange={e => setPickerSearch(e.target.value)}
+              placeholder="Search extracts…"
+              className="pl-9 bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
+            />
+          </div>
+          <div className="space-y-1 max-h-72 overflow-y-auto mb-4">
+            {filtered.length === 0 && (
+              <p className="text-slate-500 text-sm text-center py-6">No extracts found.</p>
+            )}
+            {filtered.map(e => (
+              <button
+                key={e.id}
+                onClick={() => setPickerSelected(e.id)}
+                className={`w-full text-left px-3 py-2.5 rounded-lg border transition-colors ${
+                  pickerSelected === e.id
+                    ? "bg-orange-500/15 border-orange-500/40 text-orange-200"
+                    : "border-transparent hover:bg-white/5 text-slate-300"
+                }`}
+              >
+                <p className="text-sm font-medium">{e.extract_title_official}</p>
+                {e.extract_title_internal && (
+                  <p className="text-xs text-slate-500 italic">"{e.extract_title_internal}"</p>
+                )}
+              </button>
+            ))}
+          </div>
+          <Button
+            disabled={!pickerSelected}
+            onClick={() => { window.location.href = createPageUrl(`AnnotatePage?extractId=${pickerSelected}`); }}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-40"
+          >
+            Open in Annotator
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
