@@ -400,9 +400,30 @@ export default function JointExhibits() {
                           );
                         })()}
                       </div>
-                      <div className="flex gap-2 mt-3">
+                      {/* Annotation count for attached extract */}
+                      {j.exhibit_extract_id && (
+                        <div className="mt-2 flex items-center gap-1 text-[10px] text-yellow-400/80">
+                          <StickyNote className="w-3 h-3" />
+                          Annotations: {annotationCounts[j.exhibit_extract_id] || 0}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-3">
                         <button className="text-[10px] text-slate-400 hover:text-cyan-400" onClick={() => setEditJoint({ ...j })}>Edit marking</button>
                         <span className="text-slate-700">·</span>
+                        <button
+                          className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-emerald-400"
+                          onClick={() => openSwap(j)}>
+                          <RefreshCw className="w-3 h-3" /> Swap Extract
+                        </button>
+                        <span className="text-slate-700">·</span>
+                        {j.status !== "Withdrawn" && (
+                          <button
+                            className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-orange-400"
+                            onClick={() => withdrawJoint(j)}>
+                            <MinusCircle className="w-3 h-3" /> Withdraw
+                          </button>
+                        )}
+                        {j.status !== "Withdrawn" && <span className="text-slate-700">·</span>}
                         <button className="text-[10px] text-slate-400 hover:text-red-400" onClick={() => removeJoint(j)}>Remove from list</button>
                       </div>
                     </div>
