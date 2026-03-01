@@ -228,6 +228,8 @@ export default function Extracts() {
         ))}
       </div>
 
+      {viewFile && <FileViewerModal url={viewFile.url} title={viewFile.title} onClose={() => setViewFile(null)} />}
+
       {/* Edit Dialog */}
       <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg">
