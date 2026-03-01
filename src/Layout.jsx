@@ -30,6 +30,7 @@ const NAV_SECTIONS = [
       { name: "Extracts", icon: FileText, page: "Extracts" },
       { name: "Joint List", icon: List, page: "JointExhibits" },
       { name: "Print Views", icon: Printer, page: "JointExhibitPrint" },
+      { name: "Present", icon: Play, page: "Present" },
     ],
   },
   {
