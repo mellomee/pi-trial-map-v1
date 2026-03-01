@@ -1,164 +1,22 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
-import { Document, Page, pdfjs } from "react-pdf";
+import { pdfjs } from "react-pdf";
 import {
   ChevronLeft, ChevronRight, Search, Eye, EyeOff, ZoomIn, ZoomOut,
   Maximize2, Minimize2, Printer, PanelLeftClose, PanelLeftOpen, CheckCircle
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PdfPageWithOverlay from "@/components/PdfPageWithOverlay";
 import SpotlightView from "@/components/presents/SpotlightView";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 function isPdf(url) { return url?.toLowerCase().includes(".pdf"); }
 function isImage(url) { return /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url || ""); }
 
-const COLOR_MAP = {
-  yellow: { fill: "rgba(251,191,36,VAR)", stroke: "rgba(251,191,36,0.9)" },
-  red:    { fill: "rgba(239,68,68,VAR)",  stroke: "rgba(239,68,68,0.9)" },
-  green:  { fill: "rgba(34,197,94,VAR)",  stroke: "rgba(34,197,94,0.9)" },
-  blue:   { fill: "rgba(59,130,246,VAR)", stroke: "rgba(59,130,246,0.9)" },
-};
-function getColor(color, opacity) {
-  const c = COLOR_MAP[color] || COLOR_MAP.yellow;
-  return { fill: c.fill.replace("VAR", opacity ?? 0.4), stroke: c.stroke };
-}
-
-/** Normalize annotation rect to 0-100% regardless of storage format */
-function getAnnRectPct(a) {
-  // Prefer rect_norm (0-1 fractional, new format)
-  if (a.rect_norm) {
-    return {
-      x: a.rect_norm.x * 100,
-      y: a.rect_norm.y * 100,
-      w: a.rect_norm.w * 100,
-      h: a.rect_norm.h * 100,
-    };
-  }
-  const g = a.geometry_json;
-  if (!g || g.type !== "rect") return null;
-  // geometry_json x/y/w/h are 0-100%
-  return { x: g.x, y: g.y, w: g.w, h: g.h };
-}
-
-// ── Annotation overlay ────────────────────────────────────────────────────────
-function AnnotationOverlay({ annotations, currentPage, activeId }) {
-  const pageAnns = annotations.filter(a => (a.page_number ?? a.extract_page_number) === currentPage);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      {pageAnns.map(a => {
-        const isActive = activeId === a.id;
-        if (!isActive) return null;
-        const g = a.geometry_json;
-        if (!g) return null;
-
-        if (g.type === "rect") {
-          const rect = getAnnRectPct(a);
-          if (!rect) return null;
-          const { fill, stroke } = getColor(a.color || "yellow", a.opacity ?? 0.4);
-          return (
-            <div key={a.id} style={{
-              position: "absolute",
-              left: `${rect.x}%`, top: `${rect.y}%`,
-              width: `${rect.w}%`, height: `${rect.h}%`,
-              backgroundColor: a.kind === "redaction" ? "#000" : fill,
-              border: `2px solid ${stroke}`,
-              borderRadius: "2px",
-              boxShadow: `0 0 0 3px ${stroke.replace("0.9", "0.3")}`,
-            }} />
-          );
-        }
-
-        if (g.type === "arrow") {
-          const { fill, stroke } = getColor(a.color || "yellow", 0.85);
-          return (
-            <React.Fragment key={a.id}>
-              <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
-                viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <marker id={`arrowhead-pres-${a.id}`} markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-                    <polygon points="0 0, 6 3, 0 6" fill={stroke} />
-                  </marker>
-                </defs>
-                <line x1={g.from?.x} y1={g.from?.y} x2={g.to?.x} y2={g.to?.y}
-                  stroke={stroke} strokeWidth="1" markerEnd={`url(#arrowhead-pres-${a.id})`} />
-              </svg>
-              {g.textBox && (
-                <div style={{
-                  position: "absolute",
-                  left: `${g.textBox.x}%`, top: `${g.textBox.y}%`,
-                  width: `${g.textBox.w}%`,
-                  backgroundColor: fill, border: `1.5px solid ${stroke}`,
-                  borderRadius: "3px", padding: "2px 6px", color: "#fff",
-                  fontSize: "clamp(10px,1.4vw,14px)", fontWeight: 600,
-                }}>
-                  {g.text || a.label_text || ""}
-                </div>
-              )}
-            </React.Fragment>
-          );
-        }
-        return null;
-      })}
-    </div>
-  );
-}
-
-// ── Spotlight wrapper: renders PDF page to canvas then passes to SpotlightView ─
-function PdfWithSpotlight({ fileUrl, currentPage, scale, onNumPages, showOverlay, annotations, activeAnnotationId, spotlightOn, zoomFactor, padding }) {
-  const pageRef = useRef(null);
-  const [pageCanvas, setPageCanvas] = useState(null);
-
-  // After the Page renders, grab its canvas element
-  const onRenderSuccess = useCallback(() => {
-    if (!pageRef.current) return;
-    const canvas = pageRef.current.querySelector("canvas");
-    if (canvas) setPageCanvas(canvas);
-  }, []);
-
-  const activeAnn = annotations.find(a => a.id === activeAnnotationId) || null;
-  const showSpotlight = spotlightOn && activeAnn && activeAnn.geometry_json?.type === "rect";
-
-  return (
-    <div className="relative inline-block" ref={pageRef}>
-      <Document
-        file={fileUrl}
-        onLoadSuccess={({ numPages: n }) => onNumPages(n)}
-        loading={<div className="text-slate-500 p-12">Loading PDF…</div>}
-        error={<div className="text-red-400 p-12">Failed to load PDF.</div>}
-      >
-        <Page
-          pageNumber={currentPage}
-          scale={scale}
-          renderAnnotationLayer={false}
-          renderTextLayer={false}
-          onRenderSuccess={onRenderSuccess}
-        />
-      </Document>
-      {/* Standard overlay (visible even in spotlight mode as dim context) */}
-      {showOverlay && !showSpotlight && (
-        <AnnotationOverlay annotations={annotations} currentPage={currentPage} activeId={activeAnnotationId} />
-      )}
-      {/* Spotlight */}
-      {showSpotlight && pageCanvas && (
-        <SpotlightView
-          pageCanvasEl={pageCanvas}
-          annotation={activeAnn}
-          zoomFactor={zoomFactor}
-          padding={padding}
-          visible={true}
-        />
-      )}
-    </div>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Present page ─────────────────────────────────────────────────────────────
 export default function Present() {
   const { activeCase } = useActiveCase();
   const urlParams = new URLSearchParams(window.location.search);
@@ -183,8 +41,12 @@ export default function Present() {
 
   // Spotlight state
   const [spotlightOn, setSpotlightOn] = useState(false);
-  const [spotlightZoom, setSpotlightZoom] = useState("3");
   const [spotlightPadding, setSpotlightPadding] = useState("0.4");
+
+  // Spotlight canvas data captured from PdfPageWithOverlay
+  const [spotlightCanvas, setSpotlightCanvas] = useState(null);
+  const [spotlightViewport, setSpotlightViewport] = useState(null);
+  const [spotlightVpSize, setSpotlightVpSize] = useState(null);
 
   useEffect(() => {
     if (!activeCase) return;
@@ -235,6 +97,7 @@ export default function Present() {
 
   useEffect(() => {
     if (!initAnnotationId) { setActiveAnnotationId(null); setCurrentPage(1); }
+    setSpotlightCanvas(null);
   }, [selectedExhibitId]);
 
   const selectAnnotation = useCallback((ann) => {
@@ -243,7 +106,6 @@ export default function Present() {
     if (pg !== currentPage) setCurrentPage(pg);
   }, [currentPage]);
 
-  // Sorted annotations for Prev/Next stepping
   const sortedAnns = useMemo(() =>
     [...annotations].sort((a, b) => {
       const pa = a.page_number ?? a.extract_page_number ?? 0;
@@ -271,6 +133,13 @@ export default function Present() {
     return () => window.removeEventListener("keydown", handler);
   }, [numPages, activeAnnotationId, activeIdx, sortedAnns]);
 
+  // When page renders (PDF), capture canvas + viewport for spotlight
+  const handlePageRender = useCallback(({ canvas, viewport, vpSize }) => {
+    setSpotlightCanvas(canvas);
+    setSpotlightViewport(viewport);
+    setSpotlightVpSize(vpSize);
+  }, []);
+
   const filteredExhibits = admittedExhibits.filter(e => {
     if (!search) return true;
     const q = search.toLowerCase();
@@ -281,6 +150,9 @@ export default function Present() {
   const displayNumber = selectedExhibit
     ? (selectedExhibit.admitted_no || selectedExhibit.marked_no || "—")
     : null;
+
+  const activeAnn = annotations.find(a => a.id === activeAnnotationId) || null;
+  const showSpotlight = spotlightOn && activeAnn && spotlightCanvas;
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
@@ -396,9 +268,7 @@ export default function Present() {
               {showOverlay ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
             {/* Spotlight toggle */}
-            <button
-              onClick={() => setSpotlightOn(v => !v)}
-              title="Spotlight mode"
+            <button onClick={() => setSpotlightOn(v => !v)} title="Spotlight mode"
               className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
                 spotlightOn
                   ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
@@ -406,30 +276,17 @@ export default function Present() {
               }`}>
               ✦ Spotlight
             </button>
-            {/* Spotlight controls */}
             {spotlightOn && (
-              <>
-                <Select value={spotlightZoom} onValueChange={setSpotlightZoom}>
-                  <SelectTrigger className="h-6 w-14 text-[10px] bg-[#0f1629] border-[#1e2a45] text-slate-300">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2">2×</SelectItem>
-                    <SelectItem value="3">3×</SelectItem>
-                    <SelectItem value="4">4×</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={spotlightPadding} onValueChange={setSpotlightPadding}>
-                  <SelectTrigger className="h-6 w-20 text-[10px] bg-[#0f1629] border-[#1e2a45] text-slate-300">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0.2">Tight</SelectItem>
-                    <SelectItem value="0.4">Medium</SelectItem>
-                    <SelectItem value="0.8">Loose</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
+              <Select value={spotlightPadding} onValueChange={setSpotlightPadding}>
+                <SelectTrigger className="h-6 w-20 text-[10px] bg-[#0f1629] border-[#1e2a45] text-slate-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0.2">Tight</SelectItem>
+                  <SelectItem value="0.4">Medium</SelectItem>
+                  <SelectItem value="0.8">Loose</SelectItem>
+                </SelectContent>
+              </Select>
             )}
             <div className="w-px h-4 bg-[#1e2a45]" />
             <button onClick={() => window.print()} className="p-1 text-slate-400 hover:text-white" title="Print"><Printer className="w-4 h-4" /></button>
@@ -458,27 +315,31 @@ export default function Present() {
             {selectedExhibitId && !fileUrl && (
               <div className="flex items-center justify-center h-full text-slate-600">No file attached to this exhibit.</div>
             )}
-            {fileUrl && isPdf(fileUrl) && (
-              <PdfWithSpotlight
-                fileUrl={fileUrl}
-                currentPage={currentPage}
-                scale={scale}
-                onNumPages={setNumPages}
-                showOverlay={showOverlay}
-                annotations={annotations}
-                activeAnnotationId={activeAnnotationId}
-                spotlightOn={spotlightOn}
-                zoomFactor={Number(spotlightZoom)}
-                padding={Number(spotlightPadding)}
-              />
-            )}
-            {fileUrl && isImage(fileUrl) && (
-              <div className="relative inline-block">
-                <img src={fileUrl} alt="Exhibit"
-                  style={{ transform: `scale(${scale})`, transformOrigin: "top left", display: "block", maxWidth: "100%" }}
-                  draggable={false} />
-                {showOverlay && (
-                  <AnnotationOverlay annotations={annotations} currentPage={1} activeId={activeAnnotationId} />
+            {fileUrl && (
+              /* Wrapper: position:relative so spotlight can overlay correctly */
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <PdfPageWithOverlay
+                  fileUrl={fileUrl}
+                  pageIndex={currentPage}
+                  scale={scale}
+                  highlights={showOverlay && !showSpotlight ? annotations : (showOverlay ? annotations : [])}
+                  mode="view"
+                  activeId={activeAnnotationId}
+                  onSelect={(id) => setActiveAnnotationId(id)}
+                  onNumPages={setNumPages}
+                  onPageRender={handlePageRender}
+                />
+                {/* Spotlight overlay */}
+                {showSpotlight && (
+                  <SpotlightView
+                    pageCanvasEl={spotlightCanvas}
+                    annotation={activeAnn}
+                    pdfViewport={spotlightViewport}
+                    canvasPixelW={spotlightVpSize?.width}
+                    canvasPixelH={spotlightVpSize?.height}
+                    padding={Number(spotlightPadding)}
+                    visible={true}
+                  />
                 )}
               </div>
             )}
@@ -511,17 +372,16 @@ export default function Present() {
                         </div>
                         {pageAnns.map(a => {
                           const isActive = activeAnnotationId === a.id;
-                          const kindIcon = a.kind === "redaction" ? "⬛" : a.kind === "callout" ? "➡️" : "🟡";
                           return (
                             <button key={a.id} onClick={() => selectAnnotation(a)}
                               className={`w-full text-left px-2 py-1.5 rounded transition-colors flex items-start gap-1.5 ${
                                 isActive ? "bg-green-600/20 border border-green-600/40" : "hover:bg-white/5 border border-transparent"
                               }`}>
-                              <span className="text-[10px] mt-0.5 flex-shrink-0">{kindIcon}</span>
+                              <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">▪</span>
                               <div className="min-w-0">
                                 {a.label_text
                                   ? <p className={`text-[11px] font-medium leading-tight ${isActive ? "text-green-300" : "text-slate-300"}`}>{a.label_text}</p>
-                                  : <p className={`text-[10px] leading-tight italic ${isActive ? "text-green-400" : "text-slate-500"}`}>{a.kind} on p.{pg}</p>
+                                  : <p className={`text-[10px] leading-tight italic ${isActive ? "text-green-400" : "text-slate-500"}`}>p.{pg} highlight</p>
                                 }
                               </div>
                               {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0 mt-1.5" />}
