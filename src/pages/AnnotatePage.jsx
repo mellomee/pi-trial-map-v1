@@ -32,6 +32,7 @@ export default function AnnotatePage() {
   const [pdfDoc, setPdfDoc] = useState(null);
   const [rendering, setRendering] = useState(false);
   const canvasRef = React.useRef(null);
+  const [showFindOnPage, setShowFindOnPage] = useState(false);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
