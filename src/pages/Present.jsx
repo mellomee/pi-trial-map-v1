@@ -127,7 +127,6 @@ export default function Present() {
 
   useEffect(() => {
     if (!initAnnotationId) { setActiveAnnotationId(null); setCurrentPage(1); }
-    setSpotlightCanvas(null);
   }, [selectedExhibitId]);
 
   const selectAnnotation = useCallback((ann) => {
