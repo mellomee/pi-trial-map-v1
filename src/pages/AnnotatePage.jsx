@@ -102,19 +102,7 @@ export default function AnnotatePage() {
   const [allExtracts, setAllExtracts] = useState([]);
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerSelected, setPickerSelected] = useState("");
-  const { activeCase } = (function() {
-    // inline hook call — must be called unconditionally so we hoist it here
-    // but we only use it in the picker branch; harmless when extractId is set
-    const [ac, setAc] = useState(null);
-    useEffect(() => {
-      base44.entities.AppSettings.list().then(async settings => {
-        if (!settings.length || !settings[0].active_case_id) return;
-        const cases = await base44.entities.Cases.filter({ id: settings[0].active_case_id });
-        setAc(cases[0] || null);
-      });
-    }, []);
-    return { activeCase: ac };
-  })();
+  const { activeCase } = useActiveCase();
 
   useEffect(() => {
     if (extractId || !activeCase) return;
