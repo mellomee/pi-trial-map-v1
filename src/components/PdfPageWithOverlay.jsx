@@ -91,15 +91,23 @@ export default function PdfPageWithOverlay({
         pdfViewportRef.current = vp;
         const canvas = canvasRef.current;
         if (!canvas) return;
-        canvas.width = vp.width;
-        canvas.height = vp.height;
+        // Use devicePixelRatio for sharp rendering on hi-DPI screens.
+        // The canvas physical size is vp.width*dpr but CSS size stays vp.width.
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(vp.width  * dpr);
+        canvas.height = Math.round(vp.height * dpr);
+        canvas.style.width  = `${vp.width}px`;
+        canvas.style.height = `${vp.height}px`;
         const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         return page.render({ canvasContext: ctx, viewport: vp }).promise.then(() => {
           if (!cancelled) {
+            // vpSize always tracks the CSS (layout) dimensions, not physical canvas pixels
             const vpSizeVal = { width: vp.width, height: vp.height };
             setVpSize(vpSizeVal);
             setLoading(false);
             if (onPageRender) {
+              // Pass physical canvas, viewport, and CSS layout size
               onPageRender({ canvas: canvasRef.current, viewport: vp, vpSize: vpSizeVal });
             }
           }
