@@ -456,6 +456,7 @@ export default function AnnotatePage() {
         onSave={saveEditModal}
         saving={editSaving}
         groups={groups}
+        onReextract={handleReextract}
       />
     </div>
   );
