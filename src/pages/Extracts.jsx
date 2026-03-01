@@ -164,48 +164,64 @@ export default function Extracts() {
           </div>
         ) : filtered.map(ex => (
           <div key={ex.id}
-            className="bg-[#0f1629] border border-[#1e2a45] hover:border-emerald-600/30 rounded-xl p-4 flex items-start gap-3 transition-colors">
-            <BookOpen className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-100">{ex.extract_title_official}</p>
-              {ex.extract_title_internal && (
-                <p className="text-xs text-slate-500 italic mt-0.5">"{ex.extract_title_internal}"</p>
-              )}
-              <div className="flex flex-wrap gap-2 mt-1.5 items-center">
-                {ex.source_depo_exhibit_id && (
-                  <Badge className="text-[10px] bg-slate-600/20 text-slate-400 border-slate-600/30">
-                    Source: {depoExhibitLabel(ex.source_depo_exhibit_id)}
-                  </Badge>
+            className="bg-[#0f1629] border border-[#1e2a45] hover:border-emerald-600/30 rounded-xl transition-colors">
+            {/* Row header */}
+            <div className="p-4 flex items-start gap-3">
+              <button
+                onClick={() => setExpandedId(expandedId === ex.id ? null : ex.id)}
+                className="mt-0.5 text-slate-500 hover:text-slate-200 flex-shrink-0">
+                {expandedId === ex.id
+                  ? <ChevronDown className="w-4 h-4 text-emerald-400" />
+                  : <ChevronRight className="w-4 h-4" />}
+              </button>
+              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedId(expandedId === ex.id ? null : ex.id)}>
+                <p className="text-sm font-semibold text-slate-100">{ex.extract_title_official}</p>
+                {ex.extract_title_internal && (
+                  <p className="text-xs text-slate-500 italic mt-0.5">"{ex.extract_title_internal}"</p>
                 )}
-                {deponentName(ex.source_depo_exhibit_id) && (
-                  <span className="text-[10px] text-slate-600">{deponentName(ex.source_depo_exhibit_id)}</span>
-                )}
-                {(ex.extract_page_start || ex.extract_page_end) && (
-                  <span className="text-[10px] text-slate-500">
-                    pp. {ex.extract_page_start}–{ex.extract_page_end}
-                  </span>
-                )}
-                {ex.extract_file_url && (
-                  <a href={ex.extract_file_url} target="_blank" rel="noreferrer"
-                    className="text-[10px] text-emerald-400 hover:underline flex items-center gap-0.5">
-                    <Link2 className="w-3 h-3" /> View File
-                  </a>
-                )}
-                {(jointsByExtractId[ex.id] || []).map(j => (
-                  <Badge key={j.id} className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
-                    Joint #{j.marked_no}
-                  </Badge>
-                ))}
+                <div className="flex flex-wrap gap-2 mt-1.5 items-center">
+                  {ex.source_depo_exhibit_id && (
+                    <Badge className="text-[10px] bg-slate-600/20 text-slate-400 border-slate-600/30">
+                      Source: {depoExhibitLabel(ex.source_depo_exhibit_id)}
+                    </Badge>
+                  )}
+                  {deponentName(ex.source_depo_exhibit_id) && (
+                    <span className="text-[10px] text-slate-600">{deponentName(ex.source_depo_exhibit_id)}</span>
+                  )}
+                  {(ex.extract_page_start || ex.extract_page_end) && (
+                    <span className="text-[10px] text-slate-500">
+                      pp. {ex.extract_page_start}–{ex.extract_page_end}
+                    </span>
+                  )}
+                  {ex.extract_file_url && (
+                    <a href={ex.extract_file_url} target="_blank" rel="noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="text-[10px] text-emerald-400 hover:underline flex items-center gap-0.5">
+                      <Link2 className="w-3 h-3" /> View File
+                    </a>
+                  )}
+                  {(jointsByExtractId[ex.id] || []).map(j => (
+                    <Badge key={j.id} className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+                      Joint #{j.marked_no}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={() => openEdit(ex)} className="p-1.5 text-slate-500 hover:text-slate-200">
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => remove(ex)} className="p-1.5 text-slate-500 hover:text-red-400">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button onClick={() => openEdit(ex)} className="p-1.5 text-slate-500 hover:text-slate-200">
-                <Edit2 className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={() => remove(ex)} className="p-1.5 text-slate-500 hover:text-red-400">
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            {/* Expanded annotations section */}
+            {expandedId === ex.id && (
+              <div className="px-4 pb-4">
+                <AnnotationsSection extractId={ex.id} />
+              </div>
+            )}
           </div>
         ))}
       </div>
