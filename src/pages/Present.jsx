@@ -126,12 +126,7 @@ export default function Present() {
     return () => window.removeEventListener("keydown", handler);
   }, [numPages, activeAnnotationId, activeIdx, sortedAnns]);
 
-  // When page renders (PDF), capture canvas + viewport for spotlight
-  const handlePageRender = useCallback(({ canvas, viewport, vpSize }) => {
-    setSpotlightCanvas(canvas);
-    setSpotlightViewport(viewport);
-    setSpotlightVpSize(vpSize);
-  }, []);
+
 
   const filteredExhibits = admittedExhibits.filter(e => {
     if (!search) return true;
