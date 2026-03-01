@@ -402,11 +402,20 @@ export default function JointExhibits() {
                           );
                         })()}
                       </div>
-                      {/* Annotation count for attached extract */}
+                      {/* Annotation count + Annotate button */}
                       {j.exhibit_extract_id && (
-                        <div className="mt-2 flex items-center gap-1 text-[10px] text-yellow-400/80">
-                          <StickyNote className="w-3 h-3" />
-                          Annotations: {annotationCounts[j.exhibit_extract_id] || 0}
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="flex items-center gap-1 text-[10px] text-yellow-400/80">
+                            <StickyNote className="w-3 h-3" />
+                            {annotationCounts[j.exhibit_extract_id] || 0} annotations
+                          </span>
+                          <Link
+                            to={createPageUrl(`AnnotatePage?extractId=${j.exhibit_extract_id}`)}
+                            onClick={e => e.stopPropagation()}
+                            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors"
+                          >
+                            <Highlighter className="w-3 h-3" /> Annotate
+                          </Link>
                         </div>
                       )}
                       <div className="flex flex-wrap gap-2 mt-3">
