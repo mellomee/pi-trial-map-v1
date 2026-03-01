@@ -110,7 +110,7 @@ export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPag
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs text-slate-400">
                 Anchor Text
-                <span className="text-slate-600 ml-1">— optional, used to locate quote on page</span>
+                <span className="text-slate-600 ml-1">— for text-search (defaults to quote)</span>
               </label>
               {quoteText.trim() && (
                 <button
@@ -118,7 +118,7 @@ export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPag
                   onClick={() => setAnchorText(quoteText)}
                   className="text-[10px] text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 rounded px-1.5 py-0.5"
                 >
-                  Use Quote as Anchor
+                  Use Quote
                 </button>
               )}
             </div>
@@ -127,8 +127,27 @@ export default function QuoteAnnotationModal({ open, onClose, onSave, defaultPag
               onChange={e => setAnchorText(e.target.value)}
               placeholder="Paste a longer surrounding passage for better text-search accuracy…"
               className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm"
-              rows={3}
+              rows={2}
             />
+            {/* Search Assist buttons */}
+            <div className="flex gap-1.5 mt-1.5">
+              <button
+                type="button"
+                onClick={autoCaptureSelection}
+                className="flex items-center gap-1 text-[10px] text-violet-400 border border-violet-500/30 rounded px-2 py-0.5 hover:bg-violet-500/10"
+              >
+                <MousePointer2 className="w-3 h-3" />
+                Auto-capture PDF selection
+              </button>
+              <button
+                type="button"
+                onClick={pasteFromClipboard}
+                className="flex items-center gap-1 text-[10px] text-slate-400 border border-[#1e2a45] rounded px-2 py-0.5 hover:bg-white/5"
+              >
+                <Clipboard className="w-3 h-3" />
+                Paste from Clipboard
+              </button>
+            </div>
           </div>
 
           {/* Label */}
