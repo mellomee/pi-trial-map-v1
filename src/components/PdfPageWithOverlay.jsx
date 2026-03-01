@@ -36,6 +36,9 @@ export default function PdfPageWithOverlay({
 
   const [vpSize, setVpSize] = useState(null);
   const pdfViewportRef = useRef(null);
+  // Track which page the current pdfViewportRef belongs to — never render
+  // annotations using a viewport that was built for a different page.
+  const renderedPageRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
