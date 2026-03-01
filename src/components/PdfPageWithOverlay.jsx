@@ -62,7 +62,10 @@ export default function PdfPageWithOverlay({
     setError(null);
 
     pdfjs.getDocument(fileUrl).promise
-      .then(pdf => pdf.getPage(pageIndex))
+      .then(pdf => {
+        if (!cancelled && onNumPages) onNumPages(pdf.numPages);
+        return pdf.getPage(pageIndex);
+      })
       .then(page => {
         if (cancelled) return;
         const vp = page.getViewport({ scale });
