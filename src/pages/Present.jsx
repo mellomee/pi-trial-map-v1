@@ -284,12 +284,7 @@ export default function Present() {
             <span className="text-[10px] text-slate-600 w-9 text-center">{Math.round(scale * 100)}%</span>
             <button onClick={() => setScale(s => Math.min(3, s + 0.25))} className="p-1 text-slate-400 hover:text-white"><ZoomIn className="w-4 h-4" /></button>
             <div className="w-px h-4 bg-[#1e2a45]" />
-            {/* Overlay toggle */}
-            <button onClick={() => setShowOverlay(v => !v)}
-              className={`p-1 ${showOverlay ? "text-green-400" : "text-slate-600"} hover:text-green-300`}
-              title={showOverlay ? "Hide annotation" : "Show annotation"}>
-              {showOverlay ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            </button>
+
             {/* Spotlight toggle */}
             <button onClick={() => setSpotlightOn(v => !v)} title="Spotlight quote"
               disabled={!activeAnnotationId}
