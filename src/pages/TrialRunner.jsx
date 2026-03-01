@@ -516,36 +516,48 @@ export default function TrialRunner() {
                     </div>
                     <div className="divide-y divide-[#1e2a45]">
                       {proofData.exhibits.map(je => {
-                        const depo = getDepoExhibitInfo(je);
-                        return (
-                          <div key={je.id} className="flex items-start justify-between px-4 py-3 gap-3">
-                            <div className="flex-1">
-                              <div className="flex items-baseline gap-2">
-                                <span className="text-xs font-bold text-amber-300">Exh. {je.marked_no}</span>
-                                <span className="text-sm text-slate-200">{je.marked_title}</span>
-                              </div>
-                              {je.pages && (
-                                <p className="text-[10px] text-slate-400 mt-0.5">Pages: {je.pages}</p>
-                              )}
-                              {je.notes && (
-                                <p className="text-[10px] text-slate-500 mt-0.5 italic">{je.notes}</p>
-                              )}
-                              {depo && (
-                                <p className="text-[10px] text-slate-500 mt-0.5">
-                                  {depo.depo_exhibit_no && `Depo Exh. ${depo.depo_exhibit_no} · `}
-                                  {depo.deponent_name || ""}
-                                </p>
-                              )}
+                      const depo = getDepoExhibitInfo(je);
+                      const isAdmitted = je.status === "Admitted" || je.admitted_no;
+                      return (
+                        <div key={je.id} className="flex items-start justify-between px-4 py-3 gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-xs font-bold text-amber-300">Exh. {je.marked_no}</span>
+                              <span className="text-sm text-slate-200">{je.marked_title}</span>
                             </div>
+                            {je.pages && (
+                              <p className="text-[10px] text-slate-400 mt-0.5">Pages: {je.pages}</p>
+                            )}
+                            {je.notes && (
+                              <p className="text-[10px] text-slate-500 mt-0.5 italic">{je.notes}</p>
+                            )}
+                            {depo && (
+                              <p className="text-[10px] text-slate-500 mt-0.5">
+                                {depo.depo_exhibit_no && `Depo Exh. ${depo.depo_exhibit_no} · `}
+                                {depo.deponent_name || ""}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1 flex-shrink-0">
                             <button
                               onClick={() => setDetailModal({ type: "exhibit", data: je, depo })}
-                              className="text-slate-600 hover:text-amber-400 flex-shrink-0 mt-0.5"
+                              className="text-slate-600 hover:text-amber-400"
                               title="View detail"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
                             </button>
+                            {isAdmitted && (
+                              <a
+                                href={`${createPageUrl("Present")}?exhibit_id=${je.id}`}
+                                className="text-slate-600 hover:text-green-400"
+                                title="Present to jury"
+                              >
+                                <Monitor className="w-3.5 h-3.5" />
+                              </a>
+                            )}
                           </div>
-                        );
+                        </div>
+                      );
                       })}
                     </div>
                   </div>
