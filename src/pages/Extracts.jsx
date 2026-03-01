@@ -34,6 +34,7 @@ export default function Extracts() {
   const [editing, setEditing] = useState(null); // null | EMPTY | extract obj
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [viewFile, setViewFile] = useState(null); // { url, title }
 
   useEffect(() => {
     if (!activeCase) return;
