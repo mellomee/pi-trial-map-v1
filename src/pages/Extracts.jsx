@@ -196,11 +196,11 @@ export default function Extracts() {
                     </span>
                   )}
                   {ex.extract_file_url && (
-                    <a href={ex.extract_file_url} target="_blank" rel="noreferrer"
-                      onClick={e => e.stopPropagation()}
+                    <button
+                      onClick={e => { e.stopPropagation(); setViewFile({ url: ex.extract_file_url, title: ex.extract_title_official }); }}
                       className="text-[10px] text-emerald-400 hover:underline flex items-center gap-0.5">
-                      <Link2 className="w-3 h-3" /> View File
-                    </a>
+                      <ExternalLink className="w-3 h-3" /> View File
+                    </button>
                   )}
                   {(jointsByExtractId[ex.id] || []).map(j => (
                     <Badge key={j.id} className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
