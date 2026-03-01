@@ -9,6 +9,7 @@ import {
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { createPageUrl } from "@/utils";
 import QuoteAnnotationModal from "@/components/annotate/QuoteAnnotationModal";
+import FindOnPage from "@/components/annotate/FindOnPage";
 import { pdfjs } from "react-pdf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
