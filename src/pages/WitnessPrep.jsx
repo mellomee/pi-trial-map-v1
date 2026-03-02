@@ -106,6 +106,16 @@ export default function WitnessPrep() {
     [questions, selectedPartyId, examType]
   );
 
+  // In Questions tab, show only groups that have questions for this witness/exam
+  const relevantGroupIds = useMemo(() => {
+    const ids = new Set(witnessQuestions.map(q => q.primary_evidence_group_id).filter(Boolean));
+    return Array.from(ids);
+  }, [witnessQuestions]);
+
+  const visibleGroups = useMemo(() => {
+    return evidenceGroups.filter(g => relevantGroupIds.includes(g.id));
+  }, [evidenceGroups, relevantGroupIds]);
+
   const selectedQuestion = useMemo(() => questions.find(q => q.id === selectedQuestionId), [questions, selectedQuestionId]);
 
   const getGroupLinks = (groupId) => egLinks.filter(l => l.evidence_group_id === groupId);
