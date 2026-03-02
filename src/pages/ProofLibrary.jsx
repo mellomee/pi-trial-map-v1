@@ -442,6 +442,7 @@ export default function ProofLibrary() {
               <div className="p-4 border-b border-gray-700 space-y-3">
                 <div>
                   <h2 className="text-lg font-bold text-cyan-300">{selectedGroup.title}</h2>
+                  <p className="text-xs text-gray-500 mt-1">Group ID: {selectedGroupId}</p>
                   {selectedGroup.description && <p className="text-sm text-gray-400">{selectedGroup.description}</p>}
                 </div>
                 {/* Tab buttons */}
