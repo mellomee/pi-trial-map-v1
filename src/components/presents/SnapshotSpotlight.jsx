@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import { X } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { X, Highlighter } from "lucide-react";
 
 /**
  * SnapshotSpotlight
