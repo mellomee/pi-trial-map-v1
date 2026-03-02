@@ -216,10 +216,10 @@ export default function Extracts() {
                 </button>
               </div>
             </div>
-            {/* Expanded annotations section */}
+            {/* Expanded callout editor */}
             {expandedId === ex.id && (
               <div className="px-4 pb-4">
-                <AnnotationsSection extractId={ex.id} extractFileUrl={ex.extract_file_url} />
+                <CalloutEditor extract={ex} />
               </div>
             )}
           </div>
