@@ -4,11 +4,12 @@ import useActiveCase from "@/components/hooks/useActiveCase";
 import { pdfjs } from "react-pdf";
 import {
   ChevronLeft, ChevronRight, Search, Eye, EyeOff, ZoomIn, ZoomOut,
-  Maximize2, Minimize2, Printer, PanelLeftClose, PanelLeftOpen, CheckCircle
+  Maximize2, Minimize2, Printer, PanelLeftClose, PanelLeftOpen, CheckCircle, Scissors, Image
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import QuoteSpotlight from "@/components/presents/QuoteSpotlight";
+import CalloutOverlay from "@/components/presents/CalloutOverlay";
 
 
 
