@@ -523,6 +523,7 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
         <div>
           <Label className="text-xs text-slate-400 mb-1 block">Question Text</Label>
           <Textarea
+            ref={qTextRef}
             value={q.question_text || ""}
             onChange={e => setQ({ ...q, question_text: e.target.value })}
             onBlur={() => save("question_text", q.question_text)}
