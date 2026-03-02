@@ -264,14 +264,13 @@ export default function ProofLibrary() {
   };
 
   const handleGenerateQuestion = async () => {
-    if (!generateQuestionData.witness_id) return;
+    if (!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()) return;
     try {
-      const selectedWitness = allWitnesses.find((w) => w.id === generateQuestionData.witness_id);
       const newQuestion = await base44.entities.Questions.create({
         case_id: activeCase.id,
         party_id: generateQuestionData.witness_id,
         exam_type: generateQuestionData.exam_type,
-        question_text: `Question for ${selectedWitness?.display_name || selectedWitness?.last_name}`,
+        question_text: generateQuestionData.question_text,
         status: 'NotAsked',
         importance: 'Med',
       });
@@ -283,7 +282,24 @@ export default function ProofLibrary() {
         is_primary: false,
       });
 
-      setGenerateQuestionData({ witness_id: '', exam_type: 'Direct' });
+      // Link to trial points in this evidence group
+      const tpLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
+        evidence_group_id: selectedGroupId,
+      });
+      for (const link of tpLinks) {
+        const existing = await base44.entities.QuestionLinks.filter({
+          question_id: newQuestion.id,
+          trial_point_id: link.trial_point_id,
+        });
+        if (existing.length === 0) {
+          await base44.entities.QuestionLinks.create({
+            question_id: newQuestion.id,
+            trial_point_id: link.trial_point_id,
+          });
+        }
+      }
+
+      setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       setShowGenerateQuestionModal(false);
       await loadGroupDetails();
     } catch (error) {
