@@ -54,6 +54,8 @@ export default function AnnotatePage() {
   const [dragStart, setDragStart] = useState(null);
   const [captureModalOpen, setCaptureModalOpen] = useState(false);
   const [pendingCropBlob, setPendingCropBlob] = useState(null);
+  const [highlightModalOpen, setHighlightModalOpen] = useState(false);
+  const [pendingCalloutForHighlight, setPendingCalloutForHighlight] = useState(null);
   const overlayRef = useRef(null);
 
   // ── Highlight annotation drag state ──────────────────────────────────────
