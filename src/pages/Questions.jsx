@@ -189,30 +189,50 @@ export default function Questions() {
         </div>
       </div>
 
-      <div className="space-y-2">
-        {filtered.map(q => (
-          <Card key={q.id} className="bg-[#131a2e] border-[#1e2a45]">
-            <CardContent className="py-3 flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm text-white">{q.question_text}</p>
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
-                  <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
-                  <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
-                </div>
-                {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
-              </div>
-              <div className="flex gap-1 flex-shrink-0 items-center">
-                <Link to={`${createPageUrl("QuestionDetail")}?id=${q.id}`}>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" title="Manage Links"><Link2 className="w-3 h-3" /></Button>
-                </Link>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="questions-list">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+              {filtered.map((q, idx) => (
+                <Draggable key={q.id} draggableId={q.id} index={idx}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={snapshot.isDragging ? "opacity-50" : ""}
+                    >
+                      <Card className="bg-[#131a2e] border-[#1e2a45]">
+                        <CardContent className="py-3 flex items-start justify-between gap-3">
+                          <div {...provided.dragHandleProps} className="text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing flex-shrink-0 pt-0.5">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-white">{q.question_text}</p>
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                              <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
+                              <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
+                              <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
+                            </div>
+                            {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0 items-center">
+                            <Link to={`${createPageUrl("QuestionDetail")}?id=${q.id}`}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" title="Manage Links"><Link2 className="w-3 h-3" /></Button>
+                            </Link>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent key={modalKey} className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
