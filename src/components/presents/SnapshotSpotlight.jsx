@@ -52,12 +52,28 @@ export default function SnapshotSpotlight({ annotation, exhibitNo, onClose, visi
             </p>
             {label && <p className="text-base font-semibold text-white mt-0.5">{label}</p>}
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {rawHighlights.length > 0 && (
+              <button
+                onClick={() => setShowHighlights(v => !v)}
+                title="Toggle text highlights"
+                className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold border transition-colors ${
+                  showHighlights
+                    ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
+                    : "text-slate-500 border-slate-600 hover:text-slate-300"
+                }`}
+              >
+                <Highlighter className="w-3 h-3" />
+                {showHighlights ? "Highlights ON" : "Highlights OFF"}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Snapshot image with optional text highlight overlay */}
