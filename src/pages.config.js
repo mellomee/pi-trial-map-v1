@@ -64,6 +64,7 @@ import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
 import Present from './pages/Present';
 import PresentationMode from './pages/PresentationMode';
+import ProofLibrary from './pages/ProofLibrary';
 import QuestionDetail from './pages/QuestionDetail';
 import Questions from './pages/Questions';
 import Runner from './pages/Runner';
@@ -76,7 +77,6 @@ import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
-import ProofLibrary from './pages/ProofLibrary';
 import __Layout from './Layout.jsx';
 
 
@@ -98,6 +98,7 @@ export const PAGES = {
     "Parties": Parties,
     "Present": Present,
     "PresentationMode": PresentationMode,
+    "ProofLibrary": ProofLibrary,
     "QuestionDetail": QuestionDetail,
     "Questions": Questions,
     "Runner": Runner,
@@ -110,7 +111,6 @@ export const PAGES = {
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
-    "ProofLibrary": ProofLibrary,
 }
 
 export const pagesConfig = {

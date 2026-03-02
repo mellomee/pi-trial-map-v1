@@ -17,17 +17,25 @@ export default function ProofLibrary() {
   const [evidenceGroups, setEvidenceGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [proofItems, setProofItems] = useState([]);
-  const [trialPoints, setTrialPoints] = useState([]);
-  const [witnesses, setWitnesses] = useState([]);
+  const [allTrialPoints, setAllTrialPoints] = useState([]);
+  const [linkedTrialPoints, setLinkedTrialPoints] = useState([]);
+  const [allWitnesses, setAllWitnesses] = useState([]);
+  const [linkedWitnesses, setLinkedWitnesses] = useState([]);
+  const [linkedQuestions, setLinkedQuestions] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [centerTab, setCenterTab] = useState('proof');
 
   // Modal states
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
   const [showAddProofModal, setShowAddProofModal] = useState(false);
+  const [showAddTrialPointModal, setShowAddTrialPointModal] = useState(false);
+  const [showAssignWitnessModal, setShowAssignWitnessModal] = useState(false);
+  const [showGenerateQuestionModal, setShowGenerateQuestionModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
+  const [generateQuestionData, setGenerateQuestionData] = useState({ witness_id: '', exam_type: 'Direct' });
 
   useEffect(() => {
     if (activeCase?.id) {
@@ -50,8 +58,8 @@ export default function ProofLibrary() {
         base44.entities.Parties.filter({ case_id: activeCase.id }),
       ]);
       setEvidenceGroups(groups);
-      setTrialPoints(tps);
-      setWitnesses(wits);
+      setAllTrialPoints(tps);
+      setAllWitnesses(wits);
       if (groups.length > 0 && !selectedGroupId) {
         setSelectedGroupId(groups[0].id);
       }
@@ -64,9 +72,11 @@ export default function ProofLibrary() {
 
   const loadGroupDetails = async () => {
     try {
-      const [groupProofLinks, groupTPLinks] = await Promise.all([
+      const [groupProofLinks, groupTPLinks, groupWitLinks, groupQuestions] = await Promise.all([
         base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: selectedGroupId }),
+        base44.entities.EvidenceGroupWitnesses.filter({ evidence_group_id: selectedGroupId }),
+        base44.entities.QuestionEvidenceGroups.filter({ evidence_group_id: selectedGroupId }),
       ]);
 
       // Load full proof items
@@ -85,7 +95,26 @@ export default function ProofLibrary() {
         if (tp.length > 0) tps.push(tp[0]);
       }
 
+      // Load witness details
+      const witIds = groupWitLinks.map((link) => link.witness_id);
+      const wits = [];
+      for (const witId of witIds) {
+        const wit = await base44.entities.Parties.filter({ id: witId });
+        if (wit.length > 0) wits.push(wit[0]);
+      }
+
+      // Load linked questions
+      const qIds = groupQuestions.map((link) => link.question_id);
+      const qs = [];
+      for (const qId of qIds) {
+        const q = await base44.entities.Questions.filter({ id: qId });
+        if (q.length > 0) qs.push(q[0]);
+      }
+
       setProofItems(allProof);
+      setLinkedTrialPoints(tps);
+      setLinkedWitnesses(wits);
+      setLinkedQuestions(qs);
     } catch (error) {
       console.error('Error loading group details:', error);
     }
@@ -158,6 +187,122 @@ export default function ProofLibrary() {
       await loadGroupDetails();
     } catch (error) {
       console.error('Error removing proof:', error);
+    }
+  };
+
+  const handleAddTrialPoints = async (selectedTPIds) => {
+    try {
+      for (const tpId of selectedTPIds) {
+        const existing = await base44.entities.EvidenceGroupTrialPoints.filter({
+          evidence_group_id: selectedGroupId,
+          trial_point_id: tpId,
+        });
+        if (existing.length === 0) {
+          await base44.entities.EvidenceGroupTrialPoints.create({
+            evidence_group_id: selectedGroupId,
+            trial_point_id: tpId,
+            role: 'Supports',
+          });
+        }
+      }
+      setShowAddTrialPointModal(false);
+      await loadGroupDetails();
+    } catch (error) {
+      console.error('Error adding trial points:', error);
+    }
+  };
+
+  const handleRemoveTrialPoint = async (tpId) => {
+    try {
+      const links = await base44.entities.EvidenceGroupTrialPoints.filter({
+        evidence_group_id: selectedGroupId,
+        trial_point_id: tpId,
+      });
+      for (const link of links) {
+        await base44.entities.EvidenceGroupTrialPoints.delete(link.id);
+      }
+      await loadGroupDetails();
+    } catch (error) {
+      console.error('Error removing trial point:', error);
+    }
+  };
+
+  const handleAssignWitnesses = async (selectedWitIds) => {
+    try {
+      for (const witId of selectedWitIds) {
+        const existing = await base44.entities.EvidenceGroupWitnesses.filter({
+          evidence_group_id: selectedGroupId,
+          witness_id: witId,
+        });
+        if (existing.length === 0) {
+          await base44.entities.EvidenceGroupWitnesses.create({
+            evidence_group_id: selectedGroupId,
+            witness_id: witId,
+          });
+        }
+      }
+      setShowAssignWitnessModal(false);
+      await loadGroupDetails();
+    } catch (error) {
+      console.error('Error assigning witnesses:', error);
+    }
+  };
+
+  const handleRemoveWitness = async (witId) => {
+    try {
+      const links = await base44.entities.EvidenceGroupWitnesses.filter({
+        evidence_group_id: selectedGroupId,
+        witness_id: witId,
+      });
+      for (const link of links) {
+        await base44.entities.EvidenceGroupWitnesses.delete(link.id);
+      }
+      await loadGroupDetails();
+    } catch (error) {
+      console.error('Error removing witness:', error);
+    }
+  };
+
+  const handleGenerateQuestion = async () => {
+    if (!generateQuestionData.witness_id) return;
+    try {
+      const selectedWitness = allWitnesses.find((w) => w.id === generateQuestionData.witness_id);
+      const newQuestion = await base44.entities.Questions.create({
+        case_id: activeCase.id,
+        party_id: generateQuestionData.witness_id,
+        exam_type: generateQuestionData.exam_type,
+        question_text: `Question for ${selectedWitness?.display_name || selectedWitness?.last_name}`,
+        status: 'NotAsked',
+        importance: 'Med',
+      });
+
+      // Link to evidence group
+      await base44.entities.QuestionEvidenceGroups.create({
+        question_id: newQuestion.id,
+        evidence_group_id: selectedGroupId,
+        is_primary: false,
+      });
+
+      setGenerateQuestionData({ witness_id: '', exam_type: 'Direct' });
+      setShowGenerateQuestionModal(false);
+      await loadGroupDetails();
+    } catch (error) {
+      console.error('Error generating question:', error);
+    }
+  };
+
+  const handleRemoveQuestion = async (questionId) => {
+    try {
+      const links = await base44.entities.QuestionEvidenceGroups.filter({
+        question_id: questionId,
+        evidence_group_id: selectedGroupId,
+      });
+      for (const link of links) {
+        await base44.entities.QuestionEvidenceGroups.delete(link.id);
+      }
+      await loadGroupDetails();
+    } catch (error) {
+      console.error('Error removing question:', error);
     }
   };
 
