@@ -187,6 +187,8 @@ export default function Present() {
 
   const activeAnn = annotations.find(a => a.id === activeAnnotationId) || null;
   const showSpotlight = spotlightOn && activeAnn;
+  const activeCallout = callouts.find(c => c.id === activeCalloutId) || null;
+  const showCalloutOverlay = calloutOverlayOn && activeCallout;
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
