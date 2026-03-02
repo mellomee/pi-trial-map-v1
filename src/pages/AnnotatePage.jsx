@@ -757,6 +757,22 @@ export default function AnnotatePage() {
         onSaved={(record) => { setCallouts(prev => [...prev, record]); setCalloutMode(false); }}
       />
 
+      {/* Highlight annotation snapshot modal */}
+      <AnnotationSnapshotModal
+        open={snapshotModalOpen}
+        onClose={() => { setSnapshotModalOpen(false); setPendingCaptureData(null); setHighlightMode(false); }}
+        extractId={extractId}
+        pageNumber={pageIndex}
+        captureData={pendingCaptureData}
+        color={highlightColor}
+        opacity={highlightOpacity}
+        onSaved={(record) => {
+          setAnnotations(prev => [...prev, record]);
+          setActiveId(record.id);
+          setHighlightMode(false);
+        }}
+      />
+
       {/* Full Edit Modal (edit existing annotation with all fields) */}
       <AnnotationEditorModal
         editing={editModalAnn}
