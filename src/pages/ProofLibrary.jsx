@@ -279,7 +279,7 @@ export default function ProofLibrary() {
 
   const handleGenerateQuestion = async () => {
     if (!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()) return;
-    if (isCreatingQuestion) return; // Prevent double submission
+    if (isCreatingQuestion) return;
     
     setIsCreatingQuestion(true);
     
@@ -291,11 +291,9 @@ export default function ProofLibrary() {
       status: 'NotAsked',
       importance: 'Med',
     };
-    console.log('[QUESTION_CREATE] 🚀 Creating question:', payload);
     
     try {
       const newQuestion = await base44.entities.Questions.create(payload);
-      console.log('[QUESTION_CREATE] ✅ Created:', newQuestion.id);
 
       // Link to evidence group
       await base44.entities.QuestionEvidenceGroups.create({
@@ -322,28 +320,19 @@ export default function ProofLibrary() {
         }
       }
 
-      // Optimistic update
-      setLinkedQuestions(prev => [...prev, {
-        id: newQuestion.id,
-        question_text: generateQuestionData.question_text,
-        exam_type: generateQuestionData.exam_type,
-        status: 'NotAsked',
-        party_id: generateQuestionData.witness_id,
-      }]);
-
-      // Close modal immediately
+      // Close modal and reset form
       setShowGenerateQuestionModal(false);
       setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
-      
-      // Show success toast
       toast.success('Question created');
 
-      // Refresh in background
+      // Refetch questions immediately (this updates linkedQuestions state)
+      console.log('[QUESTION_CREATE] Refetching questions for EG:', selectedGroupId);
       await loadGroupDetails();
+      console.log('[QUESTION_CREATE] ✅ Questions refetched and state updated');
       
     } catch (error) {
       console.error('[QUESTION_CREATE] ❌ Error:', error.message);
-      toast.error('Failed to create question: ' + error.message);
+      toast.error('Failed to create question');
       setShowGenerateQuestionModal(false);
     } finally {
       setIsCreatingQuestion(false);
