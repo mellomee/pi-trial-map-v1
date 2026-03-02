@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Search, Layers, Trash2, Edit2, AlertCircle, Eye, FileText, Film, BookOpen
 } from "lucide-react";
-import AddProofWizard from "@/components/evidence/AddProofWizard";
-import ProofPreviewPanel from "@/components/evidence/ProofPreviewPanel";
+import AddProofWizard from "@/components/evidence/AddProofWizard.jsx";
+import ProofPreviewPanel from "@/components/evidence/ProofPreviewPanel.jsx";
 
 export default function EvidenceWorkspace() {
   const { activeCase } = useActiveCase();
