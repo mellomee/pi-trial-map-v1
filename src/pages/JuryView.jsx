@@ -17,21 +17,19 @@ const COLOR_MAP = {
 export default function JuryView() {
   const [inputCode, setInputCode] = useState("");
   const [session, setSession] = useState(null);
-  const [liveState, setLiveState] = useState(null);
+  const [callouts, setCallouts] = useState([]);
+  const [highlightRects, setHighlightRects] = useState([]);
   const [jointExhibits, setJointExhibits] = useState([]);
-  const [admittedExhibits, setAdmittedExhibits] = useState([]);
   const [extracts, setExtracts] = useState([]);
-  const [numPages, setNumPages] = useState(null);
   const [error, setError] = useState("");
   const [connecting, setConnecting] = useState(false);
-  const connRef = useRef(null); // JuryConnection record
-  const heartbeatRef = useRef(null);
+  const connRef = useRef(null);
 
   // Auto-join via URL code
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    if (code) { setInputCode(code.toUpperCase()); joinSession(code.toUpperCase()); }
+    if (code) joinSession(code.toUpperCase());
   }, []);
 
   const joinSession = async (code) => {
@@ -44,73 +42,64 @@ export default function JuryView() {
       return;
     }
     const s = sessions[0];
-    setSession(s);
 
-    const [je, ae, ex, states] = await Promise.all([
+    const [je, ex, co, rects] = await Promise.all([
       base44.entities.JointExhibits.filter({ case_id: s.case_id }),
-      base44.entities.AdmittedExhibits.filter({ case_id: s.case_id }),
       base44.entities.ExhibitExtracts.filter({ case_id: s.case_id }),
-      base44.entities.LiveState.filter({ session_id: s.id }),
+      base44.entities.ExtractCallout.filter({ case_id: s.case_id }),
+      base44.entities.HighlightRect.list(),
     ]);
     setJointExhibits(je);
-    setAdmittedExhibits(ae);
     setExtracts(ex);
-    if (states.length) setLiveState(states[0]);
+    setCallouts(co);
+    setHighlightRects(rects.filter(r => co.some(c => c.id === r.callout_id)));
+    setSession(s);
 
-    // Create or update JuryConnection
-    const existingConns = await base44.entities.JuryConnection.filter({ session_id: s.id });
-    let conn;
-    if (existingConns.length) {
-      conn = await base44.entities.JuryConnection.update(existingConns[0].id, {
-        connected: true, last_seen_at: new Date().toISOString(),
-      });
-      connRef.current = existingConns[0];
+    // Register JuryConnection
+    const existing = await base44.entities.JuryConnection.filter({ session_id: s.id });
+    if (existing.length) {
+      await base44.entities.JuryConnection.update(existing[0].id, { connected: true, last_seen_at: new Date().toISOString() });
+      connRef.current = existing[0];
     } else {
-      conn = await base44.entities.JuryConnection.create({
-        session_id: s.id, connected: true, last_seen_at: new Date().toISOString(),
-      });
+      const conn = await base44.entities.JuryConnection.create({ session_id: s.id, connected: true, last_seen_at: new Date().toISOString() });
       connRef.current = conn;
     }
-
     setConnecting(false);
   };
 
-  // Heartbeat: update last_seen_at every 5s while connected
+  // Heartbeat + poll session every 1.5s
   useEffect(() => {
-    if (!session || !connRef.current) return;
+    if (!session) return;
     const beat = async () => {
       if (connRef.current?.id) {
-        await base44.entities.JuryConnection.update(connRef.current.id, {
-          connected: true, last_seen_at: new Date().toISOString(),
-        });
+        await base44.entities.JuryConnection.update(connRef.current.id, { connected: true, last_seen_at: new Date().toISOString() });
       }
+      const updated = await base44.entities.TrialSessions.filter({ id: session.id });
+      if (updated.length) setSession(updated[0]);
     };
-    heartbeatRef.current = setInterval(beat, 5000);
+    beat();
+    const interval = setInterval(beat, 1500);
     return () => {
-      clearInterval(heartbeatRef.current);
-      // Mark disconnected on unmount
+      clearInterval(interval);
       if (connRef.current?.id) {
         base44.entities.JuryConnection.update(connRef.current.id, { connected: false });
       }
     };
   }, [session?.id]);
 
-  // Poll LiveState every 1.5s
-  useEffect(() => {
-    if (!session) return;
-    const interval = setInterval(async () => {
-      const states = await base44.entities.LiveState.filter({ session_id: session.id });
-      if (states.length) setLiveState(states[0]);
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [session?.id]);
+  const type = session?.active_presentable_type || "none";
+  const id = session?.active_presentable_id;
+  const opts = session?.active_presentable_options || {};
 
-  const mode = liveState?.mode || "blank";
-  const je = liveState?.joint_exhibit_id ? jointExhibits.find(j => j.id === liveState.joint_exhibit_id) : null;
-  const ext = liveState?.extract_id ? extracts.find(e => e.id === liveState.extract_id) : null;
+  // Resolve current display
+  const je = type === "joint_exhibit" ? jointExhibits.find(j => j.id === id) : null;
+  const ext = je?.exhibit_extract_id ? extracts.find(e => e.id === je.exhibit_extract_id) : null;
   const fileUrl = ext?.extract_file_url || je?.file_url;
   const isPdf = fileUrl?.toLowerCase().includes(".pdf");
-  const page = liveState?.page || 1;
+  const page = opts.page || 1;
+
+  const callout = type === "extract_callout" ? callouts.find(c => c.id === id) : null;
+  const calloutRects = callout ? highlightRects.filter(r => r.callout_id === callout.id) : [];
 
   // Pair code entry screen
   if (!session) {
@@ -120,8 +109,8 @@ export default function JuryView() {
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-3">
             <Monitor className="w-16 h-16 text-green-400 mx-auto" />
-            <h1 className="text-3xl font-black text-white tracking-tight">Jury Display</h1>
-            <p className="text-sm text-slate-400">Enter the pair code from the attorney's screen to connect.</p>
+            <h1 className="text-3xl font-black text-white">Jury Display</h1>
+            <p className="text-sm text-slate-400">Enter the pair code from the attorney's screen.</p>
           </div>
           <div className="space-y-3">
             <Input
@@ -131,13 +120,11 @@ export default function JuryView() {
               placeholder="AB1CD"
               className="text-center text-2xl tracking-[0.4em] font-black font-mono bg-[#131a2e] border-[#1e2a45] text-cyan-300 h-14"
               maxLength={6}
+              autoFocus
             />
             {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 h-12 text-base font-semibold"
-              onClick={() => joinSession(inputCode)}
-              disabled={!inputCode.trim() || connecting}
-            >
+            <Button className="w-full bg-green-600 hover:bg-green-700 h-12 text-base font-semibold"
+              onClick={() => joinSession(inputCode)} disabled={!inputCode.trim() || connecting}>
               {connecting ? "Connecting…" : "Connect to Session"}
             </Button>
           </div>
@@ -152,65 +139,77 @@ export default function JuryView() {
       <style>{`body { margin: 0; overflow: hidden; background: black; }`}</style>
 
       {/* Minimal status bar */}
-      <div className="flex items-center justify-between px-4 py-1.5 bg-[#0a0f1e] border-b border-[#1e2a45] flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-1 bg-[#0a0f1e] border-b border-[#1e2a45] flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
           <span className="text-[10px] text-green-400 font-medium uppercase tracking-wider">LIVE — {session.title}</span>
         </div>
-        {liveState?.label && (
-          <p className="text-xs font-semibold text-slate-300">{liveState.label}</p>
-        )}
       </div>
 
-      {/* Main content area */}
+      {/* Main display */}
       <div className="flex-1 relative overflow-hidden">
 
         {/* BLANK */}
-        {mode === "blank" && (
+        {type === "none" && (
           <div className="absolute inset-0 bg-black flex items-center justify-center">
-            <p className="text-slate-800 text-sm">Waiting…</p>
+            <p className="text-slate-800 text-sm tracking-widest">WAITING FOR EXHIBIT…</p>
           </div>
         )}
 
-        {/* EXHIBIT — PDF */}
-        {mode === "exhibit" && fileUrl && isPdf && (
+        {/* JOINT EXHIBIT — PDF */}
+        {type === "joint_exhibit" && fileUrl && isPdf && (
           <div className="absolute inset-0 overflow-auto flex justify-center items-start p-8 bg-[#080808]">
-            <Document file={fileUrl} onLoadSuccess={({ numPages }) => setNumPages(numPages)} className="shadow-2xl">
+            <Document file={fileUrl} className="shadow-2xl">
               <Page pageNumber={page} scale={1.4} renderTextLayer={false} renderAnnotationLayer={false} />
             </Document>
           </div>
         )}
 
-        {/* EXHIBIT — Image */}
-        {mode === "exhibit" && fileUrl && !isPdf && (
-          <div className="absolute inset-0 overflow-auto flex justify-center items-center p-8 bg-[#080808]">
+        {/* JOINT EXHIBIT — Image */}
+        {type === "joint_exhibit" && fileUrl && !isPdf && (
+          <div className="absolute inset-0 flex justify-center items-center p-8 bg-[#080808]">
             <img src={fileUrl} alt={je?.marked_title} className="max-w-full max-h-full object-contain shadow-2xl" />
           </div>
         )}
 
-        {/* SPOTLIGHT */}
-        {mode === "spotlight" && liveState?.spotlight_image_url && (
-          <div className="absolute inset-0 bg-black flex items-center justify-center p-8">
+        {/* EXTRACT CALLOUT — Spotlight */}
+        {type === "extract_callout" && callout?.snapshot_image_url && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center p-6">
             <div className="relative max-w-full max-h-full">
               <img
-                src={liveState.spotlight_image_url}
-                alt="Spotlight"
-                className="max-w-full max-h-[calc(100vh-6rem)] object-contain shadow-2xl rounded-lg"
+                src={callout.snapshot_image_url}
+                alt={callout.name}
+                className="max-w-full max-h-[calc(100vh-4rem)] object-contain shadow-2xl rounded"
                 style={{ display: "block" }}
               />
               {/* Highlight overlays */}
-              {liveState.highlights_visible && (liveState.highlight_rects || []).map((r, i) => (
+              {opts.highlightsOn !== false && calloutRects.map((r, i) => (
                 <div key={i} style={{
                   position: "absolute",
-                  left: `${r.x * 100}%`,
-                  top: `${r.y * 100}%`,
-                  width: `${r.w * 100}%`,
-                  height: `${r.h * 100}%`,
+                  left: `${(r.rect?.x || 0) * 100}%`,
+                  top: `${(r.rect?.y || 0) * 100}%`,
+                  width: `${(r.rect?.w || 0) * 100}%`,
+                  height: `${(r.rect?.h || 0) * 100}%`,
                   background: COLOR_MAP[r.color] || COLOR_MAP.yellow,
                   pointerEvents: "none",
                   borderRadius: "2px",
                 }} />
               ))}
+            </div>
+            {callout.name && (
+              <div className="absolute bottom-2 left-0 right-0 text-center">
+                <span className="text-xs text-slate-600 bg-black/50 px-3 py-1 rounded-full">{callout.name}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Callout with quote text only */}
+        {type === "extract_callout" && !callout?.snapshot_image_url && callout?.quote_text && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center p-12">
+            <div className="max-w-3xl text-center">
+              <p className="text-3xl font-serif text-white leading-relaxed">"{callout.quote_text}"</p>
+              {callout.name && <p className="text-lg text-slate-500 mt-6">{callout.name}</p>}
             </div>
           </div>
         )}
