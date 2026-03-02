@@ -319,8 +319,11 @@ export default function ProofLibrary() {
       importance: 'Med',
     };
     
+    console.log('[Q_CREATE] 🚀 Creating question. selectedGroupId:', selectedGroupId);
+    
     try {
       const newQuestion = await base44.entities.Questions.create(payload);
+      console.log('[Q_CREATE] ✅ Question created:', newQuestion.id);
 
       // Link to evidence group
       await base44.entities.QuestionEvidenceGroups.create({
@@ -328,6 +331,7 @@ export default function ProofLibrary() {
         evidence_group_id: selectedGroupId,
         is_primary: false,
       });
+      console.log('[Q_CREATE] ✅ Linked to EG:', selectedGroupId);
 
       // Link to trial points
       const tpLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
@@ -346,27 +350,20 @@ export default function ProofLibrary() {
           });
         }
       }
+      console.log('[Q_CREATE] ✅ All links created');
 
-      // Immediately append to UI (optimistic update)
-      const createdQuestion = {
-        id: newQuestion.id,
-        question_text: generateQuestionData.question_text,
-        exam_type: generateQuestionData.exam_type,
-        party_id: generateQuestionData.witness_id,
-        status: 'NotAsked',
-      };
-      setLinkedQuestions(prev => [...prev, createdQuestion]);
-
-      // Close modal and reset form
+      // Close modal and reset form FIRST
       setShowGenerateQuestionModal(false);
       setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       toast.success('Question created');
 
-      // Refetch in background to sync with DB
-      await loadGroupDetails();
+      // Refetch questions for the selected group (await this to ensure state updates synchronously)
+      console.log('[Q_CREATE] 🔄 Refetching questions for group:', selectedGroupId);
+      await refetchQuestionsForGroup(selectedGroupId);
+      console.log('[Q_CREATE] ✅ Questions refetched and state updated');
       
     } catch (error) {
-      console.error('[QUESTION_CREATE] ❌ Error:', error.message);
+      console.error('[Q_CREATE] ❌ Error:', error.message);
       toast.error('Failed to create question');
       setShowGenerateQuestionModal(false);
     } finally {
