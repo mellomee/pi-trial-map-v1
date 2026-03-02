@@ -12,6 +12,7 @@ import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
 import ProofDetailsModal from '@/components/proofLibrary/ProofDetailsModal';
+import QuestionProofLinker from '@/components/proofLibrary/QuestionProofLinker';
 import { createPageUrl } from '@/utils';
 
 export default function ProofLibrary() {
