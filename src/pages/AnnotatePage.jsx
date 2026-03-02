@@ -43,6 +43,16 @@ export default function AnnotatePage() {
   const [editModalAnn, setEditModalAnn] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
 
+  // ── Callout (baked crop) state ───────────────────────────────────────────
+  const [callouts, setCallouts] = useState([]);
+  const [calloutMode, setCalloutMode] = useState(false); // drag-to-crop mode
+  const [dragRect, setDragRect] = useState(null);      // {x,y,w,h} in canvas px while dragging
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(null);
+  const [captureModalOpen, setCaptureModalOpen] = useState(false);
+  const [pendingCropBlob, setPendingCropBlob] = useState(null);
+  const overlayRef = useRef(null);
+
   // ── Picker mode (no extractId) ───────────────────────────────────────────
   const { activeCase } = useActiveCase();
   const [allExtracts, setAllExtracts] = useState([]);
