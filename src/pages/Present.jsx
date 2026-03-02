@@ -135,6 +135,8 @@ export default function Present() {
 
   useEffect(() => {
     if (!initAnnotationId) { setActiveAnnotationId(null); setCurrentPage(1); }
+    setActiveCalloutId(null);
+    setCalloutOverlayOn(false);
   }, [selectedExhibitId]);
 
   const selectAnnotation = useCallback((ann) => {
