@@ -135,9 +135,12 @@ export default function Present() {
   // Jury-safe filter
   const [jurySafeOnly, setJurySafeOnly] = useState(true);
 
+  // Panel collapse
+  const [calloutPanelOpen, setCalloutPanelOpen] = useState(true);
+
   // Spotlight state
   const [spotlightOn, setSpotlightOn] = useState(false);
-  const [highlightsOn, setHighlightsOn] = useState(false);
+  const [highlightsOn, setHighlightsOn] = useState(true); // default ON
 
   // Load exhibits
   useEffect(() => {
