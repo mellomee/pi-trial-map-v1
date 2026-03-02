@@ -225,6 +225,16 @@ export default function ProofLibrary() {
       for (const link of links) {
         await base44.entities.EvidenceGroupProofItems.delete(link.id);
       }
+      // Also remove any question-to-proof mappings
+      const qpLinks = await base44.entities.QuestionProofItems.filter({ proof_item_id: proofItemId });
+      for (const link of qpLinks) {
+        await base44.entities.QuestionProofItems.delete(link.id);
+      }
+      // Remove proof item witness associations
+      const piWits = await base44.entities.ProofItemWitnesses.filter({ proof_item_id: proofItemId });
+      for (const link of piWits) {
+        await base44.entities.ProofItemWitnesses.delete(link.id);
+      }
       await loadGroupDetails();
     } catch (error) {
       console.error('Error removing proof:', error);
