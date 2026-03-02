@@ -22,6 +22,9 @@ export default function Questions() {
   const { activeCase } = useActiveCase();
   const [questions, setQuestions] = useState([]);
   const [parties, setParties] = useState([]);
+  const [evidenceGroups, setEvidenceGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("all");
+  const [groupWitnesses, setGroupWitnesses] = useState([]);
   const [search, setSearch] = useState("");
   const [partyFilter, setPartyFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
