@@ -156,7 +156,7 @@ export default function Extracts() {
       </div>
 
       {/* List */}
-      <div className="px-6 py-4 max-w-4xl space-y-2">
+      <div className="px-6 py-4 space-y-2">
         {filtered.length === 0 ? (
           <div className="border border-dashed border-[#1e2a45] rounded-xl p-12 text-center text-slate-600">
             <FileText className="w-10 h-10 mx-auto mb-3 opacity-20" />
