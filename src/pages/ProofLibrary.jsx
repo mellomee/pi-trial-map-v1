@@ -458,8 +458,9 @@ export default function ProofLibrary() {
       {/* GENERATE QUESTIONS DIALOG — fixed hang */}
       <Dialog open={genQuestionsOpen} onOpenChange={v => { if (!genLoading) setGenQuestionsOpen(v); }}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><HelpCircle className="w-4 h-4 text-cyan-400" /> Create Questions from Group</DialogTitle></DialogHeader>
-          <p className="text-xs text-slate-400">Creates placeholder questions linked to: <strong className="text-white">{selectedGroup?.title}</strong></p>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><HelpCircle className="w-4 h-4 text-cyan-400" /> Create Placeholder Questions</DialogTitle></DialogHeader>
+          <p className="text-xs text-slate-400">Creates editable placeholder questions from: <strong className="text-white">{selectedGroup?.title}</strong></p>
+          <p className="text-[11px] text-slate-500 italic">(You will edit the question text in Witness Prep)</p>
           {genError && <p className="text-xs text-red-400 bg-red-950/30 border border-red-700/30 rounded px-2 py-1">{genError}</p>}
           <div className="space-y-3">
             <div>
