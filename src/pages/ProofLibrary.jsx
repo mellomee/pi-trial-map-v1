@@ -231,6 +231,39 @@ export default function ProofLibrary() {
     }
   };
 
+  const linkWitnessesToProof = async (proofItem) => {
+    try {
+      let witnessIds = [];
+      if (proofItem.type === 'depoClip') {
+        const clips = await base44.entities.DepoClips.filter({ id: proofItem.source_id });
+        if (clips.length > 0 && clips[0].deposition_id) {
+          const deps = await base44.entities.Depositions.filter({ id: clips[0].deposition_id });
+          if (deps.length > 0 && deps[0].party_id) {
+            witnessIds = [deps[0].party_id];
+          }
+        }
+      } else if (proofItem.type === 'extract') {
+        const extracts = await base44.entities.ExtractWitnesses.filter({ extract_id: proofItem.source_id });
+        witnessIds = extracts.map(e => e.witness_id);
+      }
+      for (const witId of witnessIds) {
+        const existing = await base44.entities.ProofItemWitnesses.filter({
+          proof_item_id: proofItem.id,
+          witness_id: witId,
+        });
+        if (existing.length === 0) {
+          await base44.entities.ProofItemWitnesses.create({
+            case_id: activeCase.id,
+            proof_item_id: proofItem.id,
+            witness_id: witId,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error linking witnesses to proof:', error);
+    }
+  };
+
   const handleAddTrialPoints = async (selectedTPIds) => {
     try {
       for (const tpId of selectedTPIds) {
