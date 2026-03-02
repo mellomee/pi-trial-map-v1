@@ -205,6 +205,10 @@ export default function Present() {
   const useSnapshotSpotlight = showSpotlight && !!(spotlightAnn?.snapshot_file);
   const activeCallout = callouts.find(c => c.id === activeCalloutId) || null;
   const showCalloutOverlay = calloutOverlayOn && activeCallout;
+  // Highlights that belong to the active callout (jury-safe already filtered)
+  const activeCalloutHighlights = activeCallout
+    ? annotations.filter(a => a.callout_id === activeCallout.id)
+    : [];
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
