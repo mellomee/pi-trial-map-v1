@@ -73,13 +73,17 @@ export default function ProofLibrary() {
   };
 
   const loadGroupDetails = async () => {
+    console.log('[LOAD_GROUP] 📋 Loading details for EG:', selectedGroupId);
     try {
+      console.log('[LOAD_GROUP] Fetching all links...');
       const [groupProofLinks, groupTPLinks, groupWitLinks, groupQuestions] = await Promise.all([
         base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.EvidenceGroupWitnesses.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.QuestionEvidenceGroups.filter({ evidence_group_id: selectedGroupId }),
       ]);
+      
+      console.log('[LOAD_GROUP] Found', groupQuestions.length, 'QuestionEvidenceGroups links');
 
       // Load full proof items
       const proofIds = groupProofLinks.map((link) => link.proof_item_id);
@@ -107,18 +111,25 @@ export default function ProofLibrary() {
 
       // Load linked questions
       const qIds = groupQuestions.map((link) => link.question_id);
+      console.log('[LOAD_GROUP] Loading', qIds.length, 'question records...');
       const qs = [];
       for (const qId of qIds) {
         const q = await base44.entities.Questions.filter({ id: qId });
-        if (q.length > 0) qs.push(q[0]);
+        if (q.length > 0) {
+          qs.push(q[0]);
+          console.log('[LOAD_GROUP] ✅ Loaded question:', q[0].question_text);
+        } else {
+          console.log('[LOAD_GROUP] ⚠️ Question ID not found:', qId);
+        }
       }
-
+      
+      console.log('[LOAD_GROUP] ✅ Final questions count:', qs.length);
       setProofItems(allProof);
       setLinkedTrialPoints(tps);
       setLinkedWitnesses(wits);
       setLinkedQuestions(qs);
     } catch (error) {
-      console.error('Error loading group details:', error);
+      console.error('[LOAD_GROUP] ❌ Error loading group details:', error);
     }
   };
 
@@ -270,31 +281,40 @@ export default function ProofLibrary() {
     if (isCreatingQuestion) return; // Prevent double submission
     
     setIsCreatingQuestion(true);
-    console.log('[QUESTION_CREATE] Starting creation:', { generateQuestionData, timestamp: new Date().toISOString() });
+    
+    // DEBUG: Log full payload before create
+    const payload = {
+      case_id: activeCase.id,
+      party_id: generateQuestionData.witness_id,
+      exam_type: generateQuestionData.exam_type,
+      question_text: generateQuestionData.question_text,
+      status: 'NotAsked',
+      importance: 'Med',
+    };
+    console.log('[QUESTION_CREATE] 🚀 Starting creation with payload:', payload);
+    console.log('[QUESTION_CREATE] Selected EvidenceGroup ID:', selectedGroupId);
     
     try {
-      const newQuestion = await base44.entities.Questions.create({
-        case_id: activeCase.id,
-        party_id: generateQuestionData.witness_id,
-        exam_type: generateQuestionData.exam_type,
-        question_text: generateQuestionData.question_text,
-        status: 'NotAsked',
-        importance: 'Med',
-      });
-      
-      console.log('[QUESTION_CREATE] Question created with ID:', newQuestion.id);
+      console.log('[QUESTION_CREATE] Calling base44.entities.Questions.create...');
+      const newQuestion = await base44.entities.Questions.create(payload);
+      console.log('[QUESTION_CREATE] ✅ Question created successfully. ID:', newQuestion.id, 'Full obj:', newQuestion);
 
       // Link to evidence group
-      await base44.entities.QuestionEvidenceGroups.create({
+      console.log('[QUESTION_CREATE] Linking to EvidenceGroup:', selectedGroupId);
+      const egLink = await base44.entities.QuestionEvidenceGroups.create({
         question_id: newQuestion.id,
         evidence_group_id: selectedGroupId,
         is_primary: false,
       });
+      console.log('[QUESTION_CREATE] ✅ EvidenceGroup link created:', egLink.id);
 
       // Link to trial points in this evidence group
+      console.log('[QUESTION_CREATE] Fetching trial point links for EG:', selectedGroupId);
       const tpLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
         evidence_group_id: selectedGroupId,
       });
+      console.log('[QUESTION_CREATE] Found', tpLinks.length, 'trial points to link');
+      
       for (const link of tpLinks) {
         const existing = await base44.entities.QuestionLinks.filter({
           question_id: newQuestion.id,
@@ -308,12 +328,17 @@ export default function ProofLibrary() {
         }
       }
 
-      console.log('[QUESTION_CREATE] All links created successfully');
+      console.log('[QUESTION_CREATE] ✅ All links created. Now calling loadGroupDetails...');
       setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       setShowGenerateQuestionModal(false);
+      
+      // Reload group details
+      console.log('[QUESTION_CREATE] Reloading group details for EG:', selectedGroupId);
       await loadGroupDetails();
+      console.log('[QUESTION_CREATE] ✅ Group details reloaded.');
     } catch (error) {
-      console.error('Error generating question:', error);
+      console.error('[QUESTION_CREATE] ❌ ERROR:', error);
+      console.error('[QUESTION_CREATE] Error stack:', error.stack);
     } finally {
       setIsCreatingQuestion(false);
     }
