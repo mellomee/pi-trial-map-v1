@@ -275,72 +275,7 @@ export default function ProofLibrary() {
     }
   };
 
-  const handleGenerateQuestion = async () => {
-    if (!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()) return;
-    if (isCreatingQuestion) return;
-    
-    setIsCreatingQuestion(true);
-    
-    const payload = {
-      case_id: activeCase.id,
-      party_id: generateQuestionData.witness_id,
-      exam_type: generateQuestionData.exam_type,
-      question_text: generateQuestionData.question_text,
-      status: 'NotAsked',
-      importance: 'Med',
-    };
-    
-    console.log('[Q_CREATE] 🚀 Creating question. selectedGroupId:', selectedGroupId);
-    
-    try {
-      const newQuestion = await base44.entities.Questions.create(payload);
-      console.log('[Q_CREATE] ✅ Question created:', newQuestion.id);
 
-      // Link to evidence group
-      await base44.entities.QuestionEvidenceGroups.create({
-        question_id: newQuestion.id,
-        evidence_group_id: selectedGroupId,
-        is_primary: false,
-      });
-      console.log('[Q_CREATE] ✅ Linked to EG:', selectedGroupId);
-
-      // Link to trial points
-      const tpLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
-        evidence_group_id: selectedGroupId,
-      });
-      
-      for (const link of tpLinks) {
-        const existing = await base44.entities.QuestionLinks.filter({
-          question_id: newQuestion.id,
-          trial_point_id: link.trial_point_id,
-        });
-        if (existing.length === 0) {
-          await base44.entities.QuestionLinks.create({
-            question_id: newQuestion.id,
-            trial_point_id: link.trial_point_id,
-          });
-        }
-      }
-      console.log('[Q_CREATE] ✅ All links created');
-
-      // Close modal and reset form FIRST
-      setShowGenerateQuestionModal(false);
-      setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
-      toast.success('Question created');
-
-      // Refetch questions for the selected group (await this to ensure state updates synchronously)
-      console.log('[Q_CREATE] 🔄 Refetching questions for group:', selectedGroupId);
-      await refetchQuestionsForGroup(selectedGroupId);
-      console.log('[Q_CREATE] ✅ Questions refetched and state updated');
-      
-    } catch (error) {
-      console.error('[Q_CREATE] ❌ Error:', error.message);
-      toast.error('Failed to create question');
-      setShowGenerateQuestionModal(false);
-    } finally {
-      setIsCreatingQuestion(false);
-    }
-  };
 
   const handleDeleteQuestionsInGroup = async () => {
     try {
