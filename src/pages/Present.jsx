@@ -83,6 +83,7 @@ export default function Present() {
   // Callout overlay state
   const [calloutOverlayOn, setCalloutOverlayOn] = useState(false);
   const [activeCalloutId, setActiveCalloutId] = useState(null);
+  const [showHighlightsInCallout, setShowHighlightsInCallout] = useState(true); // toggle highlights layer
 
   useEffect(() => {
     if (!activeCase) return;
