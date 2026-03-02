@@ -187,10 +187,10 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
 
           <TabsContent value="depoClips" className="space-y-3 mt-4">
             <Select value={selectedClip} onValueChange={setSelectedClip}>
-              <SelectTrigger className="bg-gray-800 border-gray-700">
+              <SelectTrigger className="bg-white border-gray-300">
                 <SelectValue placeholder="Select a deposition clip..." />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectContent className="bg-white border-gray-300">
                 {depoClips.map((clip) => (
                   <SelectItem key={clip.id} value={clip.id} className="text-gray-100">
                     {clip.topic_tag || `${clip.start_cite} - ${clip.end_cite}`}
