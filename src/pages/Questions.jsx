@@ -93,7 +93,11 @@ export default function Questions() {
   }, [selectedGroupId]);
 
   const save = async () => {
-    const data = { ...editing, case_id: activeCase.id };
+    const data = { 
+      ...editing, 
+      case_id: activeCase.id,
+      primary_evidence_group_id: selectedGroupId !== "all" ? selectedGroupId : null
+    };
     if (editing.id) {
       await base44.entities.Questions.update(editing.id, data);
       setQuestions(qs => qs.map(q => q.id === editing.id ? { ...q, ...data } : q));
