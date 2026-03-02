@@ -26,6 +26,7 @@ export default function WitnessPrep() {
   const [parties, setParties] = useState([]);
   const [selectedPartyId, setSelectedPartyId] = useState("");
   const [examType, setExamType] = useState("Cross");
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
 
   const [witnessPlans, setWitnessPlans] = useState([]);
   const [planItems, setPlanItems] = useState([]);
@@ -42,6 +43,19 @@ export default function WitnessPrep() {
   const [addBcOpen, setAddBcOpen] = useState(false);
   const [newBcForm, setNewBcForm] = useState({ title: "", goal: "", when_to_use: "", commit_question: "", credit_question: "", confront_question: "", priority: "Med" });
   const [activeTab, setActiveTab] = useState("plan");
+
+  // Parse URL query parameters on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wId = params.get("witnessId");
+    const eType = params.get("examType");
+    const gId = params.get("groupId");
+    const tab = params.get("tab");
+    if (wId) setSelectedPartyId(wId);
+    if (eType) setExamType(eType);
+    if (gId) setSelectedGroupId(gId);
+    if (tab) setActiveTab(tab);
+  }, []);
 
   const load = async () => {
     if (!activeCase) return;
