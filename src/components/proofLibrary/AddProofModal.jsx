@@ -5,13 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 
-export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded }) {
+export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, evidenceGroupId }) {
   const [activeTab, setActiveTab] = useState('depoClips');
   const [depoClips, setDepoClips] = useState([]);
   const [extracts, setExtracts] = useState([]);
   const [selectedClip, setSelectedClip] = useState('');
   const [selectedExtract, setSelectedExtract] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -36,60 +37,114 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded })
   };
 
   const handleAddClip = async () => {
-    if (!selectedClip) return;
+    if (!selectedClip || !evidenceGroupId) return;
+    setLoading(true);
+    setError('');
     try {
       const clip = depoClips.find((c) => c.id === selectedClip);
-      if (clip) {
-        const label = clip.topic_tag || `${clip.start_cite} - ${clip.end_cite}`;
-        const existing = await base44.entities.ProofItems.filter({
+      if (!clip) {
+        setError('Clip not found');
+        setLoading(false);
+        return;
+      }
+
+      const label = clip.topic_tag || `${clip.start_cite} - ${clip.end_cite}`;
+      const existing = await base44.entities.ProofItems.filter({
+        case_id: caseId,
+        type: 'depoClip',
+        source_id: clip.id,
+      });
+
+      let proofItem;
+      if (existing.length === 0) {
+        proofItem = await base44.entities.ProofItems.create({
           case_id: caseId,
           type: 'depoClip',
           source_id: clip.id,
+          label,
+          notes: clip.notes || '',
         });
-
-        if (existing.length === 0) {
-          await base44.entities.ProofItems.create({
-            case_id: caseId,
-            type: 'depoClip',
-            source_id: clip.id,
-            label,
-            notes: clip.notes || '',
-          });
-          onProofAdded();
-          setSelectedClip('');
-        }
+      } else {
+        proofItem = existing[0];
       }
-    } catch (error) {
-      console.error('Error adding clip:', error);
+
+      // CREATE THE BRIDGE RECORD
+      const existingLink = await base44.entities.EvidenceGroupProofItems.filter({
+        evidence_group_id: evidenceGroupId,
+        proof_item_id: proofItem.id,
+      });
+
+      if (existingLink.length === 0) {
+        await base44.entities.EvidenceGroupProofItems.create({
+          evidence_group_id: evidenceGroupId,
+          proof_item_id: proofItem.id,
+          order_index: 0,
+        });
+      }
+
+      setSelectedClip('');
+      setLoading(false);
+      onProofAdded();
+    } catch (err) {
+      console.error('Error adding clip:', err);
+      setError(err.message || 'Failed to add proof');
+      setLoading(false);
     }
   };
 
   const handleAddExtract = async () => {
-    if (!selectedExtract) return;
+    if (!selectedExtract || !evidenceGroupId) return;
+    setLoading(true);
+    setError('');
     try {
       const extract = extracts.find((e) => e.id === selectedExtract);
-      if (extract) {
-        const label = extract.extract_title_internal || extract.extract_title_official;
-        const existing = await base44.entities.ProofItems.filter({
+      if (!extract) {
+        setError('Extract not found');
+        setLoading(false);
+        return;
+      }
+
+      const label = extract.extract_title_internal || extract.extract_title_official;
+      const existing = await base44.entities.ProofItems.filter({
+        case_id: caseId,
+        type: 'extract',
+        source_id: extract.id,
+      });
+
+      let proofItem;
+      if (existing.length === 0) {
+        proofItem = await base44.entities.ProofItems.create({
           case_id: caseId,
           type: 'extract',
           source_id: extract.id,
+          label,
+          notes: extract.notes || '',
         });
-
-        if (existing.length === 0) {
-          await base44.entities.ProofItems.create({
-            case_id: caseId,
-            type: 'extract',
-            source_id: extract.id,
-            label,
-            notes: extract.notes || '',
-          });
-          onProofAdded();
-          setSelectedExtract('');
-        }
+      } else {
+        proofItem = existing[0];
       }
-    } catch (error) {
-      console.error('Error adding extract:', error);
+
+      // CREATE THE BRIDGE RECORD
+      const existingLink = await base44.entities.EvidenceGroupProofItems.filter({
+        evidence_group_id: evidenceGroupId,
+        proof_item_id: proofItem.id,
+      });
+
+      if (existingLink.length === 0) {
+        await base44.entities.EvidenceGroupProofItems.create({
+          evidence_group_id: evidenceGroupId,
+          proof_item_id: proofItem.id,
+          order_index: 0,
+        });
+      }
+
+      setSelectedExtract('');
+      setLoading(false);
+      onProofAdded();
+    } catch (err) {
+      console.error('Error adding extract:', err);
+      setError(err.message || 'Failed to add proof');
+      setLoading(false);
     }
   };
 
@@ -99,6 +154,12 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded })
         <DialogHeader>
           <DialogTitle className="text-gray-100">Add Proof to Evidence Group</DialogTitle>
         </DialogHeader>
+
+        {error && (
+          <div className="bg-red-900/50 border border-red-700 rounded p-3 text-sm text-red-200">
+            {error}
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 bg-gray-800">
