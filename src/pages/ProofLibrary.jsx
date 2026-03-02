@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search } from 'lucide-react';
+import { toast } from 'sonner';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
@@ -282,7 +283,6 @@ export default function ProofLibrary() {
     
     setIsCreatingQuestion(true);
     
-    // DEBUG: Log full payload before create
     const payload = {
       case_id: activeCase.id,
       party_id: generateQuestionData.witness_id,
@@ -291,29 +291,23 @@ export default function ProofLibrary() {
       status: 'NotAsked',
       importance: 'Med',
     };
-    console.log('[QUESTION_CREATE] 🚀 Starting creation with payload:', payload);
-    console.log('[QUESTION_CREATE] Selected EvidenceGroup ID:', selectedGroupId);
+    console.log('[QUESTION_CREATE] 🚀 Creating question:', payload);
     
     try {
-      console.log('[QUESTION_CREATE] Calling base44.entities.Questions.create...');
       const newQuestion = await base44.entities.Questions.create(payload);
-      console.log('[QUESTION_CREATE] ✅ Question created successfully. ID:', newQuestion.id, 'Full obj:', newQuestion);
+      console.log('[QUESTION_CREATE] ✅ Created:', newQuestion.id);
 
       // Link to evidence group
-      console.log('[QUESTION_CREATE] Linking to EvidenceGroup:', selectedGroupId);
-      const egLink = await base44.entities.QuestionEvidenceGroups.create({
+      await base44.entities.QuestionEvidenceGroups.create({
         question_id: newQuestion.id,
         evidence_group_id: selectedGroupId,
         is_primary: false,
       });
-      console.log('[QUESTION_CREATE] ✅ EvidenceGroup link created:', egLink.id);
 
-      // Link to trial points in this evidence group
-      console.log('[QUESTION_CREATE] Fetching trial point links for EG:', selectedGroupId);
+      // Link to trial points
       const tpLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
         evidence_group_id: selectedGroupId,
       });
-      console.log('[QUESTION_CREATE] Found', tpLinks.length, 'trial points to link');
       
       for (const link of tpLinks) {
         const existing = await base44.entities.QuestionLinks.filter({
@@ -328,31 +322,29 @@ export default function ProofLibrary() {
         }
       }
 
-      console.log('[QUESTION_CREATE] ✅ All links created. Optimistically updating UI...');
-      
-      // Optimistic update: add new question to state immediately
-      const newQuestionForUI = {
+      // Optimistic update
+      setLinkedQuestions(prev => [...prev, {
         id: newQuestion.id,
         question_text: generateQuestionData.question_text,
         exam_type: generateQuestionData.exam_type,
         status: 'NotAsked',
         party_id: generateQuestionData.witness_id,
-      };
-      setLinkedQuestions([...linkedQuestions, newQuestionForUI]);
-      console.log('[QUESTION_CREATE] ✅ Question added to UI:', newQuestionForUI.id);
-      
-      // Close modal and reset form
-      setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
+      }]);
+
+      // Close modal immediately
       setShowGenerateQuestionModal(false);
-      console.log('[QUESTION_CREATE] ✅ Modal closed.');
+      setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       
-      // Reload group details in background to sync with DB
-      console.log('[QUESTION_CREATE] Reloading group details in background...');
+      // Show success toast
+      toast.success('Question created');
+
+      // Refresh in background
       await loadGroupDetails();
-      console.log('[QUESTION_CREATE] ✅ Group details reloaded.');
+      
     } catch (error) {
-      console.error('[QUESTION_CREATE] ❌ ERROR:', error);
-      console.error('[QUESTION_CREATE] Error stack:', error.stack);
+      console.error('[QUESTION_CREATE] ❌ Error:', error.message);
+      toast.error('Failed to create question: ' + error.message);
+      setShowGenerateQuestionModal(false);
     } finally {
       setIsCreatingQuestion(false);
     }
