@@ -205,10 +205,10 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
 
           <TabsContent value="extracts" className="space-y-3 mt-4">
             <Select value={selectedExtract} onValueChange={setSelectedExtract}>
-              <SelectTrigger className="bg-gray-800 border-gray-700">
+              <SelectTrigger className="bg-white border-gray-300">
                 <SelectValue placeholder="Select an exhibit extract..." />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectContent className="bg-white border-gray-300">
                 {extracts.map((extract) => (
                   <SelectItem key={extract.id} value={extract.id} className="text-gray-100">
                     {extract.extract_title_internal || extract.extract_title_official}
