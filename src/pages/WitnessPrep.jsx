@@ -475,9 +475,10 @@ export default function WitnessPrep() {
   );
 }
 
-function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, battleCards, onUpdate, caseId }) {
+function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, egLinks, evidenceGroups, onUpdate, caseId }) {
   const [q, setQ] = useState(question);
   const [links, setLinks] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setQ(question);
@@ -487,7 +488,9 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
   const save = async (field, val) => {
     const updated = { ...q, [field]: val };
     setQ(updated);
+    setIsSaving(true);
     await base44.entities.Questions.update(q.id, { [field]: val });
+    setIsSaving(false);
     onUpdate();
   };
 
@@ -495,31 +498,68 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
   const exhibitLinks = links.filter(l => l.link_type === "JointExhibit");
   const clipLinks = links.filter(l => l.link_type === "DepoClip");
 
+  // Get trial points from the linked evidence group (if no direct trial point links)
+  const groupTrialPoints = useMemo(() => {
+    if (tpLinks.length > 0) return tpLinks;
+    if (!q.primary_evidence_group_id) return [];
+    const group = evidenceGroups.find(g => g.id === q.primary_evidence_group_id);
+    if (!group) return [];
+    return egLinks.filter(l => l.evidence_group_id === group.id && l.link_type === "TrialPoint");
+  }, [tpLinks, q.primary_evidence_group_id, egLinks, evidenceGroups]);
+
+  const trialsPointsToShow = tpLinks.length > 0 ? tpLinks : groupTrialPoints;
+
   return (
     <div className="space-y-4 max-w-2xl">
-      <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
-        <p className="text-base font-semibold text-white mb-2">{q.question_text}</p>
+      {/* Question Text (editable) */}
+      <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 space-y-3">
+        <div>
+          <Label className="text-xs text-slate-400 mb-1 block">Question Text</Label>
+          <Textarea
+            value={q.question_text || ""}
+            onChange={e => setQ({ ...q, question_text: e.target.value })}
+            onBlur={() => save("question_text", q.question_text)}
+            rows={3}
+            className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm"
+            placeholder="Enter question text…"
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs text-slate-400 mb-1 block">Expected Answer</Label>
+          <Textarea
+            value={q.expected_answer || ""}
+            onChange={e => setQ({ ...q, expected_answer: e.target.value })}
+            onBlur={() => save("expected_answer", q.expected_answer)}
+            rows={2}
+            className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm"
+            placeholder="What answer are you looking for?…"
+          />
+        </div>
+
         <div className="flex gap-2 flex-wrap">
           <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-orange-500/20 text-orange-400"}>{q.exam_type}</Badge>
           <Badge className={STATUS_COLORS[q.status] || ""}>{q.status}</Badge>
           {q.importance && <Badge variant="outline" className="text-slate-400 border-slate-600">{q.importance}</Badge>}
         </div>
-        {q.goal && <p className="text-xs text-slate-400 mt-2">🎯 {q.goal}</p>}
-        {q.expected_answer && <p className="text-xs text-slate-400 mt-1">💬 Expected: {q.expected_answer}</p>}
       </div>
 
+      {/* Live Notes */}
       <div>
         <Label className="text-xs text-slate-400">Live Notes</Label>
         <Textarea value={q.live_notes || ""} onChange={e => save("live_notes", e.target.value)} rows={2}
           className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm mt-1" placeholder="Notes during exam…" />
       </div>
 
+      {/* Trial Points (from group or direct links) */}
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Linked Trial Points ({tpLinks.length})</p>
-        {tpLinks.map(l => {
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Linked Trial Points ({trialsPointsToShow.length})</p>
+        {trialsPointsToShow.length > 0 ? trialsPointsToShow.map(l => {
           const tp = trialPoints.find(t => t.id === l.link_id);
           return tp ? <p key={l.id} className="text-xs text-slate-300 bg-[#131a2e] rounded px-2 py-1">• {tp.point_text}</p> : null;
-        })}
+        }) : (
+          <p className="text-xs text-slate-600 italic">None linked</p>
+        )}
       </div>
 
       {exhibitLinks.length > 0 && (
@@ -544,6 +584,8 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
           })}
         </div>
       )}
+
+      {isSaving && <p className="text-[10px] text-slate-500 italic">Saving…</p>}
     </div>
   );
 }
