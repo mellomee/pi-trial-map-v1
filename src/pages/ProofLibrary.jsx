@@ -731,72 +731,7 @@ export default function ProofLibrary() {
         </DialogContent>
       </Dialog>
 
-      {/* Generate Question Modal */}
-      <Dialog open={showGenerateQuestionModal} onOpenChange={setShowGenerateQuestionModal}>
-        <DialogContent className="bg-gray-900 border-gray-700 max-w-lg" style={{ zIndex: 9999 }}>
-          <DialogHeader>
-            <DialogTitle className="text-gray-100">Create Question</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-200">Question Text *</label>
-              <Textarea
-                placeholder="Type your question here..."
-                value={generateQuestionData.question_text}
-                onChange={(e) => setGenerateQuestionData({ ...generateQuestionData, question_text: e.target.value })}
-                className="mt-1 bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-200">Witness *</label>
-              <Select value={generateQuestionData.witness_id} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, witness_id: v })}>
-                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700 text-gray-100">
-                  <SelectValue placeholder="Select witness..." />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700 z-[10000]">
-                  {linkedWitnesses.length > 0 ? (
-                    linkedWitnesses.map((wit) => (
-                      <SelectItem key={wit.id} value={wit.id} className="text-gray-100">
-                        {wit.display_name || wit.last_name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-2 text-xs text-gray-400">Assign witnesses to this evidence group first</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-200">Exam Type</label>
-              <Select value={generateQuestionData.exam_type} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, exam_type: v })}>
-                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700 text-gray-100">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700 z-[10000]">
-                  <SelectItem value="Direct" className="text-gray-100">Direct</SelectItem>
-                  <SelectItem value="Cross" className="text-gray-100">Cross</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowGenerateQuestionModal(false)}
-              className="text-gray-100"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleGenerateQuestion}
-              disabled={!generateQuestionData.witness_id || !generateQuestionData.question_text.trim() || isCreatingQuestion}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white relative z-[10001]"
-            >
-              {isCreatingQuestion ? 'Creating...' : 'Create Question'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }
