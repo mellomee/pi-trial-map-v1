@@ -450,7 +450,7 @@ export default function Present() {
               {/* Annotations section */}
               <div className="p-3 border-b border-[#1e2a45] flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Annotations</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Highlights</p>
                   <p className="text-[9px] text-slate-600 mt-0.5">Jury-safe · {annotations.length} total</p>
                 </div>
                 <button
@@ -465,70 +465,107 @@ export default function Present() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {annotations.length === 0 && (
+                {annotations.length === 0 && callouts.length === 0 && (
                   <p className="text-[10px] text-slate-600 italic text-center py-4">
                     No jury-safe annotations on this exhibit.
                   </p>
                 )}
+                {/* Annotations grouped under their callout (if callout_id set) */}
                 {(() => {
-                  const pages = [...new Set(annotations.map(a => a.page_number ?? a.extract_page_number ?? 1))].sort((a, b) => a - b);
-                  return pages.map(pg => {
-                    const pageAnns = annotations.filter(a => (a.page_number ?? a.extract_page_number ?? 1) === pg);
-                    return (
-                      <div key={pg}>
-                        <div className="flex items-center gap-1 px-1 py-0.5">
-                          <div className="h-px flex-1 bg-[#1e2a45]" />
-                          <button onClick={() => setCurrentPage(pg)}
-                            className={`text-[9px] px-1.5 rounded transition-colors ${currentPage === pg ? "text-green-400 font-bold" : "text-slate-600 hover:text-slate-400"}`}>
-                            p.{pg}
-                          </button>
-                          <div className="h-px flex-1 bg-[#1e2a45]" />
-                        </div>
-                        {pageAnns.map(a => {
-                          const isActive = activeAnnotationId === a.id;
-                          return (
-                            <div key={a.id} className={`rounded border transition-colors ${
-                              isActive ? "bg-green-600/15 border-green-600/40" : "border-transparent hover:bg-white/5 hover:border-[#1e2a45]"
-                            }`}>
-                              <button
-                                onClick={() => selectAnnotation(a, spotlightOn)}
-                                className="w-full text-left px-2 py-1.5 flex items-start gap-1.5"
-                              >
-                                <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">✦</span>
-                                <div className="min-w-0 flex-1">
-                                  {a.label_text
-                                    ? <p className={`text-[11px] font-medium leading-tight ${isActive ? "text-green-300" : "text-slate-300"}`}>{a.label_text}</p>
-                                    : <p className={`text-[10px] leading-tight italic ${isActive ? "text-green-400" : "text-slate-500"}`}>p.{pg} quote</p>
-                                  }
-                                </div>
-                                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0 mt-1.5" />}
-                              </button>
-                              {isActive && (
-                                <div className="px-2 pb-2 space-y-1.5">
-                                  {a.snapshot_file && (
-                                    <img src={a.snapshot_file} alt="Snapshot" className="w-full rounded border border-[#1e2a45] object-contain max-h-20 bg-[#050809]" />
-                                  )}
-                                  {(a.quote_text || a.extracted_text) ? (
-                                    <p className="text-[10px] text-yellow-200/70 italic leading-snug line-clamp-3 bg-yellow-500/5 border border-yellow-500/20 rounded px-2 py-1.5">
-                                      "{a.quote_text || a.extracted_text}"
+                  // standalone annotations (no callout_id or callout_id not in our list)
+                  const calloutIds = new Set(callouts.map(c => c.id));
+                  const standalone = annotations.filter(a => !a.callout_id || !calloutIds.has(a.callout_id));
+                  const grouped = annotations.filter(a => a.callout_id && calloutIds.has(a.callout_id));
+
+                  return (
+                    <>
+                      {/* Callout-grouped highlights */}
+                      {callouts.map(c => {
+                        const calloutAnns = grouped.filter(a => a.callout_id === c.id);
+                        const isCalloutActive = activeAnnotationId && calloutAnns.some(a => a.id === activeAnnotationId);
+                        const calloutImg = c.callout_image || c.snapshot_image_url;
+                        return (
+                          <div key={c.id} className={`rounded border mb-1 ${isCalloutActive ? "border-yellow-500/30" : "border-[#1e2a45]"}`}>
+                            {/* Callout header row */}
+                            <button
+                              onClick={() => { setCurrentPage(c.page_number ?? 1); setActiveCalloutId(c.id); setCalloutOverlayOn(true); }}
+                              className="w-full text-left px-2 py-1.5 flex items-center gap-1.5 hover:bg-white/5"
+                            >
+                              <Image className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-medium text-yellow-200 leading-tight truncate">{c.label || `p.${c.page_number}`}</p>
+                                <p className="text-[9px] text-slate-600">p.{c.page_number} · {calloutAnns.length} highlight{calloutAnns.length !== 1 ? "s" : ""}</p>
+                              </div>
+                            </button>
+                            {/* Highlight rows under this callout */}
+                            {calloutAnns.map(a => {
+                              const isActive = activeAnnotationId === a.id;
+                              return (
+                                <div key={a.id} className={`mx-1 mb-1 rounded border transition-colors ${isActive ? "bg-green-600/15 border-green-600/30" : "border-transparent hover:bg-white/5"}`}>
+                                  <button onClick={() => selectAnnotation(a, spotlightOn)}
+                                    className="w-full text-left px-2 py-1 flex items-center gap-1.5">
+                                    <span className={`w-2 h-2 rounded flex-shrink-0 ${
+                                      (a.color||"yellow")==="yellow"?"bg-yellow-400":(a.color)==="red"?"bg-red-500":(a.color)==="green"?"bg-green-500":"bg-blue-500"
+                                    }`} />
+                                    <p className={`text-[10px] flex-1 truncate ${isActive ? "text-green-300" : "text-slate-400"}`}>
+                                      {a.label_text || a.label || "highlight"}
                                     </p>
-                                  ) : !a.snapshot_file && (
-                                    <p className="text-[9px] text-slate-600 italic">No quote or snapshot.</p>
-                                  )}
-                                  <button
-                                    onClick={() => selectAnnotation(a, true)}
-                                    className="w-full py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors"
-                                  >
-                                    ✦ {a.snapshot_file ? "Snapshot Spotlight" : "Spotlight"}
+                                    {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />}
                                   </button>
+                                  {isActive && (
+                                    <div className="px-2 pb-1.5 space-y-1">
+                                      <button onClick={() => { setActiveCalloutId(c.id); setCalloutOverlayOn(true); }}
+                                        className="w-full py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20">
+                                        ✦ Show Callout + Highlight
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  });
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+
+                      {/* Standalone annotations (QUOTE_SPOTLIGHT / snapshot-based) */}
+                      {standalone.length > 0 && (
+                        <div>
+                          {standalone.map(a => {
+                            const isActive = activeAnnotationId === a.id;
+                            const pg = a.page_number ?? a.extract_page_number ?? 1;
+                            return (
+                              <div key={a.id} className={`rounded border transition-colors mb-0.5 ${isActive ? "bg-green-600/15 border-green-600/40" : "border-transparent hover:bg-white/5 hover:border-[#1e2a45]"}`}>
+                                <button onClick={() => selectAnnotation(a, spotlightOn)}
+                                  className="w-full text-left px-2 py-1.5 flex items-start gap-1.5">
+                                  <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">✦</span>
+                                  <div className="min-w-0 flex-1">
+                                    <p className={`text-[11px] font-medium leading-tight ${isActive ? "text-green-300" : "text-slate-300"}`}>
+                                      {a.label_text || a.label || <span className="italic text-slate-500">p.{pg} note</span>}
+                                    </p>
+                                    <p className="text-[9px] text-slate-600">p.{pg}</p>
+                                  </div>
+                                </button>
+                                {isActive && (
+                                  <div className="px-2 pb-2 space-y-1.5">
+                                    {a.snapshot_file && (
+                                      <img src={a.snapshot_file} alt="Snapshot" className="w-full rounded border border-[#1e2a45] object-contain max-h-20 bg-[#050809]" />
+                                    )}
+                                    {a.quote_text && (
+                                      <p className="text-[10px] text-yellow-200/70 italic line-clamp-3 bg-yellow-500/5 border border-yellow-500/20 rounded px-2 py-1.5">"{a.quote_text}"</p>
+                                    )}
+                                    <button onClick={() => selectAnnotation(a, true)}
+                                      className="w-full py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20">
+                                      ✦ {a.snapshot_file ? "Snapshot Spotlight" : "Spotlight"}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  );
                 })()}
               </div>
               {activeAnnotationId && (
