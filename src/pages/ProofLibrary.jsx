@@ -648,7 +648,7 @@ export default function ProofLibrary() {
 
       {/* Modals */}
       <Dialog open={showNewGroupModal} onOpenChange={setShowNewGroupModal}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent className="bg-white border-gray-300">
           <DialogHeader>
             <DialogTitle>Create Evidence Group</DialogTitle>
           </DialogHeader>
