@@ -99,6 +99,28 @@ export default function Questions() {
     setQuestions(qs => qs.filter(q => q.id !== id));
   };
 
+  const saveQuestionsOrder = async (reorderedQuestions) => {
+    for (let i = 0; i < reorderedQuestions.length; i++) {
+      const q = reorderedQuestions[i];
+      if (q.order_index !== i) {
+        await base44.entities.Questions.update(q.id, { order_index: i });
+      }
+    }
+  };
+
+  const onDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
+    if (!destination || source.index === destination.index) return;
+
+    const newQuestions = Array.from(filtered);
+    const [moved] = newQuestions.splice(source.index, 1);
+    newQuestions.splice(destination.index, 0, moved);
+    
+    const reordered = newQuestions.map((q, i) => ({ ...q, order_index: i }));
+    setQuestions(qs => qs.map(q => reordered.find(r => r.id === q.id) || q));
+    saveQuestionsOrder(reordered);
+  };
+
   const getPartyName = (pid) => {
     const p = parties.find(x => x.id === pid);
     return p ? `${p.first_name} ${p.last_name}` : "Unassigned";
