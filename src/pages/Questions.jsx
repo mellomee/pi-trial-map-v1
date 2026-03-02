@@ -26,22 +26,30 @@ export default function Questions() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
+  const [modalKey, setModalKey] = useState(0);
 
-  const load = () => {
+  const load = async () => {
     if (!activeCase) return;
-    Promise.all([
+    const [q, p] = await Promise.all([
       base44.entities.Questions.filter({ case_id: activeCase.id }),
       base44.entities.Parties.filter({ case_id: activeCase.id }),
-    ]).then(([q, p]) => { setQuestions(q); setParties(p); });
+    ]);
+    setQuestions(q);
+    setParties(p);
   };
   useEffect(load, [activeCase]);
 
   const save = async () => {
     const data = { ...editing, case_id: activeCase.id };
-    if (editing.id) await base44.entities.Questions.update(editing.id, data);
-    else await base44.entities.Questions.create(data);
+    if (editing.id) {
+      await base44.entities.Questions.update(editing.id, data);
+      setQuestions(qs => qs.map(q => q.id === editing.id ? { ...q, ...data } : q));
+    } else {
+      const newQ = await base44.entities.Questions.create(data);
+      setQuestions(qs => [...qs, newQ]);
+    }
     setOpen(false);
-    load();
+    setModalKey(k => k + 1);
   };
 
   const remove = async (id) => {
