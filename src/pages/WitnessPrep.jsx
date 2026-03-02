@@ -313,50 +313,71 @@ export default function WitnessPrep() {
         )}
 
         {/* QUESTIONS TAB */}
-        {activeTab === "questions" && (
-          <div className="flex flex-1 overflow-hidden">
-            <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col">
-              <div className="px-3 py-2 border-b border-[#1e2a45]">
-                <p className="text-xs font-bold text-slate-300">{witnessQuestions.length} questions</p>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {witnessQuestions.map((q, idx) => (
-                  <button key={q.id} onClick={() => setSelectedQuestionId(q.id)}
-                    className={`w-full text-left px-3 py-2.5 border-b border-[#1e2a45] transition-colors ${selectedQuestionId === q.id ? "bg-cyan-500/10 border-l-2 border-l-cyan-400" : "hover:bg-white/5 border-l-2 border-l-transparent"}`}>
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] text-slate-600 mt-0.5">{idx+1}.</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-300 line-clamp-2">{q.question_text}</p>
-                        <Badge className={`text-[9px] mt-1 ${STATUS_COLORS[q.status] || ""}`}>{q.status}</Badge>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-                {witnessQuestions.length === 0 && (
-                  <p className="text-xs text-slate-600 text-center py-8">No questions. Go to Proof Library → Create Questions.</p>
-                )}
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5">
-              {selectedQuestion ? (
-                <QuestionDetailPanel
-                  question={selectedQuestion}
-                  trialPoints={trialPoints}
-                  depoClips={depoClips}
-                  jointExhibits={jointExhibits}
-                  battleCards={battleCards}
-                  onUpdate={load}
-                  caseId={activeCase.id}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-2">
-                  <HelpCircle className="w-12 h-12 opacity-10" />
-                  <p>Select a question to view details</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+         {activeTab === "questions" && (
+           <div className="flex flex-1 overflow-hidden">
+             <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col">
+               {/* Groups sidebar in Questions tab */}
+               <div className="px-3 py-2 border-b border-[#1e2a45]">
+                 <p className="text-xs font-bold text-slate-300">Evidence Groups</p>
+               </div>
+               <div className="flex-1 overflow-y-auto">
+                 {visibleGroups.length > 0 ? visibleGroups.map(g => (
+                   <button key={g.id} onClick={() => setSelectedGroupId(g.id)}
+                     className={`w-full text-left px-3 py-2 border-b border-[#1e2a45] text-xs transition-colors ${selectedGroupId === g.id ? "bg-cyan-500/10 border-l-2 border-l-cyan-400 text-cyan-200" : "text-slate-400 hover:bg-white/5"}`}>
+                     {g.title}
+                   </button>
+                 )) : (
+                   <p className="text-xs text-slate-600 text-center py-4">No groups with questions</p>
+                 )}
+               </div>
+             </div>
+
+             {/* Questions list in center */}
+             <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col bg-[#0a0f1e]">
+               <div className="px-3 py-2 border-b border-[#1e2a45]">
+                 <p className="text-xs font-bold text-slate-300">{witnessQuestions.length} questions</p>
+               </div>
+               <div className="flex-1 overflow-y-auto">
+                 {witnessQuestions.map((q, idx) => (
+                   <button key={q.id} onClick={() => setSelectedQuestionId(q.id)}
+                     className={`w-full text-left px-3 py-2.5 border-b border-[#1e2a45] transition-colors ${selectedQuestionId === q.id ? "bg-cyan-500/10 border-l-2 border-l-cyan-400" : "hover:bg-white/5 border-l-2 border-l-transparent"}`}>
+                     <div className="flex items-start gap-2">
+                       <span className="text-[10px] text-slate-600 mt-0.5">{idx+1}.</span>
+                       <div className="flex-1 min-w-0">
+                         <p className="text-xs text-slate-300 line-clamp-2">{q.question_text}</p>
+                         <Badge className={`text-[9px] mt-1 ${STATUS_COLORS[q.status] || ""}`}>{q.status}</Badge>
+                       </div>
+                     </div>
+                   </button>
+                 ))}
+                 {witnessQuestions.length === 0 && (
+                   <p className="text-xs text-slate-600 text-center py-8">No questions yet.</p>
+                 )}
+               </div>
+             </div>
+
+             {/* Question detail on right */}
+             <div className="flex-1 overflow-y-auto p-5">
+               {selectedQuestion ? (
+                 <QuestionDetailPanel
+                   question={selectedQuestion}
+                   trialPoints={trialPoints}
+                   depoClips={depoClips}
+                   jointExhibits={jointExhibits}
+                   egLinks={egLinks}
+                   evidenceGroups={evidenceGroups}
+                   onUpdate={load}
+                   caseId={activeCase.id}
+                 />
+               ) : (
+                 <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-2">
+                   <HelpCircle className="w-12 h-12 opacity-10" />
+                   <p>Select a question to view details</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
 
         {/* BATTLE CARDS TAB */}
         {activeTab === "battlecards" && (
