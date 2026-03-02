@@ -193,15 +193,18 @@ export default function AnnotatePage() {
       opacity:               formData.opacity ?? 0.35,
       label_text:            (formData.label_text ?? "").trim() || null,
       label:                 (formData.label_text ?? "").trim() || null,
-      note_text:             (formData.note_text ?? "").trim() || null,
+      note_text:             (formData.note_text ?? formData.internal_note ?? "").trim() || null,
+      internal_note:         (formData.internal_note ?? formData.note_text ?? "").trim() || null,
       quote_text:            (formData.quote_text ?? "").trim() || null,
       anchor_text:           (formData.anchor_text ?? "").trim() || null,
       extracted_text:        (formData.extracted_text ?? "").trim() || null,
       show_quote_in_present: formData.show_quote_in_present !== false,
+      show_in_spotlight:     formData.show_in_spotlight !== false,
       page_number:           pg,
       extract_page_number:   pg,
       jury_safe:             !!formData.jury_safe,
       group_id:              formData.group_id || null,
+      text_highlights_mode:  formData.text_highlights_mode || "auto",
     };
     await base44.entities.ExhibitAnnotations.update(formData.id, payload);
     // Re-fetch to confirm persistence from DB
