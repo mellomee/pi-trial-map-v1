@@ -413,49 +413,54 @@ export default function Present() {
                 <div className="border-b border-[#1e2a45]">
                   <div className="px-3 pt-3 pb-1 flex items-center justify-between">
                     <p className="text-[10px] font-bold text-yellow-400/80 uppercase tracking-widest flex items-center gap-1">
-                      <Scissors className="w-3 h-3" /> Callouts
+                      <Scissors className="w-3 h-3" /> Callouts ({callouts.length})
                     </p>
-                    <button
-                      onClick={() => setCalloutOverlayOn(v => !v)}
-                      className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
-                        calloutOverlayOn
-                          ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
-                          : "text-slate-500 border-[#1e2a45] hover:text-slate-300"
-                      }`}
-                    >
-                      {calloutOverlayOn ? "ON" : "OFF"}
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setShowHighlightsInCallout(v => !v)}
+                        title="Toggle highlights layer"
+                        className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                          showHighlightsInCallout ? "bg-orange-500/20 text-orange-300 border-orange-500/40" : "text-slate-500 border-[#1e2a45] hover:text-slate-300"
+                        }`}>
+                        HL {showHighlightsInCallout ? "ON" : "OFF"}
+                      </button>
+                    </div>
                   </div>
                   <div className="px-2 pb-2 space-y-1">
-                    {callouts.sort((a, b) => (a.page_number ?? 0) - (b.page_number ?? 0)).map(c => {
+                    {callouts.sort((a, b) => (a.order_index ?? a.page_number ?? 0) - (b.order_index ?? b.page_number ?? 0)).map(c => {
                       const isActive = activeCalloutId === c.id;
+                      const calloutImg = c.callout_image || c.snapshot_image_url;
+                      const hlCount = annotations.filter(a => a.callout_id === c.id).length;
                       return (
                         <div key={c.id} className={`rounded border transition-colors ${
-                          isActive ? "bg-yellow-500/15 border-yellow-500/40" : "border-transparent hover:bg-white/5 hover:border-[#1e2a45]"
+                          isActive ? "bg-yellow-500/15 border-yellow-500/40" : "border-[#1e2a45] hover:bg-white/5"
                         }`}>
                           <button
                             onClick={() => {
-                              setActiveCalloutId(c.id);
-                              setCurrentPage(c.page_number ?? 1);
+                              const newActive = isActive ? null : c.id;
+                              setActiveCalloutId(newActive);
+                              if (newActive) setCurrentPage(c.page_number ?? 1);
                             }}
-                            className="w-full text-left px-2 py-1.5 flex items-center gap-1.5"
+                            className="w-full text-left px-2 py-1.5 flex items-start gap-1.5"
                           >
-                            <Image className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                            {/* Thumbnail */}
+                            {calloutImg && (
+                              <img src={calloutImg} alt="" className="w-10 h-7 object-cover rounded flex-shrink-0 border border-[#1e2a45] bg-[#050809]" />
+                            )}
+                            {!calloutImg && <Image className="w-3 h-3 text-yellow-400 flex-shrink-0 mt-1" />}
                             <div className="min-w-0 flex-1">
                               <p className={`text-[11px] font-medium leading-tight truncate ${isActive ? "text-yellow-200" : "text-slate-300"}`}>
                                 {c.label || `p.${c.page_number}`}
                               </p>
-                              <p className="text-[9px] text-slate-600">p.{c.page_number}</p>
+                              <p className="text-[9px] text-slate-600">p.{c.page_number} · {hlCount} highlight{hlCount !== 1 ? "s" : ""}</p>
                             </div>
                           </button>
                           {isActive && (
-                            <div className="px-2 pb-2 space-y-1.5">
-                              <img src={c.callout_image} alt={c.label} className="w-full rounded border border-[#1e2a45] object-contain max-h-20" />
+                            <div className="px-2 pb-2 space-y-1">
                               <button
-                                onClick={() => setCalloutOverlayOn(true)}
+                                onClick={() => { setCalloutOverlayOn(true); }}
                                 className="w-full py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors"
                               >
-                                ✦ Show Callout
+                                ✦ Show Callout Overlay
                               </button>
                             </div>
                           )}
