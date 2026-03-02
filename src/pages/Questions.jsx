@@ -55,7 +55,7 @@ export default function Questions() {
   const remove = async (id) => {
     if (!confirm("Delete?")) return;
     await base44.entities.Questions.delete(id);
-    load();
+    setQuestions(qs => qs.filter(q => q.id !== id));
   };
 
   const getPartyName = (pid) => {
