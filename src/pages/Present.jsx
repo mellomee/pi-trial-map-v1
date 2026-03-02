@@ -98,10 +98,20 @@ function SpotlightOverlay({ callout, highlights, showHighlights, onToggleHighlig
             ))
           )}
         </div>
-        {/* Label */}
-        <p className="mt-2 text-center text-xs text-slate-400">
-          p.{callout.page_number}{callout.name ? ` · ${callout.name}` : ""}
-        </p>
+        {/* Toggle highlights + label */}
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-xs text-slate-400">
+            p.{callout.page_number}{callout.name ? ` · ${callout.name}` : ""}
+          </p>
+          <button onClick={e => { e.stopPropagation(); onToggleHighlights(); }}
+            className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-semibold border transition-colors ${
+              showHighlights
+                ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
+                : "text-slate-500 border-slate-700 hover:text-slate-300"
+            }`}>
+            {showHighlights ? "Highlights ON" : "Highlights OFF"}
+          </button>
+        </div>
       </div>
     </div>
   );
