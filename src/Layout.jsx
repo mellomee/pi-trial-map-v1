@@ -31,7 +31,6 @@ const NAV_SECTIONS = [
       { name: "Joint List", icon: List, page: "JointExhibits" },
       { name: "Print Views", icon: Printer, page: "JointExhibitPrint" },
       { name: "Present", icon: Play, page: "Present" },
-      { name: "Annotate", icon: Highlighter, page: "AnnotatePage" },
     ],
   },
   {
