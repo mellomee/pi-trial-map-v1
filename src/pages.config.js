@@ -49,7 +49,6 @@
  */
 import AdmittedExhibits from './pages/AdmittedExhibits';
 import AnnotatePage from './pages/AnnotatePage';
-import AttorneyView from './pages/AttorneyView';
 import BattleCards from './pages/BattleCards';
 import Dashboard from './pages/Dashboard';
 import DepoClips from './pages/DepoClips';
@@ -60,35 +59,35 @@ import Export from './pages/Export';
 import Extracts from './pages/Extracts';
 import Import from './pages/Import';
 import JointExhibitPrint from './pages/JointExhibitPrint';
-import JointExhibitPrintInternal from './pages/JointExhibitPrintInternal';
-import JointExhibitPrintJudge from './pages/JointExhibitPrintJudge';
 import JointExhibits from './pages/JointExhibits';
-import JuryView from './pages/JuryView';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
 import Present from './pages/Present';
 import PresentationMode from './pages/PresentationMode';
-import ProofLibrary from './pages/ProofLibrary';
 import QuestionDetail from './pages/QuestionDetail';
 import Questions from './pages/Questions';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
-import TrialMode from './pages/TrialMode';
 import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
 import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
+import TrialMode from './pages/TrialMode';
+import ProofLibrary from './pages/ProofLibrary';
 import WitnessPrep from './pages/WitnessPrep';
+import JointExhibitPrintJudge from './pages/JointExhibitPrintJudge';
+import JointExhibitPrintInternal from './pages/JointExhibitPrintInternal';
+import AttorneyView from './pages/AttorneyView';
+import JuryView from './pages/JuryView';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AdmittedExhibits": AdmittedExhibits,
     "AnnotatePage": AnnotatePage,
-    "AttorneyView": AttorneyView,
     "BattleCards": BattleCards,
     "Dashboard": Dashboard,
     "DepoClips": DepoClips,
@@ -99,28 +98,29 @@ export const PAGES = {
     "Extracts": Extracts,
     "Import": Import,
     "JointExhibitPrint": JointExhibitPrint,
-    "JointExhibitPrintInternal": JointExhibitPrintInternal,
-    "JointExhibitPrintJudge": JointExhibitPrintJudge,
     "JointExhibits": JointExhibits,
-    "JuryView": JuryView,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
     "Present": Present,
     "PresentationMode": PresentationMode,
-    "ProofLibrary": ProofLibrary,
     "QuestionDetail": QuestionDetail,
     "Questions": Questions,
     "Runner": Runner,
     "SettingsPage": SettingsPage,
     "Transcripts": Transcripts,
-    "TrialMode": TrialMode,
     "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
     "TrialRunner": TrialRunner,
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
+    "TrialMode": TrialMode,
+    "ProofLibrary": ProofLibrary,
     "WitnessPrep": WitnessPrep,
+    "JointExhibitPrintJudge": JointExhibitPrintJudge,
+    "JointExhibitPrintInternal": JointExhibitPrintInternal,
+    "AttorneyView": AttorneyView,
+    "JuryView": JuryView,
 }
 
 export const pagesConfig = {
