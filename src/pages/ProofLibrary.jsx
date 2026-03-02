@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
-import QuestionsTab from '@/components/proofLibrary/QuestionsTab';
 import ProofDetailsModal from '@/components/proofLibrary/ProofDetailsModal';
 import { createPageUrl } from '@/utils';
 
@@ -29,6 +28,8 @@ export default function ProofLibrary() {
   const [loading, setLoading] = useState(false);
   const [centerTab, setCenterTab] = useState('proof');
   const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
+  const [selectedProofItem, setSelectedProofItem] = useState(null);
+  const [showProofDetails, setShowProofDetails] = useState(false);
 
   // Modal states
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
@@ -36,10 +37,10 @@ export default function ProofLibrary() {
   const [showAddProofModal, setShowAddProofModal] = useState(false);
   const [showAddTrialPointModal, setShowAddTrialPointModal] = useState(false);
   const [showAssignWitnessModal, setShowAssignWitnessModal] = useState(false);
+  const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
-  const [selectedProofForModal, setSelectedProofForModal] = useState(null);
-  const [showProofDetailsModal, setShowProofDetailsModal] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   useEffect(() => {
     if (activeCase?.id) {
@@ -165,13 +166,18 @@ export default function ProofLibrary() {
     }
   };
 
-  const goToQuestions = () => {
-    if (selectedGroupId && selectedGroupId !== "all") {
-      sessionStorage.setItem(`evidence-group-${activeCase.id}`, selectedGroupId);
+  const handleCreateQuestion = async (questionData) => {
+    try {
+      const newQ = await base44.entities.Questions.create({
+        ...questionData,
+        case_id: activeCase.id,
+        primary_evidence_group_id: selectedGroupId,
+      });
+      setLinkedQuestions(qs => [...qs, newQ]);
+      return newQ;
+    } catch (error) {
+      console.error('Error creating question:', error);
     }
-    // Use navigation instead of window.location to avoid blank screen
-    const nav = document.querySelector('a[href*="Questions"]');
-    if (nav) nav.click();
   };
 
   const handleUpdateGroup = async () => {
@@ -315,6 +321,11 @@ export default function ProofLibrary() {
     }
   };
 
+  const getPartyName = (pid) => {
+    const p = allWitnesses.find(x => x.id === pid);
+    return p ? `${p.first_name} ${p.last_name}` : "Unassigned";
+  };
+
   const selectedGroup = evidenceGroups.find((g) => g.id === selectedGroupId);
   const filteredProof = proofItems.filter((p) => p.label?.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -428,13 +439,21 @@ export default function ProofLibrary() {
                     </div>
                     {filteredProof.length > 0 ? (
                       filteredProof.map((proof) => (
-                        <div
-                          key={proof.id}
-                          onClick={() => (setSelectedProofForModal(proof), setShowProofDetailsModal(true))}
-                          className="bg-gray-800 border border-gray-700 rounded p-3 cursor-pointer hover:bg-gray-700 transition-colors"
-                        >
-                          <p className="text-sm font-medium text-gray-100">{proof.label}</p>
-                          <p className="text-xs text-gray-500 mt-1">{proof.type}</p>
+                        <div key={proof.id} className="bg-gray-800 border border-gray-700 rounded p-3 cursor-pointer hover:border-cyan-500/50" onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-100">{proof.label}</p>
+                              <p className="text-xs text-gray-500 mt-1">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => { e.stopPropagation(); handleRemoveProof(proof.id); }}
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            >
+                              ✕
+                            </Button>
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -524,12 +543,43 @@ export default function ProofLibrary() {
 
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
-                  <QuestionsTab
-                    evidenceGroup={selectedGroup}
-                    witnesses={linkedWitnesses}
-                    proofItems={proofItems}
-                    caseId={activeCase.id}
-                  />
+                  <div key={questionsRefreshKey} className="space-y-3">
+                    <Button
+                      onClick={() => { setEditing({ party_id: '', exam_type: 'Direct', question_text: '', goal: '', expected_answer: '', status: 'NotAsked', importance: 'Med', ask_if_time: true }); setShowAddQuestionModal(true); }}
+                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
+                    >
+                      <Plus className="w-3 h-3 mr-2" />
+                      Add Question
+                    </Button>
+                    {linkedQuestions.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-400">Questions for this group ({linkedQuestions.length}):</p>
+                        {linkedQuestions.map((q) => (
+                          <div key={q.id} className="bg-gray-800 border border-gray-700 rounded p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
+                                <p className="text-xs text-gray-500 mt-1">{q.exam_type} • {getPartyName(q.party_id)}</p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRemoveQuestion(q.id)}
+                                className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-500 mt-4 py-4 border border-dashed border-gray-700 rounded">
+                        <p className="text-sm">No questions yet</p>
+                        <p className="text-xs mt-1">Create questions linked to this evidence group</p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </>
