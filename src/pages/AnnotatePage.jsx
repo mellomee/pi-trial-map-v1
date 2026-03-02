@@ -580,19 +580,44 @@ export default function AnnotatePage() {
         {showFindOnPage && pdfDoc && (
           <FindOnPage pdfDoc={pdfDoc} pageIndex={pageIndex} />
         )}
-        <div className="flex-1 overflow-auto flex justify-center items-start bg-[#050809] p-6">
+        <div className="flex-1 overflow-auto flex justify-center items-start bg-[#050809] p-6"
+          style={{ cursor: calloutMode ? "crosshair" : "default" }}>
           {!fileUrl ? (
             <div className="text-slate-500 text-sm mt-16">No file attached to this extract.</div>
           ) : isPdf ? (
-            <div className="relative inline-block">
-              <canvas ref={canvasRef} style={{ display: "block" }} />
+            <div className="relative inline-block select-none"
+              onMouseDown={onCalloutMouseDown}
+              onMouseMove={onCalloutMouseMove}
+              onMouseUp={onCalloutMouseUp}
+              ref={overlayRef}
+            >
+              <canvas ref={canvasRef} style={{ display: "block", pointerEvents: "none" }} />
               {rendering && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#0a0f1e]/60 text-slate-500 text-sm">
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0a0f1e]/60 text-slate-500 text-sm pointer-events-none">
                   Rendering…
                 </div>
               )}
+              {/* Callout drag preview */}
+              {calloutMode && dragRect && (
+                <div className="absolute pointer-events-none border-2 border-yellow-400"
+                  style={{
+                    left: dragRect.x, top: dragRect.y,
+                    width: dragRect.w, height: dragRect.h,
+                    background: "rgba(255,220,0,0.18)",
+                    boxShadow: "0 0 0 1px rgba(255,220,0,0.5)",
+                  }}
+                />
+              )}
+              {/* Callout mode hint */}
+              {calloutMode && !isDragging && (
+                <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
+                  <div className="bg-yellow-500/90 text-black text-xs font-semibold px-3 py-1 rounded-full shadow">
+                    Drag to select a region → Save as callout clip
+                  </div>
+                </div>
+              )}
               {/* Show active quote highlight overlay hint */}
-              {activeId && (() => {
+              {!calloutMode && activeId && (() => {
                 const ann = annotations.find(a => a.id === activeId);
                 if (!ann || !ann.quote_text) return null;
                 if ((ann.page_number ?? 1) !== pageIndex) return null;
