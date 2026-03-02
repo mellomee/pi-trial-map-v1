@@ -182,7 +182,7 @@ export default function ProofLibrary() {
           tab: "questions",
           questionId: firstQ.id,
         }).toString();
-        window.location.href = `/pages/WitnessPrep?${queryStr}`;
+        window.location.href = `/WitnessPrep?${queryStr}`;
       } else {
         await load();
       }
