@@ -364,7 +364,7 @@ export default function ProofLibrary() {
           </div>
         </div>
 
-        {/* Center Panel: Proof Items */}
+        {/* Center Panel: Proof Items / Trial Points / Witnesses / Questions */}
         <div className="flex-1 flex flex-col bg-[#0a0f1e] overflow-hidden">
           {selectedGroup ? (
             <>
@@ -373,41 +373,179 @@ export default function ProofLibrary() {
                   <h2 className="text-lg font-bold text-cyan-300">{selectedGroup.title}</h2>
                   {selectedGroup.description && <p className="text-sm text-gray-400">{selectedGroup.description}</p>}
                 </div>
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
-                    <Input
-                      placeholder="Search proof..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-gray-800 border-gray-700"
-                    />
-                  </div>
-                  <Button
-                    onClick={() => setShowAddProofModal(true)}
-                    size="sm"
-                    className="bg-cyan-600 hover:bg-cyan-700"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                {/* Tab buttons */}
+                <div className="flex gap-2 border-b border-gray-700 -mx-4 px-4">
+                  {['proof', 'trialPoints', 'witnesses', 'questions'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setCenterTab(tab)}
+                      className={`py-2 px-2 text-xs font-medium border-b-2 transition-colors ${
+                        centerTab === tab
+                          ? 'border-cyan-400 text-cyan-300'
+                          : 'border-transparent text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      {tab === 'proof' && `Proof (${proofItems.length})`}
+                      {tab === 'trialPoints' && `Trial Points (${linkedTrialPoints.length})`}
+                      {tab === 'witnesses' && `Witnesses (${linkedWitnesses.length})`}
+                      {tab === 'questions' && `Questions (${linkedQuestions.length})`}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {filteredProof.length > 0 ? (
-                  filteredProof.map((proof) => (
-                    <ProofItemCard
-                      key={proof.id}
-                      proofItem={proof}
-                      onRemove={handleRemoveProof}
-                      witnesses={witnesses.filter((w) => w.id === proof.witness_id)}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 mt-8">
-                    <p className="text-sm">No proof in this evidence group</p>
-                    <p className="text-xs mt-2">Add depo clips or exhibit extracts to get started</p>
-                  </div>
+                {/* Proof Tab */}
+                {centerTab === 'proof' && (
+                  <>
+                    <div className="flex gap-2 -mx-4 px-4 pb-3 mb-3 border-b border-gray-700">
+                      <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                        <Input
+                          placeholder="Search proof..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 bg-gray-800 border-gray-700 text-xs"
+                        />
+                      </div>
+                      <Button
+                        onClick={() => setShowAddProofModal(true)}
+                        size="sm"
+                        className="bg-cyan-600 hover:bg-cyan-700 text-xs"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    {filteredProof.length > 0 ? (
+                      filteredProof.map((proof) => (
+                        <ProofItemCard
+                          key={proof.id}
+                          proofItem={proof}
+                          onRemove={handleRemoveProof}
+                          witnesses={allWitnesses.filter((w) => w.id === proof.witness_id)}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 mt-8">
+                        <p className="text-sm">No proof in this evidence group</p>
+                        <p className="text-xs mt-2">Add depo clips or exhibit extracts to get started</p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Trial Points Tab */}
+                {centerTab === 'trialPoints' && (
+                  <>
+                    <Button
+                      onClick={() => setShowAddTrialPointModal(true)}
+                      size="sm"
+                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
+                    >
+                      <Plus className="w-3 h-3 mr-2" />
+                      Add Trial Point
+                    </Button>
+                    {linkedTrialPoints.length > 0 ? (
+                      linkedTrialPoints.map((tp) => (
+                        <div key={tp.id} className="bg-gray-800 border border-gray-700 rounded p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-100">{tp.point_text}</p>
+                              <p className="text-xs text-gray-500 mt-1">Theme: {tp.theme}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRemoveTrialPoint(tp.id)}
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 mt-8">
+                        <p className="text-sm">No trial points linked</p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Witnesses Tab */}
+                {centerTab === 'witnesses' && (
+                  <>
+                    <Button
+                      onClick={() => setShowAssignWitnessModal(true)}
+                      size="sm"
+                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
+                    >
+                      <Plus className="w-3 h-3 mr-2" />
+                      Assign Witness
+                    </Button>
+                    {linkedWitnesses.length > 0 ? (
+                      linkedWitnesses.map((wit) => (
+                        <div key={wit.id} className="bg-gray-800 border border-gray-700 rounded p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-100">{wit.display_name || wit.last_name}</p>
+                              <p className="text-xs text-gray-500 mt-1">{wit.party_type}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRemoveWitness(wit.id)}
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 mt-8">
+                        <p className="text-sm">No witnesses assigned</p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Questions Tab */}
+                {centerTab === 'questions' && (
+                  <>
+                    <Button
+                      onClick={() => setShowGenerateQuestionModal(true)}
+                      size="sm"
+                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
+                    >
+                      <Plus className="w-3 h-3 mr-2" />
+                      Generate Question
+                    </Button>
+                    {linkedQuestions.length > 0 ? (
+                      linkedQuestions.map((q) => (
+                        <div key={q.id} className="bg-gray-800 border border-gray-700 rounded p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
+                              <p className="text-xs text-gray-500 mt-1">{q.exam_type}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRemoveQuestion(q.id)}
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 mt-8">
+                        <p className="text-sm">No questions linked</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </>
