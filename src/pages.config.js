@@ -48,7 +48,6 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AdmittedExhibits from './pages/AdmittedExhibits';
-import AnnotatePage from './pages/AnnotatePage';
 import BattleCards from './pages/BattleCards';
 import Dashboard from './pages/Dashboard';
 import DepoClips from './pages/DepoClips';
@@ -80,7 +79,6 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "AdmittedExhibits": AdmittedExhibits,
-    "AnnotatePage": AnnotatePage,
     "BattleCards": BattleCards,
     "Dashboard": Dashboard,
     "DepoClips": DepoClips,
