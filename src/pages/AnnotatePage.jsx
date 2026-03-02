@@ -12,6 +12,8 @@ import QuoteAnnotationModal from "@/components/annotate/QuoteAnnotationModal";
 import FindOnPage from "@/components/annotate/FindOnPage";
 import AnnotationEditorModal from "@/components/exhibits/AnnotationEditorModal";
 import CalloutCaptureModal from "@/components/annotate/CalloutCaptureModal";
+import AnnotationSnapshotModal from "@/components/annotate/AnnotationSnapshotModal";
+import { captureAnnotationSnapshot } from "@/components/annotate/AnnotationSnapshotCapture";
 import { pdfjs } from "react-pdf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
