@@ -21,6 +21,7 @@ const COLOR_CSS = {
 
 export default function SnapshotSpotlight({ annotation, exhibitNo, onClose, visible }) {
   const imgContainerRef = useRef(null);
+  const [showHighlights, setShowHighlights] = useState(true);
 
   if (!visible || !annotation) return null;
 
@@ -28,9 +29,10 @@ export default function SnapshotSpotlight({ annotation, exhibitNo, onClose, visi
   const label = annotation.label_text || annotation.label || "";
   const quote = annotation.show_quote_in_present !== false ? (annotation.quote_text || "") : "";
   const hasSnapshot = !!annotation.snapshot_file;
-  const highlights = (annotation.text_highlights_mode !== "none" && annotation.text_highlights?.length)
+  const rawHighlights = (annotation.text_highlights_mode !== "none" && annotation.text_highlights?.length)
     ? annotation.text_highlights
     : [];
+  const highlights = showHighlights ? rawHighlights : [];
 
   return (
     <div
