@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Gavel, Users, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle,
   Monitor, Search, BookOpen, FileText, Swords, Layers, Plus, X,
-  Ban, Wifi, WifiOff, Scissors, Eye, EyeOff
+  Ban, Wifi, WifiOff, PanelLeftClose, PanelRightClose, ChevronDown, ChevronUp
 } from "lucide-react";
 import WorkflowBanner from "@/components/trial/WorkflowBanner";
 import JuryPreviewPanel from "@/components/trial/JuryPreviewPanel";
@@ -24,6 +24,7 @@ const STATUS_OPTS = [
   { value: "NeedsFollowUp", label: "Follow Up", color: "bg-amber-500/20 text-amber-400 border-amber-600/40" },
   { value: "Skipped", label: "Skipped", color: "bg-slate-600/20 text-slate-500 border-slate-700/40" },
 ];
+
 const QUALITY_OPTS = [
   { value: "AsExpected", label: "As Expected", color: "bg-green-500/20 text-green-400 border-green-600/40" },
   { value: "Unexpected", label: "Unexpected", color: "bg-amber-500/20 text-amber-400 border-amber-600/40" },
@@ -31,29 +32,24 @@ const QUALITY_OPTS = [
   { value: "GreatAdmission", label: "Great Admission", color: "bg-cyan-500/20 text-cyan-400 border-cyan-600/40" },
 ];
 
-function generateCode() {
-  return Math.random().toString(36).slice(2, 7).toUpperCase();
-}
-
 export default function AttorneyView() {
   const { activeCase } = useActiveCase();
 
-  // Session (single source of truth)
+  // Session
   const [sessions, setSessions] = useState([]);
-  const [session, setSession] = useState(null); // full TrialSession object
+  const [sessionId, setSessionId] = useState("");
+  const [liveState, setLiveState] = useState(null);
   const [juryConnected, setJuryConnected] = useState(false);
   const [pairModalOpen, setPairModalOpen] = useState(false);
 
   // Data
   const [parties, setParties] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [evidenceGroups, setEvidenceGroups] = useState([]);
   const [depoClips, setDepoClips] = useState([]);
   const [jointExhibits, setJointExhibits] = useState([]);
   const [admittedExhibits, setAdmittedExhibits] = useState([]);
   const [extracts, setExtracts] = useState([]);
-  const [callouts, setCallouts] = useState([]);
-  const [highlightRects, setHighlightRects] = useState([]);
-  const [proofItems, setProofItems] = useState([]);
   const [battleCards, setBattleCards] = useState([]);
 
   // Q runner
@@ -65,7 +61,9 @@ export default function AttorneyView() {
   const [leftOpen, setLeftOpen] = useState(true);
   const [midOpen, setMidOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
-  const [proofTab, setProofTab] = useState("callouts");
+  const [proofTab, setProofTab] = useState("exhibits");
+  const [exhibitControlTab, setExhibitControlTab] = useState("exhibits");
+  const [rightTab, setRightTab] = useState("preview");
 
   // Exhibit control
   const [exhibitSearch, setExhibitSearch] = useState("");
@@ -79,66 +77,70 @@ export default function AttorneyView() {
   // Push feedback
   const [pushToast, setPushToast] = useState("");
 
-  // Proof filtering
-  const [showAllProof, setShowAllProof] = useState(false);
-
   // ── Load ──────────────────────────────────────────────
   const load = async () => {
     if (!activeCase) return;
     const cid = activeCase.id;
-    const [s, p, q, dc, je, ae, ex, co, bc, pi] = await Promise.all([
+    const [s, p, q, eg, dc, je, ae, ex, bc] = await Promise.all([
       base44.entities.TrialSessions.filter({ case_id: cid }),
       base44.entities.Parties.filter({ case_id: cid }),
       base44.entities.Questions.filter({ case_id: cid }),
+      base44.entities.EvidenceGroups.filter({ case_id: cid }),
       base44.entities.DepoClips.filter({ case_id: cid }),
       base44.entities.JointExhibits.filter({ case_id: cid }),
       base44.entities.AdmittedExhibits.filter({ case_id: cid }),
       base44.entities.ExhibitExtracts.filter({ case_id: cid }),
-      base44.entities.ExtractCallout.filter({ case_id: cid }),
       base44.entities.BattleCards.filter({ case_id: cid }),
-      base44.entities.ProofItem.filter({ case_id: cid }),
     ]);
     setSessions(s);
     setParties(p);
     setQuestions(q);
+    setEvidenceGroups(eg);
     setDepoClips(dc);
     setJointExhibits(je);
     setAdmittedExhibits(ae);
     setExtracts(ex);
-    setCallouts(co);
     setBattleCards(bc);
-    setProofItems(pi);
     if (!selectedPartyId && p.length) setSelectedPartyId(p[0].id);
-    if (s.length && !session) {
-      const active = s.find(x => x.is_live) || s[0];
-      setSession(active);
+    if (s.length && !sessionId) {
+      const active = s.find(x => x.active) || s[0];
+      setSessionId(active.id);
+      loadLiveState(active.id);
     }
-    // Load highlight rects for all callouts
-    if (co.length) {
-      const rects = await base44.entities.HighlightRect.list();
-      setHighlightRects(rects);
+  };
+
+  const loadLiveState = async (sid) => {
+    const states = await base44.entities.LiveState.filter({ session_id: sid });
+    if (states.length) {
+      setLiveState(states[0]);
+    } else {
+      const ns = await base44.entities.LiveState.create({
+        session_id: sid, mode: "blank", status: "idle", highlights_visible: true,
+      });
+      setLiveState(ns);
     }
   };
 
   useEffect(() => { load(); }, [activeCase]);
 
-  // Poll session + jury connection every 2s
+  // Poll LiveState + JuryConnection every 2s
   useEffect(() => {
-    if (!session?.id) return;
+    if (!sessionId) return;
     const poll = async () => {
-      const [updated, conns] = await Promise.all([
-        base44.entities.TrialSessions.filter({ id: session.id }),
-        base44.entities.JuryConnection.filter({ session_id: session.id }),
+      const [states, conns] = await Promise.all([
+        base44.entities.LiveState.filter({ session_id: sessionId }),
+        base44.entities.JuryConnection.filter({ session_id: sessionId }),
       ]);
-      if (updated.length) setSession(updated[0]);
+      if (states.length) setLiveState(states[0]);
+      // Connected = has a JuryConnection that was seen within last 10s
       const now = Date.now();
-      const conn = conns.some(c => c.connected && c.last_seen_at && (now - new Date(c.last_seen_at).getTime()) < 12000);
-      setJuryConnected(conn);
+      const connected = conns.some(c => c.connected && c.last_seen_at && (now - new Date(c.last_seen_at).getTime()) < 12000);
+      setJuryConnected(connected);
     };
     poll();
     const interval = setInterval(poll, 2000);
     return () => clearInterval(interval);
-  }, [session?.id]);
+  }, [sessionId]);
 
   const admittedById = useMemo(() => {
     const m = {};
@@ -155,45 +157,18 @@ export default function AttorneyView() {
 
   const currentQ = witnessQuestions[selectedQIdx] || null;
 
-  // When question changes, update session.active_question_id
-  useEffect(() => {
-    if (!session?.id || !currentQ) return;
-    base44.entities.TrialSessions.update(session.id, { active_question_id: currentQ.id });
-  }, [currentQ?.id, session?.id]);
-
   const updateQ = useCallback(async (field, value) => {
     if (!currentQ) return;
     await base44.entities.Questions.update(currentQ.id, { [field]: value });
     setQuestions(prev => prev.map(q => q.id === currentQ.id ? { ...q, [field]: value } : q));
   }, [currentQ]);
 
-  // Proof items for current question
-  const currentQProofIds = useMemo(() => new Set(currentQ?.linked_proof_item_ids || []), [currentQ]);
-
-  const filteredProofItems = useMemo(() => {
-    if (showAllProof || !currentQ) return proofItems;
-    return proofItems.filter(p => currentQProofIds.has(p.id));
-  }, [proofItems, currentQProofIds, showAllProof, currentQ]);
-
-  // Callouts with their highlight rects
-  const calloutsWithRects = useMemo(() => {
-    return callouts.map(c => ({
-      ...c,
-      rects: highlightRects.filter(r => r.callout_id === c.id),
-    }));
-  }, [callouts, highlightRects]);
-
-  // ── Push to Jury (updates TrialSession) ──────────────
-  const pushToJury = async (presentableType, presentableId, options = {}, toastMsg) => {
-    if (!session) return;
-    const patch = {
-      active_presentable_type: presentableType,
-      active_presentable_id: presentableId,
-      active_presentable_options: { spotlightOn: false, highlightsOn: true, page: 1, zoom: 1.0, ...options },
-      is_live: true,
-    };
-    setSession(prev => ({ ...prev, ...patch }));
-    await base44.entities.TrialSessions.update(session.id, patch);
+  // ── Push helpers ──────────────────────────────────────
+  const pushLive = async (patch, toastMsg) => {
+    if (!liveState) return;
+    const payload = { ...patch, updated_at: new Date().toISOString() };
+    setLiveState(prev => ({ ...prev, ...payload }));
+    await base44.entities.LiveState.update(liveState.id, payload);
     setPushToast(toastMsg || "Sent to jury ✓");
     setTimeout(() => setPushToast(""), 2500);
   };
@@ -204,66 +179,48 @@ export default function AttorneyView() {
       if (!confirm(`"${je.marked_title}" is not admitted yet. Send anyway?`)) return;
     }
     const label = adm ? `Exhibit ${adm.admitted_no} – ${je.marked_title}` : `#${je.marked_no} – ${je.marked_title}`;
-    pushToJury("joint_exhibit", je.id, { page: 1, spotlightOn: false }, `Sent: ${label}`);
+    pushLive({ mode: "exhibit", status: "showing", joint_exhibit_id: je.id, page: 1, spotlight_image_url: null, callout_id: null, label }, `Sent: ${label}`);
   };
 
-  const pushCalloutToJury = (callout) => {
-    const ext = extracts.find(e => e.id === callout.extract_id);
-    const je = ext ? jointExhibits.find(j => j.exhibit_extract_id === ext.id) : null;
-    const label = `${je ? `Ex. ${admittedById[je.id]?.admitted_no || je.marked_no} – ` : ""}${callout.name || "Callout"}`;
-    pushToJury("extract_callout", callout.id, {
-      spotlightOn: true,
-      highlightsOn: true,
-    }, `Spotlight: ${label}`);
+  const pushCalloutToJury = (callout, label) => {
+    pushLive({
+      mode: "spotlight", status: "showing",
+      callout_id: callout.id,
+      spotlight_image_url: callout.snapshot_image_url,
+      highlight_rects: callout._highlightRects || [],
+      highlights_visible: true,
+      label: label || callout.name || "Callout",
+    }, `Spotlight: ${callout.name || "Callout"}`);
   };
 
-  const toggleHighlights = async () => {
-    if (!session) return;
-    const opts = session.active_presentable_options || {};
-    const patch = {
-      active_presentable_options: { ...opts, highlightsOn: !opts.highlightsOn },
-    };
-    setSession(prev => ({ ...prev, ...patch }));
-    await base44.entities.TrialSessions.update(session.id, patch);
-    setPushToast(opts.highlightsOn ? "Highlights OFF" : "Highlights ON");
-    setTimeout(() => setPushToast(""), 1500);
+  const toggleHighlights = () => {
+    pushLive({ highlights_visible: !liveState?.highlights_visible }, "Highlights toggled");
   };
 
-  const clearJury = async () => {
-    if (!session) return;
-    const patch = {
-      active_presentable_type: "none",
-      active_presentable_id: null,
-      active_presentable_options: { spotlightOn: false, highlightsOn: false },
-    };
-    setSession(prev => ({ ...prev, ...patch }));
-    await base44.entities.TrialSessions.update(session.id, patch);
-    setPushToast("Jury cleared");
-    setTimeout(() => setPushToast(""), 1500);
-  };
+  const clearJury = () => pushLive({ mode: "blank", status: "idle", spotlight_image_url: null, joint_exhibit_id: null, callout_id: null, label: "" }, "Jury cleared");
 
   // ── Session ───────────────────────────────────────────
   const createSession = async () => {
+    const pairCode = Math.random().toString(36).slice(2, 7).toUpperCase();
     const s = await base44.entities.TrialSessions.create({
-      case_id: activeCase.id, title: newSessionTitle, is_live: true,
-      pair_code: generateCode(),
-      active_presentable_type: "none",
-      active_presentable_options: { spotlightOn: false, highlightsOn: true, page: 1, zoom: 1.0 },
+      case_id: activeCase.id, title: newSessionTitle, active: true, pair_code: pairCode,
     });
     setNewSessionOpen(false);
     setNewSessionTitle("");
-    setSessions(prev => [...prev, s]);
-    setSession(s);
+    await load();
+    setSessionId(s.id);
+    loadLiveState(s.id);
   };
 
   const openJuryScreen = () => {
-    if (!session?.pair_code) { alert("No pair code. Create or select a session."); return; }
+    const current = sessions.find(s => s.id === sessionId);
+    if (!current?.pair_code) { alert("No pair code for this session. Try creating a new session."); return; }
     setPairModalOpen(true);
   };
 
   // ── Admit ─────────────────────────────────────────────
   const admitExhibit = async () => {
-    if (!admitForm.admitted_no) return;
+    if (!admitForm.admitted_no) return alert("Enter admitted number");
     const je = admitDialogExhibit;
     await base44.entities.AdmittedExhibits.create({
       case_id: activeCase.id, joint_exhibit_id: je.id,
@@ -288,41 +245,31 @@ export default function AttorneyView() {
     jointExhibits.filter(j =>
       !exhibitSearch ||
       j.marked_title?.toLowerCase().includes(exhibitSearch.toLowerCase()) ||
-      j.marked_no?.toLowerCase().includes(exhibitSearch.toLowerCase())
-    ), [jointExhibits, exhibitSearch]);
+      j.marked_no?.toLowerCase().includes(exhibitSearch.toLowerCase()) ||
+      admittedById[j.id]?.admitted_no?.toLowerCase().includes(exhibitSearch.toLowerCase())
+    ), [jointExhibits, exhibitSearch, admittedById]);
 
   const partyName = (id) => {
     const p = parties.find(x => x.id === id);
     return p ? (p.display_name || `${p.first_name || ""} ${p.last_name || ""}`.trim()) : "—";
   };
 
-  // Build jury preview-compatible state from session
-  const juryPreviewState = useMemo(() => {
-    if (!session) return null;
-    const opts = session.active_presentable_options || {};
-    const type = session.active_presentable_type || "none";
-    const id = session.active_presentable_id;
-    if (type === "none") return { mode: "blank" };
-    if (type === "joint_exhibit") {
-      return { mode: "exhibit", joint_exhibit_id: id, page: opts.page || 1, label: "" };
-    }
-    if (type === "extract_callout") {
-      const callout = calloutsWithRects.find(c => c.id === id);
-      return {
-        mode: "spotlight",
-        spotlight_image_url: callout?.snapshot_image_url,
-        highlights_visible: opts.highlightsOn !== false,
-        highlight_rects: (callout?.rects || []).map(r => ({ ...r.rect, color: r.color })),
-        label: callout?.name || "Callout",
-      };
-    }
-    return { mode: "blank" };
-  }, [session, calloutsWithRects]);
-
-  const isSpotlightActive = session?.active_presentable_type === "extract_callout";
-  const highlightsOn = session?.active_presentable_options?.highlightsOn !== false;
+  const currentSession = sessions.find(s => s.id === sessionId);
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
+
+  // ── Panel header helper ───────────────────────────────
+  const PanelHeader = ({ icon: Icon, label, color = "text-cyan-400", open, onToggle, right }) => (
+    <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e2a45] bg-[#0a0f1e] flex-shrink-0">
+      <div className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${color}`}>
+        <Icon className="w-3.5 h-3.5" />
+        <span>{label}</span>
+      </div>
+      <button onClick={onToggle} className="text-slate-600 hover:text-slate-300">
+        {right ? (open ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />) : (open ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />)}
+      </button>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0f1e] text-slate-200 overflow-hidden">
@@ -334,7 +281,7 @@ export default function AttorneyView() {
         <span className="text-sm font-bold text-white">Attorney View</span>
         <div className="w-px h-4 bg-[#1e2a45]" />
 
-        <Select value={session?.id || ""} onValueChange={v => setSession(sessions.find(s => s.id === v) || null)}>
+        <Select value={sessionId} onValueChange={v => { setSessionId(v); loadLiveState(v); }}>
           <SelectTrigger className="h-7 text-xs w-44 bg-[#131a2e] border-[#1e2a45] text-slate-200">
             <SelectValue placeholder="Select session…" />
           </SelectTrigger>
@@ -346,16 +293,25 @@ export default function AttorneyView() {
           <Plus className="w-3 h-3" />
         </Button>
 
-        {session?.pair_code && (
+        {currentSession?.pair_code && (
           <span className="text-[10px] bg-[#131a2e] border border-[#1e2a45] px-2 py-0.5 rounded text-slate-400 font-mono">
-            Code: <strong className="text-cyan-300">{session.pair_code}</strong>
+            <span className="text-slate-600">Code:</span> <strong className="text-cyan-300">{currentSession.pair_code}</strong>
           </span>
         )}
 
+        <div className="w-px h-4 bg-[#1e2a45]" />
+
+        {/* Real jury connection status */}
         <div className={`flex items-center gap-1.5 text-xs px-2 py-0.5 rounded border ${juryConnected ? "bg-green-500/10 text-green-400 border-green-700/40" : "bg-slate-800/50 text-slate-500 border-slate-700/40"}`}>
           {juryConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-          {juryConnected ? "Jury Live" : "Jury Offline"}
+          {juryConnected ? "Jury Connected" : "Jury Offline"}
         </div>
+
+        {!juryConnected && (
+          <span className="text-[10px] text-amber-400 flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" /> Jury not connected — pushes won't be seen
+          </span>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           {pushToast && <span className="text-xs text-green-400 font-medium animate-pulse">{pushToast}</span>}
@@ -372,14 +328,12 @@ export default function AttorneyView() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ═══ LEFT: Question Runner ═══ */}
-        <div className={`flex flex-col border-r border-[#1e2a45] bg-[#0f1629] transition-all duration-200 ${leftOpen ? "w-[300px]" : "w-8"} flex-shrink-0`}>
+        <div className={`flex flex-col border-r border-[#1e2a45] bg-[#0f1629] transition-all duration-200 ${leftOpen ? "w-[320px]" : "w-8"} flex-shrink-0`}>
           {leftOpen ? (
             <>
-              <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#1e2a45] bg-[#0a0f1e] flex-shrink-0">
-                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1"><Users className="w-3 h-3" /> Questions</span>
-                <button onClick={() => setLeftOpen(false)} className="text-slate-600 hover:text-slate-300"><ChevronLeft className="w-3.5 h-3.5" /></button>
-              </div>
+              <PanelHeader icon={Users} label="Questions" open={leftOpen} onToggle={() => setLeftOpen(false)} />
 
+              {/* Witness + exam */}
               <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-[#1e2a45] flex-shrink-0">
                 <Select value={selectedPartyId} onValueChange={v => { setSelectedPartyId(v); setSelectedQIdx(0); }}>
                   <SelectTrigger className="h-6 text-[11px] flex-1 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Witness…" /></SelectTrigger>
@@ -388,13 +342,15 @@ export default function AttorneyView() {
                 <div className="flex rounded border border-[#1e2a45] overflow-hidden flex-shrink-0">
                   {["D","C"].map((t, i) => (
                     <button key={t} onClick={() => { setExamType(i === 0 ? "Direct" : "Cross"); setSelectedQIdx(0); }}
-                      className={`px-2 py-0.5 text-[10px] font-medium transition-colors ${examType === (i === 0 ? "Direct" : "Cross") ? (i === 0 ? "bg-green-600 text-white" : "bg-orange-600 text-white") : "text-slate-500 hover:text-slate-300"}`}>{t}</button>
+                      className={`px-2 py-0.5 text-[10px] font-medium transition-colors ${examType === (i === 0 ? "Direct" : "Cross") ? (i === 0 ? "bg-green-600 text-white" : "bg-orange-600 text-white") : "text-slate-500 hover:text-slate-300"}`}>
+                      {t}
+                    </button>
                   ))}
                 </div>
               </div>
 
               {/* Question list */}
-              <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="flex-1 overflow-y-auto">
                 {witnessQuestions.map((q, idx) => (
                   <button key={q.id} onClick={() => setSelectedQIdx(idx)}
                     className={`w-full text-left px-2.5 py-2 border-b border-[#1e2a45] transition-colors ${selectedQIdx === idx ? "bg-cyan-500/10 border-l-2 border-l-cyan-400" : "hover:bg-white/5 border-l-2 border-l-transparent"}`}>
@@ -403,52 +359,61 @@ export default function AttorneyView() {
                       <div className="flex-1 min-w-0">
                         <p className="text-[11px] text-slate-300 line-clamp-2 leading-snug">{q.question_text}</p>
                         <span className={`text-[9px] mt-0.5 inline-block px-1.5 py-0.5 rounded ${STATUS_OPTS.find(s => s.value === q.status)?.color || ""}`}>{q.status}</span>
-                        {(q.linked_proof_item_ids?.length > 0) && (
-                          <span className="ml-1 text-[9px] text-cyan-600">{q.linked_proof_item_ids.length} proof</span>
-                        )}
                       </div>
                     </div>
                   </button>
                 ))}
-                {witnessQuestions.length === 0 && <p className="text-[10px] text-slate-600 text-center py-6">No questions for this witness.</p>}
+                {witnessQuestions.length === 0 && (
+                  <p className="text-[10px] text-slate-600 text-center py-6">No questions for this witness.</p>
+                )}
               </div>
 
               {/* Question detail */}
               {currentQ && (
-                <div className="border-t border-[#1e2a45] p-2.5 space-y-2 overflow-y-auto flex-shrink-0 max-h-[52%]">
+                <div className="border-t border-[#1e2a45] p-2.5 space-y-2 flex-shrink-0 overflow-y-auto max-h-[55%]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <button disabled={selectedQIdx === 0} onClick={() => setSelectedQIdx(i => i - 1)} className="p-0.5 text-slate-500 hover:text-white disabled:opacity-30"><ChevronLeft className="w-3.5 h-3.5" /></button>
                       <span className="text-[9px] text-slate-600">{selectedQIdx+1}/{witnessQuestions.length}</span>
                       <button disabled={selectedQIdx >= witnessQuestions.length - 1} onClick={() => setSelectedQIdx(i => i + 1)} className="p-0.5 text-slate-500 hover:text-white disabled:opacity-30"><ChevronRight className="w-3.5 h-3.5" /></button>
                     </div>
-                    <div className="flex gap-0.5 flex-wrap justify-end">
+                    <div className="flex gap-0.5 flex-wrap">
                       {STATUS_OPTS.map(s => (
                         <button key={s.value} onClick={() => updateQ("status", s.value)}
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition-colors ${currentQ.status === s.value ? s.color : "bg-[#0f1629] border-[#1e2a45] text-slate-600 hover:border-slate-500"}`}>{s.label}</button>
+                          className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition-colors ${currentQ.status === s.value ? s.color : "bg-[#0f1629] border-[#1e2a45] text-slate-600 hover:border-slate-500"}`}>
+                          {s.label}
+                        </button>
                       ))}
                     </div>
                   </div>
+
                   <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-2.5">
                     <p className="text-sm font-medium text-white leading-snug">{currentQ.question_text}</p>
                     {currentQ.goal && <p className="text-[10px] text-slate-400 mt-1">🎯 {currentQ.goal}</p>}
                     {currentQ.expected_answer && <p className="text-[10px] text-slate-400 mt-0.5">💬 {currentQ.expected_answer}</p>}
                   </div>
+
                   <div className="flex gap-1 flex-wrap">
                     {QUALITY_OPTS.map(opt => (
                       <button key={opt.value} onClick={() => updateQ("answer_quality", currentQ.answer_quality === opt.value ? null : opt.value)}
-                        className={`px-2 py-1 rounded text-[9px] font-medium border transition-colors ${currentQ.answer_quality === opt.value ? opt.color : "bg-[#0f1629] border-[#1e2a45] text-slate-600 hover:border-slate-500"}`}>{opt.label}</button>
+                        className={`px-2 py-1 rounded text-[9px] font-medium border transition-colors ${currentQ.answer_quality === opt.value ? opt.color : "bg-[#0f1629] border-[#1e2a45] text-slate-600 hover:border-slate-500"}`}>
+                        {opt.label}
+                      </button>
                     ))}
                   </div>
+
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Switch checked={currentQ.admission_obtained || false} onCheckedChange={v => updateQ("admission_obtained", v)} />
                     <span className="text-[10px] text-slate-400">Admission Obtained</span>
                   </label>
+
                   <Textarea value={currentQ.live_notes || ""} onChange={e => updateQ("live_notes", e.target.value)}
-                    placeholder="Live notes…" rows={2} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-[11px] resize-none" />
+                    placeholder="Live notes…" rows={2}
+                    className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-[11px] resize-none" />
+
                   {currentQ.answer_quality === "Harmful" && (
                     <div className="text-[9px] text-red-400 bg-red-950/30 border border-red-700/30 rounded px-2 py-1 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" /> Harmful — check Proof Drawer
+                      <AlertTriangle className="w-3 h-3" /> Harmful answer — check Proof Drawer
                     </div>
                   )}
                 </div>
@@ -457,114 +422,54 @@ export default function AttorneyView() {
           ) : (
             <button onClick={() => setLeftOpen(true)} className="flex flex-col items-center justify-center h-full gap-2 text-slate-600 hover:text-cyan-400 w-8">
               <Users className="w-3.5 h-3.5" />
-              <span className="text-[8px] uppercase tracking-widest" style={{writingMode:"vertical-rl"}}>Questions</span>
+              <span className="text-[8px] uppercase tracking-widest writing-mode-vertical" style={{writingMode:"vertical-rl"}}>Questions</span>
             </button>
           )}
         </div>
 
         {/* ═══ MIDDLE: Proof Drawer + Exhibit Control ═══ */}
-        <div className={`flex flex-col border-r border-[#1e2a45] bg-[#0a0f1e] transition-all duration-200 ${midOpen ? "flex-1 min-w-[280px]" : "w-8"} flex-shrink-0`}>
+        <div className={`flex flex-col border-r border-[#1e2a45] bg-[#0a0f1e] transition-all duration-200 ${midOpen ? "flex-1 min-w-[300px]" : "w-8"} flex-shrink-0`}>
           {midOpen ? (
             <>
-              <div className="flex border-b border-[#1e2a45] bg-[#080d1a] flex-shrink-0 items-center">
-                <button onClick={() => setMidOpen(false)} className="p-2 text-slate-600 hover:text-slate-300 border-r border-[#1e2a45] flex-shrink-0">
-                  <ChevronLeft className="w-3.5 h-3.5" />
+              {/* Sub-tabs */}
+              <div className="flex border-b border-[#1e2a45] bg-[#080d1a] flex-shrink-0">
+                <button onClick={() => setMidOpen(false)} className="p-2 text-slate-600 hover:text-slate-300 border-r border-[#1e2a45]">
+                  <PanelLeftClose className="w-3.5 h-3.5" />
                 </button>
-                <div className="flex flex-1 overflow-x-auto">
+                <div className="flex flex-1">
                   {[
-                    { id: "callouts", icon: Scissors, label: "Callouts" },
-                    { id: "exhibits", icon: BookOpen, label: "Exhibits" },
-                    { id: "control", icon: CheckCircle, label: "Admit" },
-                    { id: "clips", icon: FileText, label: "Clips" },
-                    { id: "battlecards", icon: Swords, label: "Battle" },
+                    { id: "exhibits", icon: BookOpen, label: "Proof" },
+                    { id: "control", icon: CheckCircle, label: "Exhibit Ctrl" },
+                    { id: "battlecards", icon: Swords, label: "Battle Cards" },
                   ].map(t => (
                     <button key={t.id} onClick={() => setProofTab(t.id)}
-                      className={`flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium border-b-2 transition-colors whitespace-nowrap ${proofTab === t.id ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-500 hover:text-slate-300"}`}>
+                      className={`flex items-center gap-1 px-3 py-2 text-xs font-medium border-b-2 transition-colors flex-1 justify-center ${proofTab === t.id ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-500 hover:text-slate-300"}`}>
                       <t.icon className="w-3 h-3" />{t.label}
                     </button>
                   ))}
                 </div>
-                {/* Show all proof toggle */}
-                <div className="flex items-center gap-1 px-2 border-l border-[#1e2a45] flex-shrink-0">
-                  <span className="text-[9px] text-slate-600">All</span>
-                  <Switch checked={showAllProof} onCheckedChange={setShowAllProof} />
-                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
+              <div className="flex-1 overflow-y-auto p-3">
 
-                {/* CALLOUTS TAB */}
-                {proofTab === "callouts" && (
+                {/* PROOF DRAWER */}
+                {proofTab === "exhibits" && (
                   <div className="space-y-2">
                     {!juryConnected && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-amber-400 bg-amber-900/20 border border-amber-700/30 rounded px-2 py-1">
-                        <WifiOff className="w-3 h-3" /> Jury offline
+                      <div className="flex items-center gap-2 text-[10px] text-amber-400 bg-amber-900/20 border border-amber-700/30 rounded px-2 py-1.5">
+                        <WifiOff className="w-3 h-3 flex-shrink-0" /> Jury not connected — pushes queued
                       </div>
                     )}
-                    <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">
-                      Extract Callouts {!showAllProof && currentQ ? `— filtered for Q${selectedQIdx+1}` : "— all"}
-                    </p>
-                    {(() => {
-                      const qProofCalloutIds = filteredProofItems
-                        .filter(p => p.type === "extract_callout")
-                        .map(p => p.ref_id);
-                      const visible = showAllProof || !currentQ
-                        ? calloutsWithRects
-                        : calloutsWithRects.filter(c => qProofCalloutIds.includes(c.id));
-                      if (!visible.length) return (
-                        <p className="text-[10px] text-slate-600 text-center py-4">
-                          {currentQ && !showAllProof ? "No callouts linked to this question. Toggle 'All' to see all." : "No callouts yet. Create them in Extracts."}
-                        </p>
-                      );
-                      return visible.map(c => {
-                        const ext = extracts.find(e => e.id === c.extract_id);
-                        const isActive = session?.active_presentable_id === c.id;
-                        return (
-                          <div key={c.id} className={`rounded-lg border p-2 ${isActive ? "bg-yellow-900/20 border-yellow-600/40" : "bg-[#131a2e] border-[#1e2a45]"}`}>
-                            <div className="flex items-start gap-2">
-                              {c.snapshot_image_url && (
-                                <img src={c.snapshot_image_url} alt={c.name}
-                                  className="w-14 h-10 object-cover rounded border border-[#1e2a45] flex-shrink-0 bg-[#050809]" />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] text-slate-200 font-medium leading-tight">{c.name || `p.${c.page_number}`}</p>
-                                {ext && <p className="text-[9px] text-slate-500 truncate">{ext.extract_title_internal || ext.extract_title_official}</p>}
-                                <p className="text-[9px] text-slate-600">p.{c.page_number} · {c.rects.length} highlights</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-1 mt-1.5">
-                              <button onClick={() => pushCalloutToJury(c)}
-                                className="flex-1 text-[9px] py-1 rounded bg-yellow-600/20 text-yellow-300 border border-yellow-600/40 hover:bg-yellow-600/30 flex items-center justify-center gap-1">
-                                <Monitor className="w-2.5 h-2.5" /> Spotlight
-                              </button>
-                              {isActive && (
-                                <button onClick={toggleHighlights}
-                                  className={`text-[9px] px-2 py-1 rounded border transition-colors ${highlightsOn ? "bg-yellow-500/20 text-yellow-300 border-yellow-600/40" : "text-slate-500 border-slate-700/40"}`}>
-                                  {highlightsOn ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                )}
-
-                {/* EXHIBITS (proof drawer - admitted) */}
-                {proofTab === "exhibits" && (
-                  <div className="space-y-1.5">
                     <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">Admitted Exhibits</p>
                     {jointExhibits.filter(j => j.status === "Admitted").map(je => {
                       const adm = admittedById[je.id];
-                      const isActive = session?.active_presentable_id === je.id;
                       return (
-                        <div key={je.id} className={`rounded-lg border p-2 ${isActive ? "bg-green-900/20 border-green-600/40" : "bg-[#131a2e] border-[#1e2a45]"}`}>
-                          <div className="flex items-center gap-2">
+                        <div key={je.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-2.5">
+                          <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-bold text-green-300 flex-shrink-0">#{adm?.admitted_no || je.marked_no}</span>
                             <p className="text-xs text-slate-300 flex-1 truncate">{je.marked_title}</p>
                             <button onClick={() => pushExhibitToJury(je)}
-                              className="text-[9px] px-2 py-1 rounded bg-green-600/20 text-green-400 border border-green-700/40 hover:bg-green-600/30 flex items-center gap-1 flex-shrink-0">
+                              className="flex items-center gap-1 text-[9px] px-2 py-1 rounded bg-green-600/20 text-green-400 border border-green-700/40 hover:bg-green-600/30 flex-shrink-0">
                               <Monitor className="w-2.5 h-2.5" /> Send
                             </button>
                           </div>
@@ -574,12 +479,21 @@ export default function AttorneyView() {
                     {jointExhibits.filter(j => j.status === "Admitted").length === 0 && (
                       <p className="text-[10px] text-slate-600 text-center py-4">No admitted exhibits yet.</p>
                     )}
+                    <div className="pt-2">
+                      <p className="text-[9px] text-slate-600 uppercase tracking-wider font-semibold mb-1">Depo Clips (attorney only)</p>
+                      {depoClips.slice(0, 10).map(c => (
+                        <div key={c.id} className="bg-[#0f1629] border border-[#1e2a45] rounded p-2 mb-1">
+                          <p className="text-[9px] text-violet-400">{c.topic_tag}</p>
+                          <p className="text-[10px] text-slate-400 line-clamp-2">{c.clip_text}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 {/* EXHIBIT CONTROL */}
                 {proofTab === "control" && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <div className="relative">
                       <Search className="absolute left-2 top-2 w-3 h-3 text-slate-500" />
                       <Input value={exhibitSearch} onChange={e => setExhibitSearch(e.target.value)}
@@ -589,10 +503,10 @@ export default function AttorneyView() {
                       const adm = admittedById[je.id];
                       return (
                         <div key={je.id} className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-2">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <span className={`text-[10px] font-bold ${adm ? "text-green-400" : "text-cyan-400"}`}>#{adm?.admitted_no || je.marked_no}</span>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`text-[10px] font-bold flex-shrink-0 ${adm ? "text-green-400" : "text-cyan-400"}`}>#{adm?.admitted_no || je.marked_no}</span>
                             <span className="text-[10px] text-slate-300 flex-1 truncate">{je.marked_title}</span>
-                            <Badge className={`text-[8px] flex-shrink-0 ${je.status === "Admitted" ? "bg-green-500/20 text-green-400" : je.status === "Offered" ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-500/20 text-slate-400"}`}>{je.status}</Badge>
+                            <Badge className={`text-[8px] flex-shrink-0 ${je.status === "Admitted" ? "bg-green-500/20 text-green-400" : je.status === "Offered" ? "bg-cyan-500/20 text-cyan-400" : je.status === "Excluded" ? "bg-red-500/20 text-red-400" : "bg-slate-500/20 text-slate-400"}`}>{je.status}</Badge>
                           </div>
                           <div className="flex gap-1 flex-wrap">
                             {je.status !== "Offered" && je.status !== "Admitted" && (
@@ -617,32 +531,11 @@ export default function AttorneyView() {
                   </div>
                 )}
 
-                {/* CLIPS */}
-                {proofTab === "clips" && (
-                  <div className="space-y-1.5">
-                    <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">Depo Clips (attorney only)</p>
-                    {(() => {
-                      const qProofClipIds = filteredProofItems.filter(p => p.type === "depo_clip").map(p => p.ref_id);
-                      const visible = showAllProof || !currentQ
-                        ? depoClips
-                        : depoClips.filter(c => qProofClipIds.includes(c.id));
-                      return visible.map(c => (
-                        <div key={c.id} className="bg-[#131a2e] border border-[#1e2a45] rounded p-2">
-                          <p className="text-[9px] text-violet-400">{c.topic_tag}</p>
-                          <p className="text-[10px] text-slate-400 line-clamp-3">{c.clip_text}</p>
-                          {c.start_cite && <p className="text-[9px] text-slate-600 font-mono">{c.start_cite}</p>}
-                        </div>
-                      ));
-                    })()}
-                    {depoClips.length === 0 && <p className="text-[10px] text-slate-600 text-center py-4">No depo clips.</p>}
-                  </div>
-                )}
-
                 {/* BATTLE CARDS */}
                 {proofTab === "battlecards" && (
                   <div className="space-y-2">
                     {battleCards.map(bc => (
-                      <div key={bc.id} className="bg-[#131a2e] border border-red-900/30 rounded-xl p-3 space-y-1">
+                      <div key={bc.id} className="bg-[#131a2e] border border-red-900/30 rounded-xl p-3 space-y-1.5">
                         <p className="text-xs font-semibold text-white">{bc.title}</p>
                         {bc.when_to_use && <p className="text-[9px] text-amber-400">When: {bc.when_to_use}</p>}
                         {bc.commit_question && <p className="text-[9px] text-slate-400"><span className="text-green-400 font-semibold">C1:</span> {bc.commit_question}</p>}
@@ -650,7 +543,7 @@ export default function AttorneyView() {
                         {bc.confront_question && <p className="text-[9px] text-slate-400"><span className="text-red-400 font-semibold">C3:</span> {bc.confront_question}</p>}
                       </div>
                     ))}
-                    {battleCards.length === 0 && <p className="text-[10px] text-slate-600 text-center py-4">No battle cards.</p>}
+                    {battleCards.length === 0 && <p className="text-[10px] text-slate-600 text-center py-4">No battle cards. Create in Witness Prep.</p>}
                   </div>
                 )}
               </div>
@@ -663,19 +556,25 @@ export default function AttorneyView() {
           )}
         </div>
 
-        {/* ═══ RIGHT: Jury Preview ═══ */}
-        <div className={`flex flex-col border-l border-[#1e2a45] bg-[#0a0f1e] transition-all duration-200 ${rightOpen ? "w-[320px]" : "w-8"} flex-shrink-0`}>
+        {/* ═══ RIGHT: Jury Preview + Controls ═══ */}
+        <div className={`flex flex-col border-l border-[#1e2a45] bg-[#0a0f1e] transition-all duration-200 ${rightOpen ? "w-[340px]" : "w-8"} flex-shrink-0`}>
           {rightOpen ? (
             <>
-              <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#1e2a45] bg-[#0a0f1e] flex-shrink-0">
-                <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider flex items-center gap-1"><Monitor className="w-3 h-3" /> Jury Preview</span>
-                <button onClick={() => setRightOpen(false)} className="text-slate-600 hover:text-slate-300"><ChevronRight className="w-3.5 h-3.5" /></button>
+              <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e2a45] bg-[#0a0f1e] flex-shrink-0">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-green-400">
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span>Jury Preview</span>
+                </div>
+                <button onClick={() => setRightOpen(false)} className="text-slate-600 hover:text-slate-300">
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
 
+              {/* Preview + Highlight controls */}
               <div className="flex-1 overflow-hidden flex flex-col p-2 gap-2">
                 <div className="flex-1 min-h-0">
                   <JuryPreviewPanel
-                    liveState={juryPreviewState}
+                    liveState={liveState}
                     jointExhibits={jointExhibits}
                     admittedExhibits={admittedExhibits}
                     extracts={extracts}
@@ -684,23 +583,29 @@ export default function AttorneyView() {
                   />
                 </div>
 
-                {isSpotlightActive && (
+                {/* Mode controls */}
+                {liveState?.mode === "spotlight" && (
                   <div className="flex-shrink-0 bg-[#131a2e] border border-yellow-700/30 rounded-lg p-2 space-y-1">
                     <p className="text-[9px] text-yellow-400 font-semibold uppercase tracking-wider">✦ Spotlight Active</p>
                     <button onClick={toggleHighlights}
-                      className={`w-full text-[10px] py-1 rounded border transition-colors ${highlightsOn ? "bg-yellow-500/20 text-yellow-300 border-yellow-600/40" : "text-slate-500 border-slate-700/40 hover:text-slate-300"}`}>
-                      Highlights: {highlightsOn ? "ON" : "OFF"}
+                      className={`w-full text-[10px] py-1 rounded border transition-colors ${liveState?.highlights_visible ? "bg-yellow-500/20 text-yellow-300 border-yellow-600/40" : "text-slate-500 border-slate-700/40 hover:text-slate-300"}`}>
+                      Highlights: {liveState?.highlights_visible ? "ON" : "OFF"}
                     </button>
-                    <button onClick={clearJury} className="w-full text-[10px] py-1 rounded border border-red-700/30 text-red-400 hover:bg-red-900/20">
-                      Clear Jury
+                    <button onClick={clearJury}
+                      className="w-full text-[10px] py-1 rounded border border-red-700/30 text-red-400 hover:bg-red-900/20">
+                      Clear Spotlight
                     </button>
                   </div>
                 )}
 
-                {session?.active_presentable_type === "joint_exhibit" && (
+                {liveState?.mode === "exhibit" && (
                   <div className="flex-shrink-0 bg-[#131a2e] border border-green-700/30 rounded-lg p-2">
                     <p className="text-[9px] text-green-400 font-semibold uppercase tracking-wider mb-1">📄 Exhibit Active</p>
-                    <button onClick={clearJury} className="w-full text-[10px] py-1 rounded border border-red-700/30 text-red-400 hover:bg-red-900/20">Clear</button>
+                    <p className="text-[10px] text-slate-400 truncate">{liveState.label || "—"}</p>
+                    <button onClick={clearJury}
+                      className="w-full mt-1 text-[10px] py-1 rounded border border-red-700/30 text-red-400 hover:bg-red-900/20">
+                      Clear
+                    </button>
                   </div>
                 )}
               </div>
@@ -723,7 +628,7 @@ export default function AttorneyView() {
             <Input value={newSessionTitle} onChange={e => setNewSessionTitle(e.target.value)} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 mt-1"
               onKeyDown={e => e.key === "Enter" && newSessionTitle.trim() && createSession()} />
           </div>
-          <p className="text-[10px] text-slate-500">A pair code will be generated automatically.</p>
+          <p className="text-[10px] text-slate-500">A 5-character pair code will be generated automatically.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewSessionOpen(false)} className="border-slate-600 text-slate-300">Cancel</Button>
             <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={createSession} disabled={!newSessionTitle.trim()}>Create</Button>
@@ -741,8 +646,8 @@ export default function AttorneyView() {
           <div className="space-y-3">
             <div>
               <Label className="text-xs text-slate-400">Admitted Number</Label>
-              <Input value={admitForm.admitted_no} onChange={e => setAdmitForm({ ...admitForm, admitted_no: e.target.value })} placeholder="e.g. 12"
-                className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 mt-1" onKeyDown={e => e.key === "Enter" && admitExhibit()} />
+              <Input value={admitForm.admitted_no} onChange={e => setAdmitForm({ ...admitForm, admitted_no: e.target.value })} placeholder="e.g. 12" className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 mt-1"
+                onKeyDown={e => e.key === "Enter" && admitExhibit()} />
             </div>
             <div>
               <Label className="text-xs text-slate-400">Offered By</Label>
@@ -759,7 +664,8 @@ export default function AttorneyView() {
         </DialogContent>
       </Dialog>
 
-      <PairCodeModal open={pairModalOpen} onClose={() => setPairModalOpen(false)} session={session} />
+      {/* PAIR CODE MODAL */}
+      <PairCodeModal open={pairModalOpen} onClose={() => setPairModalOpen(false)} session={currentSession} />
     </div>
   );
 }
