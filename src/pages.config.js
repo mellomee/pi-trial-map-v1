@@ -80,6 +80,8 @@ import ProofLibrary from './pages/ProofLibrary';
 import WitnessPrep from './pages/WitnessPrep';
 import JointExhibitPrintJudge from './pages/JointExhibitPrintJudge';
 import JointExhibitPrintInternal from './pages/JointExhibitPrintInternal';
+import AttorneyView from './pages/AttorneyView';
+import JuryView from './pages/JuryView';
 import __Layout from './Layout.jsx';
 
 
@@ -117,6 +119,8 @@ export const PAGES = {
     "WitnessPrep": WitnessPrep,
     "JointExhibitPrintJudge": JointExhibitPrintJudge,
     "JointExhibitPrintInternal": JointExhibitPrintInternal,
+    "AttorneyView": AttorneyView,
+    "JuryView": JuryView,
 }
 
 export const pagesConfig = {
