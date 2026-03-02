@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Users, Target, HelpCircle, Play, Swords, FileText,
-  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video
+  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap
 } from "lucide-react";
 import FloatingChat from "@/components/chat/FloatingChat";
 import useActiveCase from "@/components/hooks/useActiveCase";
@@ -16,10 +16,7 @@ const NAV_SECTIONS = [
       { name: "Parties", icon: Users, page: "Parties" },
       { name: "Trial Points", icon: Target, page: "TrialPoints" },
       { name: "Questions", icon: HelpCircle, page: "Questions" },
-      { name: "Trial Runner", icon: Play, page: "TrialRunner" },
-
-
-      { name: "Battle Cards", icon: Swords, page: "BattleCards" },
+      { name: "Trial Mode", icon: Zap, page: "TrialMode" },
       { name: "Transcripts", icon: FileText, page: "Transcripts" },
     ],
   },
@@ -30,7 +27,6 @@ const NAV_SECTIONS = [
       { name: "Extracts", icon: FileText, page: "Extracts" },
       { name: "Joint List", icon: List, page: "JointExhibits" },
       { name: "Print Views", icon: Printer, page: "JointExhibitPrint" },
-      { name: "Present", icon: Play, page: "Present" },
     ],
   },
   {
