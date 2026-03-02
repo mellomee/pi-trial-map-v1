@@ -140,10 +140,11 @@ export default function Present() {
     setCalloutOverlayOn(false);
   }, [selectedExhibitId]);
 
-  const selectAnnotation = useCallback((ann) => {
+  const selectAnnotation = useCallback((ann, openSpotlight = false) => {
     setActiveAnnotationId(ann.id);
     const pg = ann.page_number ?? ann.extract_page_number ?? 1;
     if (pg !== currentPage) setCurrentPage(pg);
+    if (openSpotlight) setSpotlightOn(true);
   }, [currentPage]);
 
   const sortedAnns = useMemo(() =>
