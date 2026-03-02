@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
-import { getProofTypeIcon } from '@/lib/proofItemResolver';
+import { getProofTypeIcon } from './proofItemResolver';
 
 export default function ProofItemCard({ proofItem, onRemove, witnesses = [], trialPoints = [] }) {
   const [resolvedData, setResolvedData] = useState(null);
