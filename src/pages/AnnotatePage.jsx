@@ -474,7 +474,28 @@ export default function AnnotatePage() {
             <Plus className="w-3.5 h-3.5" /> New Spotlight Quote
           </button>
           <button
-            onClick={() => setCalloutMode(v => !v)}
+            onClick={() => { setHighlightMode(v => !v); if (calloutMode) setCalloutMode(false); }}
+            className={`flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium border transition-colors ${
+              highlightMode
+                ? "bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse"
+                : "bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20"
+            }`}
+          >
+            <Highlighter className="w-3.5 h-3.5" /> {highlightMode ? "Cancel Highlight" : "Highlight + Snapshot"}
+          </button>
+          {highlightMode && (
+            <div className="flex items-center gap-1 px-1">
+              {["yellow","red","green","blue"].map(c => (
+                <button key={c} onClick={() => setHighlightColor(c)}
+                  className={`w-4 h-4 rounded border-2 ${highlightColor === c ? "border-white" : "border-transparent opacity-50"} ${
+                    c==="yellow"?"bg-yellow-400":c==="red"?"bg-red-500":c==="green"?"bg-green-500":"bg-blue-500"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => { setCalloutMode(v => !v); if (highlightMode) setHighlightMode(false); }}
             className={`flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium border transition-colors ${
               calloutMode
                 ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40 animate-pulse"
