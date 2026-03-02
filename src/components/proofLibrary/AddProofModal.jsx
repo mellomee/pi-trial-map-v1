@@ -91,7 +91,7 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
 
       setSelectedClip('');
       setLoading(false);
-      onProofAdded();
+      onProofAdded(proofItem);
     } catch (err) {
       console.error('Error adding clip:', err);
       setError(err.message || 'Failed to add proof');
