@@ -40,13 +40,12 @@ export default function WitnessQuestionsList({
   }, [questions, selectedWitnessId, examType, searchText]);
 
   const selectedWitness = witnesses.find(w => w.id === selectedWitnessId);
-  const selectedWitnessName = selectedWitness ? (selectedWitness.display_name || selectedWitness.last_name || selectedWitness.name || 'Unnamed') : 'Unnamed';
 
   return (
     <div className="flex flex-col h-full bg-[#0f1629] border-r border-[#1e2a45]">
       {/* Witness selector */}
       <div className="p-4 border-b border-[#1e2a45] space-y-2">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Witness: {selectedWitnessName}</label>
+        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Witness</label>
         <Select value={selectedWitnessId || ''} onValueChange={onSelectWitness}>
           <SelectTrigger className="bg-[#131a2e] border-[#1e2a45]">
             <SelectValue placeholder="Select witness..." />
@@ -54,7 +53,7 @@ export default function WitnessQuestionsList({
           <SelectContent>
             {witnesses.map(w => (
               <SelectItem key={w.id} value={w.id}>
-                {w.display_name || w.last_name || w.name || 'Unnamed'}
+                {w.display_name || w.last_name || w.sheet_name || w.name || 'Unnamed'}
               </SelectItem>
             ))}
           </SelectContent>

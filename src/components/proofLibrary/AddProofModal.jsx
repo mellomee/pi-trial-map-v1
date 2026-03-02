@@ -63,9 +63,16 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
           source_id: clip.id,
           label,
           notes: clip.notes || '',
+          witness_id: clip.deponent_party_id || clip.witness_id || undefined,
         });
       } else {
         proofItem = existing[0];
+        // Backfill witness_id if missing
+        if (!proofItem.witness_id && (clip.deponent_party_id || clip.witness_id)) {
+          proofItem = await base44.entities.ProofItems.update(proofItem.id, {
+            witness_id: clip.deponent_party_id || clip.witness_id,
+          });
+        }
       }
 
       // CREATE THE BRIDGE RECORD
@@ -119,9 +126,16 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
           source_id: extract.id,
           label,
           notes: extract.notes || '',
+          witness_id: extract.deponent_party_id || extract.witness_id || undefined,
         });
       } else {
         proofItem = existing[0];
+        // Backfill witness_id if missing
+        if (!proofItem.witness_id && (extract.deponent_party_id || extract.witness_id)) {
+          proofItem = await base44.entities.ProofItems.update(proofItem.id, {
+            witness_id: extract.deponent_party_id || extract.witness_id,
+          });
+        }
       }
 
       // CREATE THE BRIDGE RECORD
