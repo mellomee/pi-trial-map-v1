@@ -26,6 +26,7 @@ export default function ProofLibrary() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [centerTab, setCenterTab] = useState('proof');
+  const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
 
   // Modal states
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
