@@ -272,6 +272,7 @@ export default function Present() {
           callout={selectedCallout}
           highlights={calloutHighlights}
           showHighlights={highlightsOn}
+          onToggleHighlights={() => setHighlightsOn(v => !v)}
           onClose={() => setSpotlightOn(false)}
         />
       )}
