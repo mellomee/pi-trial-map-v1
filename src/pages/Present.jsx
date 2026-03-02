@@ -352,7 +352,7 @@ export default function Present() {
                   scale={scale}
                   onNumPages={setNumPages}
                 />
-                {/* Quote Spotlight overlay — text-anchored, never drifts */}
+                {/* Quote Spotlight overlay */}
                 <QuoteSpotlight
                   annotation={activeAnn}
                   exhibitNo={displayNumber}
@@ -361,6 +361,13 @@ export default function Present() {
                   onClose={() => setSpotlightOn(false)}
                 />
               </div>
+            )}
+            {/* Callout overlay — baked PNG, no coordinate drift */}
+            {showCalloutOverlay && (
+              <CalloutOverlay
+                callout={activeCallout}
+                onClose={() => setCalloutOverlayOn(false)}
+              />
             )}
           </div>
 
