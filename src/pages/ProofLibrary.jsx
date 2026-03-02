@@ -518,7 +518,7 @@ export default function ProofLibrary() {
                 {centerTab === 'questions' && (
                   <div key={questionsRefreshKey} className="space-y-3">
                     <Button
-                      onClick={() => window.location.href = createPageUrl('Questions')}
+                      onClick={goToQuestions}
                       className="bg-cyan-600 hover:bg-cyan-700 w-full"
                     >
                       <ExternalLink className="w-3 h-3 mr-2" />
