@@ -126,11 +126,15 @@ export default function Questions() {
     return p ? `${p.first_name} ${p.last_name}` : "Unassigned";
   };
 
+  const filteredWitnesses = selectedGroupId === "all" ? parties : groupWitnesses;
+  const witIds = filteredWitnesses.map(w => w.id);
+
   const filtered = questions.filter(q => {
     const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
     const matchParty = partyFilter === "all" || q.party_id === partyFilter;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
-    return matchSearch && matchParty && matchType;
+    const matchGroup = selectedGroupId === "all" || witIds.includes(q.party_id);
+    return matchSearch && matchParty && matchType && matchGroup;
   }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
