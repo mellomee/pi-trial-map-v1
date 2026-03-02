@@ -29,13 +29,9 @@ export default function SnapshotSpotlight({ annotation, exhibitNo, onClose, visi
   const label = annotation.label_text || annotation.label || "";
   const quote = annotation.show_quote_in_present !== false ? (annotation.quote_text || "") : "";
   const hasSnapshot = !!annotation.snapshot_file;
-
-  // Prefer rect_norm (callout-image-relative) if set, fallback to text_highlights
-  const rawHighlights = annotation.rect_norm
-    ? [{ x: annotation.rect_norm.x, y: annotation.rect_norm.y, w: annotation.rect_norm.w, h: annotation.rect_norm.h, color: annotation.color }]
-    : (annotation.text_highlights_mode !== "none" && annotation.text_highlights?.length)
-      ? annotation.text_highlights
-      : [];
+  const rawHighlights = (annotation.text_highlights_mode !== "none" && annotation.text_highlights?.length)
+    ? annotation.text_highlights
+    : [];
   const highlights = showHighlights ? rawHighlights : [];
 
   return (
