@@ -76,6 +76,8 @@ import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
 import TrialMode from './pages/TrialMode';
+import ProofLibrary from './pages/ProofLibrary';
+import WitnessPrep from './pages/WitnessPrep';
 import __Layout from './Layout.jsx';
 
 
@@ -109,6 +111,8 @@ export const PAGES = {
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
     "TrialMode": TrialMode,
+    "ProofLibrary": ProofLibrary,
+    "WitnessPrep": WitnessPrep,
 }
 
 export const pagesConfig = {
