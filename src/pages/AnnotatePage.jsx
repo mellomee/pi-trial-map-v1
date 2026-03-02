@@ -435,6 +435,31 @@ export default function AnnotatePage() {
           </button>
         </div>
 
+        {/* Callouts list */}
+        {callouts.length > 0 && (
+          <div className="border-b border-[#1e2a45] p-2">
+            <p className="text-[9px] text-yellow-500/70 uppercase tracking-widest px-1 mb-1 flex items-center gap-1">
+              <Scissors className="w-2.5 h-2.5" /> Callout Clips ({callouts.length})
+            </p>
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {callouts.sort((a, b) => (a.page_number ?? 0) - (b.page_number ?? 0)).map(c => (
+                <div key={c.id} className="group flex items-center gap-1.5 px-2 py-1 rounded hover:bg-white/5 cursor-pointer"
+                  onClick={() => setPageIndex(c.page_number ?? 1)}>
+                  <Image className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-slate-300 truncate">{c.label || `p.${c.page_number}`}</p>
+                    <span className="text-[8px] text-slate-600">p.{c.page_number} · {c.jury_safe ? "jury-safe" : "internal"}</span>
+                  </div>
+                  <button onClick={e => { e.stopPropagation(); deleteCallout(c.id); }}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 hover:text-red-400">
+                    <Trash2 className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Annotation list */}
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {visibleAnns.length === 0 && (
