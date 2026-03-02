@@ -60,16 +60,18 @@ export default function ProofDetailsModal({ proofItem, isOpen, onClose }) {
                 <CardContent className="pt-4 space-y-3">
                   <div>
                     <p className="text-xs text-slate-400 mb-1">TESTIMONY REFERENCE</p>
-                    <p className="text-sm text-slate-200">{depoClip.start_cite} - {depoClip.end_cite}</p>
+                    <p className="text-sm font-mono text-slate-200">{depoClip.start_cite} – {depoClip.end_cite}</p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 mb-1">TESTIMONY TEXT</p>
-                    <p className="text-sm text-slate-300 bg-[#131a2e] p-3 rounded max-h-48 overflow-y-auto">{depoClip.clip_text}</p>
+                    <div className="text-sm text-slate-300 bg-[#131a2e] p-3 rounded max-h-48 overflow-y-auto whitespace-pre-wrap">
+                      {depoClip.clip_text}
+                    </div>
                   </div>
                   {depoClip.topic_tag && (
                     <div>
                       <Badge className={depoClip.direction === 'HelpsUs' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
-                        {depoClip.topic_tag} • {depoClip.direction}
+                        {depoClip.topic_tag} • {depoClip.direction === 'HelpsUs' ? 'Helps Us' : 'Hurts Us'}
                       </Badge>
                     </div>
                   )}
