@@ -48,6 +48,9 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
     quote_text: editing.quote_text,
     anchor_text: editing.anchor_text,
     label_text: editing.label_text,
+    internal_note: editing.internal_note,
+    note_text: editing.note_text,
+    text_highlights_mode: editing.text_highlights_mode,
   }) : null]);
 
   if (!editing || !form) return null;
