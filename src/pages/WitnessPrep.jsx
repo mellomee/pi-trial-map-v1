@@ -481,10 +481,15 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
   const [q, setQ] = useState(question);
   const [links, setLinks] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const qTextRef = useRef(null);
 
   useEffect(() => {
     setQ(question);
     base44.entities.QuestionLinks.filter({ question_id: question.id }).then(setLinks);
+    // Auto-focus question text field
+    if (qTextRef.current) {
+      setTimeout(() => qTextRef.current?.focus(), 0);
+    }
   }, [question.id]);
 
   const save = async (field, val) => {
