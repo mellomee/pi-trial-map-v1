@@ -90,10 +90,9 @@ export default function ProofLibrary() {
     console.log('[LOAD_GROUP] 📋 Loading details for EG:', selectedGroupId);
     try {
       console.log('[LOAD_GROUP] Fetching all links...');
-      const [groupProofLinks, groupTPLinks, groupWitLinks, groupQuestions] = await Promise.all([
+      const [groupProofLinks, groupTPLinks, groupQuestions] = await Promise.all([
         base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: selectedGroupId }),
-        base44.entities.EvidenceGroupWitnesses.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.QuestionEvidenceGroups.filter({ evidence_group_id: selectedGroupId }),
       ]);
       
@@ -115,8 +114,10 @@ export default function ProofLibrary() {
         if (tp.length > 0) tps.push(tp[0]);
       }
 
-      // Load witness details
-      const witIds = groupWitLinks.map((link) => link.witness_id);
+      // Load witnesses from proof items
+      const allProofWitLinks = await base44.entities.ProofItemWitnesses.filter({ case_id: activeCase.id });
+      const proofWitsForGroup = allProofWitLinks.filter(link => proofIds.includes(link.proof_item_id));
+      const witIds = [...new Set(proofWitsForGroup.map(link => link.witness_id))];
       const wits = [];
       for (const witId of witIds) {
         const wit = await base44.entities.Parties.filter({ id: witId });
