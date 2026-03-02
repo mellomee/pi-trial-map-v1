@@ -390,9 +390,18 @@ export default function Present() {
             )}
           </div>
 
-          {/* Right: Callouts panel */}
+          {/* Right: Callouts panel (collapsible) */}
           {selectedExhibitId && (
-            <div className="w-56 flex-shrink-0 border-l border-[#1e2a45] flex flex-col bg-[#0a0f1e] no-print">
+            <div className="flex-shrink-0 border-l border-[#1e2a45] flex flex-col bg-[#0a0f1e] no-print transition-all duration-200"
+              style={{ width: calloutPanelOpen ? 224 : 40 }}>
+              {/* Collapsed: icon only */}
+              {!calloutPanelOpen && (
+                <button onClick={() => setCalloutPanelOpen(true)} title="Expand callouts"
+                  className="flex flex-col items-center justify-center h-full gap-2 text-slate-600 hover:text-orange-400">
+                  <Scissors className="w-4 h-4" />
+                </button>
+              )}
+              {calloutPanelOpen && <div className="w-56 flex flex-col flex-1 min-h-0">
               {/* Header */}
               <div className="px-3 pt-3 pb-2 border-b border-[#1e2a45]">
                 <div className="flex items-center justify-between mb-1">
