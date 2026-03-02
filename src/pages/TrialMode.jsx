@@ -1,65 +1,162 @@
-import React from "react";
-import { createPageUrl } from "@/utils";
-import { Play, ExternalLink } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import useActiveCase from "@/components/hooks/useActiveCase";
+import WitnessQuestionsList from "@/components/trialMode/WitnessQuestionsList";
+import QuestionWorkspace from "@/components/trialMode/QuestionWorkspace";
+import JuryControls from "@/components/trialMode/JuryControls";
+import {
+  resolveQuestionLinks,
+  getWitnessesForCase,
+  getQuestionsForWitness,
+  updateQuestionStatus,
+  getOrCreateTrialSession,
+  publishProofToJury,
+  clearJuryDisplay,
+} from "@/components/trialMode/trialModeResolvers";
+import { useSearchParams } from "react-router-dom";
 
-/**
- * TrialMode — placeholder home for the unified live-trial experience.
- * Batch 2 will build out the full UI here. For now it explains the concept
- * and links to the parts that are still functional.
- */
 export default function TrialMode() {
-  return (
-    <div className="min-h-screen bg-[#0a0f1e] text-slate-200 p-8">
-      <div className="max-w-3xl mx-auto space-y-8">
+  const { activeCase, loading } = useActiveCase();
+  const [searchParams] = useSearchParams();
 
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-            <Play className="w-5 h-5 text-cyan-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Trial Mode</h1>
-            <p className="text-sm text-slate-500">Unified live-trial command center (coming in Batch 2)</p>
-          </div>
-        </div>
+  const [witnesses, setWitnesses] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [selectedWitnessId, setSelectedWitnessId] = useState(null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+  const [examType, setExamType] = useState("Direct");
 
-        {/* Status card */}
-        <div className="bg-cyan-950/30 border border-cyan-700/40 rounded-xl p-5 space-y-2">
-          <p className="text-sm font-semibold text-cyan-300">What Trial Mode will include:</p>
-          <ul className="text-sm text-slate-400 space-y-1 list-disc list-inside">
-            <li>Live witness exam with Evidence Groups driving the flow</li>
-            <li>Attorney view: questions, proof, callouts, battle cards</li>
-            <li>Jury display: admitted exhibits + spotlight/highlights</li>
-            <li>Session state sync (attorney ↔ jury screen)</li>
-            <li>Admit workflow + ExhibitNumberHistory logging</li>
-          </ul>
-        </div>
+  const [resolvedLinks, setResolvedLinks] = useState({
+    evidenceGroups: [],
+    proofItems: [],
+    trialPoints: [],
+  });
 
-        {/* Legacy links */}
-        <div className="space-y-3">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Legacy pages (still functional)</p>
+  const [trialSession, setTrialSession] = useState(null);
+  const [publishedProof, setPublishedProof] = useState(null);
 
-          {[
-            { label: "Trial Runner (legacy)", page: "TrialRunner", desc: "Question-by-question live exam" },
-            { label: "Present (legacy)", page: "Present", desc: "Exhibit display with callout spotlight" },
-            { label: "Runner (legacy)", page: "Runner", desc: "Simplified question runner" },
-            { label: "Battle Cards (legacy)", page: "BattleCards", desc: "Tactical impeachment cards" },
-          ].map(item => (
-            <a
-              key={item.page}
-              href={createPageUrl(item.page)}
-              className="flex items-center justify-between p-3 bg-[#131a2e] border border-[#1e2a45] rounded-lg hover:border-slate-500 transition-colors group"
-            >
-              <div>
-                <p className="text-sm text-slate-300 group-hover:text-white">{item.label}</p>
-                <p className="text-xs text-slate-600">{item.desc}</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-slate-600 group-hover:text-slate-400" />
-            </a>
-          ))}
-        </div>
+  // Load data on case change
+  useEffect(() => {
+    if (!activeCase?.id) {
+      setWitnesses([]);
+      setQuestions([]);
+      return;
+    }
 
+    loadCaseData();
+  }, [activeCase?.id]);
+
+  const loadCaseData = async () => {
+    const [witnessesList, session] = await Promise.all([
+      getWitnessesForCase(activeCase.id),
+      getOrCreateTrialSession(activeCase.id),
+    ]);
+
+    setWitnesses(witnessesList);
+    setTrialSession(session);
+
+    // Pre-select first witness if coming from deep link
+    const witnessIdParam = searchParams.get("witnessId");
+    if (witnessIdParam) {
+      setSelectedWitnessId(witnessIdParam);
+      const qs = await getQuestionsForWitness(activeCase.id, witnessIdParam);
+      setQuestions(qs);
+    } else if (witnessesList.length > 0) {
+      setSelectedWitnessId(witnessesList[0].id);
+      const qs = await getQuestionsForWitness(activeCase.id, witnessesList[0].id);
+      setQuestions(qs);
+    }
+  };
+
+  // When witness changes, load their questions
+  const handleSelectWitness = async (witnessId) => {
+    setSelectedWitnessId(witnessId);
+    setSelectedQuestionId(null);
+    const qs = await getQuestionsForWitness(activeCase.id, witnessId, examType);
+    setQuestions(qs);
+  };
+
+  // When question changes, resolve its links
+  const handleSelectQuestion = async (questionId) => {
+    setSelectedQuestionId(questionId);
+    const links = await resolveQuestionLinks(questionId, activeCase.id);
+    setResolvedLinks(links);
+  };
+
+  // Update question and refresh
+  const handleUpdateQuestion = async (updated) => {
+    await updateQuestionStatus(updated.id, {
+      question_text: updated.question_text,
+      live_notes: updated.live_notes,
+      status: updated.status,
+    });
+    setSelectedQuestionId(updated.id);
+  };
+
+  // Status change
+  const handleStatusChange = async (status) => {
+    if (!selectedQuestionId) return;
+    await updateQuestionStatus(selectedQuestionId, { status });
+    setQuestions(q => q.map(qq => qq.id === selectedQuestionId ? { ...qq, status } : qq));
+  };
+
+  // Publish proof to jury
+  const handlePublishProof = async (proofItem) => {
+    if (!trialSession) return;
+    await publishProofToJury(trialSession.id, proofItem.id);
+    setPublishedProof(proofItem);
+  };
+
+  // Clear jury display
+  const handleClearJury = async () => {
+    if (!trialSession) return;
+    await clearJuryDisplay(trialSession.id);
+    setPublishedProof(null);
+  };
+
+  const selectedQuestion = questions.find(q => q.id === selectedQuestionId);
+
+  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  if (!activeCase) {
+    return (
+      <div className="flex items-center justify-center h-screen text-slate-400">
+        <p>Please select a case to begin</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen bg-[#0a0f1e]">
+      {/* Left: Witness & Questions */}
+      <WitnessQuestionsList
+        witnesses={witnesses}
+        questions={questions}
+        selectedWitnessId={selectedWitnessId}
+        onSelectWitness={handleSelectWitness}
+        selectedQuestionId={selectedQuestionId}
+        onSelectQuestion={handleSelectQuestion}
+        examType={examType}
+        onExamTypeChange={setExamType}
+      />
+
+      {/* Center: Question workspace */}
+      <QuestionWorkspace
+        question={selectedQuestion}
+        evidenceGroups={resolvedLinks.evidenceGroups}
+        trialPoints={resolvedLinks.trialPoints}
+        proofItems={resolvedLinks.proofItems}
+        onUpdateQuestion={handleUpdateQuestion}
+        onStatusChange={handleStatusChange}
+        onPreviewProof={(proof) => console.log("Preview:", proof)}
+        onPublishProof={handlePublishProof}
+      />
+
+      {/* Right: Jury controls */}
+      <JuryControls
+        caseId={activeCase.id}
+        trialSession={trialSession}
+        onPublish={handlePublishProof}
+        publishedProof={publishedProof}
+      />
     </div>
   );
 }
