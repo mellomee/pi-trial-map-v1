@@ -320,15 +320,23 @@ export default function ProofLibrary() {
         }
       }
 
+      // Immediately append to UI (optimistic update)
+      const createdQuestion = {
+        id: newQuestion.id,
+        question_text: generateQuestionData.question_text,
+        exam_type: generateQuestionData.exam_type,
+        party_id: generateQuestionData.witness_id,
+        status: 'NotAsked',
+      };
+      setLinkedQuestions(prev => [...prev, createdQuestion]);
+
       // Close modal and reset form
       setShowGenerateQuestionModal(false);
       setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       toast.success('Question created');
 
-      // Refetch questions immediately (this updates linkedQuestions state)
-      console.log('[QUESTION_CREATE] Refetching questions for EG:', selectedGroupId);
+      // Refetch in background to sync with DB
       await loadGroupDetails();
-      console.log('[QUESTION_CREATE] ✅ Questions refetched and state updated');
       
     } catch (error) {
       console.error('[QUESTION_CREATE] ❌ Error:', error.message);
