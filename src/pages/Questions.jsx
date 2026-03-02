@@ -79,7 +79,7 @@ export default function Questions() {
           <h1 className="text-2xl font-bold text-white">Questions</h1>
           <p className="text-sm text-slate-500">Direct & Cross Examination</p>
         </div>
-        <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={() => { setEditing({ ...EMPTY }); setOpen(true); }}>
+        <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={() => { setEditing({ ...EMPTY }); setOpen(true); setModalKey(k => k + 1); }}>
           <Plus className="w-4 h-4 mr-2" /> Add Question
         </Button>
       </div>
