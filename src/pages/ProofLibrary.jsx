@@ -40,6 +40,9 @@ export default function ProofLibrary() {
   useEffect(() => {
     if (activeCase?.id) {
       loadData();
+      // Load persisted group selection
+      const saved = sessionStorage.getItem(`evidence-group-${activeCase.id}`);
+      if (saved) setSelectedGroupId(saved);
     }
   }, [activeCase?.id]);
 
