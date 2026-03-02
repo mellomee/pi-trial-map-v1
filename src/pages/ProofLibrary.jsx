@@ -73,6 +73,33 @@ export default function ProofLibrary() {
     }
   };
 
+  const refetchQuestionsForGroup = async (groupId) => {
+    console.log('[REFETCH_Q] Refetching questions for EG:', groupId);
+    try {
+      const groupQuestions = await base44.entities.QuestionEvidenceGroups.filter({
+        evidence_group_id: groupId,
+      });
+      console.log('[REFETCH_Q] Found', groupQuestions.length, 'question links');
+
+      const qIds = groupQuestions.map((link) => link.question_id);
+      const qs = [];
+      for (const qId of qIds) {
+        const q = await base44.entities.Questions.filter({ id: qId });
+        if (q.length > 0) {
+          qs.push(q[0]);
+          console.log('[REFETCH_Q] ✅ Loaded:', q[0].id, q[0].question_text);
+        }
+      }
+      
+      console.log('[REFETCH_Q] ✅ Total questions after refetch:', qs.length);
+      setLinkedQuestions(qs);
+      return qs;
+    } catch (error) {
+      console.error('[REFETCH_Q] ❌ Error:', error);
+      return [];
+    }
+  };
+
   const loadGroupDetails = async () => {
     console.log('[LOAD_GROUP] 📋 Loading details for EG:', selectedGroupId);
     try {
