@@ -413,6 +413,16 @@ export default function AnnotatePage() {
             <Plus className="w-3.5 h-3.5" /> New Spotlight Quote
           </button>
           <button
+            onClick={() => setCalloutMode(v => !v)}
+            className={`flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium border transition-colors ${
+              calloutMode
+                ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40 animate-pulse"
+                : "bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/20"
+            }`}
+          >
+            <Scissors className="w-3.5 h-3.5" /> {calloutMode ? "Cancel Callout" : "Create Callout"}
+          </button>
+          <button
             onClick={() => setShowJurySafeOnly(v => !v)}
             className={`flex items-center gap-1.5 py-1 rounded text-[10px] border transition-colors px-2 ${
               showJurySafeOnly
