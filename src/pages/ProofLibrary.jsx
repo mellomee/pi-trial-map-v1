@@ -774,6 +774,24 @@ export default function ProofLibrary() {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Questions Modal (Dev Utility) */}
+      <Dialog open={showDeleteQuestionsModal} onOpenChange={setShowDeleteQuestionsModal}>
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-red-400">Delete All Questions in This Group?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-300">This will remove all {linkedQuestions.length} linked questions from this evidence group. The questions will still exist in the system.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteQuestionsModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteQuestionsInGroup} className="bg-red-600 hover:bg-red-700">
+              Delete All
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Assign Witnesses Modal */}
       <Dialog open={showAssignWitnessModal} onOpenChange={setShowAssignWitnessModal}>
         <DialogContent className="bg-gray-900 border-gray-700">
@@ -869,14 +887,11 @@ export default function ProofLibrary() {
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                console.log('Create Question clicked', { generateQuestionData, isDisabled: !generateQuestionData.witness_id || !generateQuestionData.question_text.trim() });
-                handleGenerateQuestion();
-              }}
-              disabled={!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()}
+              onClick={handleGenerateQuestion}
+              disabled={!generateQuestionData.witness_id || !generateQuestionData.question_text.trim() || isCreatingQuestion}
               className="bg-cyan-600 hover:bg-cyan-700 text-white relative z-[10001]"
             >
-              Create Question
+              {isCreatingQuestion ? 'Creating...' : 'Create Question'}
             </Button>
           </DialogFooter>
         </DialogContent>
