@@ -35,7 +35,7 @@ export default function ProofLibrary() {
   const [showGenerateQuestionModal, setShowGenerateQuestionModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
-  const [generateQuestionData, setGenerateQuestionData] = useState({ witness_id: '', exam_type: 'Direct' });
+  const [generateQuestionData, setGenerateQuestionData] = useState({ witness_id: '', exam_type: 'Direct', question_text: '' });
 
   useEffect(() => {
     if (activeCase?.id) {
@@ -772,23 +772,36 @@ export default function ProofLibrary() {
 
       {/* Generate Question Modal */}
       <Dialog open={showGenerateQuestionModal} onOpenChange={setShowGenerateQuestionModal}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent className="bg-gray-900 border-gray-700 max-w-lg">
           <DialogHeader>
-            <DialogTitle>Generate Question</DialogTitle>
+            <DialogTitle>Create Question</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Witness</label>
+              <label className="text-sm font-medium">Question Text *</label>
+              <Textarea
+                placeholder="Type your question here..."
+                value={generateQuestionData.question_text}
+                onChange={(e) => setGenerateQuestionData({ ...generateQuestionData, question_text: e.target.value })}
+                className="mt-1 bg-gray-800 border-gray-700"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Witness *</label>
               <Select value={generateQuestionData.witness_id} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, witness_id: v })}>
                 <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
                   <SelectValue placeholder="Select witness..." />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
-                  {linkedWitnesses.map((wit) => (
-                    <SelectItem key={wit.id} value={wit.id}>
-                      {wit.display_name || wit.last_name}
-                    </SelectItem>
-                  ))}
+                  {linkedWitnesses.length > 0 ? (
+                    linkedWitnesses.map((wit) => (
+                      <SelectItem key={wit.id} value={wit.id}>
+                        {wit.display_name || wit.last_name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-xs text-gray-400">Assign witnesses to this evidence group first</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -811,10 +824,10 @@ export default function ProofLibrary() {
             </Button>
             <Button
               onClick={handleGenerateQuestion}
-              disabled={!generateQuestionData.witness_id}
+              disabled={!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()}
               className="bg-cyan-600 hover:bg-cyan-700"
             >
-              Generate
+              Create Question
             </Button>
           </DialogFooter>
         </DialogContent>
