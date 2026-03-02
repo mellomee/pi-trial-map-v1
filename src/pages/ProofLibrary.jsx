@@ -654,12 +654,12 @@ export default function ProofLibrary() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Title *</label>
+              <label className="text-sm font-medium text-gray-900">Title *</label>
               <Input
                 placeholder="e.g., Sightlines Blocked"
                 value={newGroupData.title}
                 onChange={(e) => setNewGroupData({ ...newGroupData, title: e.target.value })}
-                className="mt-1 bg-gray-800 border-gray-700"
+                className="mt-1 bg-white border-gray-300 text-gray-900"
               />
             </div>
             <div>
