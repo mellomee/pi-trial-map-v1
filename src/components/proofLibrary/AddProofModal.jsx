@@ -154,7 +154,7 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
 
       setSelectedExtract('');
       setLoading(false);
-      onProofAdded();
+      onProofAdded(proofItem);
     } catch (err) {
       console.error('Error adding extract:', err);
       setError(err.message || 'Failed to add proof');
