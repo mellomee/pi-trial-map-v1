@@ -54,7 +54,7 @@ function PdfViewer({ fileUrl, currentPage, scale, onNumPages }) {
 }
 
 // ── Spotlight Overlay ─────────────────────────────────────────────────────────
-function SpotlightOverlay({ callout, highlights, showHighlights, onClose }) {
+function SpotlightOverlay({ callout, highlights, showHighlights, onToggleHighlights, onClose }) {
   useEffect(() => {
     const handler = e => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
