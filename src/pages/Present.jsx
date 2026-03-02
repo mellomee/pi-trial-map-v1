@@ -117,17 +117,20 @@ export default function Present() {
   }, [extractForExhibit, selectedExhibit, depoExhibits]);
 
   useEffect(() => {
-    if (!extractForExhibit?.id) { setAnnotations([]); return; }
-    base44.entities.ExhibitAnnotations.filter({ extract_id: extractForExhibit.id })
-      .then(anns => {
-        const juryAnns = anns.filter(a => a.jury_safe);
-        setAnnotations(juryAnns);
-        if (initAnnotationId && anns.find(a => a.id === initAnnotationId)) {
-          setActiveAnnotationId(initAnnotationId);
-          const target = anns.find(a => a.id === initAnnotationId);
-          if (target) setCurrentPage(target.page_number ?? target.extract_page_number ?? 1);
-        }
-      });
+    if (!extractForExhibit?.id) { setAnnotations([]); setCallouts([]); return; }
+    Promise.all([
+      base44.entities.ExhibitAnnotations.filter({ extract_id: extractForExhibit.id }),
+      base44.entities.ExhibitCallouts.filter({ extract_id: extractForExhibit.id }),
+    ]).then(([anns, cts]) => {
+      const juryAnns = anns.filter(a => a.jury_safe);
+      setAnnotations(juryAnns);
+      setCallouts(cts.filter(c => c.jury_safe));
+      if (initAnnotationId && anns.find(a => a.id === initAnnotationId)) {
+        setActiveAnnotationId(initAnnotationId);
+        const target = anns.find(a => a.id === initAnnotationId);
+        if (target) setCurrentPage(target.page_number ?? target.extract_page_number ?? 1);
+      }
+    });
   }, [extractForExhibit]);
 
   useEffect(() => {
