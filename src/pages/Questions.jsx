@@ -149,7 +149,7 @@ export default function Questions() {
     const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
     const matchParty = partyFilter === "all" || q.party_id === partyFilter;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
-    const matchGroup = selectedGroupId === "all" || witIds.includes(q.party_id);
+    const matchGroup = selectedGroupId === "all" ? true : (q.primary_evidence_group_id === selectedGroupId || witIds.includes(q.party_id));
     return matchSearch && matchParty && matchType && matchGroup;
   }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 
