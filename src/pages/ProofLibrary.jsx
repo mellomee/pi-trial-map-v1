@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
+import ProofDetailsModal from '@/components/proofLibrary/ProofDetailsModal';
 import { createPageUrl } from '@/utils';
 
 export default function ProofLibrary() {
@@ -27,6 +28,8 @@ export default function ProofLibrary() {
   const [loading, setLoading] = useState(false);
   const [centerTab, setCenterTab] = useState('proof');
   const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
+  const [selectedProofItem, setSelectedProofItem] = useState(null);
+  const [showProofDetails, setShowProofDetails] = useState(false);
 
   // Modal states
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
@@ -165,9 +168,7 @@ export default function ProofLibrary() {
     if (selectedGroupId && selectedGroupId !== "all") {
       sessionStorage.setItem(`evidence-group-${activeCase.id}`, selectedGroupId);
     }
-    // Use navigation instead of window.location to avoid blank screen
-    const nav = document.querySelector('a[href*="Questions"]');
-    if (nav) nav.click();
+    window.location.href = createPageUrl('Questions');
   };
 
   const handleUpdateGroup = async () => {
