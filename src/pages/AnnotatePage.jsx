@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft, ChevronRight, Trash2, Pencil, Check, X,
-  Eye, EyeOff, Plus, StickyNote, ZoomIn, ZoomOut, Highlighter
+  Eye, EyeOff, Plus, StickyNote, ZoomIn, ZoomOut, Highlighter, Scissors, Image
 } from "lucide-react";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { createPageUrl } from "@/utils";
 import QuoteAnnotationModal from "@/components/annotate/QuoteAnnotationModal";
 import FindOnPage from "@/components/annotate/FindOnPage";
 import AnnotationEditorModal from "@/components/exhibits/AnnotationEditorModal";
+import CalloutCaptureModal from "@/components/annotate/CalloutCaptureModal";
 import { pdfjs } from "react-pdf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
