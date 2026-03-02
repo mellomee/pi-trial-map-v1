@@ -187,7 +187,9 @@ export default function Present() {
     : null;
 
   const activeAnn = annotations.find(a => a.id === activeAnnotationId) || null;
+  // Use SnapshotSpotlight if annotation has a snapshot, otherwise fall back to QuoteSpotlight
   const showSpotlight = spotlightOn && activeAnn;
+  const useSnapshotSpotlight = showSpotlight && !!activeAnn?.snapshot_file;
   const activeCallout = callouts.find(c => c.id === activeCalloutId) || null;
   const showCalloutOverlay = calloutOverlayOn && activeCallout;
 
