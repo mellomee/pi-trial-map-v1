@@ -559,14 +559,26 @@ export default function ProofLibrary() {
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
                   <>
-                    <Button
-                      onClick={() => setShowGenerateQuestionModal(true)}
-                      size="sm"
-                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
-                    >
-                      <Plus className="w-3 h-3 mr-2" />
-                      Generate Question
-                    </Button>
+                    <div className="space-y-2">
+                      <Button
+                        onClick={() => setShowGenerateQuestionModal(true)}
+                        size="sm"
+                        className="bg-cyan-600 hover:bg-cyan-700 w-full"
+                      >
+                        <Plus className="w-3 h-3 mr-2" />
+                        Generate Question
+                      </Button>
+                      {linkedQuestions.length > 0 && (
+                        <Button
+                          onClick={() => setShowDeleteQuestionsModal(true)}
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-red-400 border-red-400 hover:bg-red-950"
+                        >
+                          Delete All Questions (Dev)
+                        </Button>
+                      )}
+                    </div>
                     {linkedQuestions.length > 0 ? (
                       linkedQuestions.map((q) => (
                         <div key={q.id} className="bg-gray-800 border border-gray-700 rounded p-3">
