@@ -759,9 +759,10 @@ export default function ProofLibrary() {
         onClose={() => setShowAddProofModal(false)}
         caseId={activeCase?.id}
         evidenceGroupId={selectedGroupId}
-        onProofAdded={() => {
+        onProofAdded={async (proofItem) => {
           setShowAddProofModal(false);
-          loadGroupDetails();
+          await linkWitnessesToProof(proofItem);
+          await loadGroupDetails();
         }}
       />
 
