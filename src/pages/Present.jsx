@@ -355,14 +355,25 @@ export default function Present() {
                   scale={scale}
                   onNumPages={setNumPages}
                 />
-                {/* Quote Spotlight overlay */}
-                <QuoteSpotlight
-                  annotation={activeAnn}
-                  exhibitNo={displayNumber}
-                  visible={showSpotlight}
-                  mode={spotlightMode}
-                  onClose={() => setSpotlightOn(false)}
-                />
+                {/* Snapshot-based spotlight (no drift) — preferred when snapshot_file exists */}
+                {useSnapshotSpotlight && (
+                  <SnapshotSpotlight
+                    annotation={activeAnn}
+                    exhibitNo={displayNumber}
+                    visible={true}
+                    onClose={() => setSpotlightOn(false)}
+                  />
+                )}
+                {/* Text-only fallback spotlight for annotations without snapshot */}
+                {showSpotlight && !useSnapshotSpotlight && (
+                  <QuoteSpotlight
+                    annotation={activeAnn}
+                    exhibitNo={displayNumber}
+                    visible={true}
+                    mode={spotlightMode}
+                    onClose={() => setSpotlightOn(false)}
+                  />
+                )}
               </div>
             )}
             {/* Callout overlay — baked PNG, no coordinate drift */}
