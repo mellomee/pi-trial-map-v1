@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
-  LayoutDashboard, Users, Target, FileText,
-  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Video, Zap, Layers, GitBranch, Gavel, Monitor
+  LayoutDashboard, Users, Target, HelpCircle, FileText,
+  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Layers, GitBranch
 } from "lucide-react";
 import FloatingChat from "@/components/chat/FloatingChat";
 import useActiveCase from "@/components/hooks/useActiveCase";
@@ -30,8 +30,7 @@ const NAV_SECTIONS = [
   {
     label: "LIVE TRIAL",
     items: [
-      { name: "Attorney View", icon: Gavel, page: "AttorneyView" },
-      { name: "Jury View", icon: Monitor, page: "JuryView" },
+      { name: "Trial Mode", icon: Zap, page: "TrialMode" },
     ],
   },
   {
