@@ -123,8 +123,8 @@ export default function Present() {
       base44.entities.ExhibitAnnotations.filter({ extract_id: extractForExhibit.id }),
       base44.entities.ExhibitCallouts.filter({ extract_id: extractForExhibit.id }),
     ]).then(([anns, cts]) => {
-      const juryAnns = anns.filter(a => a.jury_safe);
-      setAnnotations(juryAnns);
+      // All annotations regardless of kind — filter jury_safe for display
+      setAnnotations(anns.filter(a => a.jury_safe));
       setCallouts(cts.filter(c => c.jury_safe));
       if (initAnnotationId && anns.find(a => a.id === initAnnotationId)) {
         setActiveAnnotationId(initAnnotationId);
