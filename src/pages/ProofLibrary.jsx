@@ -844,7 +844,7 @@ export default function ProofLibrary() {
 
       {/* Add Question Modal */}
       <Dialog open={showAddQuestionModal} onOpenChange={setShowAddQuestionModal}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent className="bg-white border-gray-300">
           <DialogHeader>
             <DialogTitle>Add Question for {selectedGroup?.title}</DialogTitle>
           </DialogHeader>
