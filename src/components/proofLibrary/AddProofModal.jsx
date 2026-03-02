@@ -192,7 +192,7 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-300">
                 {depoClips.map((clip) => (
-                  <SelectItem key={clip.id} value={clip.id} className="text-gray-100">
+                   <SelectItem key={clip.id} value={clip.id} className="text-gray-900">
                     {clip.topic_tag || `${clip.start_cite} - ${clip.end_cite}`}
                   </SelectItem>
                 ))}
