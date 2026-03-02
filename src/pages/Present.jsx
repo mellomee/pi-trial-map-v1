@@ -403,12 +403,17 @@ export default function Present() {
               )}
               {calloutPanelOpen && <div className="w-56 flex flex-col flex-1 min-h-0">
               {/* Header */}
-              <div className="px-3 pt-3 pb-2 border-b border-[#1e2a45]">
+              <div className="px-3 pt-3 pb-2 border-b border-[#1e2a45] flex-shrink-0">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-[10px] font-bold text-orange-400/80 uppercase tracking-widest flex items-center gap-1">
                     <Scissors className="w-3 h-3" /> Callouts
                   </p>
-                  <span className="text-[9px] text-slate-600">{visibleCallouts.length}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[9px] text-slate-600">{visibleCallouts.length}</span>
+                    <button onClick={() => setCalloutPanelOpen(false)} className="p-0.5 text-slate-600 hover:text-slate-400" title="Collapse">
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
                 {/* Jury-safe filter */}
                 <label className="flex items-center gap-1.5 cursor-pointer select-none">
