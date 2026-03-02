@@ -188,9 +188,20 @@ export default function Present() {
     : null;
 
   const activeAnn = annotations.find(a => a.id === activeAnnotationId) || null;
-  // Use SnapshotSpotlight if annotation has a snapshot, otherwise fall back to QuoteSpotlight
+  // If annotation is linked to a callout, use the callout image as the spotlight source
+  const activeAnnCallout = activeAnn?.callout_id
+    ? callouts.find(c => c.id === activeAnn.callout_id) || null
+    : null;
+  const spotlightAnn = activeAnnCallout
+    ? {
+        ...activeAnn,
+        // Use callout image as snapshot_file for SnapshotSpotlight
+        snapshot_file: activeAnnCallout.callout_image || activeAnnCallout.snapshot_image_url || activeAnn.snapshot_file,
+        // rect_norm is already relative to callout image — SnapshotSpotlight handles this
+      }
+    : activeAnn;
   const showSpotlight = spotlightOn && activeAnn;
-  const useSnapshotSpotlight = showSpotlight && !!activeAnn?.snapshot_file;
+  const useSnapshotSpotlight = showSpotlight && !!(spotlightAnn?.snapshot_file);
   const activeCallout = callouts.find(c => c.id === activeCalloutId) || null;
   const showCalloutOverlay = calloutOverlayOn && activeCallout;
 
