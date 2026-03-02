@@ -164,9 +164,9 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-gray-900 border-gray-700">
+      <DialogContent className="max-w-md bg-white border-gray-300">
         <DialogHeader>
-          <DialogTitle className="text-gray-100">Add Proof to Evidence Group</DialogTitle>
+          <DialogTitle className="text-gray-900">Add Proof to Evidence Group</DialogTitle>
         </DialogHeader>
 
         {error && (
