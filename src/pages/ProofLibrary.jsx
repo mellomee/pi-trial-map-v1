@@ -325,13 +325,10 @@ export default function ProofLibrary() {
       setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       toast.success('Question created');
 
-      // Switch to Questions tab to show new question
-      setCenterTab('questions');
-
-      // Refetch questions immediately
+      // Refetch questions immediately (this updates linkedQuestions state)
       console.log('[QUESTION_CREATE] Refetching questions for EG:', selectedGroupId);
       await loadGroupDetails();
-      console.log('[QUESTION_CREATE] ✅ Questions refetched');
+      console.log('[QUESTION_CREATE] ✅ Questions refetched and state updated');
       
     } catch (error) {
       console.error('[QUESTION_CREATE] ❌ Error:', error.message);
