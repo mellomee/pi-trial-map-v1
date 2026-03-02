@@ -349,6 +349,55 @@ export default function AnnotatePage() {
     setCallouts(prev => prev.filter(c => c.id !== id));
   };
 
+  // ── Highlight drag handlers ───────────────────────────────────────────────
+  const onHighlightMouseDown = useCallback((e) => {
+    if (!highlightMode) return;
+    e.preventDefault();
+    const pos = getCanvasRelativePos(e);
+    setHighlightDragStart(pos);
+    setHighlightDragRect(null);
+    setHighlightDragging(true);
+  }, [highlightMode, getCanvasRelativePos]);
+
+  const onHighlightMouseMove = useCallback((e) => {
+    if (!highlightDragging || !highlightDragStart) return;
+    const pos = getCanvasRelativePos(e);
+    setHighlightDragRect({
+      x: Math.min(highlightDragStart.x, pos.x),
+      y: Math.min(highlightDragStart.y, pos.y),
+      w: Math.abs(pos.x - highlightDragStart.x),
+      h: Math.abs(pos.y - highlightDragStart.y),
+    });
+  }, [highlightDragging, highlightDragStart, getCanvasRelativePos]);
+
+  const onHighlightMouseUp = useCallback(async (e) => {
+    if (!highlightDragging || !highlightDragStart) return;
+    setHighlightDragging(false);
+    const pos = getCanvasRelativePos(e);
+    const rect = {
+      x: Math.min(highlightDragStart.x, pos.x),
+      y: Math.min(highlightDragStart.y, pos.y),
+      w: Math.abs(pos.x - highlightDragStart.x),
+      h: Math.abs(pos.y - highlightDragStart.y),
+    };
+    setHighlightDragRect(null);
+    if (rect.w < 8 || rect.h < 8) return;
+
+    if (!pdfDoc) return;
+    const page = await pdfDoc.getPage(pageIndex);
+    const captureResult = await captureAnnotationSnapshot({
+      displayCanvas: canvasRef.current,
+      pdfPage: page,
+      renderScale: scale,
+      dragRect: rect,
+      color: highlightColor,
+      bakeHighlight: true,
+    });
+
+    setPendingCaptureData(captureResult);
+    setSnapshotModalOpen(true);
+  }, [highlightDragging, highlightDragStart, getCanvasRelativePos, pdfDoc, pageIndex, scale, highlightColor]);
+
   // ── PICKER UI ────────────────────────────────────────────────────────────
   if (!extractId) {
     return (
