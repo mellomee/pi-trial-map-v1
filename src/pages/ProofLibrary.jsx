@@ -36,6 +36,8 @@ export default function ProofLibrary() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
   const [generateQuestionData, setGenerateQuestionData] = useState({ witness_id: '', exam_type: 'Direct', question_text: '' });
+  const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
+  const [showDeleteQuestionsModal, setShowDeleteQuestionsModal] = useState(false);
 
   useEffect(() => {
     if (activeCase?.id) {
@@ -265,6 +267,11 @@ export default function ProofLibrary() {
 
   const handleGenerateQuestion = async () => {
     if (!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()) return;
+    if (isCreatingQuestion) return; // Prevent double submission
+    
+    setIsCreatingQuestion(true);
+    console.log('[QUESTION_CREATE] Starting creation:', { generateQuestionData, timestamp: new Date().toISOString() });
+    
     try {
       const newQuestion = await base44.entities.Questions.create({
         case_id: activeCase.id,
@@ -274,6 +281,8 @@ export default function ProofLibrary() {
         status: 'NotAsked',
         importance: 'Med',
       });
+      
+      console.log('[QUESTION_CREATE] Question created with ID:', newQuestion.id);
 
       // Link to evidence group
       await base44.entities.QuestionEvidenceGroups.create({
@@ -299,11 +308,32 @@ export default function ProofLibrary() {
         }
       }
 
+      console.log('[QUESTION_CREATE] All links created successfully');
       setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       setShowGenerateQuestionModal(false);
       await loadGroupDetails();
     } catch (error) {
       console.error('Error generating question:', error);
+    } finally {
+      setIsCreatingQuestion(false);
+    }
+  };
+
+  const handleDeleteQuestionsInGroup = async () => {
+    try {
+      for (const q of linkedQuestions) {
+        const links = await base44.entities.QuestionEvidenceGroups.filter({
+          question_id: q.id,
+          evidence_group_id: selectedGroupId,
+        });
+        for (const link of links) {
+          await base44.entities.QuestionEvidenceGroups.delete(link.id);
+        }
+      }
+      setShowDeleteQuestionsModal(false);
+      await loadGroupDetails();
+    } catch (error) {
+      console.error('Error deleting questions:', error);
     }
   };
 
