@@ -502,7 +502,7 @@ export default function Present() {
                                     <p className="text-[9px] text-slate-600 italic">No quote or snapshot.</p>
                                   )}
                                   <button
-                                    onClick={() => { selectAnnotation(a); setSpotlightOn(true); }}
+                                    onClick={() => selectAnnotation(a, true)}
                                     className="w-full py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors"
                                   >
                                     ✦ {a.snapshot_file ? "Snapshot Spotlight" : "Spotlight"}
