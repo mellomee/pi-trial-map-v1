@@ -509,7 +509,8 @@ export default function Present() {
                   </button>
                 </div>
               )}
-            </div>
+            </div>}
+          </div>
           )}
         </div>
       </div>
