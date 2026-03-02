@@ -22,17 +22,8 @@ export default function Questions() {
   const { activeCase } = useActiveCase();
   const [questions, setQuestions] = useState([]);
   const [parties, setParties] = useState([]);
-  const [evidenceGroups, setEvidenceGroups] = useState([]);
-  const [selectedGroupId, setSelectedGroupId] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem(`evidence-group-${typeof window !== 'undefined' ? window.location.href : ''}`);
-      return saved || "all";
-    }
-    return "all";
-  });
-  const [groupWitnesses, setGroupWitnesses] = useState([]);
+  const [selectedPartyId, setSelectedPartyId] = useState("all");
   const [search, setSearch] = useState("");
-  const [partyFilter, setPartyFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
