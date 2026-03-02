@@ -23,7 +23,13 @@ export default function Questions() {
   const [questions, setQuestions] = useState([]);
   const [parties, setParties] = useState([]);
   const [evidenceGroups, setEvidenceGroups] = useState([]);
-  const [selectedGroupId, setSelectedGroupId] = useState("all");
+  const [selectedGroupId, setSelectedGroupId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(`evidence-group-${typeof window !== 'undefined' ? window.location.href : ''}`);
+      return saved || "all";
+    }
+    return "all";
+  });
   const [groupWitnesses, setGroupWitnesses] = useState([]);
   const [search, setSearch] = useState("");
   const [partyFilter, setPartyFilter] = useState("all");
