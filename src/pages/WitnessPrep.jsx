@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Plus, ChevronRight, Trash2, HelpCircle, X, Layers, Swords } from "lucide-react";
+import { useMemo } from "react";
 import WorkflowBanner from "@/components/trial/WorkflowBanner";
 
 const STATUS_COLORS = {
