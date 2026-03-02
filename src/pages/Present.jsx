@@ -259,7 +259,9 @@ export default function Present() {
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
   return (
-    <div className={`flex h-screen bg-black text-slate-100 overflow-hidden ${fullscreen ? "fixed inset-0 z-50" : ""}`}>
+    <div className={`flex flex-col h-screen bg-black text-slate-100 overflow-hidden ${fullscreen ? "fixed inset-0 z-50" : ""}`}>
+      {!fullscreen && <LegacyBanner pageName="Present" />}
+      <div className="flex flex-1 overflow-hidden bg-black text-slate-100">
       <style>{`
         @media print {
           .no-print { display: none !important; }

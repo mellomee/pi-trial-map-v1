@@ -212,7 +212,9 @@ export default function TrialRunner() {
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
   return (
-    <div className="flex h-screen bg-[#0a0f1e] overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#0a0f1e] overflow-hidden">
+      <LegacyBanner pageName="TrialRunner" />
+      <div className="flex flex-1 overflow-hidden">
       {/* ── Left: Question List ─────────────────────────────────── */}
       <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col bg-[#0f1629]">
         <div className="p-3 border-b border-[#1e2a45] space-y-2">

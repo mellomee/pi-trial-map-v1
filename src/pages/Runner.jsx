@@ -46,7 +46,9 @@ export default function Runner() {
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
   return (
-    <div className="p-8">
+    <div>
+      <LegacyBanner pageName="Runner" />
+      <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Trial Runner</h1>
