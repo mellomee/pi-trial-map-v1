@@ -37,7 +37,10 @@ export default function Questions() {
     setQuestions(q);
     setParties(p);
   };
-  useEffect(load, [activeCase]);
+  
+  useEffect(() => {
+    load();
+  }, [activeCase]);
 
   const save = async () => {
     const data = { ...editing, case_id: activeCase.id };
