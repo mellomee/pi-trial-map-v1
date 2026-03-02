@@ -151,26 +151,42 @@ export default function Questions() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-          <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+      <div className="space-y-3 mb-6">
+        <div className="flex gap-3">
+          <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+            <SelectTrigger className="w-64 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select evidence group..." /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Witnesses</SelectItem>
+              {evidenceGroups.map(eg => <SelectItem key={eg.id} value={eg.id}>{eg.title}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {selectedGroupId !== "all" && (
+            <div className="flex-1 text-xs text-slate-400 flex items-center">
+              {groupWitnesses.length} witness{groupWitnesses.length !== 1 ? "es" : ""} in group
+            </div>
+          )}
         </div>
-        <Select value={partyFilter} onValueChange={setPartyFilter}>
-          <SelectTrigger className="w-48 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="All parties" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Parties</SelectItem>
-            {parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-32 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Direct">Direct</SelectItem>
-            <SelectItem value="Cross">Cross</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+            <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+          </div>
+          <Select value={partyFilter} onValueChange={setPartyFilter}>
+            <SelectTrigger className="w-48 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="All parties" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Parties</SelectItem>
+              {filteredWitnesses.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-32 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="Direct">Direct</SelectItem>
+              <SelectItem value="Cross">Cross</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-2">
