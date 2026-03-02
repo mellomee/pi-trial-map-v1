@@ -101,7 +101,7 @@ export default function ProofDetailsModal({ proofItem, isOpen, onClose }) {
               </Card>
             )}
 
-            {proofItem.notes && (
+            {proofItem?.notes && (
               <Card className="bg-[#0a0f1e] border-[#1e2a45]">
                 <CardContent className="pt-4">
                   <p className="text-xs text-slate-400 mb-1">NOTES</p>
