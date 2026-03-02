@@ -161,7 +161,7 @@ export default function ProofLibrary() {
           case_id: activeCase.id,
           party_id: genForm.party_id,
           exam_type: genForm.exam_type,
-          question_text: `(From: ${selectedGroup.title}) — [fill question ${i + 1}]`,
+          question_text: `(From: ${selectedGroup.title}) — [edit me]`,
           order_index: i,
           primary_evidence_group_id: selectedGroupId,
           importance: selectedGroup.priority || "Med",
@@ -172,7 +172,14 @@ export default function ProofLibrary() {
       }
       clearTimeout(timeout);
       setGenQuestionsOpen(false);
-      alert(`Created ${created.length} questions for ${parties.find(p => p.id === genForm.party_id)?.display_name || "witness"}`);
+      // Navigate to Witness Prep with context
+      const queryStr = new URLSearchParams({
+        witnessId: genForm.party_id,
+        examType: genForm.exam_type,
+        groupId: selectedGroupId,
+        tab: "questions",
+      }).toString();
+      window.location.href = `/pages/WitnessPrep?${queryStr}`;
     } catch (err) {
       clearTimeout(timeout);
       setGenError(err?.message || "Failed to create questions");
