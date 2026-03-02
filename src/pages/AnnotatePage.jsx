@@ -85,10 +85,12 @@ export default function AnnotatePage() {
       base44.entities.ExhibitExtracts.filter({ id: extractId }),
       base44.entities.ExhibitAnnotations.filter({ extract_id: extractId }),
       base44.entities.ExhibitAnnotationGroups.filter({ extract_id: extractId }),
-    ]).then(([exts, anns, grps]) => {
+      base44.entities.ExhibitCallouts.filter({ extract_id: extractId }),
+    ]).then(([exts, anns, grps, cts]) => {
       setExtract(exts[0] || null);
       setAnnotations(anns);
       setGroups(grps);
+      setCallouts(cts);
     }).finally(() => setLoading(false));
   }, [extractId]);
 
