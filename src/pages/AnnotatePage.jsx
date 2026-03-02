@@ -647,6 +647,16 @@ export default function AnnotatePage() {
         seedQuoteText={modalSeedText}
       />
 
+      {/* Callout capture modal */}
+      <CalloutCaptureModal
+        open={captureModalOpen}
+        onClose={() => { setCaptureModalOpen(false); setPendingCropBlob(null); setCalloutMode(false); }}
+        extractId={extractId}
+        pageNumber={pageIndex}
+        cropBlob={pendingCropBlob}
+        onSaved={(record) => { setCallouts(prev => [...prev, record]); setCalloutMode(false); }}
+      />
+
       {/* Full Edit Modal (edit existing annotation with all fields) */}
       <AnnotationEditorModal
         editing={editModalAnn}
