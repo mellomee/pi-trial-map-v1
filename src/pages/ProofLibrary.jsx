@@ -772,30 +772,30 @@ export default function ProofLibrary() {
 
       {/* Generate Question Modal */}
       <Dialog open={showGenerateQuestionModal} onOpenChange={setShowGenerateQuestionModal}>
-        <DialogContent className="bg-gray-900 border-gray-700 max-w-lg">
+        <DialogContent className="bg-gray-900 border-gray-700 max-w-lg" style={{ zIndex: 9999 }}>
           <DialogHeader>
-            <DialogTitle>Create Question</DialogTitle>
+            <DialogTitle className="text-gray-100">Create Question</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Question Text *</label>
+              <label className="text-sm font-medium text-gray-200">Question Text *</label>
               <Textarea
                 placeholder="Type your question here..."
                 value={generateQuestionData.question_text}
                 onChange={(e) => setGenerateQuestionData({ ...generateQuestionData, question_text: e.target.value })}
-                className="mt-1 bg-gray-800 border-gray-700"
+                className="mt-1 bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500"
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Witness *</label>
+              <label className="text-sm font-medium text-gray-200">Witness *</label>
               <Select value={generateQuestionData.witness_id} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, witness_id: v })}>
-                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700 text-gray-100">
                   <SelectValue placeholder="Select witness..." />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectContent className="bg-gray-800 border-gray-700 z-[10000]">
                   {linkedWitnesses.length > 0 ? (
                     linkedWitnesses.map((wit) => (
-                      <SelectItem key={wit.id} value={wit.id}>
+                      <SelectItem key={wit.id} value={wit.id} className="text-gray-100">
                         {wit.display_name || wit.last_name}
                       </SelectItem>
                     ))
@@ -806,26 +806,33 @@ export default function ProofLibrary() {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">Exam Type</label>
+              <label className="text-sm font-medium text-gray-200">Exam Type</label>
               <Select value={generateQuestionData.exam_type} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, exam_type: v })}>
-                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700 text-gray-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="Direct">Direct</SelectItem>
-                  <SelectItem value="Cross">Cross</SelectItem>
+                <SelectContent className="bg-gray-800 border-gray-700 z-[10000]">
+                  <SelectItem value="Direct" className="text-gray-100">Direct</SelectItem>
+                  <SelectItem value="Cross" className="text-gray-100">Cross</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGenerateQuestionModal(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowGenerateQuestionModal(false)}
+              className="text-gray-100"
+            >
               Cancel
             </Button>
             <Button
-              onClick={handleGenerateQuestion}
+              onClick={() => {
+                console.log('Create Question clicked', { generateQuestionData, isDisabled: !generateQuestionData.witness_id || !generateQuestionData.question_text.trim() });
+                handleGenerateQuestion();
+              }}
               disabled={!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()}
-              className="bg-cyan-600 hover:bg-cyan-700"
+              className="bg-cyan-600 hover:bg-cyan-700 text-white relative z-[10001]"
             >
               Create Question
             </Button>
