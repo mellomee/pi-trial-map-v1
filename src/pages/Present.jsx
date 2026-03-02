@@ -392,10 +392,13 @@ export default function Present() {
                 )}
               </div>
             )}
-            {/* Callout overlay — baked PNG, no coordinate drift */}
+            {/* Callout overlay — baked PNG + highlight rects, no coordinate drift */}
             {showCalloutOverlay && (
               <CalloutOverlay
                 callout={activeCallout}
+                highlights={activeCalloutHighlights}
+                showHighlights={showHighlightsInCallout}
+                onToggleHighlights={() => setShowHighlightsInCallout(v => !v)}
                 onClose={() => setCalloutOverlayOn(false)}
               />
             )}
