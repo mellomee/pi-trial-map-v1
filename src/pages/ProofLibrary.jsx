@@ -388,6 +388,7 @@ export default function ProofLibrary() {
         isOpen={showAddProofModal}
         onClose={() => setShowAddProofModal(false)}
         caseId={activeCase?.id}
+        evidenceGroupId={selectedGroupId}
         onProofAdded={() => {
           setShowAddProofModal(false);
           loadGroupDetails();
