@@ -65,13 +65,17 @@ export async function resolveQuestionLinks(questionId, caseId) {
 }
 
 /**
- * Get all witnesses for a case, optionally filtered by those assigned to a witness
+ * Get all witnesses for a case
+ * Loads from Parties table and ensures witness names resolve correctly
  */
 export async function getWitnessesForCase(caseId) {
   try {
     const parties = await base44.entities.Parties.filter({ case_id: caseId });
-    // Filter to only "witnesses" (could be any party, but typically deponents/experts)
-    return parties.filter(p => p.role === 'Witness' || p.role === 'Deponent' || !p.role);
+    // Return all parties as potential witnesses (filter by role if needed in Trial Mode)
+    return parties.map(p => ({
+      ...p,
+      displayName: p.display_name || p.last_name || p.name || 'Unnamed',
+    }));
   } catch (error) {
     console.error('Error fetching witnesses:', error);
     return [];
@@ -85,7 +89,13 @@ export async function getQuestionsForWitness(caseId, witnessId, examType = null)
   try {
     const filter = { case_id: caseId, party_id: witnessId };
     if (examType) filter.exam_type = examType;
-    return await base44.entities.Questions.filter(filter);
+    const questions = await base44.entities.Questions.filter(filter);
+    
+    // Resolve witness_id from party_id if not explicitly set
+    return questions.map(q => ({
+      ...q,
+      witness_id: q.witness_id || q.party_id,
+    }));
   } catch (error) {
     console.error('Error fetching questions:', error);
     return [];
