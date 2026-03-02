@@ -806,7 +806,7 @@ export default function ProofLibrary() {
 
       {/* Assign Witnesses Modal */}
       <Dialog open={showAssignWitnessModal} onOpenChange={setShowAssignWitnessModal}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent className="bg-white border-gray-300">
           <DialogHeader>
             <DialogTitle>Assign Witnesses</DialogTitle>
           </DialogHeader>
