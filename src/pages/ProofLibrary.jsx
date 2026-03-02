@@ -328,12 +328,26 @@ export default function ProofLibrary() {
         }
       }
 
-      console.log('[QUESTION_CREATE] ✅ All links created. Now calling loadGroupDetails...');
+      console.log('[QUESTION_CREATE] ✅ All links created. Optimistically updating UI...');
+      
+      // Optimistic update: add new question to state immediately
+      const newQuestionForUI = {
+        id: newQuestion.id,
+        question_text: generateQuestionData.question_text,
+        exam_type: generateQuestionData.exam_type,
+        status: 'NotAsked',
+        party_id: generateQuestionData.witness_id,
+      };
+      setLinkedQuestions([...linkedQuestions, newQuestionForUI]);
+      console.log('[QUESTION_CREATE] ✅ Question added to UI:', newQuestionForUI.id);
+      
+      // Close modal and reset form
       setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
       setShowGenerateQuestionModal(false);
+      console.log('[QUESTION_CREATE] ✅ Modal closed.');
       
-      // Reload group details
-      console.log('[QUESTION_CREATE] Reloading group details for EG:', selectedGroupId);
+      // Reload group details in background to sync with DB
+      console.log('[QUESTION_CREATE] Reloading group details in background...');
       await loadGroupDetails();
       console.log('[QUESTION_CREATE] ✅ Group details reloaded.');
     } catch (error) {
