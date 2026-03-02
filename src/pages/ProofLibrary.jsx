@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
-import CreateQuestionModal from '@/components/proofLibrary/CreateQuestionModal';
 import { createPageUrl } from '@/utils';
 
 export default function ProofLibrary() {
@@ -37,6 +36,8 @@ export default function ProofLibrary() {
   const [showGenerateQuestionModal, setShowGenerateQuestionModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
+  const [generateQuestionData, setGenerateQuestionData] = useState({ witness_id: '', exam_type: 'Direct', question_text: '' });
+  const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
   const [showDeleteQuestionsModal, setShowDeleteQuestionsModal] = useState(false);
 
   useEffect(() => {
@@ -72,7 +73,32 @@ export default function ProofLibrary() {
     }
   };
 
+  const refetchQuestionsForGroup = async (groupId) => {
+    console.log('[REFETCH_Q] Refetching questions for EG:', groupId);
+    try {
+      const groupQuestions = await base44.entities.QuestionEvidenceGroups.filter({
+        evidence_group_id: groupId,
+      });
+      console.log('[REFETCH_Q] Found', groupQuestions.length, 'question links');
 
+      const qIds = groupQuestions.map((link) => link.question_id);
+      const qs = [];
+      for (const qId of qIds) {
+        const q = await base44.entities.Questions.filter({ id: qId });
+        if (q.length > 0) {
+          qs.push(q[0]);
+          console.log('[REFETCH_Q] ✅ Loaded:', q[0].id, q[0].question_text);
+        }
+      }
+      
+      console.log('[REFETCH_Q] ✅ Total questions after refetch:', qs.length);
+      setLinkedQuestions(qs);
+      return qs;
+    } catch (error) {
+      console.error('[REFETCH_Q] ❌ Error:', error);
+      return [];
+    }
+  };
 
   const loadGroupDetails = async () => {
     console.log('[LOAD_GROUP] 📋 Loading details for EG:', selectedGroupId);
@@ -278,9 +304,71 @@ export default function ProofLibrary() {
     }
   };
 
-  const handleQuestionCreated = (newQuestion) => {
-    // Simply append the new question to the list immediately
-    setLinkedQuestions(prev => [...prev, newQuestion]);
+  const handleGenerateQuestion = async () => {
+    if (!generateQuestionData.witness_id || !generateQuestionData.question_text.trim()) return;
+    if (isCreatingQuestion) return;
+    
+    setIsCreatingQuestion(true);
+    
+    const payload = {
+      case_id: activeCase.id,
+      party_id: generateQuestionData.witness_id,
+      exam_type: generateQuestionData.exam_type,
+      question_text: generateQuestionData.question_text,
+      status: 'NotAsked',
+      importance: 'Med',
+    };
+    
+    console.log('[Q_CREATE] 🚀 Creating question. selectedGroupId:', selectedGroupId);
+    
+    try {
+      const newQuestion = await base44.entities.Questions.create(payload);
+      console.log('[Q_CREATE] ✅ Question created:', newQuestion.id);
+
+      // Link to evidence group
+      await base44.entities.QuestionEvidenceGroups.create({
+        question_id: newQuestion.id,
+        evidence_group_id: selectedGroupId,
+        is_primary: false,
+      });
+      console.log('[Q_CREATE] ✅ Linked to EG:', selectedGroupId);
+
+      // Link to trial points
+      const tpLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
+        evidence_group_id: selectedGroupId,
+      });
+      
+      for (const link of tpLinks) {
+        const existing = await base44.entities.QuestionLinks.filter({
+          question_id: newQuestion.id,
+          trial_point_id: link.trial_point_id,
+        });
+        if (existing.length === 0) {
+          await base44.entities.QuestionLinks.create({
+            question_id: newQuestion.id,
+            trial_point_id: link.trial_point_id,
+          });
+        }
+      }
+      console.log('[Q_CREATE] ✅ All links created');
+
+      // Close modal and reset form FIRST
+      setShowGenerateQuestionModal(false);
+      setGenerateQuestionData({ witness_id: '', exam_type: 'Direct', question_text: '' });
+      toast.success('Question created');
+
+      // Refetch questions for the selected group (await this to ensure state updates synchronously)
+      console.log('[Q_CREATE] 🔄 Refetching questions for group:', selectedGroupId);
+      await refetchQuestionsForGroup(selectedGroupId);
+      console.log('[Q_CREATE] ✅ Questions refetched and state updated');
+      
+    } catch (error) {
+      console.error('[Q_CREATE] ❌ Error:', error.message);
+      toast.error('Failed to create question');
+      setShowGenerateQuestionModal(false);
+    } finally {
+      setIsCreatingQuestion(false);
+    }
   };
 
   const handleDeleteQuestionsInGroup = async () => {
@@ -795,14 +883,72 @@ export default function ProofLibrary() {
         </DialogContent>
       </Dialog>
 
-      <CreateQuestionModal
-        isOpen={showGenerateQuestionModal}
-        onClose={() => setShowGenerateQuestionModal(false)}
-        caseId={activeCase?.id}
-        evidenceGroupId={selectedGroupId}
-        witnesses={linkedWitnesses}
-        onQuestionCreated={handleQuestionCreated}
-      />
+      {/* Generate Question Modal */}
+      <Dialog open={showGenerateQuestionModal} onOpenChange={setShowGenerateQuestionModal}>
+        <DialogContent className="bg-gray-900 border-gray-700 max-w-lg" style={{ zIndex: 9999 }}>
+          <DialogHeader>
+            <DialogTitle className="text-gray-100">Create Question</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-200">Question Text *</label>
+              <Textarea
+                placeholder="Type your question here..."
+                value={generateQuestionData.question_text}
+                onChange={(e) => setGenerateQuestionData({ ...generateQuestionData, question_text: e.target.value })}
+                className="mt-1 bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-200">Witness *</label>
+              <Select value={generateQuestionData.witness_id} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, witness_id: v })}>
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700 text-gray-100">
+                  <SelectValue placeholder="Select witness..." />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 z-[10000]">
+                  {linkedWitnesses.length > 0 ? (
+                    linkedWitnesses.map((wit) => (
+                      <SelectItem key={wit.id} value={wit.id} className="text-gray-100">
+                        {wit.display_name || wit.last_name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-xs text-gray-400">Assign witnesses to this evidence group first</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-200">Exam Type</label>
+              <Select value={generateQuestionData.exam_type} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, exam_type: v })}>
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700 text-gray-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 z-[10000]">
+                  <SelectItem value="Direct" className="text-gray-100">Direct</SelectItem>
+                  <SelectItem value="Cross" className="text-gray-100">Cross</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowGenerateQuestionModal(false)}
+              className="text-gray-100"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerateQuestion}
+              disabled={!generateQuestionData.witness_id || !generateQuestionData.question_text.trim() || isCreatingQuestion}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white relative z-[10001]"
+            >
+              {isCreatingQuestion ? 'Creating...' : 'Create Question'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
