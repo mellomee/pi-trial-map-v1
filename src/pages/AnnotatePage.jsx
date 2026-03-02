@@ -47,13 +47,23 @@ export default function AnnotatePage() {
 
   // ── Callout (baked crop) state ───────────────────────────────────────────
   const [callouts, setCallouts] = useState([]);
-  const [calloutMode, setCalloutMode] = useState(false); // drag-to-crop mode
-  const [dragRect, setDragRect] = useState(null);      // {x,y,w,h} in canvas px while dragging
+  const [calloutMode, setCalloutMode] = useState(false); // drag-to-crop mode for callouts
+  const [dragRect, setDragRect] = useState(null);      // {x,y,w,h} in CSS px while dragging
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [captureModalOpen, setCaptureModalOpen] = useState(false);
   const [pendingCropBlob, setPendingCropBlob] = useState(null);
   const overlayRef = useRef(null);
+
+  // ── Highlight annotation drag state ──────────────────────────────────────
+  const [highlightMode, setHighlightMode] = useState(false);
+  const [highlightDragRect, setHighlightDragRect] = useState(null);
+  const [highlightDragging, setHighlightDragging] = useState(false);
+  const [highlightDragStart, setHighlightDragStart] = useState(null);
+  const [snapshotModalOpen, setSnapshotModalOpen] = useState(false);
+  const [pendingCaptureData, setPendingCaptureData] = useState(null);
+  const [highlightColor, setHighlightColor] = useState("yellow");
+  const [highlightOpacity, setHighlightOpacity] = useState(0.35);
 
   // ── Picker mode (no extractId) ───────────────────────────────────────────
   const { activeCase } = useActiveCase();
