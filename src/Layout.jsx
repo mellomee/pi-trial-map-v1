@@ -28,12 +28,6 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: "EVIDENCE",
-    items: [
-      { name: "Evidence Workspace", icon: Layers, page: "EvidenceWorkspace" },
-    ],
-  },
-  {
     label: "LIVE TRIAL",
     items: [
       { name: "Attorney View", icon: Gavel, page: "AttorneyView" },
