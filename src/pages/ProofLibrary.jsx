@@ -606,14 +606,22 @@ export default function ProofLibrary() {
                                 <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
                                 <p className="text-xs text-gray-500 mt-1">{q.exam_type} • {getPartyName(q.party_id)}</p>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleRemoveQuestion(q.id)}
-                                className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                              >
-                                ✕
-                              </Button>
+                              <div className="flex gap-1">
+                                <QuestionProofLinker
+                                  questionId={q.id}
+                                  evidenceGroupId={selectedGroupId}
+                                  caseId={activeCase.id}
+                                  proofItems={proofItems}
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleRemoveQuestion(q.id)}
+                                  className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                                >
+                                  ✕
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))}
