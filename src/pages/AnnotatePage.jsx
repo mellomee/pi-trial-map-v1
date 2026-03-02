@@ -12,6 +12,7 @@ import QuoteAnnotationModal from "@/components/annotate/QuoteAnnotationModal";
 import FindOnPage from "@/components/annotate/FindOnPage";
 import AnnotationEditorModal from "@/components/exhibits/AnnotationEditorModal";
 import CalloutCaptureModal from "@/components/annotate/CalloutCaptureModal";
+import CalloutHighlightModal from "@/components/annotate/CalloutHighlightModal";
 import AnnotationSnapshotModal from "@/components/annotate/AnnotationSnapshotModal";
 import { captureAnnotationSnapshot } from "@/components/annotate/AnnotationSnapshotCapture";
 import { pdfjs } from "react-pdf";
