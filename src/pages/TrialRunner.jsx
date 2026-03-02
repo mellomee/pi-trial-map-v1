@@ -757,6 +757,7 @@ export default function TrialRunner() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
