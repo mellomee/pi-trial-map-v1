@@ -44,6 +44,8 @@ export default function ProofDetailsModal({ proofItem, isOpen, onClose }) {
         </DialogHeader>
         {loading ? (
           <div className="text-center py-8">Loading...</div>
+        ) : !proofItem ? (
+          <div className="text-center py-8 text-slate-400">No proof item selected</div>
         ) : (
           <div className="space-y-4">
             {witness && (
