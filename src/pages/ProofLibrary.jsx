@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
-import QuestionsTab from '@/components/proofLibrary/QuestionsTab';
 import ProofDetailsModal from '@/components/proofLibrary/ProofDetailsModal';
 import { createPageUrl } from '@/utils';
 
@@ -29,6 +28,8 @@ export default function ProofLibrary() {
   const [loading, setLoading] = useState(false);
   const [centerTab, setCenterTab] = useState('proof');
   const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
+  const [selectedProofItem, setSelectedProofItem] = useState(null);
+  const [showProofDetails, setShowProofDetails] = useState(false);
 
   // Modal states
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
@@ -163,13 +164,18 @@ export default function ProofLibrary() {
     }
   };
 
-  const goToQuestions = () => {
-    if (selectedGroupId && selectedGroupId !== "all") {
-      sessionStorage.setItem(`evidence-group-${activeCase.id}`, selectedGroupId);
+  const handleCreateQuestion = async (questionData) => {
+    try {
+      const newQ = await base44.entities.Questions.create({
+        ...questionData,
+        case_id: activeCase.id,
+        primary_evidence_group_id: selectedGroupId,
+      });
+      setLinkedQuestions(qs => [...qs, newQ]);
+      return newQ;
+    } catch (error) {
+      console.error('Error creating question:', error);
     }
-    // Use navigation instead of window.location to avoid blank screen
-    const nav = document.querySelector('a[href*="Questions"]');
-    if (nav) nav.click();
   };
 
   const handleUpdateGroup = async () => {
@@ -426,12 +432,22 @@ export default function ProofLibrary() {
                     </div>
                     {filteredProof.length > 0 ? (
                       filteredProof.map((proof) => (
-                        <ProofItemCard
-                          key={proof.id}
-                          proofItem={proof}
-                          onRemove={handleRemoveProof}
-                          witnesses={allWitnesses.filter((w) => w.id === proof.witness_id)}
-                        />
+                        <div key={proof.id} className="bg-gray-800 border border-gray-700 rounded p-3 cursor-pointer hover:border-cyan-500/50" onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-100">{proof.label}</p>
+                              <p className="text-xs text-gray-500 mt-1">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => { e.stopPropagation(); handleRemoveProof(proof.id); }}
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        </div>
                       ))
                     ) : (
                       <div className="text-center text-gray-500 mt-8">
