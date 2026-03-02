@@ -74,6 +74,7 @@ import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
+import AnnotatePage from './pages/AnnotatePage';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +106,7 @@ export const PAGES = {
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
+    "AnnotatePage": AnnotatePage,
 }
 
 export const pagesConfig = {
