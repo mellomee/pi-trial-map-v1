@@ -491,7 +491,7 @@ export default function Present() {
                               isActive ? "bg-green-600/15 border-green-600/40" : "border-transparent hover:bg-white/5 hover:border-[#1e2a45]"
                             }`}>
                               <button
-                                onClick={() => selectAnnotation(a)}
+                                onClick={() => selectAnnotation(a, spotlightOn)}
                                 className="w-full text-left px-2 py-1.5 flex items-start gap-1.5"
                               >
                                 <span className="text-yellow-400 mt-0.5 flex-shrink-0 text-[10px]">✦</span>
