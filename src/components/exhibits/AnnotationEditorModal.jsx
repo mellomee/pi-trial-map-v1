@@ -244,6 +244,26 @@ export default function AnnotationEditorModal({ editing, setEditing, onSave, sav
             </div>
           )}
 
+          {/* Snapshot preview */}
+          {form.snapshot_file && (
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Snapshot</label>
+              <img src={form.snapshot_file} alt="Snapshot" className="w-full max-h-32 object-contain rounded border border-[#1e2a45] bg-[#050809]" />
+            </div>
+          )}
+
+          {/* Text highlights toggle */}
+          {form.has_text_layer && (
+            <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+              <input type="checkbox"
+                checked={form.text_highlights_mode === "auto"}
+                onChange={e => set("text_highlights_mode", e.target.checked ? "auto" : "none")}
+                className="accent-yellow-400"
+              />
+              Auto-highlight text inside crop (selectable text detected)
+            </label>
+          )}
+
           {/* Toggles */}
           <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
             <input type="checkbox"
