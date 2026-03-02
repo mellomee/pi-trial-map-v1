@@ -760,7 +760,26 @@ export default function AnnotatePage() {
         extractId={extractId}
         pageNumber={pageIndex}
         cropBlob={pendingCropBlob}
-        onSaved={(record) => { setCallouts(prev => [...prev, record]); setCalloutMode(false); }}
+        onSaved={(record) => {
+          setCallouts(prev => [...prev, record]);
+          setCalloutMode(false);
+          // After saving callout, open highlight-drawing modal
+          setPendingCalloutForHighlight(record);
+          setHighlightModalOpen(true);
+        }}
+      />
+
+      {/* Highlight-on-callout modal: draw highlight rects on the snapshot image */}
+      <CalloutHighlightModal
+        open={highlightModalOpen}
+        onClose={() => { setHighlightModalOpen(false); setPendingCalloutForHighlight(null); }}
+        callout={pendingCalloutForHighlight}
+        extractId={extractId}
+        pageNumber={pageIndex}
+        onSaved={(savedAnns) => {
+          setAnnotations(prev => [...prev, ...savedAnns]);
+          if (savedAnns.length > 0) setActiveId(savedAnns[0].id);
+        }}
       />
 
       {/* Highlight annotation snapshot modal */}
