@@ -413,106 +413,90 @@ export default function Present() {
                 </button>
               )}
               {calloutPanelOpen && (
-              <div className="w-56 flex flex-col flex-1 min-h-0">
-              {/* Header */}
-              <div className="px-3 pt-3 pb-2 border-b border-[#1e2a45] flex-shrink-0">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-[10px] font-bold text-orange-400/80 uppercase tracking-widest flex items-center gap-1">
-                    <Scissors className="w-3 h-3" /> Callouts
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[9px] text-slate-600">{visibleCallouts.length}</span>
-                    <button onClick={() => setCalloutPanelOpen(false)} className="p-0.5 text-slate-600 hover:text-slate-400" title="Collapse">
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                {/* Jury-safe filter */}
-                <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                  <input type="checkbox" checked={jurySafeOnly} onChange={e => setJurySafeOnly(e.target.checked)}
-                    className="accent-green-500 w-3 h-3" />
-                  <span className="text-[9px] text-slate-400">Jury-safe only</span>
-                </label>
-              </div>
-
-              {/* Callout list grouped by page */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {visibleCallouts.length === 0 && (
-                  <p className="text-[10px] text-slate-600 italic text-center py-4">
-                    {callouts.length > 0 ? "No jury-safe callouts." : "No callouts for this exhibit."}
-                  </p>
-                )}
-                {Object.entries(calloutsByPage).sort((a, b) => Number(a[0]) - Number(b[0])).map(([pg, pcs]) => (
-                  <div key={pg}>
-                    {/* Page divider */}
-                    <div className="flex items-center gap-1 px-1 py-0.5">
-                      <div className="h-px flex-1 bg-[#1e2a45]" />
-                      <button onClick={() => setCurrentPage(Number(pg))}
-                        className={`text-[9px] px-1.5 rounded transition-colors ${currentPage === Number(pg) ? "text-green-400 font-bold" : "text-slate-600 hover:text-slate-400"}`}>
-                        p.{pg}
-                      </button>
-                      <div className="h-px flex-1 bg-[#1e2a45]" />
+                <div className="w-56 flex flex-col flex-1 min-h-0">
+                  {/* Header */}
+                  <div className="px-3 pt-3 pb-2 border-b border-[#1e2a45] flex-shrink-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] font-bold text-orange-400/80 uppercase tracking-widest flex items-center gap-1">
+                        <Scissors className="w-3 h-3" /> Callouts
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-slate-600">{visibleCallouts.length}</span>
+                        <button onClick={() => setCalloutPanelOpen(false)} className="p-0.5 text-slate-600 hover:text-slate-400" title="Collapse">
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    {pcs.map(c => {
-                      const isActive = selectedCalloutId === c.id;
-                      const hasSnapshot = !!c.snapshot_image_url;
-                      return (
-                        <div key={c.id} className={`rounded border transition-colors ${
-                          isActive ? "bg-orange-500/15 border-orange-500/40" : "border-transparent hover:bg-white/5 hover:border-[#1e2a45]"
-                        }`}>
-                          <button
-                            onClick={() => hasSnapshot ? selectCallout(c) : null}
-                            disabled={!hasSnapshot}
-                            className={`w-full text-left px-2 py-1.5 flex items-start gap-1.5 ${!hasSnapshot ? "opacity-50 cursor-not-allowed" : ""}`}
-                          >
-                            <Scissors className="w-3 h-3 text-orange-400 flex-shrink-0 mt-0.5" />
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-[11px] font-medium leading-tight truncate ${isActive ? "text-orange-200" : "text-slate-300"}`}>
-                                {c.name || `p.${c.page_number}`}
-                              </p>
-                              {!hasSnapshot && (
-                                <span className="text-[9px] text-amber-500">⚠ needs snapshot</span>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                      <input type="checkbox" checked={jurySafeOnly} onChange={e => setJurySafeOnly(e.target.checked)}
+                        className="accent-green-500 w-3 h-3" />
+                      <span className="text-[9px] text-slate-400">Jury-safe only</span>
+                    </label>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    {visibleCallouts.length === 0 && (
+                      <p className="text-[10px] text-slate-600 italic text-center py-4">
+                        {callouts.length > 0 ? "No jury-safe callouts." : "No callouts for this exhibit."}
+                      </p>
+                    )}
+                    {Object.entries(calloutsByPage).sort((a, b) => Number(a[0]) - Number(b[0])).map(([pg, pcs]) => (
+                      <div key={pg}>
+                        <div className="flex items-center gap-1 px-1 py-0.5">
+                          <div className="h-px flex-1 bg-[#1e2a45]" />
+                          <button onClick={() => setCurrentPage(Number(pg))}
+                            className={`text-[9px] px-1.5 rounded transition-colors ${currentPage === Number(pg) ? "text-green-400 font-bold" : "text-slate-600 hover:text-slate-400"}`}>
+                            p.{pg}
+                          </button>
+                          <div className="h-px flex-1 bg-[#1e2a45]" />
+                        </div>
+                        {pcs.map(c => {
+                          const isActive = selectedCalloutId === c.id;
+                          const hasSnapshot = !!c.snapshot_image_url;
+                          return (
+                            <div key={c.id} className={`rounded border transition-colors ${isActive ? "bg-orange-500/15 border-orange-500/40" : "border-transparent hover:bg-white/5 hover:border-[#1e2a45]"}`}>
+                              <button onClick={() => hasSnapshot ? selectCallout(c) : null} disabled={!hasSnapshot}
+                                className={`w-full text-left px-2 py-1.5 flex items-start gap-1.5 ${!hasSnapshot ? "opacity-50 cursor-not-allowed" : ""}`}>
+                                <Scissors className="w-3 h-3 text-orange-400 flex-shrink-0 mt-0.5" />
+                                <div className="min-w-0 flex-1">
+                                  <p className={`text-[11px] font-medium leading-tight truncate ${isActive ? "text-orange-200" : "text-slate-300"}`}>
+                                    {c.name || `p.${c.page_number}`}
+                                  </p>
+                                  {!hasSnapshot && <span className="text-[9px] text-amber-500">⚠ needs snapshot</span>}
+                                </div>
+                              </button>
+                              {isActive && hasSnapshot && (
+                                <div className="px-2 pb-2 space-y-1.5">
+                                  <img src={c.snapshot_image_url} alt={c.name}
+                                    className="w-full rounded border border-[#1e2a45] object-contain max-h-20 bg-[#050809]" />
+                                  <div className="flex gap-1">
+                                    <button onClick={() => { setSpotlightOn(true); setHighlightsOn(false); }}
+                                      className="flex-1 py-0.5 text-[9px] font-semibold text-orange-300 bg-orange-500/10 border border-orange-500/30 rounded hover:bg-orange-500/20 transition-colors">
+                                      ✦ Spotlight
+                                    </button>
+                                    <button onClick={() => { setSpotlightOn(true); setHighlightsOn(true); }}
+                                      className="flex-1 py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors">
+                                      + Highlights
+                                    </button>
+                                  </div>
+                                </div>
                               )}
                             </div>
-                          </button>
-                          {/* Thumbnail + controls */}
-                          {isActive && hasSnapshot && (
-                            <div className="px-2 pb-2 space-y-1.5">
-                              <img src={c.snapshot_image_url} alt={c.name}
-                                className="w-full rounded border border-[#1e2a45] object-contain max-h-20 bg-[#050809]" />
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => { setSpotlightOn(true); setHighlightsOn(false); }}
-                                  className="flex-1 py-0.5 text-[9px] font-semibold text-orange-300 bg-orange-500/10 border border-orange-500/30 rounded hover:bg-orange-500/20 transition-colors">
-                                  ✦ Spotlight
-                                </button>
-                                <button
-                                  onClick={() => { setSpotlightOn(true); setHighlightsOn(true); }}
-                                  className="flex-1 py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors">
-                                  + Highlights
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-
-              {/* Selected callout footer */}
-              {selectedCalloutId && (
-                <div className="p-2 border-t border-[#1e2a45] flex-shrink-0">
-                  <button onClick={() => { setSelectedCalloutId(null); setSpotlightOn(false); setHighlightsOn(true); }}
-                    className="w-full py-1 text-[10px] text-slate-500 hover:text-slate-300 border border-[#1e2a45] rounded">
-                    Clear selection
-                  </button>
+                  {selectedCalloutId && (
+                    <div className="p-2 border-t border-[#1e2a45] flex-shrink-0">
+                      <button onClick={() => { setSelectedCalloutId(null); setSpotlightOn(false); setHighlightsOn(true); }}
+                        className="w-full py-1 text-[10px] text-slate-500 hover:text-slate-300 border border-[#1e2a45] rounded">
+                        Clear selection
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
