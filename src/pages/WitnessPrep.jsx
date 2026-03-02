@@ -51,10 +51,12 @@ export default function WitnessPrep() {
     const eType = params.get("examType");
     const gId = params.get("groupId");
     const tab = params.get("tab");
+    const qId = params.get("questionId");
     if (wId) setSelectedPartyId(wId);
     if (eType) setExamType(eType);
     if (gId) setSelectedGroupId(gId);
     if (tab) setActiveTab(tab);
+    if (qId) setSelectedQuestionId(qId);
   }, []);
 
   const load = async () => {
