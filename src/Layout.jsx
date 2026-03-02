@@ -10,21 +10,13 @@ import useActiveCase from "@/components/hooks/useActiveCase";
 
 const NAV_SECTIONS = [
   {
-    label: "CORE PIPELINE",
+    label: "CORE",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
       { name: "Parties", icon: Users, page: "Parties" },
       { name: "Trial Points", icon: Target, page: "TrialPoints" },
-      { name: "Proof Vault", icon: Layers, page: "ProofLibrary" },
-      { name: "Evidence Groups", icon: BookOpen, page: "ProofLibrary" },
-      { name: "Exam Builder", icon: GitBranch, page: "ExamBuilder" },
-    ],
-  },
-  {
-    label: "LIVE TRIAL",
-    items: [
-      { name: "Attorney Cockpit", icon: Gavel, page: "AttorneyView" },
-      { name: "Jury Screen", icon: Monitor, page: "JuryView" },
+      { name: "Proof Library", icon: Layers, page: "ProofLibrary" },
+      { name: "Witness Prep", icon: GitBranch, page: "WitnessPrep" },
     ],
   },
   {
@@ -33,6 +25,20 @@ const NAV_SECTIONS = [
       { name: "Depo Exhibits", icon: BookOpen, page: "DepositionExhibits" },
       { name: "Extracts", icon: FileText, page: "Extracts" },
       { name: "Joint List", icon: List, page: "JointExhibits" },
+    ],
+  },
+  {
+    label: "LIVE TRIAL",
+    items: [
+      { name: "Attorney View", icon: Gavel, page: "AttorneyView" },
+      { name: "Jury View", icon: Monitor, page: "JuryView" },
+    ],
+  },
+  {
+    label: "VIDEO",
+    items: [
+      { name: "Depo Clips", icon: FileText, page: "DepoClips" },
+      { name: "Video Hub", icon: Video, page: "VideoHub" },
     ],
   },
   {
