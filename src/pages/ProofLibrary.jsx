@@ -277,24 +277,6 @@ export default function ProofLibrary() {
 
 
 
-  const handleDeleteQuestionsInGroup = async () => {
-    try {
-      for (const q of linkedQuestions) {
-        const links = await base44.entities.QuestionEvidenceGroups.filter({
-          question_id: q.id,
-          evidence_group_id: selectedGroupId,
-        });
-        for (const link of links) {
-          await base44.entities.QuestionEvidenceGroups.delete(link.id);
-        }
-      }
-      setShowDeleteQuestionsModal(false);
-      await loadGroupDetails();
-    } catch (error) {
-      console.error('Error deleting questions:', error);
-    }
-  };
-
   const handleRemoveQuestion = async (questionId) => {
     try {
       const links = await base44.entities.QuestionEvidenceGroups.filter({
@@ -304,7 +286,7 @@ export default function ProofLibrary() {
       for (const link of links) {
         await base44.entities.QuestionEvidenceGroups.delete(link.id);
       }
-      await loadGroupDetails();
+      setLinkedQuestions(qs => qs.filter(q => q.id !== questionId));
     } catch (error) {
       console.error('Error removing question:', error);
     }
