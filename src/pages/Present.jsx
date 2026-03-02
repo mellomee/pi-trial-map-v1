@@ -412,7 +412,8 @@ export default function Present() {
                   <Scissors className="w-4 h-4" />
                 </button>
               )}
-              {calloutPanelOpen && <div className="w-56 flex flex-col flex-1 min-h-0">
+              {calloutPanelOpen && (
+              <div className="w-56 flex flex-col flex-1 min-h-0">
               {/* Header */}
               <div className="px-3 pt-3 pb-2 border-b border-[#1e2a45] flex-shrink-0">
                 <div className="flex items-center justify-between mb-1">
