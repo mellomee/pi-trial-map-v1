@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { Button } from "@/components/ui/button";
@@ -51,12 +51,10 @@ export default function WitnessPrep() {
     const eType = params.get("examType");
     const gId = params.get("groupId");
     const tab = params.get("tab");
-    const qId = params.get("questionId");
     if (wId) setSelectedPartyId(wId);
     if (eType) setExamType(eType);
     if (gId) setSelectedGroupId(gId);
     if (tab) setActiveTab(tab);
-    if (qId) setSelectedQuestionId(qId);
   }, []);
 
   const load = async () => {
@@ -481,15 +479,10 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
   const [q, setQ] = useState(question);
   const [links, setLinks] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
-  const qTextRef = useRef(null);
 
   useEffect(() => {
     setQ(question);
     base44.entities.QuestionLinks.filter({ question_id: question.id }).then(setLinks);
-    // Auto-focus question text field
-    if (qTextRef.current) {
-      setTimeout(() => qTextRef.current?.focus(), 0);
-    }
   }, [question.id]);
 
   const save = async (field, val) => {
@@ -523,7 +516,6 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
         <div>
           <Label className="text-xs text-slate-400 mb-1 block">Question Text</Label>
           <Textarea
-            ref={qTextRef}
             value={q.question_text || ""}
             onChange={e => setQ({ ...q, question_text: e.target.value })}
             onBlur={() => save("question_text", q.question_text)}

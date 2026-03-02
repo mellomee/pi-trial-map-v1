@@ -172,20 +172,14 @@ export default function ProofLibrary() {
       }
       clearTimeout(timeout);
       setGenQuestionsOpen(false);
-      // Zero-click landing: navigate to WitnessPrep with first question auto-focused
-      if (created.length > 0) {
-        const firstQ = created[0];
-        const queryStr = new URLSearchParams({
-          witnessId: genForm.party_id,
-          examType: genForm.exam_type,
-          groupId: selectedGroupId,
-          tab: "questions",
-          questionId: firstQ.id,
-        }).toString();
-        window.location.href = `/pages/WitnessPrep?${queryStr}`;
-      } else {
-        await load();
-      }
+      // Navigate to Witness Prep with context
+      const queryStr = new URLSearchParams({
+        witnessId: genForm.party_id,
+        examType: genForm.exam_type,
+        groupId: selectedGroupId,
+        tab: "questions",
+      }).toString();
+      window.location.href = `/pages/WitnessPrep?${queryStr}`;
     } catch (err) {
       clearTimeout(timeout);
       setGenError(err?.message || "Failed to create questions");
