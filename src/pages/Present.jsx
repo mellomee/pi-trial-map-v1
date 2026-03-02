@@ -454,7 +454,9 @@ export default function Present() {
               </div>
               <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {annotations.length === 0 && (
-                  <p className="text-[10px] text-slate-600 italic text-center py-4">No jury-safe annotations.</p>
+                  <p className="text-[10px] text-slate-600 italic text-center py-4">
+                    No jury-safe annotations on this exhibit.
+                  </p>
                 )}
                 {(() => {
                   const pages = [...new Set(annotations.map(a => a.page_number ?? a.extract_page_number ?? 1))].sort((a, b) => a - b);
