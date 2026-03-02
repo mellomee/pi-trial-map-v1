@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import QuoteSpotlight from "@/components/presents/QuoteSpotlight";
+import SnapshotSpotlight from "@/components/presents/SnapshotSpotlight";
 import CalloutOverlay from "@/components/presents/CalloutOverlay";
 
 
