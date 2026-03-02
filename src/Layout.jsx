@@ -14,6 +14,7 @@ const NAV_SECTIONS = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
       { name: "Parties", icon: Users, page: "Parties" },
+      { name: "Proof Library", icon: BookOpen, page: "ProofLibrary" },
       { name: "Trial Points", icon: Target, page: "TrialPoints" },
       { name: "Questions", icon: HelpCircle, page: "Questions" },
       { name: "Trial Mode", icon: Zap, page: "TrialMode" },
