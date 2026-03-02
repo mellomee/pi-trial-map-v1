@@ -234,7 +234,7 @@ export default function Questions() {
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpen(false)} className="border-slate-600 text-slate-300">Cancel</Button>
+            <Button variant="outline" onClick={() => { setOpen(false); setEditing(null); setModalKey(k => k + 1); }} className="border-slate-600 text-slate-300">Cancel</Button>
             <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={save}>Save</Button>
           </DialogFooter>
         </DialogContent>
