@@ -161,7 +161,7 @@ export default function ProofLibrary() {
           case_id: activeCase.id,
           party_id: genForm.party_id,
           exam_type: genForm.exam_type,
-          question_text: `(From: ${selectedGroup.title}) — [edit me]`,
+          question_text: `(From: ${selectedGroup.title}) — [fill question ${i + 1}]`,
           order_index: i,
           primary_evidence_group_id: selectedGroupId,
           importance: selectedGroup.priority || "Med",
@@ -172,14 +172,7 @@ export default function ProofLibrary() {
       }
       clearTimeout(timeout);
       setGenQuestionsOpen(false);
-      // Navigate to Witness Prep with context
-      const queryStr = new URLSearchParams({
-        witnessId: genForm.party_id,
-        examType: genForm.exam_type,
-        groupId: selectedGroupId,
-        tab: "questions",
-      }).toString();
-      window.location.href = `/pages/WitnessPrep?${queryStr}`;
+      alert(`Created ${created.length} questions for ${parties.find(p => p.id === genForm.party_id)?.display_name || "witness"}`);
     } catch (err) {
       clearTimeout(timeout);
       setGenError(err?.message || "Failed to create questions");
@@ -458,9 +451,8 @@ export default function ProofLibrary() {
       {/* GENERATE QUESTIONS DIALOG — fixed hang */}
       <Dialog open={genQuestionsOpen} onOpenChange={v => { if (!genLoading) setGenQuestionsOpen(v); }}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><HelpCircle className="w-4 h-4 text-cyan-400" /> Create Placeholder Questions</DialogTitle></DialogHeader>
-          <p className="text-xs text-slate-400">Creates editable placeholder questions from: <strong className="text-white">{selectedGroup?.title}</strong></p>
-          <p className="text-[11px] text-slate-500 italic">(You will edit the question text in Witness Prep)</p>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><HelpCircle className="w-4 h-4 text-cyan-400" /> Create Questions from Group</DialogTitle></DialogHeader>
+          <p className="text-xs text-slate-400">Creates placeholder questions linked to: <strong className="text-white">{selectedGroup?.title}</strong></p>
           {genError && <p className="text-xs text-red-400 bg-red-950/30 border border-red-700/30 rounded px-2 py-1">{genError}</p>}
           <div className="space-y-3">
             <div>

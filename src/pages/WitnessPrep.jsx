@@ -26,7 +26,6 @@ export default function WitnessPrep() {
   const [parties, setParties] = useState([]);
   const [selectedPartyId, setSelectedPartyId] = useState("");
   const [examType, setExamType] = useState("Cross");
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
 
   const [witnessPlans, setWitnessPlans] = useState([]);
   const [planItems, setPlanItems] = useState([]);
@@ -43,19 +42,6 @@ export default function WitnessPrep() {
   const [addBcOpen, setAddBcOpen] = useState(false);
   const [newBcForm, setNewBcForm] = useState({ title: "", goal: "", when_to_use: "", commit_question: "", credit_question: "", confront_question: "", priority: "Med" });
   const [activeTab, setActiveTab] = useState("plan");
-
-  // Parse URL query parameters on mount
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const wId = params.get("witnessId");
-    const eType = params.get("examType");
-    const gId = params.get("groupId");
-    const tab = params.get("tab");
-    if (wId) setSelectedPartyId(wId);
-    if (eType) setExamType(eType);
-    if (gId) setSelectedGroupId(gId);
-    if (tab) setActiveTab(tab);
-  }, []);
 
   const load = async () => {
     if (!activeCase) return;
@@ -105,16 +91,6 @@ export default function WitnessPrep() {
       .sort((a, b) => (a.order_index || 0) - (b.order_index || 0)),
     [questions, selectedPartyId, examType]
   );
-
-  // In Questions tab, show only groups that have questions for this witness/exam
-  const relevantGroupIds = useMemo(() => {
-    const ids = new Set(witnessQuestions.map(q => q.primary_evidence_group_id).filter(Boolean));
-    return Array.from(ids);
-  }, [witnessQuestions]);
-
-  const visibleGroups = useMemo(() => {
-    return evidenceGroups.filter(g => relevantGroupIds.includes(g.id));
-  }, [evidenceGroups, relevantGroupIds]);
 
   const selectedQuestion = useMemo(() => questions.find(q => q.id === selectedQuestionId), [questions, selectedQuestionId]);
 
@@ -313,71 +289,50 @@ export default function WitnessPrep() {
         )}
 
         {/* QUESTIONS TAB */}
-         {activeTab === "questions" && (
-           <div className="flex flex-1 overflow-hidden">
-             <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col">
-               {/* Groups sidebar in Questions tab */}
-               <div className="px-3 py-2 border-b border-[#1e2a45]">
-                 <p className="text-xs font-bold text-slate-300">Evidence Groups</p>
-               </div>
-               <div className="flex-1 overflow-y-auto">
-                 {visibleGroups.length > 0 ? visibleGroups.map(g => (
-                   <button key={g.id} onClick={() => setSelectedGroupId(g.id)}
-                     className={`w-full text-left px-3 py-2 border-b border-[#1e2a45] text-xs transition-colors ${selectedGroupId === g.id ? "bg-cyan-500/10 border-l-2 border-l-cyan-400 text-cyan-200" : "text-slate-400 hover:bg-white/5"}`}>
-                     {g.title}
-                   </button>
-                 )) : (
-                   <p className="text-xs text-slate-600 text-center py-4">No groups with questions</p>
-                 )}
-               </div>
-             </div>
-
-             {/* Questions list in center */}
-             <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col bg-[#0a0f1e]">
-               <div className="px-3 py-2 border-b border-[#1e2a45]">
-                 <p className="text-xs font-bold text-slate-300">{witnessQuestions.length} questions</p>
-               </div>
-               <div className="flex-1 overflow-y-auto">
-                 {witnessQuestions.map((q, idx) => (
-                   <button key={q.id} onClick={() => setSelectedQuestionId(q.id)}
-                     className={`w-full text-left px-3 py-2.5 border-b border-[#1e2a45] transition-colors ${selectedQuestionId === q.id ? "bg-cyan-500/10 border-l-2 border-l-cyan-400" : "hover:bg-white/5 border-l-2 border-l-transparent"}`}>
-                     <div className="flex items-start gap-2">
-                       <span className="text-[10px] text-slate-600 mt-0.5">{idx+1}.</span>
-                       <div className="flex-1 min-w-0">
-                         <p className="text-xs text-slate-300 line-clamp-2">{q.question_text}</p>
-                         <Badge className={`text-[9px] mt-1 ${STATUS_COLORS[q.status] || ""}`}>{q.status}</Badge>
-                       </div>
-                     </div>
-                   </button>
-                 ))}
-                 {witnessQuestions.length === 0 && (
-                   <p className="text-xs text-slate-600 text-center py-8">No questions yet.</p>
-                 )}
-               </div>
-             </div>
-
-             {/* Question detail on right */}
-             <div className="flex-1 overflow-y-auto p-5">
-               {selectedQuestion ? (
-                 <QuestionDetailPanel
-                   question={selectedQuestion}
-                   trialPoints={trialPoints}
-                   depoClips={depoClips}
-                   jointExhibits={jointExhibits}
-                   egLinks={egLinks}
-                   evidenceGroups={evidenceGroups}
-                   onUpdate={load}
-                   caseId={activeCase.id}
-                 />
-               ) : (
-                 <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-2">
-                   <HelpCircle className="w-12 h-12 opacity-10" />
-                   <p>Select a question to view details</p>
-                 </div>
-               )}
-             </div>
-           </div>
-         )}
+        {activeTab === "questions" && (
+          <div className="flex flex-1 overflow-hidden">
+            <div className="w-72 flex-shrink-0 border-r border-[#1e2a45] flex flex-col">
+              <div className="px-3 py-2 border-b border-[#1e2a45]">
+                <p className="text-xs font-bold text-slate-300">{witnessQuestions.length} questions</p>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {witnessQuestions.map((q, idx) => (
+                  <button key={q.id} onClick={() => setSelectedQuestionId(q.id)}
+                    className={`w-full text-left px-3 py-2.5 border-b border-[#1e2a45] transition-colors ${selectedQuestionId === q.id ? "bg-cyan-500/10 border-l-2 border-l-cyan-400" : "hover:bg-white/5 border-l-2 border-l-transparent"}`}>
+                    <div className="flex items-start gap-2">
+                      <span className="text-[10px] text-slate-600 mt-0.5">{idx+1}.</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-slate-300 line-clamp-2">{q.question_text}</p>
+                        <Badge className={`text-[9px] mt-1 ${STATUS_COLORS[q.status] || ""}`}>{q.status}</Badge>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                {witnessQuestions.length === 0 && (
+                  <p className="text-xs text-slate-600 text-center py-8">No questions. Go to Proof Library → Create Questions.</p>
+                )}
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5">
+              {selectedQuestion ? (
+                <QuestionDetailPanel
+                  question={selectedQuestion}
+                  trialPoints={trialPoints}
+                  depoClips={depoClips}
+                  jointExhibits={jointExhibits}
+                  battleCards={battleCards}
+                  onUpdate={load}
+                  caseId={activeCase.id}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-2">
+                  <HelpCircle className="w-12 h-12 opacity-10" />
+                  <p>Select a question to view details</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* BATTLE CARDS TAB */}
         {activeTab === "battlecards" && (
@@ -475,10 +430,9 @@ export default function WitnessPrep() {
   );
 }
 
-function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, egLinks, evidenceGroups, onUpdate, caseId }) {
+function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, battleCards, onUpdate, caseId }) {
   const [q, setQ] = useState(question);
   const [links, setLinks] = useState([]);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setQ(question);
@@ -488,9 +442,7 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
   const save = async (field, val) => {
     const updated = { ...q, [field]: val };
     setQ(updated);
-    setIsSaving(true);
     await base44.entities.Questions.update(q.id, { [field]: val });
-    setIsSaving(false);
     onUpdate();
   };
 
@@ -498,68 +450,31 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
   const exhibitLinks = links.filter(l => l.link_type === "JointExhibit");
   const clipLinks = links.filter(l => l.link_type === "DepoClip");
 
-  // Get trial points from the linked evidence group (if no direct trial point links)
-  const groupTrialPoints = useMemo(() => {
-    if (tpLinks.length > 0) return tpLinks;
-    if (!q.primary_evidence_group_id) return [];
-    const group = evidenceGroups.find(g => g.id === q.primary_evidence_group_id);
-    if (!group) return [];
-    return egLinks.filter(l => l.evidence_group_id === group.id && l.link_type === "TrialPoint");
-  }, [tpLinks, q.primary_evidence_group_id, egLinks, evidenceGroups]);
-
-  const trialsPointsToShow = tpLinks.length > 0 ? tpLinks : groupTrialPoints;
-
   return (
     <div className="space-y-4 max-w-2xl">
-      {/* Question Text (editable) */}
-      <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4 space-y-3">
-        <div>
-          <Label className="text-xs text-slate-400 mb-1 block">Question Text</Label>
-          <Textarea
-            value={q.question_text || ""}
-            onChange={e => setQ({ ...q, question_text: e.target.value })}
-            onBlur={() => save("question_text", q.question_text)}
-            rows={3}
-            className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm"
-            placeholder="Enter question text…"
-          />
-        </div>
-
-        <div>
-          <Label className="text-xs text-slate-400 mb-1 block">Expected Answer</Label>
-          <Textarea
-            value={q.expected_answer || ""}
-            onChange={e => setQ({ ...q, expected_answer: e.target.value })}
-            onBlur={() => save("expected_answer", q.expected_answer)}
-            rows={2}
-            className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm"
-            placeholder="What answer are you looking for?…"
-          />
-        </div>
-
+      <div className="bg-[#131a2e] border border-[#1e2a45] rounded-xl p-4">
+        <p className="text-base font-semibold text-white mb-2">{q.question_text}</p>
         <div className="flex gap-2 flex-wrap">
           <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-orange-500/20 text-orange-400"}>{q.exam_type}</Badge>
           <Badge className={STATUS_COLORS[q.status] || ""}>{q.status}</Badge>
           {q.importance && <Badge variant="outline" className="text-slate-400 border-slate-600">{q.importance}</Badge>}
         </div>
+        {q.goal && <p className="text-xs text-slate-400 mt-2">🎯 {q.goal}</p>}
+        {q.expected_answer && <p className="text-xs text-slate-400 mt-1">💬 Expected: {q.expected_answer}</p>}
       </div>
 
-      {/* Live Notes */}
       <div>
         <Label className="text-xs text-slate-400">Live Notes</Label>
         <Textarea value={q.live_notes || ""} onChange={e => save("live_notes", e.target.value)} rows={2}
           className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-sm mt-1" placeholder="Notes during exam…" />
       </div>
 
-      {/* Trial Points (from group or direct links) */}
       <div className="space-y-2">
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Linked Trial Points ({trialsPointsToShow.length})</p>
-        {trialsPointsToShow.length > 0 ? trialsPointsToShow.map(l => {
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Linked Trial Points ({tpLinks.length})</p>
+        {tpLinks.map(l => {
           const tp = trialPoints.find(t => t.id === l.link_id);
           return tp ? <p key={l.id} className="text-xs text-slate-300 bg-[#131a2e] rounded px-2 py-1">• {tp.point_text}</p> : null;
-        }) : (
-          <p className="text-xs text-slate-600 italic">None linked</p>
-        )}
+        })}
       </div>
 
       {exhibitLinks.length > 0 && (
@@ -584,8 +499,6 @@ function QuestionDetailPanel({ question, trialPoints, depoClips, jointExhibits, 
           })}
         </div>
       )}
-
-      {isSaving && <p className="text-[10px] text-slate-500 italic">Saving…</p>}
     </div>
   );
 }
