@@ -166,7 +166,7 @@ export default function Present() {
         if (activeAnnotationId) goPrev();
         else setCurrentPage(p => Math.max(1, p - 1));
       }
-      if (e.key === "Escape") { setFullscreen(false); setSpotlightOn(false); }
+      if (e.key === "Escape") { setFullscreen(false); setSpotlightOn(false); setCalloutOverlayOn(false); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
