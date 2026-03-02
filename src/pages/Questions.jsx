@@ -31,57 +31,17 @@ export default function Questions() {
 
   const load = async () => {
     if (!activeCase) return;
-    const [q, p, eg] = await Promise.all([
+    const [q, p] = await Promise.all([
       base44.entities.Questions.filter({ case_id: activeCase.id }),
       base44.entities.Parties.filter({ case_id: activeCase.id }),
-      base44.entities.EvidenceGroups.filter({ case_id: activeCase.id }),
     ]);
     setQuestions(q);
     setParties(p);
-    setEvidenceGroups(eg);
-    
-    // Load persisted group selection
-    const saved = sessionStorage.getItem(`evidence-group-${activeCase.id}`);
-    if (saved && saved !== "all") {
-      setSelectedGroupId(saved);
-    }
   };
   
   useEffect(() => {
     load();
   }, [activeCase]);
-
-  const loadGroupWitnesses = async (groupId) => {
-    if (groupId === "all") {
-      setGroupWitnesses([]);
-      return;
-    }
-    try {
-      const proofLinks = await base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: groupId });
-      const witnessIds = new Set();
-      for (const link of proofLinks) {
-        const proof = await base44.entities.ProofItems.filter({ id: link.proof_item_id });
-        if (proof.length > 0 && proof[0].witness_id) {
-          witnessIds.add(proof[0].witness_id);
-        }
-      }
-      const witIds = Array.from(witnessIds);
-      const witnesses = [];
-      for (const witId of witIds) {
-        const w = await base44.entities.Parties.filter({ id: witId });
-        if (w.length > 0) witnesses.push(w[0]);
-      }
-      setGroupWitnesses(witnesses);
-    } catch (error) {
-      console.error('Error loading group witnesses:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedGroupId !== "all") {
-      loadGroupWitnesses(selectedGroupId);
-    }
-  }, [selectedGroupId]);
 
   const save = async () => {
     const data = { 
