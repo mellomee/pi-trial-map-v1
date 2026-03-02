@@ -176,7 +176,7 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100">
             <TabsTrigger value="depoClips" className="text-xs">
               Deposition Clips
             </TabsTrigger>
