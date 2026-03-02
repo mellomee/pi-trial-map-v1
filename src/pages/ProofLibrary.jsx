@@ -33,12 +33,8 @@ export default function ProofLibrary() {
   const [showAddProofModal, setShowAddProofModal] = useState(false);
   const [showAddTrialPointModal, setShowAddTrialPointModal] = useState(false);
   const [showAssignWitnessModal, setShowAssignWitnessModal] = useState(false);
-  const [showGenerateQuestionModal, setShowGenerateQuestionModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
-  const [generateQuestionData, setGenerateQuestionData] = useState({ witness_id: '', exam_type: 'Direct', question_text: '' });
-  const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
-  const [showDeleteQuestionsModal, setShowDeleteQuestionsModal] = useState(false);
 
   useEffect(() => {
     if (activeCase?.id) {
