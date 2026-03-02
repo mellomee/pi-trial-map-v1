@@ -706,7 +706,7 @@ export default function ProofLibrary() {
       </Dialog>
 
       <Dialog open={showEditGroupModal} onOpenChange={setShowEditGroupModal}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent className="bg-white border-gray-300">
           <DialogHeader>
             <DialogTitle>Edit Evidence Group</DialogTitle>
           </DialogHeader>
