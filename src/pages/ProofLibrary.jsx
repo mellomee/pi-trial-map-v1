@@ -172,15 +172,17 @@ export default function ProofLibrary() {
       }
       clearTimeout(timeout);
       setGenQuestionsOpen(false);
-      // Navigate to Attorney View with first question auto-focused
+      // Zero-click landing: navigate to WitnessPrep with first question auto-focused
       if (created.length > 0) {
         const firstQ = created[0];
         const queryStr = new URLSearchParams({
           witnessId: genForm.party_id,
           examType: genForm.exam_type,
-          selectQuestionId: firstQ.id,
+          groupId: selectedGroupId,
+          tab: "questions",
+          questionId: firstQ.id,
         }).toString();
-        window.location.href = `/AttorneyView?${queryStr}`;
+        window.location.href = `/WitnessPrep?${queryStr}`;
       } else {
         await load();
       }
