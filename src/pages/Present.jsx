@@ -491,18 +491,21 @@ export default function Present() {
                               </button>
                               {isActive && (
                                 <div className="px-2 pb-2 space-y-1.5">
+                                  {a.snapshot_file && (
+                                    <img src={a.snapshot_file} alt="Snapshot" className="w-full rounded border border-[#1e2a45] object-contain max-h-20 bg-[#050809]" />
+                                  )}
                                   {(a.quote_text || a.extracted_text) ? (
-                                    <p className="text-[10px] text-yellow-200/70 italic leading-snug line-clamp-4 bg-yellow-500/5 border border-yellow-500/20 rounded px-2 py-1.5">
+                                    <p className="text-[10px] text-yellow-200/70 italic leading-snug line-clamp-3 bg-yellow-500/5 border border-yellow-500/20 rounded px-2 py-1.5">
                                       "{a.quote_text || a.extracted_text}"
                                     </p>
-                                  ) : (
-                                    <p className="text-[9px] text-slate-600 italic">No quote text stored.</p>
+                                  ) : !a.snapshot_file && (
+                                    <p className="text-[9px] text-slate-600 italic">No quote or snapshot.</p>
                                   )}
                                   <button
                                     onClick={() => { selectAnnotation(a); setSpotlightOn(true); }}
                                     className="w-full py-0.5 text-[9px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors"
                                   >
-                                    ✦ Spotlight
+                                    ✦ {a.snapshot_file ? "Snapshot Spotlight" : "Spotlight"}
                                   </button>
                                 </div>
                               )}
