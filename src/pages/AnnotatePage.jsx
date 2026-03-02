@@ -663,14 +663,14 @@ export default function AnnotatePage() {
           <FindOnPage pdfDoc={pdfDoc} pageIndex={pageIndex} />
         )}
         <div className="flex-1 overflow-auto flex justify-center items-start bg-[#050809] p-6"
-          style={{ cursor: calloutMode ? "crosshair" : "default" }}>
+          style={{ cursor: (calloutMode || highlightMode) ? "crosshair" : "default" }}>
           {!fileUrl ? (
             <div className="text-slate-500 text-sm mt-16">No file attached to this extract.</div>
           ) : isPdf ? (
             <div className="relative inline-block select-none"
-              onMouseDown={onCalloutMouseDown}
-              onMouseMove={onCalloutMouseMove}
-              onMouseUp={onCalloutMouseUp}
+              onMouseDown={e => { onCalloutMouseDown(e); onHighlightMouseDown(e); }}
+              onMouseMove={e => { onCalloutMouseMove(e); onHighlightMouseMove(e); }}
+              onMouseUp={e => { onCalloutMouseUp(e); onHighlightMouseUp(e); }}
               ref={overlayRef}
             >
               <canvas ref={canvasRef} style={{ display: "block", pointerEvents: "none" }} />
@@ -690,11 +690,29 @@ export default function AnnotatePage() {
                   }}
                 />
               )}
-              {/* Callout mode hint */}
+              {/* Highlight drag preview */}
+              {highlightMode && highlightDragRect && (
+                <div className="absolute pointer-events-none border-2 border-orange-400"
+                  style={{
+                    left: highlightDragRect.x, top: highlightDragRect.y,
+                    width: highlightDragRect.w, height: highlightDragRect.h,
+                    background: "rgba(251,146,60,0.2)",
+                    boxShadow: "0 0 0 1px rgba(251,146,60,0.5)",
+                  }}
+                />
+              )}
+              {/* Mode hints */}
               {calloutMode && !isDragging && (
                 <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
                   <div className="bg-yellow-500/90 text-black text-xs font-semibold px-3 py-1 rounded-full shadow">
                     Drag to select a region → Save as callout clip
+                  </div>
+                </div>
+              )}
+              {highlightMode && !highlightDragging && (
+                <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
+                  <div className="bg-orange-500/90 text-black text-xs font-semibold px-3 py-1 rounded-full shadow">
+                    Drag to highlight → Save as annotation with snapshot
                   </div>
                 </div>
               )}
