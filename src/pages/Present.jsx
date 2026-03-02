@@ -366,16 +366,16 @@ export default function Present() {
                   scale={scale}
                   onNumPages={setNumPages}
                 />
-                {/* Snapshot-based spotlight (no drift) — preferred when snapshot_file exists */}
+                {/* Snapshot/callout spotlight — no drift */}
                 {useSnapshotSpotlight && (
                   <SnapshotSpotlight
-                    annotation={activeAnn}
+                    annotation={spotlightAnn}
                     exhibitNo={displayNumber}
                     visible={true}
                     onClose={() => setSpotlightOn(false)}
                   />
                 )}
-                {/* Text-only fallback spotlight for annotations without snapshot */}
+                {/* Text-only fallback for annotations without snapshot */}
                 {showSpotlight && !useSnapshotSpotlight && (
                   <QuoteSpotlight
                     annotation={activeAnn}
