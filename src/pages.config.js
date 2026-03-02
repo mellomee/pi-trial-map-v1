@@ -82,6 +82,7 @@ import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
 import JuryView from './pages/JuryView';
 import WitnessPrep from './pages/WitnessPrep';
+import EvidenceWorkspace from './pages/EvidenceWorkspace';
 import __Layout from './Layout.jsx';
 
 
@@ -121,6 +122,7 @@ export const PAGES = {
     "VideoLibrary": VideoLibrary,
     "JuryView": JuryView,
     "WitnessPrep": WitnessPrep,
+    "EvidenceWorkspace": EvidenceWorkspace,
 }
 
 export const pagesConfig = {
