@@ -49,6 +49,12 @@ export default function ProofLibrary() {
     }
   }, [selectedGroupId]);
 
+  useEffect(() => {
+    if (selectedGroupId && centerTab === 'questions') {
+      loadGroupDetails();
+    }
+  }, [questionsRefreshKey]);
+
   const loadData = async () => {
     setLoading(true);
     try {
