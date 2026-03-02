@@ -252,6 +252,91 @@ export default function AnnotatePage() {
 
   const visibleAnns = showJurySafeOnly ? annotations.filter(a => a.jury_safe) : annotations;
 
+  // ── Callout drag handlers ────────────────────────────────────────────────
+  const getCanvasRelativePos = useCallback((e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  }, []);
+
+  const onCalloutMouseDown = useCallback((e) => {
+    if (!calloutMode) return;
+    e.preventDefault();
+    const pos = getCanvasRelativePos(e);
+    setDragStart(pos);
+    setDragRect(null);
+    setIsDragging(true);
+  }, [calloutMode, getCanvasRelativePos]);
+
+  const onCalloutMouseMove = useCallback((e) => {
+    if (!isDragging || !dragStart) return;
+    const pos = getCanvasRelativePos(e);
+    setDragRect({
+      x: Math.min(dragStart.x, pos.x),
+      y: Math.min(dragStart.y, pos.y),
+      w: Math.abs(pos.x - dragStart.x),
+      h: Math.abs(pos.y - dragStart.y),
+    });
+  }, [isDragging, dragStart, getCanvasRelativePos]);
+
+  const onCalloutMouseUp = useCallback(async (e) => {
+    if (!isDragging || !dragStart) return;
+    setIsDragging(false);
+    const pos = getCanvasRelativePos(e);
+    const rect = {
+      x: Math.min(dragStart.x, pos.x),
+      y: Math.min(dragStart.y, pos.y),
+      w: Math.abs(pos.x - dragStart.x),
+      h: Math.abs(pos.y - dragStart.y),
+    };
+    setDragRect(null);
+    if (rect.w < 10 || rect.h < 10) return; // too small
+
+    // Render page at high scale to a hidden canvas for crisp crop
+    const CROP_SCALE = 3;
+    const hiddenCanvas = document.createElement("canvas");
+    const page = await pdfDoc.getPage(pageIndex);
+    const vp = page.getViewport({ scale: CROP_SCALE });
+    hiddenCanvas.width = vp.width;
+    hiddenCanvas.height = vp.height;
+    await page.render({ canvasContext: hiddenCanvas.getContext("2d"), viewport: vp }).promise;
+
+    // Scale the drag rect from display coords to CROP_SCALE coords
+    const displayCanvas = canvasRef.current;
+    const scaleX = hiddenCanvas.width / displayCanvas.width;
+    const scaleY = hiddenCanvas.height / displayCanvas.height;
+    const sx = rect.x * scaleX;
+    const sy = rect.y * scaleY;
+    const sw = rect.w * scaleX;
+    const sh = rect.h * scaleY;
+
+    // Crop canvas
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = sw;
+    cropCanvas.height = sh;
+    const ctx = cropCanvas.getContext("2d");
+    ctx.drawImage(hiddenCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    // Bake highlight: semi-transparent yellow overlay
+    ctx.fillStyle = "rgba(255, 220, 0, 0.28)";
+    ctx.fillRect(0, 0, sw, sh);
+
+    cropCanvas.toBlob((blob) => {
+      setPendingCropBlob(blob);
+      setCaptureModalOpen(true);
+    }, "image/png");
+  }, [isDragging, dragStart, getCanvasRelativePos, pdfDoc, pageIndex]);
+
+  const deleteCallout = async (id) => {
+    if (!confirm("Delete this callout clip?")) return;
+    await base44.entities.ExhibitCallouts.delete(id);
+    setCallouts(prev => prev.filter(c => c.id !== id));
+  };
+
   // ── PICKER UI ────────────────────────────────────────────────────────────
   if (!extractId) {
     return (
