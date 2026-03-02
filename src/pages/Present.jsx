@@ -448,9 +448,21 @@ export default function Present() {
               )}
 
               {/* Annotations section */}
-              <div className="p-3 border-b border-[#1e2a45]">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Annotations</p>
-                <p className="text-[9px] text-slate-600 mt-0.5">Jury-safe only</p>
+              <div className="p-3 border-b border-[#1e2a45] flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Annotations</p>
+                  <p className="text-[9px] text-slate-600 mt-0.5">Jury-safe · {annotations.length} total</p>
+                </div>
+                <button
+                  onClick={() => setSpotlightOn(v => !v)}
+                  className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                    spotlightOn
+                      ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
+                      : "text-slate-500 border-[#1e2a45] hover:text-slate-300"
+                  }`}
+                >
+                  ✦ {spotlightOn ? "ON" : "OFF"}
+                </button>
               </div>
               <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {annotations.length === 0 && (
