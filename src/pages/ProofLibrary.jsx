@@ -677,6 +677,132 @@ export default function ProofLibrary() {
           loadGroupDetails();
         }}
       />
+
+      {/* Add Trial Points Modal */}
+      <Dialog open={showAddTrialPointModal} onOpenChange={setShowAddTrialPointModal}>
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle>Link Trial Points</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {allTrialPoints.map((tp) => {
+              const isLinked = linkedTrialPoints.some((l) => l.id === tp.id);
+              return (
+                <label key={tp.id} className="flex items-start gap-3 p-2 border border-gray-700 rounded cursor-pointer hover:bg-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={isLinked}
+                    disabled={isLinked}
+                    onChange={() => {
+                      if (!isLinked) {
+                        handleAddTrialPoints([tp.id]);
+                      }
+                    }}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-100">{tp.point_text}</p>
+                    <p className="text-xs text-gray-500">{tp.theme}</p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddTrialPointModal(false)}>
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Witnesses Modal */}
+      <Dialog open={showAssignWitnessModal} onOpenChange={setShowAssignWitnessModal}>
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle>Assign Witnesses</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {allWitnesses.map((wit) => {
+              const isAssigned = linkedWitnesses.some((l) => l.id === wit.id);
+              return (
+                <label key={wit.id} className="flex items-start gap-3 p-2 border border-gray-700 rounded cursor-pointer hover:bg-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={isAssigned}
+                    disabled={isAssigned}
+                    onChange={() => {
+                      if (!isAssigned) {
+                        handleAssignWitnesses([wit.id]);
+                      }
+                    }}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-100">{wit.display_name || wit.last_name}</p>
+                    <p className="text-xs text-gray-500">{wit.party_type}</p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAssignWitnessModal(false)}>
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate Question Modal */}
+      <Dialog open={showGenerateQuestionModal} onOpenChange={setShowGenerateQuestionModal}>
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle>Generate Question</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Witness</label>
+              <Select value={generateQuestionData.witness_id} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, witness_id: v })}>
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                  <SelectValue placeholder="Select witness..." />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  {linkedWitnesses.map((wit) => (
+                    <SelectItem key={wit.id} value={wit.id}>
+                      {wit.display_name || wit.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Exam Type</label>
+              <Select value={generateQuestionData.exam_type} onValueChange={(v) => setGenerateQuestionData({ ...generateQuestionData, exam_type: v })}>
+                <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="Direct">Direct</SelectItem>
+                  <SelectItem value="Cross">Cross</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGenerateQuestionModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerateQuestion}
+              disabled={!generateQuestionData.witness_id}
+              className="bg-cyan-600 hover:bg-cyan-700"
+            >
+              Generate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
