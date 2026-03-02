@@ -79,6 +79,10 @@ export default function Present() {
   const [spotlightOn, setSpotlightOn] = useState(false);
   const [spotlightMode, setSpotlightMode] = useState("only"); // "only" | "locate"
 
+  // Callout overlay state
+  const [calloutOverlayOn, setCalloutOverlayOn] = useState(false);
+  const [activeCalloutId, setActiveCalloutId] = useState(null);
+
   useEffect(() => {
     if (!activeCase) return;
     Promise.all([
