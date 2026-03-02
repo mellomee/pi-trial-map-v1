@@ -82,7 +82,6 @@ import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
 import WitnessPrep from './pages/WitnessPrep';
-import ExamBuilder from './pages/ExamBuilder';
 import __Layout from './Layout.jsx';
 
 
@@ -122,7 +121,6 @@ export const PAGES = {
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
     "WitnessPrep": WitnessPrep,
-    "ExamBuilder": ExamBuilder,
 }
 
 export const pagesConfig = {
