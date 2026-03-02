@@ -8,6 +8,7 @@ import {
   CheckCircle, Scissors, Eye, EyeOff, X
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import LegacyBanner from "@/components/LegacyBanner";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 

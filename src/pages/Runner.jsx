@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Play, ChevronRight, CheckCircle, AlertTriangle, Bookmark, FileText } from "lucide-react";
+import LegacyBanner from "@/components/LegacyBanner";
 
 export default function Runner() {
   const { activeCase } = useActiveCase();

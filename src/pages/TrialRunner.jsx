@@ -13,6 +13,7 @@ import {
   ChevronLeft, ChevronRight, AlertTriangle, GitBranch, ArrowRight, Zap, Monitor
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import LegacyBanner from "@/components/LegacyBanner";
 
 const STATUS_OPTS = [
   { value: "NotAsked", label: "Not Asked", color: "bg-slate-600/30 text-slate-400 border-slate-600" },
