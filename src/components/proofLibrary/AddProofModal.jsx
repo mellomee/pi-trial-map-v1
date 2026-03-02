@@ -210,7 +210,7 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-300">
                 {extracts.map((extract) => (
-                  <SelectItem key={extract.id} value={extract.id} className="text-gray-100">
+                   <SelectItem key={extract.id} value={extract.id} className="text-gray-900">
                     {extract.extract_title_internal || extract.extract_title_official}
                   </SelectItem>
                 ))}
