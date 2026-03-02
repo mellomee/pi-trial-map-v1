@@ -10,6 +10,7 @@ import { Plus, Search } from 'lucide-react';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
+import { createPageUrl } from '@/utils';
 
 export default function ProofLibrary() {
   const { activeCase } = useActiveCase();
@@ -166,9 +167,19 @@ export default function ProofLibrary() {
   return (
     <div className="h-screen flex flex-col bg-[#0a0f1e] text-slate-200">
       {/* Header */}
-      <div className="border-b border-gray-700 p-4 bg-[#0f1629]">
-        <h1 className="text-2xl font-bold text-cyan-400">Proof Library</h1>
-        <p className="text-sm text-gray-400">Gather and organize evidence by argument themes</p>
+      <div className="border-b border-gray-700 p-4 bg-[#0f1629] flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-cyan-400">Proof Library</h1>
+          <p className="text-sm text-gray-400">Gather and organize evidence by argument themes</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.location.href = createPageUrl('Dashboard')}
+          className="text-xs"
+        >
+          ← Back
+        </Button>
       </div>
 
       {/* Main Content */}
