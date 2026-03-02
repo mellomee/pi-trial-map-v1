@@ -48,6 +48,12 @@ export default function Questions() {
     setQuestions(q);
     setParties(p);
     setEvidenceGroups(eg);
+    
+    // Load persisted group selection
+    const saved = sessionStorage.getItem(`evidence-group-${activeCase.id}`);
+    if (saved && saved !== "all") {
+      setSelectedGroupId(saved);
+    }
   };
   
   useEffect(() => {
