@@ -491,14 +491,14 @@ export default function Present() {
 
               {/* Selected callout footer */}
               {selectedCalloutId && (
-                <div className="p-2 border-t border-[#1e2a45]">
-                  <button onClick={() => { setSelectedCalloutId(null); setSpotlightOn(false); setHighlightsOn(false); }}
+                <div className="p-2 border-t border-[#1e2a45] flex-shrink-0">
+                  <button onClick={() => { setSelectedCalloutId(null); setSpotlightOn(false); setHighlightsOn(true); }}
                     className="w-full py-1 text-[10px] text-slate-500 hover:text-slate-300 border border-[#1e2a45] rounded">
                     Clear selection
                   </button>
                 </div>
               )}
-            </div>
+            </div>}
           )}
         </div>
       </div>
