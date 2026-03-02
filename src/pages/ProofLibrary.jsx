@@ -161,6 +161,13 @@ export default function ProofLibrary() {
     }
   };
 
+  const goToQuestions = () => {
+    if (selectedGroupId && selectedGroupId !== "all") {
+      sessionStorage.setItem(`evidence-group-${activeCase.id}`, selectedGroupId);
+    }
+    window.location.href = createPageUrl('Questions');
+  };
+
   const handleUpdateGroup = async () => {
     if (!editingGroup?.title) return;
     try {
