@@ -499,52 +499,30 @@ export default function ProofLibrary() {
 
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
-                  <>
-                    <div className="space-y-2">
+                  <div className="text-center text-gray-500 mt-8 space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-300 mb-3">Manage questions for this evidence group in the dedicated Questions page</p>
                       <Button
-                        onClick={() => setShowGenerateQuestionModal(true)}
-                        size="sm"
-                        className="bg-cyan-600 hover:bg-cyan-700 w-full"
+                        onClick={() => window.location.href = createPageUrl('Questions')}
+                        className="bg-cyan-600 hover:bg-cyan-700"
                       >
-                        <Plus className="w-3 h-3 mr-2" />
-                        Generate Question
+                        Go to Questions
                       </Button>
-                      {linkedQuestions.length > 0 && (
-                        <Button
-                          onClick={() => setShowDeleteQuestionsModal(true)}
-                          size="sm"
-                          variant="outline"
-                          className="w-full text-red-400 border-red-400 hover:bg-red-950"
-                        >
-                          Delete All Questions (Dev)
-                        </Button>
-                      )}
                     </div>
-                    {linkedQuestions.length > 0 ? (
-                      linkedQuestions.map((q) => (
-                        <div key={q.id} className="bg-gray-800 border border-gray-700 rounded p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
-                              <p className="text-xs text-gray-500 mt-1">{q.exam_type}</p>
+                    {linkedQuestions.length > 0 && (
+                      <div className="pt-4 border-t border-gray-700">
+                        <p className="text-xs text-gray-500 mb-3">Questions linked to this evidence group:</p>
+                        <div className="space-y-2">
+                          {linkedQuestions.map((q) => (
+                            <div key={q.id} className="bg-gray-800 border border-gray-700 rounded p-2 text-left text-xs">
+                              <p className="text-gray-100">{q.question_text}</p>
+                              <p className="text-gray-500 mt-1">{q.exam_type}</p>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleRemoveQuestion(q.id)}
-                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                            >
-                              ✕
-                            </Button>
-                          </div>
+                          ))}
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 mt-8">
-                        <p className="text-sm">No questions linked</p>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             </>
