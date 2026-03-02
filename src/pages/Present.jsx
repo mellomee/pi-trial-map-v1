@@ -61,6 +61,7 @@ export default function Present() {
   const [admittedExhibits, setAdmittedExhibits] = useState([]);
   const [extracts, setExtracts] = useState([]);
   const [annotations, setAnnotations] = useState([]);
+  const [callouts, setCallouts] = useState([]);
   const [depoExhibits, setDepoExhibits] = useState([]);
 
   const [selectedExhibitId, setSelectedExhibitId] = useState(initExhibitId);
