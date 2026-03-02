@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown, ExternalLink, ChevronsUpDown, ChevronUp, RefreshCw, MinusCircle, StickyNote, Highlighter, Printer } from "lucide-react";
+import { Search, CheckSquare, Pencil, Trash2, X, ChevronDown, ExternalLink, ChevronsUpDown, ChevronUp, RefreshCw, MinusCircle, StickyNote, Highlighter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import FileViewerModal from "@/components/exhibits/FileViewerModal";
@@ -215,16 +215,6 @@ export default function JointExhibits() {
             <span className="text-slate-600">·</span>
             <span className="text-green-400">{admittedCount} admitted</span>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <a href={createPageUrl("JointExhibitPrintJudge")} target="_blank" rel="noreferrer"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded border border-slate-600/50 text-slate-400 hover:text-slate-200 hover:border-slate-500 text-xs transition-colors">
-            <Printer className="w-3.5 h-3.5" /> Print Judge
-          </a>
-          <a href={createPageUrl("JointExhibitPrintInternal")} target="_blank" rel="noreferrer"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded border border-slate-600/50 text-slate-400 hover:text-slate-200 hover:border-slate-500 text-xs transition-colors">
-            <Printer className="w-3.5 h-3.5" /> Print Internal
-          </a>
         </div>
       </div>
 
