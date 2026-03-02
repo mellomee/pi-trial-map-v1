@@ -303,8 +303,7 @@ export default function Present() {
 
             {/* Spotlight toggle + mode */}
             <button onClick={() => setSpotlightOn(v => !v)} title="Toggle Spotlight overlay"
-              disabled={!activeAnnotationId}
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-semibold border transition-colors disabled:opacity-30 ${
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-semibold border transition-colors ${
                 spotlightOn
                   ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40"
                   : "text-slate-400 border-[#1e2a45] hover:text-slate-200 hover:border-slate-500"
