@@ -120,6 +120,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
   const [highlights, setHighlights] = useState([]);
   const [selectedCallout, setSelectedCallout] = useState(null);
   const [viewingFile, setViewingFile] = useState(null); // { url, label }
+  const [caseParties, setCaseParties] = useState({}); // id -> name
 
   useEffect(() => {
     if (isOpen && proofItem) {
