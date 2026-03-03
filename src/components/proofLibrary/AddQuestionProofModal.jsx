@@ -57,11 +57,13 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
   const loadProofsForWitness = async () => {
     setLoading(true);
     try {
-      const [allParties, allDeps, allClips, allExtracts] = await Promise.all([
+      const [allParties, allDeps, allClips, allExtracts, allDepoExhibits, allJointExhibits] = await Promise.all([
         base44.entities.Parties.filter({ case_id: caseId }),
         base44.entities.Depositions.filter({ case_id: caseId }),
         base44.entities.DepoClips.filter({ case_id: caseId }),
         base44.entities.ExhibitExtracts.filter({ case_id: caseId }),
+        base44.entities.DepositionExhibits.filter({ case_id: caseId }),
+        base44.entities.JointExhibits.filter({ case_id: caseId }),
       ]);
 
       // Build maps
@@ -72,6 +74,14 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
       const depsMap = {};
       allDeps.forEach(d => { depsMap[d.id] = d; });
       setDepositions(depsMap);
+
+      const depoExMap = {};
+      allDepoExhibits.forEach(dx => { depoExMap[dx.id] = dx; });
+      setDepoExhibits(depoExMap);
+
+      const jxMap = {};
+      allJointExhibits.forEach(jx => { jxMap[jx.id] = jx; });
+      setJointExhibits(jxMap);
 
       // Filter clips for witness
       const witClips = [];
