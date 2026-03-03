@@ -639,11 +639,13 @@ export default function ProofLibrary() {
                               </div>
                               <div className="flex gap-1">
                                 <QuestionProofLinker
-                                  questionId={q.id}
-                                  evidenceGroupId={selectedGroupId}
-                                  caseId={activeCase.id}
-                                  proofItems={proofItems}
-                                />
+                                   questionId={q.id}
+                                   evidenceGroupId={selectedGroupId}
+                                   caseId={activeCase.id}
+                                   proofItems={proofItems}
+                                   calloutNames={calloutNames}
+                                   calloutWitnesses={calloutWitnesses}
+                                 />
                                 <Button
                                   size="sm"
                                   variant="ghost"
