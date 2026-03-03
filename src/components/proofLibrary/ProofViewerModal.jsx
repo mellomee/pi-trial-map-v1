@@ -247,7 +247,8 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
     if (!selectedCallout || !proofItem) return;
     await base44.entities.ProofItems.update(proofItem.id, { callout_id: selectedCallout.id });
     if (onCalloutSelected) onCalloutSelected(proofItem.id, selectedCallout);
-    onClose();
+    // Don't close — update local proofItem reference so badge shows immediately
+    setCallouts(prev => [...prev]); // trigger re-render
   };
 
   const selectedCalloutIdx = callouts.findIndex((c) => c.id === selectedCallout?.id);
