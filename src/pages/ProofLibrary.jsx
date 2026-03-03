@@ -65,6 +65,7 @@ export default function ProofLibrary() {
       setLinkedQuestions([]);
       setProofWitnessesForGroup([]);
       setCalloutWitnesses({});
+      setQuestionProofLinks({});
       loadGroupDetails(selectedGroupId);
     }
   }, [selectedGroupId]);
