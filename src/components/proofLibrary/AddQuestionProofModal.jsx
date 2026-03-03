@@ -5,10 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, FileText, Image, Eye, EyeOff } from 'lucide-react';
-import * as pdfjs from 'pdfjs-dist';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+import { FileText, Image } from 'lucide-react';
+import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
 
 const COLOR_CSS = {
   yellow: "rgba(255,220,0,0.40)",
