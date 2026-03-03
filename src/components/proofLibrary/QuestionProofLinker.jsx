@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Link2 } from 'lucide-react';
 
-export default function QuestionProofLinker({ questionId, evidenceGroupId, caseId, proofItems }) {
+export default function QuestionProofLinker({ questionId, evidenceGroupId, caseId, proofItems, calloutNames, calloutWitnesses }) {
   const [isOpen, setIsOpen] = useState(false);
   const [linkedProofIds, setLinkedProofIds] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -79,18 +79,18 @@ export default function QuestionProofLinker({ questionId, evidenceGroupId, caseI
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="bg-gray-900 border-gray-700">
+        <DialogContent className="bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle>Link Proofs to Question</DialogTitle>
+            <DialogTitle className="text-gray-900">Link Proofs to Question</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {proofItems.length === 0 ? (
-              <p className="text-sm text-gray-400">No proofs in this evidence group</p>
+              <p className="text-sm text-gray-500">No proofs in this evidence group</p>
             ) : (
               proofItems.map(proof => (
                 <label
                   key={proof.id}
-                  className="flex items-start gap-3 p-2 border border-gray-700 rounded cursor-pointer hover:bg-gray-800"
+                  className="flex items-start gap-3 p-2 border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
                 >
                   <Checkbox
                     checked={linkedProofIds.includes(proof.id)}
@@ -98,8 +98,14 @@ export default function QuestionProofLinker({ questionId, evidenceGroupId, caseI
                     className="mt-1"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-100">{proof.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{proof.type}</p>
+                    <p className="text-sm font-medium text-gray-900">{proof.label}</p>
+                    {proof.type === 'extract' && proof.callout_id && calloutNames && calloutNames[proof.callout_id] ? (
+                      <p className="text-xs text-blue-600 mt-0.5">↳ {calloutNames[proof.callout_id]}</p>
+                    ) : null}
+                    {proof.type === 'extract' && proof.callout_id && calloutWitnesses && calloutWitnesses[proof.callout_id] ? (
+                      <p className="text-xs text-green-600 mt-0.5">👤 {calloutWitnesses[proof.callout_id]}</p>
+                    ) : null}
+                    <p className="text-xs text-gray-500 mt-0.5">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
                   </div>
                 </label>
               ))
@@ -109,7 +115,7 @@ export default function QuestionProofLinker({ questionId, evidenceGroupId, caseI
             <Button variant="outline" onClick={() => setIsOpen(false)} className="border-gray-300 text-gray-700">
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={loading} className="bg-cyan-600 hover:bg-cyan-700">
+            <Button onClick={handleSave} disabled={loading} className="bg-cyan-600 hover:bg-cyan-700 text-white">
               Save Links
             </Button>
           </DialogFooter>
