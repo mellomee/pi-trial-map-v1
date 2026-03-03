@@ -13,6 +13,7 @@ import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
 import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
 import QuestionProofLinker from '@/components/proofLibrary/QuestionProofLinker';
+import HierarchicalQuestionsList from '@/components/proofLibrary/HierarchicalQuestionsList';
 import { createPageUrl } from '@/utils';
 
 export default function ProofLibrary() {
