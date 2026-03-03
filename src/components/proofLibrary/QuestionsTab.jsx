@@ -285,6 +285,22 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
       </Dialog>
 
       <ProofViewerModal proofItem={selectedProofItem} isOpen={showProofModal} onClose={() => setShowProofModal(false)} />
+
+      {linkingQuestion && (
+        <QuestionProofLinkerModal
+          isOpen={showLinkModal}
+          onClose={() => { setShowLinkModal(false); setLinkingQuestion(null); }}
+          question={linkingQuestion}
+          evidenceGroupId={evidenceGroup.id}
+          caseId={caseId}
+          proofItems={proofItems}
+          onProofLinked={() => {
+            setShowLinkModal(false);
+            setLinkingQuestion(null);
+            loadQuestions();
+          }}
+        />
+      )}
     </div>
   );
 }
