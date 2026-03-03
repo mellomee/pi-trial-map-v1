@@ -921,7 +921,16 @@ export default function ProofLibrary() {
         </DialogContent>
       </Dialog>
 
-      <ProofViewerModal proofItem={selectedProofItem} isOpen={showProofDetails} onClose={() => setShowProofDetails(false)} />
+      <ProofViewerModal
+        proofItem={selectedProofItem}
+        isOpen={showProofDetails}
+        onClose={() => setShowProofDetails(false)}
+        onCalloutSelected={(proofItemId, callout) => {
+          setCalloutNames(prev => ({ ...prev, [callout.id]: callout.name }));
+          setProofItems(prev => prev.map(p => p.id === proofItemId ? { ...p, callout_id: callout.id } : p));
+          setSelectedProofItem(prev => prev?.id === proofItemId ? { ...prev, callout_id: callout.id } : prev);
+        }}
+      />
     </div>
   );
 }
