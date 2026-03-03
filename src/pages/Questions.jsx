@@ -28,6 +28,9 @@ export default function Questions() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
+  const [questionProofs, setQuestionProofs] = useState({}); // questionId -> array of proofItems
+  const [calloutNames, setCalloutNames] = useState({});
+  const [calloutWitnesses, setCalloutWitnesses] = useState({});
 
   const load = async () => {
     if (!activeCase) return;
