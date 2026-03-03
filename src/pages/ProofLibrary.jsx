@@ -514,6 +514,9 @@ export default function ProofLibrary() {
                               {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] ? (
                                 <p className="text-xs text-cyan-400 mt-0.5">↳ {calloutNames[proof.callout_id]}</p>
                               ) : null}
+                              {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] ? (
+                                <p className="text-xs text-blue-400 mt-0.5">👤 {calloutWitnesses[proof.callout_id]}</p>
+                              ) : null}
                               <p className="text-xs text-gray-500 mt-1">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
                             </div>
                             <Button
