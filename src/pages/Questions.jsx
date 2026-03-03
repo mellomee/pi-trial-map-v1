@@ -101,8 +101,9 @@ export default function Questions() {
       // Load evidence groups for this case to filter egLinks
       const caseEGs = await base44.entities.EvidenceGroups.filter({ case_id: caseId }).catch(() => []);
       const caseEGIds = new Set(caseEGs.map(g => g.id));
-      const egLinks = await base44.entities.EvidenceGroupTrialPoints.list('-created_date', 500).catch(() => []);
-      const filteredEgLinks = egLinks.filter(l => caseEGIds.has(l.evidence_group_id));
+      // EvidenceGroupTrialPoints has no case_id, so we must list all and filter client-side
+      const allEgLinks = await base44.entities.EvidenceGroupTrialPoints.list('-created_date', 1000).catch(() => []);
+      const filteredEgLinks = allEgLinks.filter(l => caseEGIds.has(l.evidence_group_id));
       for (const q of qs) {
         if (q.primary_evidence_group_id) {
           const egTps = filteredEgLinks.filter(l => l.evidence_group_id === q.primary_evidence_group_id);
