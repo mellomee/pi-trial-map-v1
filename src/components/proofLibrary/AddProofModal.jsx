@@ -296,6 +296,7 @@ function ExtractDetailPanel({ extract, caseId, selectedCallout, setSelectedCallo
         selectedCallout={selectedCallout}
         setSelectedCallout={setSelectedCallout}
         proofCalloutId={null}
+        caseParties={caseParties}
       />
 
       <Button onClick={onAdd} disabled={loading} className="w-full bg-cyan-600 hover:bg-cyan-700">
