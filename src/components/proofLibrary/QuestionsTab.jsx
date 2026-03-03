@@ -96,11 +96,11 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
   const handleLinkProof = async (questionId, proofItem) => {
     try {
-      await base44.entities.QuestionLinks.create({
+      await base44.entities.QuestionProofItems.create({
         case_id: caseId,
+        evidence_group_id: evidenceGroup.id,
         question_id: questionId,
-        link_type: proofItem.type === 'depoClip' ? 'DepoClip' : 'JointExhibit',
-        link_id: proofItem.source_id,
+        proof_item_id: proofItem.id,
       });
       await loadQuestions();
     } catch (error) {
