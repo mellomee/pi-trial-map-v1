@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Pencil, Trash2, Plus, ChevronDown, ChevronRight, Link2, ExternalLink } from 'lucide-react';
+import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
+import AddQuestionProofModal from '@/components/proofLibrary/AddQuestionProofModal';
 
 export default function HierarchicalQuestionsList({
   questions,
