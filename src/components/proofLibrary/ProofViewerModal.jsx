@@ -274,7 +274,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                       {extractMeta.sourceDepoExhibit ? (
                         <>
                           <p className="text-xl font-bold text-yellow-300 leading-none">
-                            Exh {extractMeta.primarySrc?.source_depo_exhibit_no || extractMeta.sourceDepoExhibit.depo_exhibit_no || '—'}
+                            #{extractMeta.primarySrc?.source_depo_exhibit_no || extractMeta.sourceDepoExhibit.depo_exhibit_no || '—'}
                           </p>
                           <p className="text-xs text-gray-300 leading-tight mt-1">
                             {extractMeta.sourceDepoExhibit.depo_exhibit_title || extractMeta.sourceDepoExhibit.display_title || '—'}
