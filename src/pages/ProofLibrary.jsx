@@ -643,8 +643,6 @@ export default function ProofLibrary() {
                                   evidenceGroupId={selectedGroupId}
                                   caseId={activeCase.id}
                                   proofItems={proofItems}
-                                  calloutNames={calloutNames}
-                                  calloutWitnesses={calloutWitnesses}
                                 />
                                 <Button
                                   size="sm"
