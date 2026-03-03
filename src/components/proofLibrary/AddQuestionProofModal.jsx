@@ -326,24 +326,34 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                 <div className="px-3 py-2 border-b border-gray-700">
                   <p className="text-xs font-semibold text-gray-400 uppercase">Exhibit Extracts ({extracts.length})</p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 p-2 max-h-24 overflow-y-auto">
-                  {extracts.filter(e =>
-                    e.title?.toLowerCase().includes(searchExtract.toLowerCase()) ||
-                    e.marked_title?.toLowerCase().includes(searchExtract.toLowerCase())
-                  ).map(extract => (
-                    <button
-                      key={extract.id}
-                      onClick={() => { setSelectedExtract(extract); setSelectedCallout(null); }}
-                      className={`text-left p-2 rounded border transition-colors ${
-                        selectedExtract?.id === extract.id
-                          ? 'border-cyan-400 bg-cyan-500/10'
-                          : 'border-gray-700 bg-gray-800 hover:border-gray-500'
-                      }`}
-                    >
-                      <p className="text-xs font-medium text-gray-200 truncate">{extract.title || extract.marked_title}</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">#{extract.marked_no}</p>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-2 p-2 max-h-40 overflow-y-auto">
+                  {extracts.length > 0 ? (
+                    extracts.map(extract => (
+                      <button
+                        key={extract.id}
+                        onClick={() => { setSelectedExtract(extract); setSelectedCallout(null); }}
+                        className={`text-left rounded border transition-colors overflow-hidden ${
+                          selectedExtract?.id === extract.id
+                            ? 'border-cyan-400 bg-cyan-500/10'
+                            : 'border-gray-700 bg-gray-800 hover:border-gray-500'
+                        }`}
+                      >
+                        {extract.extract_file_url && (
+                          <img 
+                            src={extract.extract_file_url} 
+                            alt={extract.title} 
+                            className="w-full h-24 object-cover"
+                          />
+                        )}
+                        <div className="p-2">
+                          <p className="text-xs font-medium text-gray-200 truncate">{extract.title || extract.marked_title}</p>
+                          <p className="text-[10px] text-gray-500 mt-0.5">#{extract.marked_no}</p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center py-4 text-gray-500 text-xs">No extracts available</div>
+                  )}
                 </div>
               </div>
 
