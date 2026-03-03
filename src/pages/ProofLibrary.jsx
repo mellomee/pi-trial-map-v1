@@ -200,35 +200,16 @@ export default function ProofLibrary() {
 
   const handleCreateQuestion = async (questionData) => {
     try {
-      if (questionData.id) {
-        // Editing existing question
-        const updated = await base44.entities.Questions.update(questionData.id, {
-          question_text: questionData.question_text,
-          party_id: questionData.party_id,
-          exam_type: questionData.exam_type,
-          goal: questionData.goal,
-          expected_answer: questionData.expected_answer,
-          importance: questionData.importance,
-          status: questionData.status,
-        });
-        setLinkedQuestions(qs => qs.map(q => q.id === updated.id ? updated : q));
-      } else {
-        // Creating new question
-        const newQ = await base44.entities.Questions.create({
-          ...questionData,
-          case_id: activeCase.id,
-          primary_evidence_group_id: selectedGroupId,
-        });
-        // Create the QuestionEvidenceGroups link so loadGroupDetails can find it
+      // For linking to evidence group (parent questions only)
+      if (!questionData.parent_id) {
         await base44.entities.QuestionEvidenceGroups.create({
           case_id: activeCase.id,
-          question_id: newQ.id,
+          question_id: questionData.id || null,
           evidence_group_id: selectedGroupId,
         });
-        setLinkedQuestions(qs => [...qs, newQ]);
       }
     } catch (error) {
-      console.error('Error creating/updating question:', error);
+      console.error('Error linking question to evidence group:', error);
     }
   };
 
