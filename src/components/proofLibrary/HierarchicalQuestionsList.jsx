@@ -269,24 +269,6 @@ export default function HierarchicalQuestionsList({
         {isExpanded && children.length > 0 && (
           <div className="space-y-2">
             {children.map(child => renderQuestion(child, true))}
-            <div className="ml-6 flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddChild(q, 'Follow-Up')}
-                className="h-6 text-xs border-gray-600 text-gray-300 hover:text-cyan-400"
-              >
-                <Plus className="w-3 h-3 mr-1" /> Follow-Up
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddChild(q, 'Impeachment')}
-                className="h-6 text-xs border-gray-600 text-gray-300 hover:text-cyan-400"
-              >
-                <Plus className="w-3 h-3 mr-1" /> Impeachment
-              </Button>
-            </div>
           </div>
         )}
       </div>
