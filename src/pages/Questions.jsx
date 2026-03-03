@@ -98,10 +98,14 @@ export default function Questions() {
         if (tpLookup[ql.link_id]) tpMap[ql.question_id].push(tpLookup[ql.link_id]);
       }
       // Also check EvidenceGroup trial points via primary_evidence_group_id
-      const egLinks = await base44.entities.EvidenceGroupTrialPoints.list().catch(() => []);
+      // Load evidence groups for this case to filter egLinks
+      const caseEGs = await base44.entities.EvidenceGroups.filter({ case_id: caseId }).catch(() => []);
+      const caseEGIds = new Set(caseEGs.map(g => g.id));
+      const egLinks = await base44.entities.EvidenceGroupTrialPoints.list('-created_date', 500).catch(() => []);
+      const filteredEgLinks = egLinks.filter(l => caseEGIds.has(l.evidence_group_id));
       for (const q of qs) {
         if (q.primary_evidence_group_id) {
-          const egTps = egLinks.filter(l => l.evidence_group_id === q.primary_evidence_group_id);
+          const egTps = filteredEgLinks.filter(l => l.evidence_group_id === q.primary_evidence_group_id);
           for (const etp of egTps) {
             if (tpLookup[etp.trial_point_id]) {
               if (!tpMap[q.id]) tpMap[q.id] = [];
