@@ -128,12 +128,38 @@ export default function Questions() {
     return p ? `${p.first_name} ${p.last_name}` : "Unassigned";
   };
 
-  const filtered = questions.filter(q => {
+  // Build hierarchy from parent_id relationships
+  const buildQuestionTree = (allQuestions) => {
+    const tree = [];
+    const qMap = {};
+
+    // First pass: index all questions
+    allQuestions.forEach(q => {
+      qMap[q.id] = { ...q, children: [] };
+    });
+
+    // Second pass: build parent-child relationships
+    allQuestions.forEach(q => {
+      if (q.parent_id && qMap[q.parent_id]) {
+        // This is a child question
+        qMap[q.parent_id].children.push(qMap[q.id]);
+      } else {
+        // This is a root question
+        tree.push(qMap[q.id]);
+      }
+    });
+
+    return tree;
+  };
+
+  const allFiltered = questions.filter(q => {
     const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
     const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
     return matchSearch && matchParty && matchType;
   }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+  const filtered = buildQuestionTree(allFiltered);
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
