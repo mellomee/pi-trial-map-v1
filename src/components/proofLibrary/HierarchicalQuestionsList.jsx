@@ -14,7 +14,6 @@ import AddQuestionProofModal from '@/components/proofLibrary/AddQuestionProofMod
 export default function HierarchicalQuestionsList({
   questions,
   evidenceGroupId,
-  evidenceGroup,
   caseId,
   proofItems,
   calloutNames,
@@ -121,7 +120,7 @@ export default function HierarchicalQuestionsList({
       question_type: childType,
       parent_id: parentQuestion.id,
       case_id: caseId,
-      primary_evidence_group_id: parentQuestion.primary_evidence_group_id ?? evidenceGroup?.id,
+      primary_evidence_group_id: evidenceGroupId,
     });
     setShowModal(true);
   };
@@ -139,12 +138,7 @@ export default function HierarchicalQuestionsList({
         await base44.entities.Questions.update(editingQuestion.id, editingQuestion);
         onQuestionUpdated && onQuestionUpdated(editingQuestion);
       } else {
-        let newQ = await base44.entities.Questions.create(editingQuestion);
-        // Safety check: ensure child question has the correct evidence group id
-        if (!newQ.primary_evidence_group_id && evidenceGroup?.id) {
-          await base44.entities.Questions.update(newQ.id, { primary_evidence_group_id: evidenceGroup.id });
-          newQ.primary_evidence_group_id = evidenceGroup.id;
-        }
+        const newQ = await base44.entities.Questions.create(editingQuestion);
         onQuestionCreated && onQuestionCreated(newQ);
         if (parentQuestionForChild) {
           setExpandedParents(prev => new Set([...prev, parentQuestionForChild.id]));

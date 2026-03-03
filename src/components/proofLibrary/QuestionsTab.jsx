@@ -26,31 +26,15 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
   const loadQuestions = async () => {
     try {
-      // Load questions for this evidence group
+      // Load questions by witnesses in this group
       const witIds = witnesses.map(w => w.id);
       if (witIds.length === 0) {
         setQuestions([]);
         return;
       }
       
-      // Load root questions scoped to this evidence group
-      const roots = await base44.entities.Questions.filter({ 
-        case_id: caseId,
-        primary_evidence_group_id: evidenceGroup.id,
-        parent_id: null,
-      });
-      
-      // Collect all root IDs for child lookup
-      const rootIds = roots.map(r => r.id);
-      
-      // Load all children of these roots (resilient to missing group id on child)
-      const allChildren = rootIds.length > 0 
-        ? await base44.entities.Questions.filter({ parent_id: { $in: rootIds } })
-        : [];
-      
-      // Combine roots + children
-      const allQ = [...roots, ...allChildren];
-      const filtered = allQ.filter(q => witIds.includes(q.party_id) || q.parent_id);
+      const allQ = await base44.entities.Questions.filter({ case_id: caseId });
+      const filtered = allQ.filter(q => witIds.includes(q.party_id));
       setQuestions(filtered);
 
       // Load linked proof for each question
