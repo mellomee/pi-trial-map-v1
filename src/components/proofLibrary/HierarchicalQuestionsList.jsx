@@ -262,39 +262,7 @@ export default function HierarchicalQuestionsList({
             </div>
           )}
 
-          {/* Add/Link proof button */}
-          <div className="border-t border-gray-600 mt-2 pt-2 flex gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => { setSelectedQuestionForProof(q); setShowAddProofModal(true); }}
-              className="h-6 text-xs border-gray-600 text-gray-300 hover:text-cyan-400 flex-1"
-            >
-              <Link2 className="w-3 h-3 mr-1" /> Link Proof
-            </Button>
-          </div>
 
-          {/* Action buttons for parent questions */}
-          {!q.parent_id && children.length === 0 && (
-            <div className="border-t border-gray-600 mt-2 pt-2 flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddChild(q, 'Follow-Up')}
-                className="h-6 text-xs border-gray-600 text-gray-300 hover:text-cyan-400"
-              >
-                <Plus className="w-3 h-3 mr-1" /> Follow-Up
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddChild(q, 'Impeachment')}
-                className="h-6 text-xs border-gray-600 text-gray-300 hover:text-cyan-400"
-              >
-                <Plus className="w-3 h-3 mr-1" /> Impeachment
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Child questions */}
