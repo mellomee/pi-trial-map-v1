@@ -236,16 +236,15 @@ export default function LinkQuestionProofModal({
         </DialogContent>
       </Dialog>
 
-      {/* ProofViewerModal for preview and linking */}
-      {selectedProof && (
+      {/* ProofViewerModal for preview only */}
+      {previewProof && (
         <ProofViewerModal
-          proofItem={selectedProof}
+          proofItem={previewProof}
           isOpen={showProofViewer}
           onClose={() => {
             setShowProofViewer(false);
-            setSelectedProof(null);
+            setPreviewProof(null);
           }}
-          onCalloutSelected={handleProofCalloutSelected}
         />
       )}
     </>
