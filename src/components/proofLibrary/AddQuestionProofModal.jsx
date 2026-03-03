@@ -35,6 +35,11 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
   const [loading, setLoading] = useState(false);
   const [parties, setParties] = useState({});
   const [depositions, setDepositions] = useState({});
+  const [viewingFile, setViewingFile] = useState(null);
+  const [fileViewerPage, setFileViewerPage] = useState(1);
+  const [fileViewerNumPages, setFileViewerNumPages] = useState(1);
+  const [fileViewerScale, setFileViewerScale] = useState(1.2);
+  const [fileViewerPdfDoc, setFileViewerPdfDoc] = useState(null);
 
   const canvasRef = React.useRef(null);
 
