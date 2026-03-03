@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronRight, Trash2, Eye } from 'lucide-react';
 
-export default function LinkedProofsViewer({ questionId, evidenceGroupId }) {
+export default function LinkedProofsViewer({ questionId, evidenceGroupId, onPreview, onUnlink }) {
   const [linkedProofs, setLinkedProofs] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function LinkedProofsViewer({ questionId, evidenceGroupId }) {
       for (const link of sortedLinks) {
         const proof = await base44.entities.ProofItems.filter({ id: link.proof_item_id });
         if (proof.length > 0) {
-          proofs.push(proof[0]);
+          proofs.push({ ...proof[0], linkId: link.id });
         }
       }
       setLinkedProofs(proofs);
