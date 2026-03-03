@@ -298,7 +298,7 @@ export default function HierarchicalQuestionsList({
         {/* Child questions */}
         {isExpanded && children.length > 0 && (
           <div className="space-y-2">
-            {children.map(child => renderQuestion(child, true))}
+            {children.map((child, idx) => renderQuestion(child, true, idx))}
           </div>
         )}
       </div>
