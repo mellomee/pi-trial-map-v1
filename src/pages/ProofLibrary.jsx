@@ -165,6 +165,15 @@ export default function ProofLibrary() {
       // Cache trial points & witnesses globally so add modals are fast
       setAllTrialPoints(allTPsInCase);
       setAllWitnesses(allPartiesInCase);
+
+      // Load question-proof links
+      const qpLinks = await base44.entities.QuestionProofItems.filter({ evidence_group_id: gId });
+      const qMap = {};
+      qpLinks.forEach(link => {
+        if (!qMap[link.question_id]) qMap[link.question_id] = [];
+        qMap[link.question_id].push(link.proof_item_id);
+      });
+      setQuestionProofLinks(qMap);
     } catch (error) {
       console.error('Error loading group details:', error);
     }
