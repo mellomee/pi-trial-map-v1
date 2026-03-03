@@ -257,7 +257,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                       }`}
                     >
                       <div className="flex gap-1 items-center">
-                        <p className="text-xs font-medium text-gray-200 truncate flex-1">{clip.clip_title || clip.start_cite}</p>
+                        <p className="text-xs font-medium text-gray-200 truncate flex-1">{clip.topic_tag || clip.clip_title || clip.start_cite}</p>
                         {clip.direction && (
                           <Badge className={clip.direction === 'HelpsUs' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} size="sm">
                             {clip.direction === 'HelpsUs' ? '✓' : '✗'}
