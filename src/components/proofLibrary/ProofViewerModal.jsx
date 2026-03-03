@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Image, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { FileText, Image, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function CalloutImageWithHighlights({ callout, highlights }) {
-  const containerRef = useRef(null);
   const [dims, setDims] = useState(null);
+  const colorMap = { yellow: 'rgba(253,224,71,', red: 'rgba(239,68,68,', green: 'rgba(34,197,94,', blue: 'rgba(59,130,246,' };
 
   if (!callout.snapshot_image_url) {
     return (
@@ -20,10 +20,8 @@ function CalloutImageWithHighlights({ callout, highlights }) {
     );
   }
 
-  const colorMap = { yellow: 'rgba(253,224,71,', red: 'rgba(239,68,68,', green: 'rgba(34,197,94,', blue: 'rgba(59,130,246,' };
-
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div className="relative w-full">
       <img
         src={callout.snapshot_image_url}
         alt={callout.name}
@@ -34,18 +32,15 @@ function CalloutImageWithHighlights({ callout, highlights }) {
         (hl.rects_norm || []).map((r, ri) => {
           const base = colorMap[hl.color] || colorMap.yellow;
           return (
-            <div
-              key={`${hi}-${ri}`}
-              style={{
-                position: 'absolute',
-                left: `${r.x * 100}%`,
-                top: `${r.y * 100}%`,
-                width: `${r.w * 100}%`,
-                height: `${r.h * 100}%`,
-                backgroundColor: `${base}${hl.opacity ?? 0.35})`,
-                pointerEvents: 'none',
-              }}
-            />
+            <div key={`${hi}-${ri}`} style={{
+              position: 'absolute',
+              left: `${r.x * 100}%`,
+              top: `${r.y * 100}%`,
+              width: `${r.w * 100}%`,
+              height: `${r.h * 100}%`,
+              backgroundColor: `${base}${hl.opacity ?? 0.35})`,
+              pointerEvents: 'none',
+            }} />
           );
         })
       )}
@@ -53,12 +48,12 @@ function CalloutImageWithHighlights({ callout, highlights }) {
   );
 }
 
-export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectCallout }) {
+export default function ProofViewerModal({ proofItem, isOpen, onClose, onCalloutSelected }) {
   const [loading, setLoading] = useState(false);
   const [depoClip, setDepoClip] = useState(null);
   const [deposition, setDeposition] = useState(null);
   const [extract, setExtract] = useState(null);
-  const [extractMeta, setExtractMeta] = useState(null); // { sourceDepoExhibit, deponent, jointExhibit, admittedExhibit }
+  const [extractMeta, setExtractMeta] = useState(null);
   const [callouts, setCallouts] = useState([]);
   const [highlights, setHighlights] = useState([]);
   const [selectedCallout, setSelectedCallout] = useState(null);
@@ -67,21 +62,15 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
     if (isOpen && proofItem) {
       loadDetails();
     } else {
-      setDepoClip(null);
-      setDeposition(null);
-      setExtract(null);
-      setExtractMeta(null);
-      setCallouts([]);
-      setHighlights([]);
-      setSelectedCallout(null);
+      setDepoClip(null); setDeposition(null); setExtract(null);
+      setExtractMeta(null); setCallouts([]); setHighlights([]); setSelectedCallout(null);
     }
   }, [isOpen, proofItem?.id]);
 
   useEffect(() => {
     if (selectedCallout?.id) {
       base44.entities.Highlights.filter({ callout_id: selectedCallout.id })
-        .then(setHighlights)
-        .catch(() => setHighlights([]));
+        .then(setHighlights).catch(() => setHighlights([]));
     } else {
       setHighlights([]);
     }
@@ -107,7 +96,6 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
         if (extracts.length > 0) {
           const ext = extracts[0];
           setExtract(ext);
-          // Load metadata in parallel
           const [sources, jointExhibits] = await Promise.all([
             base44.entities.ExtractSources.filter({ exhibit_extract_id: ext.id }),
             base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }),
@@ -122,15 +110,14 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
             if (depoExhibits.length > 0) sourceDepoExhibit = depoExhibits[0];
             if (parties.length > 0) deponent = parties[0];
           }
-          let admittedExhibit = null;
-          if (jointExhibits.length > 0 && jointExhibits[0].admitted_no) {
-            admittedExhibit = { admitted_no: jointExhibits[0].admitted_no, admitted_date: jointExhibits[0].admitted_date };
-          }
-          setExtractMeta({ sourceDepoExhibit, deponent, sources, jointExhibits, admittedExhibit });
+          const jx = jointExhibits[0] || null;
+          setExtractMeta({ sourceDepoExhibit, deponent, sources, jointExhibit: jx });
         }
         const sorted = cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
         setCallouts(sorted);
-        if (sorted.length > 0) setSelectedCallout(sorted[0]);
+        // Pre-select the currently linked callout, or first
+        const linked = proofItem.callout_id ? sorted.find(c => c.id === proofItem.callout_id) : null;
+        setSelectedCallout(linked || (sorted.length > 0 ? sorted[0] : null));
       }
     } catch (err) {
       console.error('Error loading proof details:', err);
@@ -138,7 +125,15 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
     setLoading(false);
   };
 
+  const handleSetAsProofCallout = async () => {
+    if (!selectedCallout || !proofItem) return;
+    await base44.entities.ProofItems.update(proofItem.id, { callout_id: selectedCallout.id });
+    if (onCalloutSelected) onCalloutSelected(proofItem.id, selectedCallout);
+    onClose();
+  };
+
   const selectedCalloutIdx = callouts.findIndex(c => c.id === selectedCallout?.id);
+  const isCurrentProofCallout = proofItem?.callout_id && selectedCallout?.id === proofItem?.callout_id;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -161,9 +156,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
                       {depoClip.direction === 'HelpsUs' ? '✓ Helps Us' : '✗ Hurts Us'}
                     </Badge>
                   )}
-                  {depoClip.topic_tag && (
-                    <Badge variant="outline" className="text-gray-300">{depoClip.topic_tag}</Badge>
-                  )}
+                  {depoClip.topic_tag && <Badge variant="outline" className="text-gray-300">{depoClip.topic_tag}</Badge>}
                 </div>
                 {deposition && (
                   <div className="text-xs text-gray-400 bg-[#131a2e] px-3 py-2 rounded">
@@ -206,58 +199,70 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
                   {extract.extract_title_internal || extract.extract_title_official}
                 </div>
 
-                {/* Metadata grid */}
+                {/* 3-column metadata strip */}
                 {extractMeta && (
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {extractMeta.sourceDepoExhibit && (
-                      <div className="bg-[#131a2e] border border-[#1e2a45] rounded px-3 py-2">
-                        <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">Source Exhibit</p>
-                        <p className="text-gray-200">{extractMeta.sourceDepoExhibit.depo_exhibit_title || extractMeta.sourceDepoExhibit.display_title}</p>
-                        {extractMeta.sourceDepoExhibit.depo_exhibit_no && (
-                          <p className="text-gray-400 mt-0.5">Exh #{extractMeta.sourceDepoExhibit.depo_exhibit_no}</p>
-                        )}
-                      </div>
-                    )}
-                    {extractMeta.deponent && (
-                      <div className="bg-[#131a2e] border border-[#1e2a45] rounded px-3 py-2">
-                        <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">Source Deponent</p>
-                        <p className="text-gray-200">{extractMeta.deponent.display_name || `${extractMeta.deponent.first_name || ''} ${extractMeta.deponent.last_name}`.trim()}</p>
-                        {extractMeta.sources[0]?.source_depo_exhibit_no && (
-                          <p className="text-gray-400 mt-0.5">Depo Exh #{extractMeta.sources[0].source_depo_exhibit_no}</p>
-                        )}
-                      </div>
-                    )}
-                    {extractMeta.jointExhibits.length > 0 ? (
-                      <div className="bg-[#131a2e] border border-[#1e2a45] rounded px-3 py-2">
-                        <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">Joint List</p>
-                        <p className="text-gray-200">Marked #{extractMeta.jointExhibits[0].marked_no}</p>
-                        {extractMeta.jointExhibits[0].marked_title && (
-                          <p className="text-gray-400 mt-0.5 truncate">{extractMeta.jointExhibits[0].marked_title}</p>
-                        )}
-                        <Badge className={`mt-1 text-[10px] ${extractMeta.jointExhibits[0].status === 'Admitted' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                          {extractMeta.jointExhibits[0].status}
-                        </Badge>
-                      </div>
-                    ) : (
-                      <div className="bg-[#131a2e] border border-[#1e2a45] rounded px-3 py-2">
-                        <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">Joint List</p>
-                        <p className="text-gray-500 italic">Not on joint list</p>
-                      </div>
-                    )}
-                    {extractMeta.admittedExhibit ? (
-                      <div className="bg-[#131a2e] border border-green-500/30 rounded px-3 py-2">
-                        <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">Admitted</p>
-                        <p className="text-green-300 font-semibold">Admitted #{extractMeta.admittedExhibit.admitted_no}</p>
-                        {extractMeta.admittedExhibit.admitted_date && (
-                          <p className="text-gray-400 mt-0.5">{extractMeta.admittedExhibit.admitted_date}</p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="bg-[#131a2e] border border-[#1e2a45] rounded px-3 py-2">
-                        <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">Admitted</p>
-                        <p className="text-gray-500 italic">Not admitted</p>
-                      </div>
-                    )}
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* ORIGINAL */}
+                    <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-3 flex flex-col gap-1">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Original</p>
+                      {extractMeta.sourceDepoExhibit ? (
+                        <>
+                          <p className="text-xl font-bold text-gray-100 leading-none">
+                            #{extractMeta.sourceDepoExhibit.depo_exhibit_no || '—'}
+                          </p>
+                          <p className="text-xs text-gray-300 leading-tight line-clamp-2">
+                            {extractMeta.sourceDepoExhibit.depo_exhibit_title || extractMeta.sourceDepoExhibit.display_title}
+                          </p>
+                          {extractMeta.deponent && (
+                            <p className="text-[11px] text-cyan-400 mt-1">
+                              {extractMeta.deponent.display_name || `${extractMeta.deponent.first_name || ''} ${extractMeta.deponent.last_name}`.trim()}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-gray-500 italic text-xs">No source</p>
+                      )}
+                    </div>
+
+                    {/* MARKED */}
+                    <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 ${extractMeta.jointExhibit ? 'border-yellow-500/40' : 'border-[#1e2a45]'}`}>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Marked</p>
+                      {extractMeta.jointExhibit ? (
+                        <>
+                          <p className="text-xl font-bold text-yellow-300 leading-none">
+                            #{extractMeta.jointExhibit.marked_no}
+                          </p>
+                          <p className="text-xs text-gray-300 leading-tight line-clamp-2">
+                            {extractMeta.jointExhibit.marked_title || extractMeta.jointExhibit.internal_name || '—'}
+                          </p>
+                          <Badge className={`mt-1 text-[10px] w-fit ${extractMeta.jointExhibit.status === 'Admitted' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                            {extractMeta.jointExhibit.status}
+                          </Badge>
+                        </>
+                      ) : (
+                        <p className="text-gray-500 italic text-xs mt-1">Not on joint list</p>
+                      )}
+                    </div>
+
+                    {/* ADMITTED */}
+                    <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 ${extractMeta.jointExhibit?.admitted_no ? 'border-green-500/40' : 'border-[#1e2a45]'}`}>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Admitted</p>
+                      {extractMeta.jointExhibit?.admitted_no ? (
+                        <>
+                          <p className="text-xl font-bold text-green-300 leading-none">
+                            #{extractMeta.jointExhibit.admitted_no}
+                          </p>
+                          {extractMeta.jointExhibit.admitted_date && (
+                            <p className="text-xs text-gray-400">{extractMeta.jointExhibit.admitted_date}</p>
+                          )}
+                          <Badge className="mt-1 w-fit text-[10px] bg-green-500/20 text-green-400">
+                            ✓ Admitted
+                          </Badge>
+                        </>
+                      ) : (
+                        <p className="text-gray-500 italic text-xs mt-1">Not admitted</p>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -289,7 +294,12 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
                     <div className="flex gap-2 overflow-x-auto pb-2">
                       {callouts.map((c, idx) => (
                         <button key={c.id} onClick={() => setSelectedCallout(c)}
-                          className={`flex-shrink-0 rounded border-2 transition-all ${selectedCallout?.id === c.id ? 'border-cyan-400 shadow-lg shadow-cyan-500/20' : 'border-[#1e2a45] hover:border-gray-500'}`}>
+                          className={`flex-shrink-0 rounded border-2 transition-all relative ${selectedCallout?.id === c.id ? 'border-cyan-400 shadow-lg shadow-cyan-500/20' : 'border-[#1e2a45] hover:border-gray-500'}`}>
+                          {proofItem?.callout_id === c.id && (
+                            <div className="absolute top-0.5 right-0.5 z-10">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 bg-[#0f1629] rounded-full" />
+                            </div>
+                          )}
                           {c.snapshot_image_url ? (
                             <img src={c.snapshot_image_url} alt={c.name || `Callout ${idx + 1}`} className="h-16 w-20 object-cover rounded" />
                           ) : (
@@ -297,25 +307,27 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onSelectC
                               <Image className="w-5 h-5 text-gray-600" />
                             </div>
                           )}
+                          {c.name && <p className="text-[9px] text-gray-400 text-center px-1 py-0.5 truncate w-20">{c.name}</p>}
                         </button>
                       ))}
                     </div>
 
                     {/* Selected callout */}
                     {selectedCallout && (
-                      <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-3 space-y-2">
-                        <div className="flex items-center gap-2">
+                      <div className={`border rounded-lg p-3 space-y-2 ${isCurrentProofCallout ? 'bg-cyan-900/20 border-cyan-500/50' : 'bg-[#131a2e] border-[#1e2a45]'}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs text-cyan-400 font-semibold">{selectedCallout.name || `Callout – Page ${selectedCallout.page_number}`}</span>
-                          <span className="text-xs text-gray-500 ml-auto">Pg {selectedCallout.page_number}</span>
-                          {selectedCallout.jury_safe && (
-                            <Badge className="bg-green-500/20 text-green-400 text-xs">Jury Safe</Badge>
+                          <span className="text-xs text-gray-500">Pg {selectedCallout.page_number}</span>
+                          {selectedCallout.jury_safe && <Badge className="bg-green-500/20 text-green-400 text-xs">Jury Safe</Badge>}
+                          {isCurrentProofCallout && (
+                            <Badge className="bg-cyan-500/20 text-cyan-300 text-xs ml-auto">✓ Current Proof Callout</Badge>
                           )}
-                          {onSelectCallout && (
+                          {!isCurrentProofCallout && (
                             <Button size="sm"
-                              className="h-6 text-xs bg-cyan-600 hover:bg-cyan-700 px-2"
-                              onClick={() => { onSelectCallout(selectedCallout); onClose(); }}>
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Use This Callout
+                              className="ml-auto h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-3"
+                              onClick={handleSetAsProofCallout}>
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Set as Proof Callout
                             </Button>
                           )}
                         </div>
