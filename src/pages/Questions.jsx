@@ -245,8 +245,8 @@ export default function Questions() {
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...qNode }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(qNode.id)}><Trash2 className="w-3 h-3" /></Button>
                       </div>
-                    </div>
-                    {linkedProofIds.length > 0 && (
+                      </div>
+                      {linkedProofIds.length > 0 && (
                       <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
                         <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
                         {linkedProofIds.map((proofId) => {
@@ -266,21 +266,76 @@ export default function Questions() {
                           );
                         })}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-                {hasChildren && (
-                  <div className="space-y-2">
-                    {qNode.children.map(child => renderQuestion(child, depth + 1))}
-                  </div>
-                )}
-              </div>
-            );
-          };
+                      )}
+                      </CardContent>
+                      </Card>
+                      </div>
+                      )}
+                      {hasChildren && (
+                      <div className="space-y-2 ml-6">
+                      {qNode.children.map((child, cidx) => (
+                      <div key={child.id}>
+                        {renderQuestion(child, depth + 1)}
+                      </div>
+                      ))}
+                      </div>
+                      )}
+                      </div>
+                      ) : (
+                      <Card className={`bg-[#131a2e] border-[#1e2a45] ml-6`}>
+                      <CardContent className="py-3 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                      <div className="flex gap-2 items-baseline">
+                        <span className="text-xs text-gray-500">↳</span>
+                        <p className="text-sm text-white">{qNode.question_text}</p>
+                      </div>
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        <Badge className={qNode.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{qNode.exam_type}</Badge>
+                        <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(qNode.party_id)}</Badge>
+                        {qNode.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{qNode.question_type}</Badge>}
+                      </div>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0 items-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...qNode }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(qNode.id)}><Trash2 className="w-3 h-3" /></Button>
+                      </div>
+                      </div>
+                      {linkedProofIds.length > 0 && (
+                      <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
+                      {linkedProofIds.map((proofId) => {
+                        const proof = proofItemsMap[proofId];
+                        if (!proof) return null;
+                        return (
+                          <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 space-y-1">
+                            <p className="font-medium text-slate-100">{proof.label}</p>
+                            {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                              <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
+                            )}
+                            {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                              <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
+                            )}
+                            <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                          </div>
+                        );
+                      })}
+                      </div>
+                      )}
+                      </CardContent>
+                      </Card>
+                      )}
+                      </div>
+                      );
+                      };
 
-          return renderQuestion(q);
-        })}
-      </div>
+                      return renderQuestion(q, 0);
+                      })}
+                      {provided.placeholder}
+                      </div>
+                      )}
+                      </Droppable>
+                      </DragDropContext>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent key={modalKey} className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
