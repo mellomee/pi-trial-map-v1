@@ -270,7 +270,7 @@ export default function ProofLibrary() {
         }
       }
       setShowAddTrialPointModal(false);
-      await loadGroupDetails();
+      await loadGroupDetails(selectedGroupId);
     } catch (error) {
       console.error('Error adding trial points:', error);
     }
