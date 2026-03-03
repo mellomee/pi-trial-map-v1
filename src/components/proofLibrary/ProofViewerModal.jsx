@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Image, ChevronLeft, ChevronRight, CheckCircle2, Eye, X } from 'lucide-react';
+import { FileText, Image, ChevronLeft, ChevronRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function CalloutImageWithHighlights({ callout, highlights }) {
-  const [dims, setDims] = useState(null);
   const colorMap = { yellow: 'rgba(253,224,71,', red: 'rgba(239,68,68,', green: 'rgba(34,197,94,', blue: 'rgba(59,130,246,' };
+  const [dims, setDims] = useState(null);
 
   if (!callout.snapshot_image_url) {
     return (
@@ -34,10 +34,8 @@ function CalloutImageWithHighlights({ callout, highlights }) {
           return (
             <div key={`${hi}-${ri}`} style={{
               position: 'absolute',
-              left: `${r.x * 100}%`,
-              top: `${r.y * 100}%`,
-              width: `${r.w * 100}%`,
-              height: `${r.h * 100}%`,
+              left: `${r.x * 100}%`, top: `${r.y * 100}%`,
+              width: `${r.w * 100}%`, height: `${r.h * 100}%`,
               backgroundColor: `${base}${hl.opacity ?? 0.35})`,
               pointerEvents: 'none',
             }} />
@@ -50,22 +48,58 @@ function CalloutImageWithHighlights({ callout, highlights }) {
 
 function InlineFileViewer({ url, label, onClose }) {
   if (!url) return null;
-  const isPdf = url.toLowerCase().includes('.pdf') || url.includes('application/pdf');
+
+  const lowerUrl = url.toLowerCase().split('?')[0];
+  const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp');
+
   return (
-    <div className="bg-[#0a0f1e] border border-[#1e2a45] rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e2a45]">
+    <div className="border border-[#1e2a45] rounded-lg overflow-hidden bg-[#0a0f1e]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e2a45] bg-[#131a2e]">
         <span className="text-xs text-cyan-400 font-semibold truncate">{label}</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-white ml-2 flex-shrink-0">
-          <X className="w-4 h-4" />
-        </button>
+        <button onClick={onClose} className="text-gray-400 hover:text-white ml-2 flex-shrink-0 text-lg leading-none">×</button>
       </div>
-      <iframe
-        src={url}
-        title={label}
-        className="w-full"
-        style={{ height: '520px', border: 'none' }}
-      />
+      {isImage ? (
+        <div className="p-2 flex justify-center bg-black">
+          <img src={url} alt={label} className="max-w-full max-h-[520px] object-contain" />
+        </div>
+      ) : (
+        // PDF: use <object> which renders inline in browser without triggering download
+        <object
+          data={url + '#toolbar=1&navpanes=0&scrollbar=1'}
+          type="application/pdf"
+          className="w-full"
+          style={{ height: '540px' }}
+        >
+          {/* Fallback if browser can't embed the PDF */}
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400 text-sm gap-3">
+            <FileText className="w-10 h-10 opacity-30" />
+            <p>Your browser cannot display this PDF inline.</p>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-cyan-400 hover:underline text-xs"
+            >
+              Open in new tab
+            </a>
+          </div>
+        </object>
+      )}
     </div>
+  );
+}
+
+function ViewFileButton({ url, label, viewingFile, setViewingFile }) {
+  if (!url) return null;
+  const active = viewingFile?.url === url;
+  return (
+    <button
+      onClick={() => setViewingFile(active ? null : { url, label })}
+      className="mt-2 flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-200 transition-colors"
+    >
+      {active ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+      {active ? 'Hide File' : 'View File'}
+    </button>
   );
 }
 
@@ -117,6 +151,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           base44.entities.ExhibitExtracts.filter({ id: proofItem.source_id }),
           base44.entities.Callouts.filter({ extract_id: proofItem.source_id }),
         ]);
+
         if (extracts.length > 0) {
           const ext = extracts[0];
           setExtract(ext);
@@ -127,32 +162,35 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           ]);
 
           let sourceDepoExhibit = null, deponent = null;
-
-          // Try ExtractSources first, fall back to extract.source_depo_exhibit_id
           const primarySrc = sources[0] || null;
           const depoExhibitId = primarySrc?.source_depo_exhibit_id || ext.source_depo_exhibit_id;
           const deponentPartyId = primarySrc?.source_deponent_party_id;
 
-          if (depoExhibitId || deponentPartyId) {
-            const [depoExhibits, parties] = await Promise.all([
-              depoExhibitId ? base44.entities.DepositionExhibits.filter({ id: depoExhibitId }) : Promise.resolve([]),
-              deponentPartyId ? base44.entities.Parties.filter({ id: deponentPartyId }) : Promise.resolve([]),
-            ]);
-            if (depoExhibits.length > 0) sourceDepoExhibit = depoExhibits[0];
-            if (parties.length > 0) deponent = parties[0];
-          }
+          const [depoExhibits, parties] = await Promise.all([
+            depoExhibitId ? base44.entities.DepositionExhibits.filter({ id: depoExhibitId }) : Promise.resolve([]),
+            deponentPartyId ? base44.entities.Parties.filter({ id: deponentPartyId }) : Promise.resolve([]),
+          ]);
+          if (depoExhibits.length > 0) sourceDepoExhibit = depoExhibits[0];
+          if (parties.length > 0) deponent = parties[0];
 
-          // If deponent still not found, try via deposition from depo exhibit
+          // Fallback: find deponent via deposition
           if (!deponent && sourceDepoExhibit?.deposition_id) {
             const deps = await base44.entities.Depositions.filter({ id: sourceDepoExhibit.deposition_id });
             if (deps.length > 0 && deps[0].party_id) {
-              const parties = await base44.entities.Parties.filter({ id: deps[0].party_id });
-              if (parties.length > 0) deponent = parties[0];
+              const pts = await base44.entities.Parties.filter({ id: deps[0].party_id });
+              if (pts.length > 0) deponent = pts[0];
             }
           }
 
-          const jx = jointExhibits[0] || null;
-          setExtractMeta({ sourceDepoExhibit, deponent, sources, primarySrc, jointExhibit: jx });
+          // Find joint exhibit — try by exhibit_extract_id, fallback by source_depo_exhibit_ids
+          let jx = jointExhibits[0] || null;
+          if (!jx && depoExhibitId) {
+            // Try finding by primary_depo_exhibit_id
+            const byDepo = await base44.entities.JointExhibits.filter({ primary_depo_exhibit_id: depoExhibitId });
+            if (byDepo.length > 0) jx = byDepo[0];
+          }
+
+          setExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx });
         }
 
         const sorted = cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
@@ -175,6 +213,8 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
 
   const selectedCalloutIdx = callouts.findIndex(c => c.id === selectedCallout?.id);
   const isCurrentProofCallout = proofItem?.callout_id && selectedCallout?.id === proofItem?.callout_id;
+
+  const jx = extractMeta?.jointExhibit;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -227,9 +267,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
             {/* EXTRACT VIEW */}
             {extract && (
               <div className="space-y-4">
-                <div className="flex gap-2 flex-wrap items-center">
-                  <Badge className="bg-purple-500/20 text-purple-300">Exhibit Extract</Badge>
-                </div>
+                <Badge className="bg-purple-500/20 text-purple-300">Exhibit Extract</Badge>
 
                 <div className="text-sm font-medium text-gray-100 bg-[#131a2e] px-3 py-2 rounded">
                   {extract.extract_title_internal || extract.extract_title_official}
@@ -241,13 +279,13 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
 
                     {/* ORIGINAL */}
                     <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-3 flex flex-col gap-1 min-w-0">
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Original</p>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1">Original</p>
                       {extractMeta.sourceDepoExhibit ? (
                         <>
-                          <p className="text-xl font-bold text-gray-100 leading-none">
-                            Exh {extractMeta.sourceDepoExhibit.depo_exhibit_no || extractMeta.primarySrc?.source_depo_exhibit_no || '—'}
+                          <p className="text-xl font-bold text-yellow-300 leading-none">
+                            Exh {extractMeta.primarySrc?.source_depo_exhibit_no || extractMeta.sourceDepoExhibit.depo_exhibit_no || '—'}
                           </p>
-                          <p className="text-xs text-gray-300 leading-tight mt-0.5">
+                          <p className="text-xs text-gray-300 leading-tight mt-1">
                             {extractMeta.sourceDepoExhibit.depo_exhibit_title || extractMeta.sourceDepoExhibit.display_title || '—'}
                           </p>
                           {extractMeta.deponent && (
@@ -255,95 +293,85 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                               {extractMeta.deponent.display_name || `${extractMeta.deponent.first_name || ''} ${extractMeta.deponent.last_name}`.trim()}
                             </p>
                           )}
-                          {extractMeta.sourceDepoExhibit.file_url && (
-                            <button
-                              onClick={() => setViewingFile(viewingFile?.url === extractMeta.sourceDepoExhibit.file_url ? null : { url: extractMeta.sourceDepoExhibit.file_url, label: `Exh ${extractMeta.sourceDepoExhibit.depo_exhibit_no} – Original` })}
-                              className="mt-2 flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-200 transition-colors"
-                            >
-                              <Eye className="w-3 h-3" />
-                              {viewingFile?.url === extractMeta.sourceDepoExhibit.file_url ? 'Hide File' : 'View File'}
-                            </button>
-                          )}
+                          <ViewFileButton
+                            url={extractMeta.sourceDepoExhibit.file_url}
+                            label={`Exh ${extractMeta.sourceDepoExhibit.depo_exhibit_no} – Original`}
+                            viewingFile={viewingFile}
+                            setViewingFile={setViewingFile}
+                          />
                         </>
                       ) : (
                         <p className="text-gray-500 italic text-xs mt-1">Source not linked</p>
                       )}
                     </div>
 
-                    {/* MARKED / EXTRACTED */}
-                    <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 min-w-0 ${extractMeta.jointExhibit ? 'border-yellow-500/40' : 'border-[#1e2a45]'}`}>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Marked</p>
-                      {extractMeta.jointExhibit ? (
+                    {/* MARKED */}
+                    <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 min-w-0 ${jx ? 'border-yellow-500/40' : 'border-[#1e2a45]'}`}>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1">Marked</p>
+                      {jx ? (
                         <>
-                          <p className="text-xl font-bold text-yellow-300 leading-none">
-                            #{extractMeta.jointExhibit.marked_no}
+                          <p className="text-xl font-bold text-yellow-300 leading-none">#{jx.marked_no}</p>
+                          <p className="text-xs text-gray-300 leading-tight mt-1">
+                            {jx.internal_name || jx.marked_title || '—'}
                           </p>
-                          <p className="text-xs text-gray-300 leading-tight mt-0.5">
-                            {extractMeta.jointExhibit.internal_name || extractMeta.jointExhibit.marked_title || '—'}
-                          </p>
-                          {(extract.extract_page_start || extractMeta.primarySrc?.referenced_pages) && (
+                          {/* Source pages extracted from */}
+                          {(extractMeta.primarySrc?.referenced_pages || extract.extract_page_start) && (
                             <p className="text-[11px] text-gray-400 mt-1">
+                              Source pp.&nbsp;
                               {extractMeta.primarySrc?.referenced_pages
-                                ? `Source pp. ${extractMeta.primarySrc.referenced_pages}`
-                                : `Source pp. ${extract.extract_page_start}${extract.extract_page_end ? `–${extract.extract_page_end}` : ''}`}
+                                ? extractMeta.primarySrc.referenced_pages
+                                : `${extract.extract_page_start}${extract.extract_page_end ? `–${extract.extract_page_end}` : ''}`}
                             </p>
                           )}
-                          {extract.extract_page_count && (
-                            <p className="text-[11px] text-gray-400">{extract.extract_page_count} pages extracted</p>
-                          )}
-                          {extract.extract_file_url && (
-                            <button
-                              onClick={() => setViewingFile(viewingFile?.url === extract.extract_file_url ? null : { url: extract.extract_file_url, label: `Extract – Marked #${extractMeta.jointExhibit.marked_no}` })}
-                              className="mt-2 flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-200 transition-colors"
-                            >
-                              <Eye className="w-3 h-3" />
-                              {viewingFile?.url === extract.extract_file_url ? 'Hide File' : 'View File'}
-                            </button>
-                          )}
+                          {/* Page count of the extracted file */}
+                          {extract.extract_page_count ? (
+                            <p className="text-[11px] text-gray-400">{extract.extract_page_count} pg extracted</p>
+                          ) : null}
+                          <Badge className="mt-1 text-[10px] w-fit bg-yellow-500/20 text-yellow-400">{jx.status}</Badge>
+                          <ViewFileButton
+                            url={extract.extract_file_url}
+                            label={`Extract – Marked #${jx.marked_no}`}
+                            viewingFile={viewingFile}
+                            setViewingFile={setViewingFile}
+                          />
                         </>
                       ) : (
                         <>
                           <p className="text-gray-500 italic text-xs mt-1">Not on joint list</p>
-                          {(extract.extract_page_start || extractMeta.primarySrc?.referenced_pages) && (
+                          {(extractMeta.primarySrc?.referenced_pages || extract.extract_page_start) && (
                             <p className="text-[11px] text-gray-400 mt-1">
+                              Source pp.&nbsp;
                               {extractMeta.primarySrc?.referenced_pages
-                                ? `Source pp. ${extractMeta.primarySrc.referenced_pages}`
-                                : `Source pp. ${extract.extract_page_start}${extract.extract_page_end ? `–${extract.extract_page_end}` : ''}`}
+                                ? extractMeta.primarySrc.referenced_pages
+                                : `${extract.extract_page_start}${extract.extract_page_end ? `–${extract.extract_page_end}` : ''}`}
                             </p>
                           )}
-                          {extract.extract_page_count && (
-                            <p className="text-[11px] text-gray-400">{extract.extract_page_count} pages extracted</p>
-                          )}
-                          {extract.extract_file_url && (
-                            <button
-                              onClick={() => setViewingFile(viewingFile?.url === extract.extract_file_url ? null : { url: extract.extract_file_url, label: 'Extract File' })}
-                              className="mt-2 flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-200 transition-colors"
-                            >
-                              <Eye className="w-3 h-3" />
-                              {viewingFile?.url === extract.extract_file_url ? 'Hide File' : 'View File'}
-                            </button>
-                          )}
+                          {extract.extract_page_count ? (
+                            <p className="text-[11px] text-gray-400">{extract.extract_page_count} pg extracted</p>
+                          ) : null}
+                          <ViewFileButton
+                            url={extract.extract_file_url}
+                            label="Extract File"
+                            viewingFile={viewingFile}
+                            setViewingFile={setViewingFile}
+                          />
                         </>
                       )}
                     </div>
 
                     {/* ADMITTED */}
-                    <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 min-w-0 ${extractMeta.jointExhibit?.admitted_no ? 'border-green-500/40' : 'border-[#1e2a45]'}`}>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Admitted</p>
-                      {extractMeta.jointExhibit?.admitted_no ? (
+                    <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 min-w-0 ${jx?.admitted_no ? 'border-green-500/40' : 'border-[#1e2a45]'}`}>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1">Admitted</p>
+                      {jx?.admitted_no ? (
                         <>
-                          <p className="text-xl font-bold text-green-300 leading-none">
-                            #{extractMeta.jointExhibit.admitted_no}
-                          </p>
-                          {extractMeta.jointExhibit.admitted_date && (
-                            <p className="text-[11px] text-gray-300 mt-0.5">{extractMeta.jointExhibit.admitted_date}</p>
+                          <p className="text-xl font-bold text-green-300 leading-none">#{jx.admitted_no}</p>
+                          {jx.admitted_date && (
+                            <p className="text-[11px] text-gray-300 mt-1">{jx.admitted_date}</p>
                           )}
-                          {extractMeta.jointExhibit.admitted_by && (
-                            <p className="text-[11px] text-gray-400">By: {extractMeta.jointExhibit.admitted_by}</p>
+                          {jx.admitted_by && (
+                            <p className="text-[11px] text-gray-400">By: {jx.admitted_by}</p>
                           )}
-                          <Badge className="mt-1 w-fit text-[10px] bg-green-500/20 text-green-400">
-                            ✓ Admitted
-                          </Badge>
+                          <Badge className="mt-1 w-fit text-[10px] bg-green-500/20 text-green-400">✓ Admitted</Badge>
                         </>
                       ) : (
                         <p className="text-gray-500 italic text-xs mt-1">Not admitted</p>
@@ -352,18 +380,20 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                   </div>
                 )}
 
-                {/* Inline file viewer */}
+                {/* Inline file viewer — shown below the metadata strip */}
                 {viewingFile && (
-                  <InlineFileViewer url={viewingFile.url} label={viewingFile.label} onClose={() => setViewingFile(null)} />
+                  <InlineFileViewer
+                    url={viewingFile.url}
+                    label={viewingFile.label}
+                    onClose={() => setViewingFile(null)}
+                  />
                 )}
 
                 {/* Callouts */}
                 {callouts.length > 0 ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-cyan-400 tracking-wider">
-                        CALLOUTS ({callouts.length})
-                      </span>
+                      <span className="text-xs font-semibold text-cyan-400 tracking-wider">CALLOUTS ({callouts.length})</span>
                       {callouts.length > 1 && (
                         <div className="flex items-center gap-2">
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-gray-400 hover:text-white"
@@ -381,7 +411,6 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                       )}
                     </div>
 
-                    {/* Thumbnails */}
                     <div className="flex gap-2 overflow-x-auto pb-2">
                       {callouts.map((c, idx) => (
                         <button key={c.id} onClick={() => setSelectedCallout(c)}
@@ -403,7 +432,6 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                       ))}
                     </div>
 
-                    {/* Selected callout */}
                     {selectedCallout && (
                       <div className={`border rounded-lg p-3 space-y-2 ${isCurrentProofCallout ? 'bg-cyan-900/20 border-cyan-500/50' : 'bg-[#131a2e] border-[#1e2a45]'}`}>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -413,9 +441,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                           {isCurrentProofCallout ? (
                             <Badge className="bg-cyan-500/20 text-cyan-300 text-xs ml-auto">✓ Current Proof Callout</Badge>
                           ) : (
-                            <Button size="sm"
-                              className="ml-auto h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-3"
-                              onClick={handleSetAsProofCallout}>
+                            <Button size="sm" className="ml-auto h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-3" onClick={handleSetAsProofCallout}>
                               <CheckCircle2 className="w-3 h-3 mr-1" />
                               Set as Proof Callout
                             </Button>
