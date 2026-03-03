@@ -88,9 +88,7 @@ export default function ProofLibrary() {
 
 
   const loadGroupDetails = async () => {
-    console.log('[LOAD_GROUP] 📋 Loading details for EG:', selectedGroupId);
     try {
-      console.log('[LOAD_GROUP] Fetching all links...');
       const [groupProofLinks, groupTPLinks, groupQuestions] = await Promise.all([
         base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: selectedGroupId }),
