@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, ChevronDown, Trash2 } from 'lucide-react';
 import ProofViewerModal from './ProofViewerModal';
-import QuestionProofLinkerModal from './QuestionProofLinkerModal';
 
 export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, caseId }) {
   const [questions, setQuestions] = useState([]);
@@ -20,8 +19,6 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
   const [showProofModal, setShowProofModal] = useState(false);
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [linkedProof, setLinkedProof] = useState({});
-  const [linkingQuestion, setLinkingQuestion] = useState(null);
-  const [showLinkModal, setShowLinkModal] = useState(false);
 
   useEffect(() => {
     if (evidenceGroup?.id) loadQuestions();
@@ -204,15 +201,29 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
                         </div>
                       )}
 
-                      {/* Link Proof Button */}
-                      <Button
-                        size="sm"
-                        onClick={() => { setLinkingQuestion(q); setShowLinkModal(true); }}
-                        className="bg-cyan-600 hover:bg-cyan-700 w-full text-xs"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Link Proof
-                      </Button>
+                      {/* Add Proof Section */}
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-400 font-semibold">ADD PROOF</p>
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {proofItems.map((proof) => {
+                            const isLinked = links.some(l => l.link_id === proof.source_id);
+                            return (
+                              <button
+                                key={proof.id}
+                                onClick={() => !isLinked && handleLinkProof(q.id, proof)}
+                                disabled={isLinked}
+                                className={`w-full text-left p-2 rounded text-xs transition-colors ${
+                                  isLinked
+                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                    : 'bg-[#0a0f1e] text-gray-300 hover:bg-cyan-900 hover:text-cyan-300'
+                                }`}
+                              >
+                                {proof.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </CollapsibleContent>
                   </Collapsible>
                 </CardContent>
@@ -285,22 +296,6 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
       </Dialog>
 
       <ProofViewerModal proofItem={selectedProofItem} isOpen={showProofModal} onClose={() => setShowProofModal(false)} />
-
-      {linkingQuestion && (
-        <QuestionProofLinkerModal
-          isOpen={showLinkModal}
-          onClose={() => { setShowLinkModal(false); setLinkingQuestion(null); }}
-          question={linkingQuestion}
-          evidenceGroupId={evidenceGroup.id}
-          caseId={caseId}
-          proofItems={proofItems}
-          onProofLinked={() => {
-            setShowLinkModal(false);
-            setLinkingQuestion(null);
-            loadQuestions();
-          }}
-        />
-      )}
     </div>
   );
 }

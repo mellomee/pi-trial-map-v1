@@ -110,7 +110,7 @@ function ViewFileButton({ url, label, viewingFile, setViewingFile }) {
 
 }
 
-export default function ProofViewerModal({ proofItem, isOpen, onClose, onCalloutSelected, selectionMode = false, availableProofItems = [], onProofSelected, witnessFilter = null }) {
+export default function ProofViewerModal({ proofItem, isOpen, onClose, onCalloutSelected }) {
   const [loading, setLoading] = useState(false);
   const [depoClip, setDepoClip] = useState(null);
   const [deposition, setDeposition] = useState(null);
@@ -121,10 +121,9 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
   const [selectedCallout, setSelectedCallout] = useState(null);
   const [viewingFile, setViewingFile] = useState(null); // { url, label }
   const [caseParties, setCaseParties] = useState({}); // id -> name
-  const [selectedProofInList, setSelectedProofInList] = useState(proofItem);
 
   useEffect(() => {
-    if (isOpen && (proofItem || selectedProofInList)) {
+    if (isOpen && proofItem) {
       loadDetails();
       setViewingFile(null);
     } else {
@@ -132,13 +131,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
       setExtractMeta(null);setCallouts([]);setHighlights([]);
       setSelectedCallout(null);setViewingFile(null);setCaseParties({});
     }
-  }, [isOpen, (proofItem || selectedProofInList)?.id]);
-
-  useEffect(() => {
-    if (selectionMode && availableProofItems.length > 0 && !selectedProofInList) {
-      setSelectedProofInList(availableProofItems[0]);
-    }
-  }, [selectionMode, availableProofItems]);
+  }, [isOpen, proofItem?.id]);
 
   useEffect(() => {
     if (selectedCallout?.id) {
@@ -151,14 +144,9 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
 
   const loadDetails = async () => {
     setLoading(true);
-    const targetProof = selectedProofInList || proofItem;
-    if (!targetProof) {
-      setLoading(false);
-      return;
-    }
     try {
-      if (targetProof.type === 'depoClip') {
-        const clips = await base44.entities.DepoClips.filter({ id: targetProof.source_id });
+      if (proofItem.type === 'depoClip') {
+        const clips = await base44.entities.DepoClips.filter({ id: proofItem.source_id });
         if (clips.length > 0) {
           setDepoClip(clips[0]);
           if (clips[0].deposition_id) {
@@ -166,18 +154,18 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
             if (deps.length > 0) setDeposition(deps[0]);
           }
         }
-      } else if (targetProof.type === 'extract') {
+      } else if (proofItem.type === 'extract') {
         // Also load all case parties so callout witness names can be resolved
-        if (targetProof.case_id) {
-          base44.entities.Parties.filter({ case_id: targetProof.case_id }).then(ps => {
+        if (proofItem.case_id) {
+          base44.entities.Parties.filter({ case_id: proofItem.case_id }).then(ps => {
             const map = {};
             ps.forEach(p => { map[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
             setCaseParties(map);
           });
         }
         const [extracts, cos] = await Promise.all([
-        base44.entities.ExhibitExtracts.filter({ id: targetProof.source_id }),
-        base44.entities.Callouts.filter({ extract_id: targetProof.source_id })]
+        base44.entities.ExhibitExtracts.filter({ id: proofItem.source_id }),
+        base44.entities.Callouts.filter({ extract_id: proofItem.source_id })]
         );
 
         if (extracts.length > 0) {
@@ -255,7 +243,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
 
         const sorted = cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
         setCallouts(sorted);
-        const linked = targetProof.callout_id ? sorted.find((c) => c.id === targetProof.callout_id) : null;
+        const linked = proofItem.callout_id ? sorted.find((c) => c.id === proofItem.callout_id) : null;
         setSelectedCallout(linked || (sorted.length > 0 ? sorted[0] : null));
       }
     } catch (err) {
@@ -265,67 +253,24 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
   };
 
   const handleSetAsProofCallout = async () => {
-    const targetProof = selectedProofInList || proofItem;
-    if (!selectedCallout || !targetProof) return;
-    await base44.entities.ProofItems.update(targetProof.id, { callout_id: selectedCallout.id });
-    if (onCalloutSelected) onCalloutSelected(targetProof.id, selectedCallout);
+    if (!selectedCallout || !proofItem) return;
+    await base44.entities.ProofItems.update(proofItem.id, { callout_id: selectedCallout.id });
+    if (onCalloutSelected) onCalloutSelected(proofItem.id, selectedCallout);
     // Don't close — update local proofItem reference so badge shows immediately
     setCallouts(prev => [...prev]); // trigger re-render
   };
 
-  const handleLinkProofToQuestion = async () => {
-    if (onProofSelected && selectedProofInList) {
-      onProofSelected(selectedProofInList);
-    }
-  };
-
   const selectedCalloutIdx = callouts.findIndex((c) => c.id === selectedCallout?.id);
-  const targetProof = selectedProofInList || proofItem;
-  const isCurrentProofCallout = targetProof?.callout_id && selectedCallout?.id === targetProof?.callout_id;
+  const isCurrentProofCallout = proofItem?.callout_id && selectedCallout?.id === proofItem?.callout_id;
 
   const jx = extractMeta?.jointExhibit;
-  
-  const filteredProofItems = availableProofItems.filter(p => {
-    if (!witnessFilter) return true;
-    // For extracts with callouts, check if the callout's witness matches filter
-    if (p.type === 'extract' && p.callout_id) {
-      const calloutWitness = callouts.find(c => c.id === p.callout_id)?.witness_id;
-      return calloutWitness === witnessFilter;
-    }
-    return true;
-  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-[#0f1629] border-[#1e2a45] text-slate-200 max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-cyan-300">{targetProof?.label || 'Proof Detail'}</DialogTitle>
-          </div>
+          <DialogTitle className="text-cyan-300">{proofItem?.label || 'Proof Detail'}</DialogTitle>
         </DialogHeader>
-
-        {/* Selection mode: show list of available proofs */}
-        {selectionMode && filteredProofItems.length > 0 && (
-          <div className="space-y-2 mb-4 pb-4 border-b border-[#1e2a45]">
-            <p className="text-xs font-semibold text-cyan-400 tracking-wider">SELECT PROOF</p>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {filteredProofItems.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setSelectedProofInList(p)}
-                  className={`flex-shrink-0 rounded border-2 px-3 py-2 transition-all ${
-                    selectedProofInList?.id === p.id
-                      ? 'border-cyan-400 bg-cyan-500/10'
-                      : 'border-[#1e2a45] hover:border-gray-500 bg-[#131a2e]'
-                  }`}
-                >
-                  <p className="text-xs font-medium text-gray-100 truncate max-w-48">{p.label}</p>
-                  <p className="text-[10px] text-gray-500 mt-1">{p.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {loading ?
         <div className="text-center py-12 text-gray-400">Loading...</div> :
@@ -591,18 +536,6 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           }
           </>
         }
-
-        {/* Selection mode: action buttons */}
-        {selectionMode && (
-          <div className="flex gap-2 mt-6 pt-4 border-t border-[#1e2a45]">
-            <Button variant="outline" onClick={onClose} className="border-[#1e2a45] text-gray-300 flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleLinkProofToQuestion} className="bg-cyan-600 hover:bg-cyan-700 flex-1">
-              Link Proof
-            </Button>
-          </div>
-        )}
       </DialogContent>
     </Dialog>);
 
