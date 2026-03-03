@@ -110,11 +110,12 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
   const handleUnlinkProof = async (questionId, linkId) => {
     try {
-      await base44.entities.QuestionLinks.delete(linkId);
+      await base44.entities.QuestionProofItems.delete(linkId);
       setLinkedProof(prev => ({
         ...prev,
         [questionId]: prev[questionId].filter(l => l.id !== linkId),
       }));
+      setUnlinkDialog(null);
     } catch (error) {
       console.error('Error unlinking proof:', error);
     }
