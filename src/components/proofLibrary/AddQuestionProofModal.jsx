@@ -359,7 +359,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                           />
                         )}
                         <div className="p-2">
-                          <p className="text-xs font-medium text-gray-200 truncate">{extract.title || extract.marked_title}</p>
+                          <p className="text-xs font-medium text-gray-200 truncate">{extract.title}</p>
                           <p className="text-[10px] text-gray-500 mt-0.5">#{extract.marked_no}</p>
                         </div>
                       </button>
