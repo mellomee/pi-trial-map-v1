@@ -98,7 +98,7 @@ export default function Questions() {
         if (tpLookup[ql.link_id]) tpMap[ql.question_id].push(tpLookup[ql.link_id]);
       }
       // Also check EvidenceGroup trial points via primary_evidence_group_id
-      const egLinks = await base44.entities.EvidenceGroupTrialPoints.list();
+      const egLinks = await base44.entities.EvidenceGroupTrialPoints.filter({ case_id: caseId }).catch(() => []);
       for (const q of qs) {
         if (q.primary_evidence_group_id) {
           const egTps = egLinks.filter(l => l.evidence_group_id === q.primary_evidence_group_id);
