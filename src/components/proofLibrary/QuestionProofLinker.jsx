@@ -3,9 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Link2 } from 'lucide-react';
+import { Plus, Link2 } from 'lucide-react';
 
-export default function QuestionProofLinker({ questionId, evidenceGroupId, caseId, proofItems, calloutNames = {}, calloutWitnesses = {} }) {
+export default function QuestionProofLinker({ questionId, evidenceGroupId, caseId, proofItems }) {
   const [isOpen, setIsOpen] = useState(false);
   const [linkedProofIds, setLinkedProofIds] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -99,13 +99,7 @@ export default function QuestionProofLinker({ questionId, evidenceGroupId, caseI
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-100">{proof.label}</p>
-                    {proof.type === 'extract' && proof.callout_id ? (
-                      <p className="text-xs text-cyan-400 mt-0.5">
-                        {[calloutNames[proof.callout_id], calloutWitnesses[proof.callout_id]].filter(Boolean).join(' · ') || 'Exhibit Extract'}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-slate-500 mt-0.5">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
-                    )}
+                    <p className="text-xs text-slate-500 mt-0.5">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
                   </div>
                 </label>
               ))
