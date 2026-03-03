@@ -240,69 +240,85 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
 
             {/* Deposition Clips Tab */}
             <TabsContent value="depoClip" className="space-y-3 mt-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
-                <Input
-                  placeholder="Search clips..."
-                  value={searchClip}
-                  onChange={(e) => setSearchClip(e.target.value)}
-                  className="pl-10 bg-gray-800 border-gray-700 text-xs text-gray-100"
-                />
-              </div>
+              <div className="grid grid-cols-3 gap-3 h-96">
+                {/* Clips List */}
+                <div className="border border-gray-700 rounded bg-gray-950 flex flex-col">
+                  <div className="relative px-3 py-2 border-b border-gray-700">
+                    <Search className="absolute left-6 top-3 w-3 h-3 text-gray-500" />
+                    <Input
+                      placeholder="Search clips..."
+                      value={searchClip}
+                      onChange={(e) => setSearchClip(e.target.value)}
+                      className="pl-7 h-7 text-xs bg-gray-800 border-gray-700 text-gray-100"
+                    />
+                  </div>
+                  <div className="flex-1 overflow-y-auto space-y-1 p-2">
+                    {depoClips.filter(c => 
+                      c.clip_title?.toLowerCase().includes(searchClip.toLowerCase()) ||
+                      c.clip_text?.toLowerCase().includes(searchClip.toLowerCase())
+                    ).map(clip => (
+                      <button
+                        key={clip.id}
+                        onClick={() => setSelectedClip(clip)}
+                        className={`w-full text-left p-2 rounded text-xs border transition-colors ${
+                          selectedClip?.id === clip.id
+                            ? 'border-cyan-400 bg-cyan-500/10 text-cyan-200'
+                            : 'border-gray-700 bg-gray-800 hover:border-gray-500 text-gray-300'
+                        }`}
+                      >
+                        <p className="font-medium truncate">{clip.clip_title || clip.start_cite}</p>
+                        <p className="text-[10px] text-gray-500">{clip.start_cite}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-                {depoClips.filter(c => 
-                  c.clip_title?.toLowerCase().includes(searchClip.toLowerCase()) ||
-                  c.clip_text?.toLowerCase().includes(searchClip.toLowerCase())
-                ).map(clip => (
-                  <div
-                    key={clip.id}
-                    onClick={() => setSelectedClip(clip)}
-                    className={`p-3 rounded border-2 cursor-pointer transition-colors ${
-                      selectedClip?.id === clip.id
-                        ? 'border-cyan-400 bg-cyan-500/10'
-                        : 'border-gray-600 bg-gray-800 hover:border-gray-500'
-                    }`}
-                  >
-                    <p className="text-xs font-medium text-gray-100 truncate">{clip.clip_title || `${clip.start_cite}`}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">{clip.start_cite} - {clip.end_cite}</p>
-                    {clip.direction && (
-                      <p className={`text-[10px] mt-1 font-medium ${clip.direction === 'HelpsUs' ? 'text-green-400' : 'text-red-400'}`}>
-                        {clip.direction === 'HelpsUs' ? '✓ Helps Us' : '✗ Hurts Us'}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {selectedClip && (
-                <div className="bg-gray-800 border border-gray-700 rounded p-4 mt-4 space-y-3">
-                  <div>
-                    <p className="text-xs font-medium text-gray-400 uppercase">Clip Details</p>
-                    <p className="text-sm text-gray-200 mt-2">{selectedClip.clip_title || 'Untitled Clip'}</p>
-                    <p className="text-xs text-gray-500 mt-1">Citation: {selectedClip.start_cite} - {selectedClip.end_cite}</p>
-                    {selectedClip.direction && (
-                      <p className={`text-xs mt-2 font-medium ${selectedClip.direction === 'HelpsUs' ? 'text-green-400' : 'text-red-400'}`}>
-                        Direction: {selectedClip.direction === 'HelpsUs' ? 'Helps Us' : 'Hurts Us'}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-400 uppercase">Clip Text</p>
-                    <p className="text-xs text-gray-300 mt-1 max-h-24 overflow-y-auto bg-gray-900 p-2 rounded">
-                      {selectedClip.clip_text}
-                    </p>
-                  </div>
-                  {selectedClip.notes && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-400 uppercase">Notes</p>
-                      <p className="text-xs text-gray-300 mt-1">{selectedClip.notes}</p>
+                {/* Clip Details Preview */}
+                <div className="col-span-2 border border-gray-700 rounded bg-gray-950 flex flex-col overflow-hidden">
+                  {selectedClip ? (
+                    <>
+                      <div className="px-4 py-3 border-b border-gray-700 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-cyan-300">{selectedClip.clip_title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Citation: {selectedClip.start_cite} – {selectedClip.end_cite}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge className="bg-blue-500/20 text-blue-300 text-[10px]">Deposition Clip</Badge>
+                          {selectedClip.direction && (
+                            <Badge className={selectedClip.direction === 'HelpsUs' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} size="sm">
+                              {selectedClip.direction === 'HelpsUs' ? '✓ Helps Us' : '✗ Hurts Us'}
+                            </Badge>
+                          )}
+                          {selectedClip.topic_tag && <Badge variant="outline" className="text-gray-300 border-gray-600 text-[10px]">{selectedClip.topic_tag}</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex-1 overflow-y-auto px-4 py-3">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase mb-2">Testimony</p>
+                        <div className="bg-gray-900 rounded border border-gray-700 p-2">
+                          <p className="text-xs text-gray-200 font-mono whitespace-pre-wrap leading-relaxed">{selectedClip.clip_text}</p>
+                        </div>
+                        {selectedClip.notes && (
+                          <div className="mt-3">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase mb-1">Notes</p>
+                            <p className="text-xs text-gray-300">{selectedClip.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <FileText className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        <p className="text-xs">Select a clip to preview</p>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
+              </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-3">
                 <Button variant="outline" onClick={onClose} className="border-gray-700 text-gray-300 flex-1">
                   Cancel
                 </Button>
