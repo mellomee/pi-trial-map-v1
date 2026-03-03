@@ -121,7 +121,7 @@ export default function HierarchicalQuestionsList({
       question_type: childType,
       parent_id: parentQuestion.id,
       case_id: caseId,
-      primary_evidence_group_id: evidenceGroupId,
+      primary_evidence_group_id: parentQuestion.primary_evidence_group_id ?? evidenceGroup?.id,
     });
     setShowModal(true);
   };
