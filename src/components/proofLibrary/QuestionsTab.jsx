@@ -19,6 +19,8 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
   const [showProofModal, setShowProofModal] = useState(false);
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [linkedProof, setLinkedProof] = useState({});
+  const [childQuestions, setChildQuestions] = useState({});
+  const [unlinkDialog, setUnlinkDialog] = useState(null);
 
   useEffect(() => {
     if (evidenceGroup?.id) loadQuestions();
