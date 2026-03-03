@@ -158,7 +158,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
     }
     try {
       if (targetProof.type === 'depoClip') {
-        const clips = await base44.entities.DepoClips.filter({ id: proofItem.source_id });
+        const clips = await base44.entities.DepoClips.filter({ id: targetProof.source_id });
         if (clips.length > 0) {
           setDepoClip(clips[0]);
           if (clips[0].deposition_id) {
@@ -166,18 +166,18 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
             if (deps.length > 0) setDeposition(deps[0]);
           }
         }
-      } else if (proofItem.type === 'extract') {
+      } else if (targetProof.type === 'extract') {
         // Also load all case parties so callout witness names can be resolved
-        if (proofItem.case_id) {
-          base44.entities.Parties.filter({ case_id: proofItem.case_id }).then(ps => {
+        if (targetProof.case_id) {
+          base44.entities.Parties.filter({ case_id: targetProof.case_id }).then(ps => {
             const map = {};
             ps.forEach(p => { map[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
             setCaseParties(map);
           });
         }
         const [extracts, cos] = await Promise.all([
-        base44.entities.ExhibitExtracts.filter({ id: proofItem.source_id }),
-        base44.entities.Callouts.filter({ extract_id: proofItem.source_id })]
+        base44.entities.ExhibitExtracts.filter({ id: targetProof.source_id }),
+        base44.entities.Callouts.filter({ extract_id: targetProof.source_id })]
         );
 
         if (extracts.length > 0) {
