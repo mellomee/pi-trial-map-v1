@@ -175,6 +175,12 @@ export default function ProofLibrary() {
         case_id: activeCase.id,
         primary_evidence_group_id: selectedGroupId,
       });
+      // Create the QuestionEvidenceGroups link so loadGroupDetails can find it
+      await base44.entities.QuestionEvidenceGroups.create({
+        case_id: activeCase.id,
+        question_id: newQ.id,
+        evidence_group_id: selectedGroupId,
+      });
       setLinkedQuestions(qs => [...qs, newQ]);
       return newQ;
     } catch (error) {
