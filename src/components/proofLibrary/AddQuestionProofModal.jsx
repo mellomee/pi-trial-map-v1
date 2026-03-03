@@ -82,11 +82,11 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
       }
       setDepoClips(witClips);
 
-      // Filter extracts for witness (via ExtractWitnesses or extract source)
+      // Filter extracts for witness (via callouts)
       const witExtracts = [];
       for (const extract of allExtracts) {
-        const extractWits = await base44.entities.ExtractWitnesses.filter({ extract_id: extract.id });
-        if (extractWits.some(ew => ew.witness_id === question.party_id)) {
+        const extractCallouts = await base44.entities.Callouts.filter({ extract_id: extract.id });
+        if (extractCallouts.some(co => co.witness_id === question.party_id)) {
           witExtracts.push(extract);
         }
       }
