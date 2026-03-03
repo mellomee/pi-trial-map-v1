@@ -154,6 +154,14 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           }
         }
       } else if (proofItem.type === 'extract') {
+        // Also load all case parties so callout witness names can be resolved
+        if (proofItem.case_id) {
+          base44.entities.Parties.filter({ case_id: proofItem.case_id }).then(ps => {
+            const map = {};
+            ps.forEach(p => { map[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
+            setCaseParties(map);
+          });
+        }
         const [extracts, cos] = await Promise.all([
         base44.entities.ExhibitExtracts.filter({ id: proofItem.source_id }),
         base44.entities.Callouts.filter({ extract_id: proofItem.source_id })]
