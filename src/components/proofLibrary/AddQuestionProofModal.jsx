@@ -33,9 +33,9 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
 
   // Load initial data
   useEffect(() => {
-    if (!isOpen || !question?.party_id) return;
+    if (!isOpen) return;
     loadProofsForWitness();
-  }, [isOpen, question?.party_id]);
+  }, [isOpen]);
 
   const loadProofsForWitness = async () => {
     setLoading(true);
