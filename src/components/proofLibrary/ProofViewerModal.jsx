@@ -185,23 +185,23 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose }) {
                     {selectedCallout && (
                       <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg p-3 space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-cyan-400 font-semibold">{selectedCallout.label || `Callout – Page ${selectedCallout.page_number}`}</span>
+                          <span className="text-xs text-cyan-400 font-semibold">{selectedCallout.name || `Callout – Page ${selectedCallout.page_number}`}</span>
                           <span className="text-xs text-gray-500 ml-auto">Pg {selectedCallout.page_number}</span>
                           {selectedCallout.jury_safe && (
                             <Badge className="bg-green-500/20 text-green-400 text-xs">Jury Safe</Badge>
                           )}
                         </div>
-                        {selectedCallout.callout_image ? (
+                        {selectedCallout.snapshot_image_url ? (
                           <img
-                            src={selectedCallout.callout_image}
-                            alt={selectedCallout.label}
+                            src={selectedCallout.snapshot_image_url}
+                            alt={selectedCallout.name}
                             className="w-full rounded border border-[#1e2a45] max-h-96 object-contain bg-black"
                           />
                         ) : (
                           <div className="w-full h-48 flex items-center justify-center bg-[#0a0f1e] rounded border border-[#1e2a45] text-gray-500">
                             <div className="text-center">
                               <Image className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                              <p className="text-xs">No callout image captured yet</p>
+                              <p className="text-xs">No snapshot captured yet</p>
                             </div>
                           </div>
                         )}
