@@ -3,10 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Scissors, Highlighter,
   Plus, Trash2, CheckSquare, Square, ChevronRight as PanelClose, ChevronsLeft, ChevronsRight,
-  Printer
+  Printer, User
 } from "lucide-react";
 import HighlightEditorModal from "./HighlightEditorModal";
 
