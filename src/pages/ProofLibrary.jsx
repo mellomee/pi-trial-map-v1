@@ -88,7 +88,9 @@ export default function ProofLibrary() {
 
 
   const loadGroupDetails = async () => {
+    console.log('[LOAD_GROUP] 📋 Loading details for EG:', selectedGroupId);
     try {
+      console.log('[LOAD_GROUP] Fetching all links...');
       const [groupProofLinks, groupTPLinks, groupQuestions] = await Promise.all([
         base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: selectedGroupId }),
         base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: selectedGroupId }),
@@ -97,25 +99,47 @@ export default function ProofLibrary() {
       
       console.log('[LOAD_GROUP] Found', groupQuestions.length, 'QuestionEvidenceGroups links');
 
+      // Load full proof items
       const proofIds = groupProofLinks.map((link) => link.proof_item_id);
+      const allProof = [];
+      for (const pId of proofIds) {
+        const proof = await base44.entities.ProofItems.filter({ id: pId });
+        if (proof.length > 0) allProof.push(proof[0]);
+      }
+
+      // Load trial point details
       const tpIds = groupTPLinks.map((link) => link.trial_point_id);
-      const qIds = groupQuestions.map((link) => link.question_id);
+      const tps = [];
+      for (const tpId of tpIds) {
+        const tp = await base44.entities.TrialPoints.filter({ id: tpId });
+        if (tp.length > 0) tps.push(tp[0]);
+      }
 
-      // Fetch all records for the case in parallel, then filter client-side (avoids rate limits)
-      const [allProofItems, allTPs, witLinkResults, allQuestions] = await Promise.all([
-        base44.entities.ProofItems.filter({ case_id: activeCase.id }),
-        base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
-        base44.entities.ProofItemWitnesses.filter({ case_id: activeCase.id }),
-        base44.entities.Questions.filter({ case_id: activeCase.id }),
-      ]);
-
-      const allProof = allProofItems.filter(p => proofIds.includes(p.id));
-      const tps = allTPs.filter(tp => tpIds.includes(tp.id));
-      const qs = allQuestions.filter(q => qIds.includes(q.id));
-
-      const proofWitsForGroup = witLinkResults.filter(link => proofIds.includes(link.proof_item_id));
+      // Load witnesses from proof items
+      const allProofWitLinks = await base44.entities.ProofItemWitnesses.filter({ case_id: activeCase.id });
+      const proofWitsForGroup = allProofWitLinks.filter(link => proofIds.includes(link.proof_item_id));
       const witIds = [...new Set(proofWitsForGroup.map(link => link.witness_id))];
-      const wits = allWitnesses.filter(w => witIds.includes(w.id));
+      const wits = [];
+      for (const witId of witIds) {
+        const wit = await base44.entities.Parties.filter({ id: witId });
+        if (wit.length > 0) wits.push(wit[0]);
+      }
+
+      // Load linked questions
+      const qIds = groupQuestions.map((link) => link.question_id);
+      console.log('[LOAD_GROUP] Loading', qIds.length, 'question records...');
+      const qs = [];
+      for (const qId of qIds) {
+        const q = await base44.entities.Questions.filter({ id: qId });
+        if (q.length > 0) {
+          qs.push(q[0]);
+          console.log('[LOAD_GROUP] ✅ Loaded question:', q[0].question_text);
+        } else {
+          console.log('[LOAD_GROUP] ⚠️ Question ID not found:', qId);
+        }
+      }
+      
+      console.log('[LOAD_GROUP] ✅ Final questions count:', qs.length);
       setProofItems(allProof);
       setLinkedTrialPoints(tps);
       setLinkedWitnesses(wits);
