@@ -566,7 +566,7 @@ export default function ProofLibrary() {
 
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
-                  <div key={questionsRefreshKey} className="space-y-3">
+                  <div className="space-y-3">
                     <Button
                       onClick={() => { setEditing({ party_id: '', exam_type: 'Direct', question_text: '', goal: '', expected_answer: '', status: 'NotAsked', importance: 'Med', ask_if_time: true }); setShowAddQuestionModal(true); }}
                       className="bg-cyan-600 hover:bg-cyan-700 w-full"
