@@ -239,7 +239,8 @@ export default function Questions() {
                         </div>
                         {qNode.goal && <p className="text-xs text-slate-500 mt-1">Goal: {qNode.goal}</p>}
                         {qNode.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {qNode.expected_answer}</p>}
-                      </div>
+                        </div>
+                        </div>
                       <div className="flex gap-1 flex-shrink-0 items-center">
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...qNode }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(qNode.id)}><Trash2 className="w-3 h-3" /></Button>
