@@ -124,7 +124,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
   const [selectedProofInList, setSelectedProofInList] = useState(proofItem);
 
   useEffect(() => {
-    if (isOpen && proofItem) {
+    if (isOpen && (proofItem || selectedProofInList)) {
       loadDetails();
       setViewingFile(null);
     } else {
@@ -132,7 +132,13 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
       setExtractMeta(null);setCallouts([]);setHighlights([]);
       setSelectedCallout(null);setViewingFile(null);setCaseParties({});
     }
-  }, [isOpen, proofItem?.id]);
+  }, [isOpen, (proofItem || selectedProofInList)?.id]);
+
+  useEffect(() => {
+    if (selectionMode && availableProofItems.length > 0 && !selectedProofInList) {
+      setSelectedProofInList(availableProofItems[0]);
+    }
+  }, [selectionMode, availableProofItems]);
 
   useEffect(() => {
     if (selectedCallout?.id) {
