@@ -906,11 +906,11 @@ export default function ProofLibrary() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Expected Answer</label>
+                <label className="text-sm font-medium text-gray-900">Expected Answer</label>
                 <Input
                   value={editing.expected_answer || ""}
                   onChange={(e) => setEditing({ ...editing, expected_answer: e.target.value })}
-                  className="mt-1 bg-gray-800 border-gray-700"
+                  className="mt-1 bg-white border-gray-300 text-gray-900"
                 />
               </div>
             </div>
