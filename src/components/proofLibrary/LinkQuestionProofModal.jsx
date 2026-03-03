@@ -20,6 +20,7 @@ export default function LinkQuestionProofModal({
   const [selectedProof, setSelectedProof] = useState(null);
   const [showProofViewer, setShowProofViewer] = useState(false);
   const [caseParties, setCaseParties] = useState({});
+  const [previewProof, setPreviewProof] = useState(null);
 
   useEffect(() => {
     if (isOpen && evidenceGroupId && question?.party_id) {
