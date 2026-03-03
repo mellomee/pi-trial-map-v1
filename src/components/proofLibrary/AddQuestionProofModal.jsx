@@ -375,22 +375,63 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                 <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
                   {/* 3-column metadata tiles */}
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                    {/* Original Column */}
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
-                      <p className="text-xl font-bold text-yellow-300">#2</p>
-                      <p className="text-xs text-gray-300">Color photocopy of photograph</p>
-                      <p className="text-[10px] text-cyan-400 mt-1">KEROLES</p>
+                      <button
+                        onClick={() => setViewingFile({ type: 'original', url: selectedExtract.extract_file_url, label: selectedExtract.title })}
+                        className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors"
+                      >
+                        {viewingFile?.type === 'original' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        {viewingFile?.type === 'original' ? 'Hide File' : 'View File'}
+                      </button>
                     </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+
+                    {/* Marked Column */}
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
-                      <p className="text-gray-400 text-xs">Not on joint list</p>
-                      <p className="text-[10px] text-gray-400 mt-2">1 pg extracted</p>
+                      <p className="text-gray-400 text-xs">Status</p>
+                      {selectedExtract.extract_file_url && (
+                        <button
+                          onClick={() => setViewingFile({ type: 'marked', url: selectedExtract.extract_file_url, label: `Extract – ${selectedExtract.title}` })}
+                          className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors"
+                        >
+                          {viewingFile?.type === 'marked' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                          {viewingFile?.type === 'marked' ? 'Hide File' : 'View File'}
+                        </button>
+                      )}
                     </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+
+                    {/* Admitted Column */}
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
                       <p className="text-gray-400 text-xs">Not admitted</p>
                     </div>
                   </div>
+
+                  {/* File Viewer */}
+                  {viewingFile && (
+                    <div className="border border-gray-700 rounded bg-black p-3">
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-700">
+                        <span className="text-xs text-cyan-400 font-semibold">{viewingFile.label}</span>
+                        <button onClick={() => setViewingFile(null)} className="text-gray-400 hover:text-white">×</button>
+                      </div>
+                      {viewingFile.url?.toLowerCase().endsWith('.pdf') ? (
+                        <iframe
+                          src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewingFile.url)}&embedded=true`}
+                          className="w-full rounded"
+                          style={{ height: '400px', border: 'none' }}
+                          title={viewingFile.label}
+                        />
+                      ) : (
+                        <img 
+                          src={viewingFile.url} 
+                          alt={viewingFile.label}
+                          className="w-full max-h-96 object-contain rounded"
+                        />
+                      )}
+                    </div>
+                  )}
 
                   {/* Callouts row */}
                   {callouts.length > 0 && (
