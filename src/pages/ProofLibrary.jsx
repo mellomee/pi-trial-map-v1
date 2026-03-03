@@ -851,11 +851,11 @@ export default function ProofLibrary() {
           {editing && (
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium">Question *</label>
+                <label className="text-sm font-medium text-gray-900">Question *</label>
                 <Textarea
                   value={editing.question_text}
                   onChange={(e) => setEditing({ ...editing, question_text: e.target.value })}
-                  className="mt-1 bg-gray-800 border-gray-700"
+                  className="mt-1 bg-white border-gray-300 text-gray-900"
                   rows={3}
                 />
               </div>
