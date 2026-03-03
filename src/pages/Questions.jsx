@@ -237,13 +237,21 @@ export default function Questions() {
                       </div>
                     </div>
                     {linkedProofIds.length > 0 && (
-                      <div className="border-t border-slate-700 pt-2 ml-2 space-y-1">
+                      <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
                         <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
                         {linkedProofIds.map((proofId) => {
-                          const proofLabel = `Proof ${proofId.slice(0, 8)}`;
+                          const proof = proofItemsMap[proofId];
+                          if (!proof) return null;
                           return (
-                            <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-1.5">
-                              <p className="font-medium">{proofLabel}</p>
+                            <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 space-y-1">
+                              <p className="font-medium text-slate-100">{proof.label}</p>
+                              {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                                <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
+                              )}
+                              {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                                <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
+                              )}
+                              <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
                             </div>
                           );
                         })}
