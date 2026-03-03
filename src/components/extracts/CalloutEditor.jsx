@@ -451,7 +451,26 @@ export default function CalloutEditor({ extract }) {
                               ))
                             )}
                           </div>
-                          <div className="flex gap-1.5">
+                          {/* Witness picker for existing callout */}
+                          <Select value={c.witness_id || "none"} onValueChange={async v => {
+                            const newWitId = v === "none" ? null : v;
+                            const updated = await base44.entities.Callouts.update(c.id, { witness_id: newWitId });
+                            setCallouts(prev => prev.map(x => x.id === updated.id ? updated : x));
+                          }}>
+                            <SelectTrigger className="h-6 text-[10px] bg-[#0a0f1e] border-[#1e2a45] text-slate-300 mt-1">
+                              <User className="w-2.5 h-2.5 mr-1 text-cyan-400 flex-shrink-0" />
+                              <SelectValue placeholder="Assign witness…" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+                              <SelectItem value="none" className="text-xs">— No witness —</SelectItem>
+                              {parties.map(p => (
+                                <SelectItem key={p.id} value={p.id} className="text-xs">
+                                  {p.display_name || `${p.first_name || ""} ${p.last_name}`.trim()}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="flex gap-1.5 mt-1.5">
                             <button
                               onClick={() => setHighlightModalOpen(true)}
                               className="flex-1 flex items-center justify-center gap-1 py-1 text-[10px] font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded hover:bg-yellow-500/20 transition-colors">
