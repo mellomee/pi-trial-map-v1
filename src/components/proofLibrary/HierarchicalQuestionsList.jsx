@@ -81,6 +81,17 @@ export default function HierarchicalQuestionsList({
     return questions.filter(q => !q.parent_id).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
   };
 
+  const updateQuestionOrder = async (updatedQuestions) => {
+    try {
+      const updates = updatedQuestions.map((q, i) => 
+        base44.entities.Questions.update(q.id, { order_index: i })
+      );
+      await Promise.allSettled(updates);
+    } catch (error) {
+      console.error('Error updating order:', error);
+    }
+  };
+
   const getWitnessName = (partyId) => {
     const p = allWitnesses.find(w => w.id === partyId);
     return p ? (p.display_name || `${p.first_name} ${p.last_name}`.trim()) : 'Unassigned';
