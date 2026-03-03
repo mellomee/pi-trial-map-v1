@@ -196,15 +196,49 @@ export default function HierarchicalQuestionsList({
 
           {/* Linked proofs */}
           {linkedProofIds.length > 0 && (
-            <div className="border-t border-gray-600 mt-2 pt-2 space-y-1">
+            <div className="border-t border-gray-600 mt-2 pt-2 space-y-2">
               <p className="text-[10px] font-semibold text-gray-500 uppercase">Linked Proof:</p>
-              {linkedProofIds.map(proofId => (
-                <div key={proofId} className="text-xs text-gray-300 bg-gray-600/30 rounded p-1">
-                  Proof {proofId.slice(0, 8)}
-                </div>
-              ))}
+              {linkedProofIds.map(proofId => {
+                const proof = proofItems.find(p => p.id === proofId);
+                if (!proof) return null;
+                return (
+                  <div key={proofId} className="text-xs text-gray-200 bg-gray-600/30 rounded p-2 flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-100">{proof.label}</p>
+                      {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                        <p className="text-gray-400">↳ {calloutNames[proof.callout_id]}</p>
+                      )}
+                      {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                        <p className="text-blue-400">👤 {calloutWitnesses[proof.callout_id]}</p>
+                      )}
+                      <p className="text-gray-500">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}
+                      className="h-5 w-5 p-0 text-gray-500 hover:text-cyan-400 flex-shrink-0"
+                      title="View proof"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
+
+          {/* Add/Link proof button */}
+          <div className="border-t border-gray-600 mt-2 pt-2 flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { setSelectedQuestionForProof(q); setShowAddProofModal(true); }}
+              className="h-6 text-xs border-gray-600 text-gray-300 hover:text-cyan-400 flex-1"
+            >
+              <Link2 className="w-3 h-3 mr-1" /> Link Proof
+            </Button>
+          </div>
 
           {/* Action buttons for parent questions */}
           {!q.parent_id && children.length === 0 && (
