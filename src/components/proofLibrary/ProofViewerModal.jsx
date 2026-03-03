@@ -180,13 +180,25 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           if (depoExhibits.length > 0) sourceDepoExhibit = depoExhibits[0];
           if (parties.length > 0) deponent = parties[0];
 
-          // Fallback: find deponent via deposition
+          // Fallback 1: find deponent via deposition
           if (!deponent && sourceDepoExhibit?.deposition_id) {
             const deps = await base44.entities.Depositions.filter({ id: sourceDepoExhibit.deposition_id });
             if (deps.length > 0 && deps[0].party_id) {
               const pts = await base44.entities.Parties.filter({ id: deps[0].party_id });
               if (pts.length > 0) deponent = pts[0];
             }
+          }
+          // Fallback 2: find deponent via ExtractWitnesses
+          if (!deponent) {
+            const ews = await base44.entities.ExtractWitnesses.filter({ extract_id: ext.id });
+            if (ews.length > 0) {
+              const pts = await base44.entities.Parties.filter({ id: ews[0].witness_id });
+              if (pts.length > 0) deponent = pts[0];
+            }
+          }
+          // Fallback 3: use deponent_name string from sourceDepoExhibit
+          if (!deponent && sourceDepoExhibit?.deponent_name) {
+            deponent = { display_name: sourceDepoExhibit.deponent_name };
           }
 
           // Find joint exhibit — try exhibit_extract_id first, then depo exhibit fallbacks
