@@ -360,7 +360,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                  <div className="px-3 py-2 border-b border-gray-700">
                    <p className="text-xs font-semibold text-gray-400 uppercase">Exhibit Extracts ({extracts.length})</p>
                  </div>
-                 <div className="space-y-1 p-2 max-h-32 overflow-y-auto">
+                 <div className="space-y-1 p-2 max-h-40 overflow-y-auto">
                    {extracts.length > 0 ? (
                      extracts.map(extract => (
                        <button
@@ -372,7 +372,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                              : 'border-gray-700 bg-gray-800 hover:border-gray-500'
                          }`}
                        >
-                         <p className="text-xs font-medium text-gray-200">{extract.internal_name || extract.title || extract.marked_title}</p>
+                         <p className="text-xs font-medium text-gray-200">{extract.internal_name || extract.depo_exhibit_title || 'Exhibit'}</p>
                        </button>
                      ))
                    ) : (
@@ -381,38 +381,57 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                  </div>
                </div>
 
-              {/* Extract Details - Full width */}
-              {selectedExtract && (
-                <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
-                  {/* 3-column metadata tiles */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
-                      <p className="text-xl font-bold text-yellow-300">{selectedExtract.depo_exhibit_no || '#—'}</p>
-                      <p className="text-xs text-gray-300">{selectedExtract.depo_exhibit_title}</p>
-                      {selectedExtract.deponent_name && <p className="text-[10px] text-cyan-400">{selectedExtract.deponent_name}</p>}
-                      {selectedExtract.extract_file_url && (
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => setViewingFile(selectedExtract)}
-                          className="h-6 text-cyan-400 hover:text-cyan-300 p-0 text-[10px]"
-                        >
-                          <Eye className="w-3 h-3 mr-1" /> View File
-                        </Button>
-                      )}
-                    </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
-                      <p className="text-gray-400 text-xs">{selectedExtract.marked_no ? `Exhibit ${selectedExtract.marked_no}` : 'Not on joint list'}</p>
-                      {selectedExtract.marked_date && <p className="text-[10px] text-gray-500">{selectedExtract.marked_date}</p>}
-                      {!selectedExtract.marked_no && <p className="text-[10px] text-gray-400 mt-2">Not marked yet</p>}
-                    </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
-                      <p className="text-gray-400 text-xs">Not admitted</p>
-                    </div>
-                  </div>
+               {/* Extract Details - Full width */}
+               {selectedExtract && (
+                 <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
+                   {/* 3-column metadata tiles */}
+                   <div className="grid grid-cols-3 gap-3">
+                     <div className="bg-gray-900 border border-gray-700 rounded p-3 flex flex-col gap-1 min-w-0">
+                       <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Original</p>
+                       <p className="text-xl font-bold text-yellow-300 leading-none">{selectedExtract.depo_exhibit_no ? `#${selectedExtract.depo_exhibit_no}` : '#—'}</p>
+                       <p className="text-xs text-gray-300 leading-tight mt-1">{selectedExtract.depo_exhibit_title || '—'}</p>
+                       {selectedExtract.deponent_name && <p className="text-[10px] text-cyan-400 mt-1">{selectedExtract.deponent_name}</p>}
+                       {selectedExtract.extract_file_url && (
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => setViewingFile(selectedExtract)}
+                           className="h-6 text-cyan-400 hover:text-cyan-300 p-0 text-[10px] mt-1"
+                         >
+                           <Eye className="w-3 h-3 mr-1" /> View File
+                         </Button>
+                       )}
+                     </div>
+                     <div className="bg-gray-900 border border-gray-700 rounded p-3 flex flex-col gap-1 min-w-0">
+                       <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Marked</p>
+                       {selectedExtract.marked_no ? (
+                         <>
+                           <p className="text-xl font-bold text-yellow-300 leading-none">#{selectedExtract.marked_no}</p>
+                           <p className="text-xs text-gray-300 leading-tight mt-1">{selectedExtract.marked_title || '—'}</p>
+                           {selectedExtract.marked_date && <p className="text-[10px] text-gray-400 mt-1">{selectedExtract.marked_date}</p>}
+                         </>
+                       ) : (
+                         <>
+                           <p className="text-gray-500 italic text-xs mt-1">Not on joint list</p>
+                           {selectedExtract.extract_page_count && <p className="text-[10px] text-gray-400 mt-1">{selectedExtract.extract_page_count} pg extracted</p>}
+                         </>
+                       )}
+                       {selectedExtract.extract_file_url && selectedExtract.marked_no && (
+                         <Button 
+                           size="sm" 
+                           variant="ghost" 
+                           onClick={() => setViewingFile(selectedExtract)}
+                           className="h-6 text-cyan-400 hover:text-cyan-300 p-0 text-[10px] mt-1"
+                         >
+                           <Eye className="w-3 h-3 mr-1" /> View File
+                         </Button>
+                       )}
+                     </div>
+                     <div className="bg-gray-900 border border-gray-700 rounded p-3 flex flex-col gap-1 min-w-0">
+                       <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Admitted</p>
+                       <p className="text-gray-500 italic text-xs mt-1">Not admitted</p>
+                     </div>
+                   </div>
 
                   {/* Callouts row */}
                   {callouts.length > 0 && (
