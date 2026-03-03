@@ -489,10 +489,56 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                   Link Callout
                 </Button>
               </div>
-            </TabsContent>
-          </Tabs>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
+              </TabsContent>
+              </Tabs>
+              )}
+
+              {/* File Viewer Modal */}
+              {viewingFile && (
+              <Dialog open={!!viewingFile} onOpenChange={() => setViewingFile(null)}>
+              <DialogContent className="bg-gray-950 border-gray-700 max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-gray-100">{viewingFile.depo_exhibit_no} – {viewingFile.depo_exhibit_title}</DialogTitle>
+              </DialogHeader>
+
+              {viewingFile.extract_file_url?.toLowerCase().includes('.pdf') ? (
+                <div className="space-y-2">
+                  <canvas ref={fileViewerCanvasRef} className="w-full border border-gray-700 rounded" />
+                  {fileViewerNumPages > 1 && (
+                    <div className="flex items-center justify-center gap-2">
+                      <Button 
+                        size="sm" 
+                        onClick={() => setFileViewerPage(p => Math.max(1, p - 1))} 
+                        disabled={fileViewerPage === 1}
+                        className="bg-gray-800 hover:bg-gray-700 text-gray-200"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-xs text-gray-400">{fileViewerPage} / {fileViewerNumPages}</span>
+                      <Button 
+                        size="sm" 
+                        onClick={() => setFileViewerPage(p => Math.min(fileViewerNumPages, p + 1))} 
+                        disabled={fileViewerPage === fileViewerNumPages}
+                        className="bg-gray-800 hover:bg-gray-700 text-gray-200"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="border border-gray-700 rounded bg-black p-2">
+                  <img src={viewingFile.extract_file_url} alt="Extract" className="w-full max-h-96 object-contain" />
+                </div>
+              )}
+
+              <Button onClick={() => setViewingFile(null)} className="w-full bg-gray-800 hover:bg-gray-700">
+                Close
+              </Button>
+              </DialogContent>
+              </Dialog>
+              )}
+              </DialogContent>
+              </Dialog>
+              );
+              }
