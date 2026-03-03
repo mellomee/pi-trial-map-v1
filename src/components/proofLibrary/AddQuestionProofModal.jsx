@@ -457,37 +457,81 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                </div>
 
               {/* Extract Details - Full width */}
-              {selectedExtract && (
-                <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
-                  {/* 3-column metadata tiles */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
-                      <p className="text-xl font-bold text-yellow-300">{selectedExtract.depo_exhibit_no || '#—'}</p>
-                      <p className="text-xs text-gray-300">{selectedExtract.depo_exhibit_title}</p>
-                      {selectedExtract.deponent_name && <p className="text-[10px] text-cyan-400">{selectedExtract.deponent_name}</p>}
-                      {selectedExtract.extract_file_url && (
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => setViewingFile(selectedExtract)}
-                          className="h-6 text-cyan-400 hover:text-cyan-300 p-0 text-[10px]"
-                        >
-                          <Eye className="w-3 h-3 mr-1" /> View File
-                        </Button>
-                      )}
-                    </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
-                      <p className="text-gray-400 text-xs">{selectedExtract.marked_no ? `Exhibit ${selectedExtract.marked_no}` : 'Not on joint list'}</p>
-                      {selectedExtract.marked_date && <p className="text-[10px] text-gray-500">{selectedExtract.marked_date}</p>}
-                      {!selectedExtract.marked_no && <p className="text-[10px] text-gray-400 mt-2">Not marked yet</p>}
-                    </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
-                      <p className="text-gray-400 text-xs">Not admitted</p>
-                    </div>
-                  </div>
+               {selectedExtract && selectedExtractMeta && (
+                 <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
+                   {/* 3-column metadata tiles */}
+                   <div className="grid grid-cols-3 gap-3">
+                     {/* ORIGINAL */}
+                     <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
+                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
+                       {selectedExtractMeta.sourceDepoExhibit ? (
+                         <>
+                           <p className="text-xl font-bold text-yellow-300">
+                             #{selectedExtractMeta.primarySrc?.source_depo_exhibit_no || selectedExtractMeta.sourceDepoExhibit.depo_exhibit_no || '—'}
+                           </p>
+                           <p className="text-xs text-gray-300 leading-tight mt-1">
+                             {selectedExtractMeta.sourceDepoExhibit.depo_exhibit_title || selectedExtractMeta.sourceDepoExhibit.display_title || '—'}
+                           </p>
+                           {selectedExtractMeta.deponent && (
+                             <p className="text-[11px] text-cyan-400 mt-1">
+                               {selectedExtractMeta.deponent.display_name || `${selectedExtractMeta.deponent.first_name || ''} ${selectedExtractMeta.deponent.last_name}`.trim()}
+                             </p>
+                           )}
+                           {selectedExtractMeta.sourceDepoExhibit.file_url && (
+                             <Button 
+                               size="sm" 
+                               variant="ghost" 
+                               onClick={() => setViewingFile(selectedExtract)}
+                               className="h-6 text-cyan-400 hover:text-cyan-300 p-0 text-[10px]"
+                             >
+                               <Eye className="w-3 h-3 mr-1" /> View File
+                             </Button>
+                           )}
+                         </>
+                       ) : (
+                         <p className="text-gray-500 italic text-xs mt-1">Source not linked</p>
+                       )}
+                     </div>
+
+                     {/* MARKED */}
+                     <div className={`bg-gray-900 border rounded p-3 space-y-2 ${selectedExtractMeta.jointExhibit ? 'border-yellow-500/40' : 'border-gray-700'}`}>
+                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
+                       {selectedExtractMeta.jointExhibit ? (
+                         <>
+                           <p className="text-xl font-bold text-yellow-300">#{selectedExtractMeta.jointExhibit.marked_no}</p>
+                           <p className="text-xs text-gray-300 leading-tight mt-1">
+                             {selectedExtractMeta.jointExhibit.internal_name || selectedExtractMeta.jointExhibit.marked_title || '—'}
+                           </p>
+                           {selectedExtractMeta.jointExhibit.status && (
+                             <Badge className="mt-1 text-[10px] bg-yellow-500/20 text-yellow-400">{selectedExtractMeta.jointExhibit.status}</Badge>
+                           )}
+                         </>
+                       ) : (
+                         <>
+                           <p className="text-gray-500 italic text-xs mt-1">Not on joint list</p>
+                           {selectedExtract.extract_page_count && (
+                             <p className="text-[11px] text-gray-400 mt-1">{selectedExtract.extract_page_count} pg extracted</p>
+                           )}
+                         </>
+                       )}
+                     </div>
+
+                     {/* ADMITTED */}
+                     <div className={`bg-gray-900 border rounded p-3 space-y-2 ${selectedExtractMeta.admittedRecord?.admitted_no || selectedExtractMeta.jointExhibit?.admitted_no ? 'border-green-500/40' : 'border-gray-700'}`}>
+                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
+                       {selectedExtractMeta.admittedRecord?.admitted_no || selectedExtractMeta.jointExhibit?.admitted_no ? (
+                         <>
+                           <p className="text-xl font-bold text-green-300">#{selectedExtractMeta.admittedRecord?.admitted_no || selectedExtractMeta.jointExhibit.admitted_no}</p>
+                           {(selectedExtractMeta.admittedRecord?.date_admitted || selectedExtractMeta.jointExhibit?.admitted_date) && (
+                             <p className="text-[11px] text-gray-300 mt-1">{selectedExtractMeta.admittedRecord?.date_admitted || selectedExtractMeta.jointExhibit.admitted_date}</p>
+                           )}
+                           <Badge className="mt-1 text-[10px] bg-green-500/20 text-green-400">✓ Admitted</Badge>
+                         </>
+                       ) : (
+                         <p className="text-gray-500 italic text-xs mt-1">Not admitted</p>
+                       )}
+                     </div>
+                   </div>
 
                   {/* Callouts row */}
                   {callouts.length > 0 && (
