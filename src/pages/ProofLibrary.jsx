@@ -321,7 +321,7 @@ export default function ProofLibrary() {
       for (const link of links) {
         await base44.entities.EvidenceGroupWitnesses.delete(link.id);
       }
-      await loadGroupDetails();
+      await loadGroupDetails(selectedGroupId);
     } catch (error) {
       console.error('Error removing witness:', error);
     }
