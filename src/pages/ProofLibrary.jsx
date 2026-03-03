@@ -20,11 +20,13 @@ export default function ProofLibrary() {
   const [evidenceGroups, setEvidenceGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [proofItems, setProofItems] = useState([]);
-  const [calloutNames, setCalloutNames] = useState({}); // proofItemId -> callout name
+  const [calloutNames, setCalloutNames] = useState({}); // calloutId -> callout name
+  const [calloutWitnesses, setCalloutWitnesses] = useState({}); // proofItemId -> witness name string
   const [allTrialPoints, setAllTrialPoints] = useState([]);
   const [linkedTrialPoints, setLinkedTrialPoints] = useState([]);
   const [allWitnesses, setAllWitnesses] = useState([]);
   const [linkedWitnesses, setLinkedWitnesses] = useState([]);
+  const [proofWitnessesForGroup, setProofWitnessesForGroup] = useState([]); // deduplicated witnesses from proof items
   const [linkedQuestions, setLinkedQuestions] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
