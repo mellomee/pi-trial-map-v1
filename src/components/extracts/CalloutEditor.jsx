@@ -345,6 +345,21 @@ export default function CalloutEditor({ extract }) {
                 placeholder="Callout name…"
                 className="h-7 text-xs bg-[#0a0f1e] border-[#1e2a45] text-slate-200 w-44" autoFocus
                 onKeyDown={e => { if (e.key === "Enter" && !saving) savePendingCallout(); if (e.key === "Escape") setPendingCrop(null); }} />
+              {/* Witness picker */}
+              <Select value={pendingWitnessId || "none"} onValueChange={v => setPendingWitnessId(v === "none" ? "" : v)}>
+                <SelectTrigger className="h-7 text-xs bg-[#0a0f1e] border-[#1e2a45] text-slate-200 w-40">
+                  <User className="w-3 h-3 mr-1 text-cyan-400 flex-shrink-0" />
+                  <SelectValue placeholder="Witness…" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+                  <SelectItem value="none" className="text-xs">— No witness —</SelectItem>
+                  {parties.map(p => (
+                    <SelectItem key={p.id} value={p.id} className="text-xs">
+                      {p.display_name || `${p.first_name || ""} ${p.last_name}`.trim()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <label className="flex items-center gap-1 text-[10px] text-slate-400 cursor-pointer select-none">
                 <input type="checkbox" checked={pendingJurySafe} onChange={e => setPendingJurySafe(e.target.checked)}
                   className="accent-green-500 w-3 h-3" /> Jury-safe
