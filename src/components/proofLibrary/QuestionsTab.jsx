@@ -160,94 +160,133 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
             const witness = getWitness(q.party_id);
             const links = linkedProof[q.id] || [];
             const isExpanded = expandedQuestion === q.id;
+            const children = childQuestions[q.id] || [];
             
             return (
-              <Card key={q.id} className="bg-gray-800 border-gray-700">
-                <CardContent className="p-3">
-                  <Collapsible open={isExpanded} onOpenChange={(open) => setExpandedQuestion(open ? q.id : null)}>
-                    <div className="flex items-start gap-2">
-                      <CollapsibleTrigger asChild>
-                        <button className="text-gray-400 hover:text-white flex-shrink-0 pt-0.5">
-                          <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </button>
-                      </CollapsibleTrigger>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
-                        <div className="flex gap-2 mt-1 flex-wrap">
-                          <Badge variant="outline" className="text-xs text-gray-400">{witness?.first_name} {witness?.last_name}</Badge>
-                          <Badge className={q.exam_type === 'Direct' ? 'bg-green-500/20 text-green-400 text-xs' : 'bg-red-500/20 text-red-400 text-xs'}>
-                            {q.exam_type}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs text-gray-400">{links.length} proof</Badge>
+              <div key={q.id}>
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardContent className="p-3">
+                    <Collapsible open={isExpanded} onOpenChange={(open) => setExpandedQuestion(open ? q.id : null)}>
+                      <div className="flex items-start gap-2">
+                        {children.length > 0 && (
+                          <CollapsibleTrigger asChild>
+                            <button className="text-gray-400 hover:text-white flex-shrink-0 pt-0.5">
+                              <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                          </CollapsibleTrigger>
+                        )}
+                        {children.length === 0 && <div className="w-6" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
+                          <div className="flex gap-2 mt-1 flex-wrap">
+                            <Badge variant="outline" className="text-xs text-gray-400">{witness?.first_name} {witness?.last_name}</Badge>
+                            <Badge className={q.exam_type === 'Direct' ? 'bg-green-500/20 text-green-400 text-xs' : 'bg-red-500/20 text-red-400 text-xs'}>
+                              {q.exam_type}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs text-gray-400">{links.length} proof</Badge>
+                            {children.length > 0 && <Badge variant="outline" className="text-xs text-gray-400">{children.length} follow-up</Badge>}
+                          </div>
                         </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveQuestion(q.id)}
+                          className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                        >
+                          ✕
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveQuestion(q.id)}
-                        className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                      >
-                        ✕
-                      </Button>
-                    </div>
 
-                    <CollapsibleContent className="mt-3 space-y-2 border-t border-gray-700 pt-2">
-                      {/* Linked Proof Section */}
-                      {links.length > 0 && (
+                      <CollapsibleContent className="mt-3 space-y-2 border-t border-gray-700 pt-2">
+                        {/* Linked Proof Section */}
+                        {links.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs text-gray-400 font-semibold">LINKED PROOF</p>
+                            {links.map((link) => {
+                              const proof = proofItems.find(p => 
+                                (link.link_type === 'DepoClip' && p.source_id === link.link_id && p.type === 'depoClip') ||
+                                (link.link_type === 'JointExhibit' && p.source_id === link.link_id && p.type === 'jointExhibit')
+                              );
+                              return (
+                                <div key={link.id} className="flex items-start justify-between gap-2 bg-[#131a2e] p-2 rounded text-xs">
+                                  <button
+                                    onClick={() => proof && (setSelectedProofItem(proof), setShowProofModal(true))}
+                                    className="flex-1 text-left text-gray-300 hover:text-cyan-400 truncate"
+                                  >
+                                    {proof?.label}
+                                  </button>
+                                  <button
+                                    onClick={() => handleUnlinkProof(q.id, link.id)}
+                                    className="text-gray-400 hover:text-red-400 flex-shrink-0"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Add Proof Section */}
                         <div className="space-y-2">
-                          <p className="text-xs text-gray-400 font-semibold">LINKED PROOF</p>
-                          {links.map((link) => {
-                            const proof = proofItems.find(p => 
-                              (link.link_type === 'DepoClip' && p.source_id === link.link_id && p.type === 'depoClip') ||
-                              (link.link_type === 'JointExhibit' && p.source_id === link.link_id && p.type === 'jointExhibit')
-                            );
-                            return (
-                              <div key={link.id} className="flex items-start justify-between gap-2 bg-[#131a2e] p-2 rounded text-xs">
+                          <p className="text-xs text-gray-400 font-semibold">ADD PROOF</p>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {proofItems.map((proof) => {
+                              const isLinked = links.some(l => l.link_id === proof.source_id);
+                              return (
                                 <button
-                                  onClick={() => proof && (setSelectedProofItem(proof), setShowProofModal(true))}
-                                  className="flex-1 text-left text-gray-300 hover:text-cyan-400 truncate"
+                                  key={proof.id}
+                                  onClick={() => !isLinked && handleLinkProof(q.id, proof)}
+                                  disabled={isLinked}
+                                  className={`w-full text-left p-2 rounded text-xs transition-colors ${
+                                    isLinked
+                                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                      : 'bg-[#0a0f1e] text-gray-300 hover:bg-cyan-900 hover:text-cyan-300'
+                                  }`}
                                 >
-                                  {proof?.label}
+                                  {proof.label}
                                 </button>
-                                <button
-                                  onClick={() => handleUnlinkProof(q.id, link.id)}
-                                  className="text-gray-400 hover:text-red-400 flex-shrink-0"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </CardContent>
+                </Card>
 
-                      {/* Add Proof Section */}
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-400 font-semibold">ADD PROOF</p>
-                        <div className="space-y-1 max-h-32 overflow-y-auto">
-                          {proofItems.map((proof) => {
-                            const isLinked = links.some(l => l.link_id === proof.source_id);
-                            return (
-                              <button
-                                key={proof.id}
-                                onClick={() => !isLinked && handleLinkProof(q.id, proof)}
-                                disabled={isLinked}
-                                className={`w-full text-left p-2 rounded text-xs transition-colors ${
-                                  isLinked
-                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                    : 'bg-[#0a0f1e] text-gray-300 hover:bg-cyan-900 hover:text-cyan-300'
-                                }`}
+                {/* Child Questions */}
+                {isExpanded && children.length > 0 && (
+                  <div className="ml-6 mt-2 space-y-2 border-l-2 border-gray-700 pl-3">
+                    {children.map((child) => {
+                      const childLinks = linkedProof[child.id] || [];
+                      return (
+                        <Card key={child.id} className="bg-gray-750 border-gray-700">
+                          <CardContent className="p-3">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-200">{child.question_text}</p>
+                                <div className="flex gap-2 mt-1 flex-wrap">
+                                  <Badge variant="outline" className="text-xs text-gray-400 text-[11px]">{child.question_type}</Badge>
+                                  <Badge variant="outline" className="text-xs text-gray-400">{childLinks.length} proof</Badge>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRemoveQuestion(child.id)}
+                                className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
                               >
-                                {proof.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </CardContent>
-              </Card>
+                                ✕
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
