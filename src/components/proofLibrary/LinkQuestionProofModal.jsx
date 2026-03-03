@@ -176,36 +176,37 @@ export default function LinkQuestionProofModal({
               <p>No proofs found for this witness in this evidence group.</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-cyan-400 uppercase">
-                Available Proofs ({filteredProofs.length})
-              </p>
-              <div className="grid gap-2">
-                {filteredProofs.map((proof) => (
-                  <button
-                    key={proof.id}
-                    onClick={() => handleProofClick(proof)}
-                    className="text-left p-3 rounded border border-gray-700 bg-gray-800 hover:border-cyan-400 hover:bg-gray-750 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-100 truncate">
-                          {proof.label}
-                        </p>
-                        <Badge className="mt-1 text-[10px]" variant="outline">
-                          {proof.type === 'depoClip'
-                            ? 'Deposition Clip'
-                            : 'Exhibit Extract'}
-                        </Badge>
-                      </div>
-                      <span className="text-xs text-gray-500 flex-shrink-0">
-                        Click to preview
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+           <div className="space-y-3">
+             <p className="text-xs font-semibold text-cyan-400 uppercase">
+               Available Proofs ({filteredProofs.length})
+             </p>
+             <div className="grid gap-2">
+               {filteredProofs.map((proof) => (
+                 <button
+                   key={proof.id}
+                   onClick={() => handleProofSelect(proof)}
+                   className={`text-left p-3 rounded border transition-colors ${
+                     selectedProof?.id === proof.id
+                       ? 'bg-cyan-500/10 border-cyan-400 ring-1 ring-cyan-400/50'
+                       : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                   }`}
+                 >
+                   <div className="flex items-start justify-between gap-2">
+                     <div className="flex-1 min-w-0">
+                       <p className="text-sm font-medium text-gray-100 truncate">
+                         {proof.label}
+                       </p>
+                       <Badge className="mt-1 text-[10px] bg-cyan-500/20 text-cyan-300 border-cyan-400/30">
+                         {proof.type === 'depoClip'
+                           ? 'Deposition Clip'
+                           : 'Exhibit Extract'}
+                       </Badge>
+                     </div>
+                   </div>
+                 </button>
+               ))}
+             </div>
+           </div>
           )}
 
           <div className="flex gap-2 pt-3">
