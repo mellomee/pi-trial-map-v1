@@ -226,12 +226,15 @@ export default function CalloutEditor({ extract }) {
       page_number: pageNum,
       name: pendingName.trim() || `p.${pageNum} callout`,
       jury_safe: pendingJurySafe,
+      witness_id: pendingWitnessId || undefined,
       crop_rect_norm: cropRectNorm,
       snapshot_image_url: snapshotUrl,
     });
     setCallouts(prev => [...prev, record].sort((a, b) => (a.page_number ?? 0) - (b.page_number ?? 0)));
     setSelectedCalloutId(record.id);
     setPendingCrop(null);
+    // Reset pending witness to default for next callout
+    setPendingWitnessId(defaultWitnessId);
     setSaving(false);
   };
 
