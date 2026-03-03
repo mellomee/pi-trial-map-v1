@@ -299,8 +299,33 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-[#0f1629] border-[#1e2a45] text-slate-200 max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-cyan-300">{proofItem?.label || 'Proof Detail'}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-cyan-300">{targetProof?.label || 'Proof Detail'}</DialogTitle>
+          </div>
         </DialogHeader>
+
+        {/* Selection mode: show list of available proofs */}
+        {selectionMode && filteredProofItems.length > 0 && (
+          <div className="space-y-2 mb-4 pb-4 border-b border-[#1e2a45]">
+            <p className="text-xs font-semibold text-cyan-400 tracking-wider">SELECT PROOF</p>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {filteredProofItems.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedProofInList(p)}
+                  className={`flex-shrink-0 rounded border-2 px-3 py-2 transition-all ${
+                    selectedProofInList?.id === p.id
+                      ? 'border-cyan-400 bg-cyan-500/10'
+                      : 'border-[#1e2a45] hover:border-gray-500 bg-[#131a2e]'
+                  }`}
+                >
+                  <p className="text-xs font-medium text-gray-100 truncate max-w-48">{p.label}</p>
+                  <p className="text-[10px] text-gray-500 mt-1">{p.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {loading ?
         <div className="text-center py-12 text-gray-400">Loading...</div> :
