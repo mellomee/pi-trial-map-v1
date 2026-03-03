@@ -447,8 +447,8 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                              : 'border-gray-700 bg-gray-800 hover:border-gray-500'
                          }`}
                        >
-                         <p className="text-xs font-semibold text-gray-100">{extract.internal_name || extract.marked_title || extract.title || 'Untitled'}</p>
-                         <p className="text-[10px] text-gray-400 mt-1">{extract.depo_exhibit_title || extract.original_title || '—'}</p>
+                         <p className="text-xs font-semibold text-gray-100">{extract.extract_title_internal || extract.extract_title_official || 'Untitled'}</p>
+                         <p className="text-[10px] text-gray-400 mt-1">{extract.extract_title_official || '—'}</p>
                        </button>
                      ))
                    ) : (
