@@ -110,7 +110,7 @@ function ViewFileButton({ url, label, viewingFile, setViewingFile }) {
 
 }
 
-export default function ProofViewerModal({ proofItem, isOpen, onClose, onCalloutSelected }) {
+export default function ProofViewerModal({ proofItem, isOpen, onClose, onCalloutSelected, selectionMode = false, availableProofItems = [], onProofSelected, witnessFilter = null }) {
   const [loading, setLoading] = useState(false);
   const [depoClip, setDepoClip] = useState(null);
   const [deposition, setDeposition] = useState(null);
@@ -121,6 +121,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
   const [selectedCallout, setSelectedCallout] = useState(null);
   const [viewingFile, setViewingFile] = useState(null); // { url, label }
   const [caseParties, setCaseParties] = useState({}); // id -> name
+  const [selectedProofInList, setSelectedProofInList] = useState(proofItem);
 
   useEffect(() => {
     if (isOpen && proofItem) {
