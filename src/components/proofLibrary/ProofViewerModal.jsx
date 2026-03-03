@@ -182,7 +182,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
             ]);
             jx = byPrimary[0] || byMaster[0] || null;
           }
-          console.log('[ProofViewer] jointExhibit found:', jx);
+          console.log('[ProofViewer] jointExhibit found:', JSON.stringify(jx));
 
           setExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx });
         }
