@@ -54,27 +54,20 @@ export default function ProofLibrary() {
 
   useEffect(() => {
     if (selectedGroupId) {
-      loadGroupDetails();
+      // Clear stale data immediately so previous group doesn't flash
+      setProofItems([]);
+      setLinkedTrialPoints([]);
+      setLinkedWitnesses([]);
+      setLinkedQuestions([]);
+      loadGroupDetails(selectedGroupId);
     }
   }, [selectedGroupId]);
-
-  useEffect(() => {
-    if (selectedGroupId && centerTab === 'questions') {
-      loadGroupDetails();
-    }
-  }, [questionsRefreshKey]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [groups, tps, wits] = await Promise.all([
-        base44.entities.EvidenceGroups.filter({ case_id: activeCase.id }),
-        base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
-        base44.entities.Parties.filter({ case_id: activeCase.id }),
-      ]);
+      const groups = await base44.entities.EvidenceGroups.filter({ case_id: activeCase.id });
       setEvidenceGroups(groups);
-      setAllTrialPoints(tps);
-      setAllWitnesses(wits);
       if (groups.length > 0 && !selectedGroupId) {
         setSelectedGroupId(groups[0].id);
       }
