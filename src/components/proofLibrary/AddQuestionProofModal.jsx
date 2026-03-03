@@ -19,33 +19,9 @@ const COLOR_CSS = {
 };
 
 export default function AddQuestionProofModal({ isOpen, onClose, question, evidenceGroupId, caseId, onProofLinked }) {
-  const [proofTab, setProofTab] = useState('depoClip');
-  const [depoClips, setDepoClips] = useState([]);
-  const [extracts, setExtracts] = useState([]);
-  const [selectedClip, setSelectedClip] = useState(null);
-  const [selectedExtract, setSelectedExtract] = useState(null);
-  const [selectedExtractMeta, setSelectedExtractMeta] = useState(null);
-  const [selectedCallout, setSelectedCallout] = useState(null);
-  const [callouts, setCallouts] = useState([]);
-  const [highlights, setHighlights] = useState([]);
-  const [searchClip, setSearchClip] = useState('');
-  const [searchExtract, setSearchExtract] = useState('');
-  const [scale, setScale] = useState(1.2);
-  const [pdfDoc, setPdfDoc] = useState(null);
-  const [pageNum, setPageNum] = useState(1);
-  const [numPages, setNumPages] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [parties, setParties] = useState({});
-  const [depositions, setDepositions] = useState({});
-  const [viewingFile, setViewingFile] = useState(null);
-  const [fileViewerPage, setFileViewerPage] = useState(1);
-  const [fileViewerNumPages, setFileViewerNumPages] = useState(1);
-  const [fileViewerScale, setFileViewerScale] = useState(1.2);
-  const [fileViewerPdfDoc, setFileViewerPdfDoc] = useState(null);
-  const [caseParties, setCaseParties] = useState({});
+  const [showLinkModal, setShowLinkModal] = useState(false);
 
-  const canvasRef = React.useRef(null);
-  const fileViewerCanvasRef = React.useRef(null);
+  if (!isOpen) return null;
 
   // Get witness name
   const getWitnessName = (witId) => {
