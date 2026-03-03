@@ -263,7 +263,7 @@ export default function HierarchicalQuestionsList({
             <div className="border-t border-gray-600 mt-2 pt-2 space-y-2">
               <p className="text-[10px] font-semibold text-gray-500 uppercase">Linked Proof:</p>
               {linkedProofIds.map(proofId => {
-                const proof = proofItems.find(p => p.id === proofId);
+                const proof = cachedProofItems[proofId] || proofItems.find(p => p.id === proofId);
                 if (!proof) return null;
                 return (
                   <div key={proofId} className="text-xs text-gray-200 bg-gray-600/30 rounded p-2 flex items-start justify-between gap-2">
