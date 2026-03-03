@@ -166,10 +166,10 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose }) {
                               : 'border-[#1e2a45] hover:border-gray-500'
                           }`}
                         >
-                          {c.callout_image ? (
+                          {c.snapshot_image_url ? (
                             <img
-                              src={c.callout_image}
-                              alt={c.label || `Callout ${idx + 1}`}
+                              src={c.snapshot_image_url}
+                              alt={c.name || `Callout ${idx + 1}`}
                               className="h-16 w-20 object-cover rounded"
                             />
                           ) : (
