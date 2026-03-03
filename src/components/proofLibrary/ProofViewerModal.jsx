@@ -220,8 +220,16 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
               (Array.isArray(j.source_depo_exhibit_ids) && j.source_depo_exhibit_ids.includes(depoExhibitId))
             ) || null;
           }
-          console.log('[ProofViewer] jx:', JSON.stringify(jx));
-          setExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx });
+          // If jx found but no admitted_no, check AdmittedExhibits table
+          let admittedRecord = null;
+          if (jx) {
+            const admRecs = await base44.entities.AdmittedExhibits.filter({ joint_exhibit_id: jx.id });
+            admittedRecord = admRecs[0] || null;
+            console.log('[ProofViewer] jx:', JSON.stringify(jx), '| admitted record:', JSON.stringify(admittedRecord));
+          } else {
+            console.log('[ProofViewer] no jx found for ext.id:', ext.id, 'depoExhibitId:', depoExhibitId);
+          }
+          setExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx, admittedRecord });
         }
 
         const sorted = cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
