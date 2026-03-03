@@ -246,7 +246,71 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
                   </Collapsible>
                 </CardContent>
               </Card>
-            );
+
+              {/* Child Questions */}
+              {children.length > 0 && isExpanded && (
+                <div className="ml-4 space-y-2 mt-2">
+                  {children.map((child) => {
+                    const childWit = getWitness(child.party_id);
+                    const childLinks = linkedProof[child.id] || [];
+                    return (
+                      <Card key={child.id} className="bg-gray-700 border-gray-600">
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-2">
+                            <div className="w-4 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-200"><span className="text-gray-500 font-normal">↳</span> {child.question_text}</p>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                <Badge variant="outline" className="text-xs text-gray-400">{childWit?.first_name} {childWit?.last_name}</Badge>
+                                <Badge className={child.question_type ? 'bg-blue-500/20 text-blue-300 text-xs' : 'bg-gray-600 text-gray-300 text-xs'}>
+                                  {child.question_type || 'Follow-Up'}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs text-gray-400">{childLinks.length} proof</Badge>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRemoveQuestion(child.id)}
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+
+                          {/* Child Linked Proofs */}
+                          {childLinks.length > 0 && (
+                            <div className="mt-2 space-y-2 border-t border-gray-600 pt-2">
+                              <p className="text-xs text-gray-400 font-semibold">LINKED PROOF</p>
+                              {childLinks.map((link) => {
+                                const proof = proofItems.find(p => p.id === link.proof_item_id);
+                                return (
+                                  <div key={link.id} className="flex items-start justify-between gap-2 bg-[#0a0f1e] p-2 rounded text-xs">
+                                    <button
+                                      onClick={() => proof && (setSelectedProofItem(proof), setShowProofModal(true))}
+                                      className="flex-1 text-left text-gray-300 hover:text-cyan-400 truncate flex items-center gap-1"
+                                    >
+                                      <Eye className="w-3 h-3 flex-shrink-0" />
+                                      {proof?.label}
+                                    </button>
+                                    <button
+                                      onClick={() => handleUnlinkProof(child.id, link.id)}
+                                      className="text-gray-400 hover:text-red-400 flex-shrink-0"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           })}
         </div>
       ) : (
