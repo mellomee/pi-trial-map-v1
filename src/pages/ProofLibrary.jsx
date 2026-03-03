@@ -895,7 +895,7 @@ export default function ProofLibrary() {
                     <SelectValue placeholder="Select witness..." />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-300">
-                    {linkedWitnesses.map(w => <SelectItem key={w.id} value={w.id}>{w.first_name} {w.last_name}</SelectItem>)}
+                   {proofWitnessesForGroup.map(w => <SelectItem key={w.id} value={w.id}>{w.display_name || `${w.first_name || ''} ${w.last_name}`.trim()}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
