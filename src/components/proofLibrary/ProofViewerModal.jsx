@@ -182,9 +182,17 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
             ]);
             jx = byPrimary[0] || byMaster[0] || null;
           }
-          console.log('[ProofViewer] jointExhibit found:', JSON.stringify(jx));
-
-          console.log('[ProofViewer] jx.admitted_no:', jx?.admitted_no, '| jx.status:', jx?.status, '| ext.extract_page_count:', ext.extract_page_count);
+          // Last resort: scan all JointExhibits for this case
+          if (!jx && ext.case_id) {
+            const allJx = await base44.entities.JointExhibits.filter({ case_id: ext.case_id });
+            jx = allJx.find(j =>
+              j.exhibit_extract_id === ext.id ||
+              j.primary_depo_exhibit_id === depoExhibitId ||
+              j.master_exhibit_id === depoExhibitId ||
+              (Array.isArray(j.source_depo_exhibit_ids) && j.source_depo_exhibit_ids.includes(depoExhibitId))
+            ) || null;
+          }
+          console.log('[ProofViewer] jx:', JSON.stringify(jx));
           setExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx });
         }
 
