@@ -255,7 +255,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
 
         const sorted = cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
         setCallouts(sorted);
-        const linked = proofItem.callout_id ? sorted.find((c) => c.id === proofItem.callout_id) : null;
+        const linked = targetProof.callout_id ? sorted.find((c) => c.id === targetProof.callout_id) : null;
         setSelectedCallout(linked || (sorted.length > 0 ? sorted[0] : null));
       }
     } catch (err) {
