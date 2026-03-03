@@ -204,6 +204,14 @@ function ExtractDetailPanel({ extract, caseId, selectedCallout, setSelectedCallo
       setCallouts(sorted);
       setSelectedCallout(sorted[0] || null);
       setMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx, admittedRecord });
+
+      // Load all case parties for witness name resolution
+      if (caseId) {
+        const parts = await base44.entities.Parties.filter({ case_id: caseId });
+        const map = {};
+        parts.forEach(p => { map[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
+        setCaseParties(map);
+      }
     } catch (e) {
       console.error('Error loading extract meta:', e);
     }
