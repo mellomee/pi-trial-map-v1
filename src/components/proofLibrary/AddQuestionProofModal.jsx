@@ -5,10 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Image } from 'lucide-react';
-import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
+import { Search, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, FileText, Image } from 'lucide-react';
+import * as pdfjs from 'pdfjs-dist';
 
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
+const COLOR_CSS = {
+  yellow: "rgba(255,220,0,0.40)",
+  red:    "rgba(239,68,68,0.40)",
+  green:  "rgba(34,197,94,0.40)",
+  blue:   "rgba(59,130,246,0.40)",
+};
 
 export default function AddQuestionProofModal({ isOpen, onClose, question, evidenceGroupId, caseId, onProofLinked }) {
   const [proofTab, setProofTab] = useState('depoClip');
@@ -18,11 +25,18 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
   const [selectedExtract, setSelectedExtract] = useState(null);
   const [selectedCallout, setSelectedCallout] = useState(null);
   const [callouts, setCallouts] = useState([]);
+  const [highlights, setHighlights] = useState([]);
+  const [searchClip, setSearchClip] = useState('');
+  const [searchExtract, setSearchExtract] = useState('');
+  const [scale, setScale] = useState(1.2);
+  const [pdfDoc, setPdfDoc] = useState(null);
+  const [pageNum, setPageNum] = useState(1);
+  const [numPages, setNumPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [parties, setParties] = useState({});
   const [depositions, setDepositions] = useState({});
-  const [showProofViewer, setShowProofViewer] = useState(false);
-  const [viewerProofItem, setViewerProofItem] = useState(null);
+
+  const canvasRef = React.useRef(null);
 
   // Get witness name
   const getWitnessName = (witId) => {
@@ -33,20 +47,18 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
 
   // Load initial data
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !question?.party_id) return;
     loadProofsForWitness();
-  }, [isOpen]);
+  }, [isOpen, question?.party_id]);
 
   const loadProofsForWitness = async () => {
     setLoading(true);
     try {
-      const [allParties, allDeps, allClips, allExtracts, allDepoExhibits, allJointExhibits] = await Promise.all([
+      const [allParties, allDeps, allClips, allExtracts] = await Promise.all([
         base44.entities.Parties.filter({ case_id: caseId }),
         base44.entities.Depositions.filter({ case_id: caseId }),
         base44.entities.DepoClips.filter({ case_id: caseId }),
         base44.entities.ExhibitExtracts.filter({ case_id: caseId }),
-        base44.entities.DepositionExhibits.filter({ case_id: caseId }),
-        base44.entities.JointExhibits.filter({ case_id: caseId }),
       ]);
 
       // Build maps
@@ -57,14 +69,6 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
       const depsMap = {};
       allDeps.forEach(d => { depsMap[d.id] = d; });
       setDepositions(depsMap);
-
-      const depoExMap = {};
-      allDepoExhibits.forEach(dx => { depoExMap[dx.id] = dx; });
-      setDepoExhibits(depoExMap);
-
-      const jxMap = {};
-      allJointExhibits.forEach(jx => { jxMap[jx.id] = jx; });
-      setJointExhibits(jxMap);
 
       // Filter clips for witness
       const witClips = [];
@@ -78,8 +82,15 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
       }
       setDepoClips(witClips);
 
-      // Load all extracts (callout selection filters by witness)
-      setExtracts(allExtracts);
+      // Filter extracts for witness (via callouts)
+      const witExtracts = [];
+      for (const extract of allExtracts) {
+        const extractCallouts = await base44.entities.Callouts.filter({ extract_id: extract.id });
+        if (extractCallouts.some(co => co.witness_id === question.party_id)) {
+          witExtracts.push(extract);
+        }
+      }
+      setExtracts(witExtracts);
     } catch (error) {
       console.error('Error loading proofs:', error);
     } finally {
@@ -92,6 +103,40 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
     if (!selectedExtract?.id) return;
     base44.entities.Callouts.filter({ extract_id: selectedExtract.id }).then(setCallouts);
   }, [selectedExtract?.id]);
+
+  // Load highlights for selected callout
+  useEffect(() => {
+    if (!selectedCallout?.id) return;
+    base44.entities.Highlights.filter({ callout_id: selectedCallout.id }).then(setHighlights);
+  }, [selectedCallout?.id]);
+
+  // Load PDF for selected extract
+  useEffect(() => {
+    if (!selectedExtract?.extract_file_url?.toLowerCase().includes('.pdf')) {
+      setPdfDoc(null);
+      return;
+    }
+    pdfjs.getDocument(selectedExtract.extract_file_url).promise.then(doc => {
+      setPdfDoc(doc);
+      setNumPages(doc.numPages);
+      setPageNum(selectedCallout?.page_number || 1);
+    });
+  }, [selectedExtract, selectedCallout]);
+
+  // Render PDF page
+  useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
+    let cancelled = false;
+    pdfDoc.getPage(pageNum).then(page => {
+      if (cancelled) return;
+      const vp = page.getViewport({ scale });
+      const canvas = canvasRef.current;
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      page.render({ canvasContext: canvas.getContext("2d"), viewport: vp });
+    });
+    return () => { cancelled = true; };
+  }, [pdfDoc, pageNum, scale]);
 
   // Handle adding clip as proof
   const handleAddClipProof = async () => {
@@ -301,7 +346,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                           />
                         )}
                         <div className="p-2">
-                          <p className="text-xs font-medium text-gray-200 truncate">{extract.title}</p>
+                          <p className="text-xs font-medium text-gray-200 truncate">{extract.title || extract.marked_title}</p>
                           <p className="text-[10px] text-gray-500 mt-0.5">#{extract.marked_no}</p>
                         </div>
                       </button>
@@ -312,34 +357,34 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                 </div>
               </div>
 
-              {/* Extract Details - ProofViewerModal */}
+              {/* Extract Details - Full width */}
               {selectedExtract && (
-                <div className="space-y-3">
-                  <div className="border border-gray-700 rounded bg-gray-950 p-3">
-                    <p className="text-xs font-semibold text-cyan-400 uppercase mb-3">Preview</p>
-                    <Button
-                      onClick={() => {
-                        const proofItem = {
-                          id: selectedExtract.id,
-                          type: 'extract',
-                          label: selectedExtract.title,
-                          source_id: selectedExtract.id,
-                        };
-                        setViewerProofItem(proofItem);
-                        setShowProofViewer(true);
-                      }}
-                      className="w-full bg-cyan-600 hover:bg-cyan-700"
-                    >
-                      View Extract
-                    </Button>
+                <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
+                  {/* 3-column metadata tiles */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
+                      <p className="text-xl font-bold text-yellow-300">#2</p>
+                      <p className="text-xs text-gray-300">Color photocopy of photograph</p>
+                      <p className="text-[10px] text-cyan-400 mt-1">KEROLES</p>
+                    </div>
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
+                      <p className="text-gray-400 text-xs">Not on joint list</p>
+                      <p className="text-[10px] text-gray-400 mt-2">1 pg extracted</p>
+                    </div>
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
+                      <p className="text-gray-400 text-xs">Not admitted</p>
+                    </div>
                   </div>
 
-                  {/* Callouts row - only show if there are callouts */}
+                  {/* Callouts row */}
                   {callouts.length > 0 && (
-                    <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
+                    <div className="space-y-2">
                       <p className="text-xs font-semibold text-cyan-400 uppercase">Callouts ({callouts.length})</p>
                       <div className="flex gap-2 overflow-x-auto pb-2">
-                        {callouts.map((callout) => (
+                        {callouts.map((callout, idx) => (
                           <button
                             key={callout.id}
                             onClick={() => setSelectedCallout(callout)}
@@ -362,6 +407,38 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                       </div>
                     </div>
                   )}
+
+                  {/* Full-width preview */}
+                  {selectedCallout && (
+                    <div className="border border-gray-700 rounded bg-black p-3 flex items-center justify-center min-h-64">
+                      {selectedCallout.snapshot_image_url ? (
+                        <div className="relative max-w-full">
+                          <img 
+                            src={selectedCallout.snapshot_image_url} 
+                            alt="Callout" 
+                            className="max-w-full max-h-96 object-contain"
+                          />
+                          {/* Highlights overlay */}
+                          {highlights.map(hl =>
+                            (hl.rects_norm || []).map((r, ri) => (
+                              <div key={`${hl.id}-${ri}`} style={{
+                                position: "absolute",
+                                left: `${r.x * 100}%`, top: `${r.y * 100}%`,
+                                width: `${r.w * 100}%`, height: `${r.h * 100}%`,
+                                background: COLOR_CSS[hl.color] || COLOR_CSS.yellow,
+                                pointerEvents: "none",
+                              }} />
+                            ))
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-600">
+                          <Image className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                          <p className="text-sm">No snapshot</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -380,13 +457,6 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
             </TabsContent>
           </Tabs>
         )}
-
-        {/* Proof Viewer Modal for Extract Preview */}
-        <ProofViewerModal
-          proofItem={viewerProofItem}
-          isOpen={showProofViewer}
-          onClose={() => setShowProofViewer(false)}
-        />
       </DialogContent>
     </Dialog>
   );
