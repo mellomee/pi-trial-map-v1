@@ -215,7 +215,7 @@ export default function ProofLibrary() {
       for (const link of piWits) {
         await base44.entities.ProofItemWitnesses.delete(link.id);
       }
-      await loadGroupDetails();
+      await loadGroupDetails(selectedGroupId);
     } catch (error) {
       console.error('Error removing proof:', error);
     }
