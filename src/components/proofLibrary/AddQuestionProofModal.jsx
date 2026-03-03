@@ -114,6 +114,14 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
 
   const loadExtractMetadata = async () => {
     try {
+      // Load case parties for witness name mapping
+      if (selectedExtract.case_id) {
+        const ps = await base44.entities.Parties.filter({ case_id: selectedExtract.case_id });
+        const map = {};
+        ps.forEach(p => { map[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
+        setCaseParties(map);
+      }
+
       const [cos, sources, jointExhibits] = await Promise.all([
         base44.entities.Callouts.filter({ extract_id: selectedExtract.id }),
         base44.entities.ExtractSources.filter({ exhibit_extract_id: selectedExtract.id }),
