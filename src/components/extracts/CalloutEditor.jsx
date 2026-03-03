@@ -98,7 +98,12 @@ export default function CalloutEditor({ extract }) {
   const [pendingCrop, setPendingCrop] = useState(null);
   const [pendingName, setPendingName] = useState("");
   const [pendingJurySafe, setPendingJurySafe] = useState(false);
+  const [pendingWitnessId, setPendingWitnessId] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Parties for witness picker
+  const [parties, setParties] = useState([]);
+  const [defaultWitnessId, setDefaultWitnessId] = useState("");
 
   // Panel collapse
   const [panelOpen, setPanelOpen] = useState(true);
