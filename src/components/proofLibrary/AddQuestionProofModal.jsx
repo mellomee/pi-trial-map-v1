@@ -42,6 +42,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
   const [fileViewerPdfDoc, setFileViewerPdfDoc] = useState(null);
 
   const canvasRef = React.useRef(null);
+  const fileViewerCanvasRef = React.useRef(null);
 
   // Get witness name
   const getWitnessName = (witId) => {
