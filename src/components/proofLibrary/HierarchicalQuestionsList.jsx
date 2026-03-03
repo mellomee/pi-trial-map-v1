@@ -14,6 +14,7 @@ import AddQuestionProofModal from '@/components/proofLibrary/AddQuestionProofMod
 export default function HierarchicalQuestionsList({
   questions,
   evidenceGroupId,
+  evidenceGroup,
   caseId,
   proofItems,
   calloutNames,
