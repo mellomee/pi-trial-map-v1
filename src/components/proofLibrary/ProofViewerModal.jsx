@@ -173,13 +173,16 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
             }
           }
 
-          // Find joint exhibit — try by exhibit_extract_id, fallback by source_depo_exhibit_ids
+          // Find joint exhibit — try exhibit_extract_id first, then depo exhibit fallbacks
           let jx = jointExhibits[0] || null;
           if (!jx && depoExhibitId) {
-            // Try finding by primary_depo_exhibit_id
-            const byDepo = await base44.entities.JointExhibits.filter({ primary_depo_exhibit_id: depoExhibitId });
-            if (byDepo.length > 0) jx = byDepo[0];
+            const [byPrimary, byMaster] = await Promise.all([
+              base44.entities.JointExhibits.filter({ primary_depo_exhibit_id: depoExhibitId }),
+              base44.entities.JointExhibits.filter({ master_exhibit_id: depoExhibitId }),
+            ]);
+            jx = byPrimary[0] || byMaster[0] || null;
           }
+          console.log('[ProofViewer] jointExhibit found:', jx);
 
           setExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx });
         }
