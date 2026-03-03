@@ -591,6 +591,18 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           }
           </>
         }
+
+        {/* Selection mode: action buttons */}
+        {selectionMode && (
+          <div className="flex gap-2 mt-6 pt-4 border-t border-[#1e2a45]">
+            <Button variant="outline" onClick={onClose} className="border-[#1e2a45] text-gray-300 flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleLinkProofToQuestion} className="bg-cyan-600 hover:bg-cyan-700 flex-1">
+              Link Proof
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>);
 
