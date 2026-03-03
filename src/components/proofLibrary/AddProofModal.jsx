@@ -86,7 +86,9 @@ function CalloutPicker({ callouts, selectedCallout, setSelectedCallout, proofCal
 
       {/* Thumbnails */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {callouts.map((c, i) => (
+        {callouts.map((c, i) => {
+          const witName = c.witness_id ? caseParties[c.witness_id] : null;
+          return (
           <button key={c.id} onClick={() => setSelectedCallout(c)}
             className={`flex-shrink-0 rounded border-2 transition-all relative ${selectedCallout?.id === c.id ? 'border-cyan-500' : 'border-gray-200 hover:border-gray-400'}`}>
             {proofCalloutId === c.id && (
@@ -98,9 +100,11 @@ function CalloutPicker({ callouts, selectedCallout, setSelectedCallout, proofCal
               ? <img src={c.snapshot_image_url} alt={c.name || `Callout ${i + 1}`} className="h-14 w-18 object-cover rounded" />
               : <div className="h-14 w-18 flex items-center justify-center bg-gray-100 rounded px-3"><Image className="w-4 h-4 text-gray-400" /></div>
             }
-            {c.name && <p className="text-[9px] text-gray-500 text-center px-1 pb-0.5 truncate max-w-[72px]">{c.name}</p>}
+            {c.name && <p className="text-[9px] text-gray-500 text-center px-1 pt-0.5 truncate max-w-[72px]">{c.name}</p>}
+            {witName && <p className="text-[9px] text-blue-600 text-center px-1 pb-0.5 truncate max-w-[72px]">{witName}</p>}
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* Selected callout */}
