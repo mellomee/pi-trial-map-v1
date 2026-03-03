@@ -97,26 +97,25 @@ export default function ProofLibrary() {
       
       console.log('[LOAD_GROUP] Found', groupQuestions.length, 'QuestionEvidenceGroups links');
 
-      // Load all in parallel
       const proofIds = groupProofLinks.map((link) => link.proof_item_id);
       const tpIds = groupTPLinks.map((link) => link.trial_point_id);
       const qIds = groupQuestions.map((link) => link.question_id);
 
-      const [proofResults, tpResults, witLinkResults, qResults] = await Promise.all([
-        Promise.all(proofIds.map(id => base44.entities.ProofItems.filter({ id }))),
-        Promise.all(tpIds.map(id => base44.entities.TrialPoints.filter({ id }))),
+      // Fetch all records for the case in parallel, then filter client-side (avoids rate limits)
+      const [allProofItems, allTPs, witLinkResults, allQuestions] = await Promise.all([
+        base44.entities.ProofItems.filter({ case_id: activeCase.id }),
+        base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
         base44.entities.ProofItemWitnesses.filter({ case_id: activeCase.id }),
-        Promise.all(qIds.map(id => base44.entities.Questions.filter({ id }))),
+        base44.entities.Questions.filter({ case_id: activeCase.id }),
       ]);
 
-      const allProof = proofResults.map(r => r[0]).filter(Boolean);
-      const tps = tpResults.map(r => r[0]).filter(Boolean);
-      const qs = qResults.map(r => r[0]).filter(Boolean);
+      const allProof = allProofItems.filter(p => proofIds.includes(p.id));
+      const tps = allTPs.filter(tp => tpIds.includes(tp.id));
+      const qs = allQuestions.filter(q => qIds.includes(q.id));
 
       const proofWitsForGroup = witLinkResults.filter(link => proofIds.includes(link.proof_item_id));
       const witIds = [...new Set(proofWitsForGroup.map(link => link.witness_id))];
-      const witResults = await Promise.all(witIds.map(id => base44.entities.Parties.filter({ id })));
-      const wits = witResults.map(r => r[0]).filter(Boolean);
+      const wits = allWitnesses.filter(w => witIds.includes(w.id));
       setProofItems(allProof);
       setLinkedTrialPoints(tps);
       setLinkedWitnesses(wits);
