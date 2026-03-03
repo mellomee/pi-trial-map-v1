@@ -217,6 +217,21 @@ export default function LinkQuestionProofModal({
             >
               Cancel
             </Button>
+            <Button
+              onClick={handlePreview}
+              disabled={!selectedProof}
+              className="text-gray-400 hover:text-white flex-1 border-gray-600"
+              variant="outline"
+            >
+              Preview
+            </Button>
+            <Button
+              onClick={handleLinkProof}
+              disabled={!selectedProof}
+              className="bg-cyan-600 hover:bg-cyan-700 flex-1"
+            >
+              Link Proof
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
