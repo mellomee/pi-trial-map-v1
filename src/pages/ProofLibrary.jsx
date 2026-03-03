@@ -87,65 +87,44 @@ export default function ProofLibrary() {
 
 
 
-  const loadGroupDetails = async () => {
-    console.log('[LOAD_GROUP] 📋 Loading details for EG:', selectedGroupId);
+  const loadGroupDetails = async (groupId) => {
+    const gId = groupId || selectedGroupId;
+    if (!gId) return;
     try {
-      console.log('[LOAD_GROUP] Fetching all links...');
-      const [groupProofLinks, groupTPLinks, groupQuestions] = await Promise.all([
-        base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: selectedGroupId }),
-        base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: selectedGroupId }),
-        base44.entities.QuestionEvidenceGroups.filter({ evidence_group_id: selectedGroupId }),
+      // Fetch all link tables in parallel
+      const [groupProofLinks, groupTPLinks, groupQuestions, allProofInCase, allTPsInCase, allPartiesInCase, allQsInCase, allProofWitLinks] = await Promise.all([
+        base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: gId }),
+        base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: gId }),
+        base44.entities.QuestionEvidenceGroups.filter({ evidence_group_id: gId }),
+        base44.entities.ProofItems.filter({ case_id: activeCase.id }),
+        base44.entities.TrialPoints.filter({ case_id: activeCase.id }),
+        base44.entities.Parties.filter({ case_id: activeCase.id }),
+        base44.entities.Questions.filter({ case_id: activeCase.id }),
+        base44.entities.ProofItemWitnesses.filter({ case_id: activeCase.id }),
       ]);
-      
-      console.log('[LOAD_GROUP] Found', groupQuestions.length, 'QuestionEvidenceGroups links');
 
-      // Load full proof items
-      const proofIds = groupProofLinks.map((link) => link.proof_item_id);
-      const allProof = [];
-      for (const pId of proofIds) {
-        const proof = await base44.entities.ProofItems.filter({ id: pId });
-        if (proof.length > 0) allProof.push(proof[0]);
-      }
+      const proofIds = new Set(groupProofLinks.map(l => l.proof_item_id));
+      const tpIds = new Set(groupTPLinks.map(l => l.trial_point_id));
+      const qIds = new Set(groupQuestions.map(l => l.question_id));
 
-      // Load trial point details
-      const tpIds = groupTPLinks.map((link) => link.trial_point_id);
-      const tps = [];
-      for (const tpId of tpIds) {
-        const tp = await base44.entities.TrialPoints.filter({ id: tpId });
-        if (tp.length > 0) tps.push(tp[0]);
-      }
+      const allProof = allProofInCase.filter(p => proofIds.has(p.id));
+      const tps = allTPsInCase.filter(tp => tpIds.has(tp.id));
+      const qs = allQsInCase.filter(q => qIds.has(q.id));
 
-      // Load witnesses from proof items
-      const allProofWitLinks = await base44.entities.ProofItemWitnesses.filter({ case_id: activeCase.id });
-      const proofWitsForGroup = allProofWitLinks.filter(link => proofIds.includes(link.proof_item_id));
-      const witIds = [...new Set(proofWitsForGroup.map(link => link.witness_id))];
-      const wits = [];
-      for (const witId of witIds) {
-        const wit = await base44.entities.Parties.filter({ id: witId });
-        if (wit.length > 0) wits.push(wit[0]);
-      }
+      const witIdsForGroup = [...new Set(
+        allProofWitLinks.filter(l => proofIds.has(l.proof_item_id)).map(l => l.witness_id)
+      )];
+      const wits = allPartiesInCase.filter(p => witIdsForGroup.includes(p.id));
 
-      // Load linked questions
-      const qIds = groupQuestions.map((link) => link.question_id);
-      console.log('[LOAD_GROUP] Loading', qIds.length, 'question records...');
-      const qs = [];
-      for (const qId of qIds) {
-        const q = await base44.entities.Questions.filter({ id: qId });
-        if (q.length > 0) {
-          qs.push(q[0]);
-          console.log('[LOAD_GROUP] ✅ Loaded question:', q[0].question_text);
-        } else {
-          console.log('[LOAD_GROUP] ⚠️ Question ID not found:', qId);
-        }
-      }
-      
-      console.log('[LOAD_GROUP] ✅ Final questions count:', qs.length);
       setProofItems(allProof);
       setLinkedTrialPoints(tps);
       setLinkedWitnesses(wits);
       setLinkedQuestions(qs);
+      // Cache trial points & witnesses globally so add modals are fast
+      setAllTrialPoints(allTPsInCase);
+      setAllWitnesses(allPartiesInCase);
     } catch (error) {
-      console.error('[LOAD_GROUP] ❌ Error loading group details:', error);
+      console.error('Error loading group details:', error);
     }
   };
 
