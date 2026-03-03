@@ -330,6 +330,38 @@ export default function HierarchicalQuestionsList({
         )}
       </div>
 
+      {/* Proof viewer modal */}
+      <ProofViewerModal
+        proofItem={selectedProofItem}
+        isOpen={showProofDetails}
+        onClose={() => setShowProofDetails(false)}
+      />
+
+      {/* Add proof to question modal */}
+      {selectedQuestionForProof && (
+        <AddQuestionProofModal
+          isOpen={showAddProofModal}
+          onClose={() => { setShowAddProofModal(false); setSelectedQuestionForProof(null); }}
+          question={selectedQuestionForProof}
+          evidenceGroupId={evidenceGroupId}
+          caseId={caseId}
+          onProofLinked={async () => {
+            setShowAddProofModal(false);
+            setSelectedQuestionForProof(null);
+            // Reload linked proofs
+            const links = await base44.entities.QuestionProofItems.filter({
+              evidence_group_id: evidenceGroupId,
+            });
+            const proofMap = {};
+            links.forEach(link => {
+              if (!proofMap[link.question_id]) proofMap[link.question_id] = [];
+              proofMap[link.question_id].push(link.proof_item_id);
+            });
+            setLinkedProofsByQuestion(proofMap);
+          }}
+        />
+      )}
+
       {/* Add/Edit Question Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-gray-900 border-gray-700 max-w-2xl max-h-[90vh] overflow-y-auto">
