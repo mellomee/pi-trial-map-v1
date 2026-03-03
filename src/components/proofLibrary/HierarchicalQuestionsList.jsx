@@ -173,10 +173,11 @@ export default function HierarchicalQuestionsList({
     }
   };
 
-  const renderQuestion = (q, isChild = false) => {
+  const renderQuestion = (q, isChild = false, index = 0, parentCount = 0) => {
     const linkedProofIds = linkedProofsByQuestion[q.id] || [];
     const children = getChildQuestions(q.id);
     const isExpanded = expandedParents.has(q.id);
+    const num = isChild ? '' : `${index + 1}.`;
 
     return (
       <div key={q.id} className="space-y-2">
@@ -193,7 +194,7 @@ export default function HierarchicalQuestionsList({
                   </button>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
+                  <p className="text-sm font-medium text-gray-100">{num && <span className="text-cyan-400">{num}</span>} {q.question_text}</p>
                   <div className="flex gap-2 mt-1 flex-wrap items-center">
                     <Badge className="bg-blue-500/20 text-blue-400 text-xs">{q.exam_type}</Badge>
                     {q.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{q.question_type}</Badge>}
