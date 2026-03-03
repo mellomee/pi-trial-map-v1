@@ -13,6 +13,7 @@ import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
 import AddProofModal from '@/components/proofLibrary/AddProofModal';
 import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
 import QuestionProofLinker from '@/components/proofLibrary/QuestionProofLinker';
+import HierarchicalQuestionsList from '@/components/proofLibrary/HierarchicalQuestionsList';
 import { createPageUrl } from '@/utils';
 
 export default function ProofLibrary() {
@@ -42,7 +43,6 @@ export default function ProofLibrary() {
   const [showAddProofModal, setShowAddProofModal] = useState(false);
   const [showAddTrialPointModal, setShowAddTrialPointModal] = useState(false);
   const [showAssignWitnessModal, setShowAssignWitnessModal] = useState(false);
-  const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
   const [editing, setEditing] = useState(null);
@@ -200,35 +200,16 @@ export default function ProofLibrary() {
 
   const handleCreateQuestion = async (questionData) => {
     try {
-      if (questionData.id) {
-        // Editing existing question
-        const updated = await base44.entities.Questions.update(questionData.id, {
-          question_text: questionData.question_text,
-          party_id: questionData.party_id,
-          exam_type: questionData.exam_type,
-          goal: questionData.goal,
-          expected_answer: questionData.expected_answer,
-          importance: questionData.importance,
-          status: questionData.status,
-        });
-        setLinkedQuestions(qs => qs.map(q => q.id === updated.id ? updated : q));
-      } else {
-        // Creating new question
-        const newQ = await base44.entities.Questions.create({
-          ...questionData,
-          case_id: activeCase.id,
-          primary_evidence_group_id: selectedGroupId,
-        });
-        // Create the QuestionEvidenceGroups link so loadGroupDetails can find it
+      // For linking to evidence group (parent questions only)
+      if (!questionData.parent_id) {
         await base44.entities.QuestionEvidenceGroups.create({
           case_id: activeCase.id,
-          question_id: newQ.id,
+          question_id: questionData.id || null,
           evidence_group_id: selectedGroupId,
         });
-        setLinkedQuestions(qs => [...qs, newQ]);
       }
     } catch (error) {
-      console.error('Error creating/updating question:', error);
+      console.error('Error linking question to evidence group:', error);
     }
   };
 
@@ -644,100 +625,32 @@ export default function ProofLibrary() {
 
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
-                  <div className="space-y-3">
-                    <Button
-                      onClick={() => { setEditing({ party_id: '', exam_type: 'Direct', question_text: '', goal: '', expected_answer: '', status: 'NotAsked', importance: 'Med', ask_if_time: true }); setShowAddQuestionModal(true); }}
-                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
-                    >
-                      <Plus className="w-3 h-3 mr-2" />
-                      Add Question
-                    </Button>
-                    {linkedQuestions.length > 0 ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-400">Questions for this group ({linkedQuestions.length}):</p>
-                        {linkedQuestions.map((q) => {
-                          const linkedProofIds = questionProofLinks[q.id] || [];
-                          const linkedProofsForQ = proofItems.filter(p => linkedProofIds.includes(p.id));
-                          return (
-                          <div key={q.id} className="bg-gray-50 border border-gray-200 rounded p-3 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900">{q.question_text}</p>
-                                <div className="flex gap-2 mt-1 flex-wrap">
-                                  <span className="text-xs text-gray-600">{q.exam_type}</span>
-                                  <span className="text-xs text-blue-600 font-medium">👤 {getPartyName(q.party_id)}</span>
-                                  {q.goal && <span className="text-xs text-gray-600">Goal: {q.goal}</span>}
-                                  {q.expected_answer && <span className="text-xs text-cyan-600">Expected: {q.expected_answer}</span>}
-                                </div>
-                              </div>
-                              <div className="flex gap-1 flex-shrink-0">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => { setEditing({ ...q }); setShowAddQuestionModal(true); }}
-                                  className="h-7 w-7 p-0 text-gray-400 hover:text-cyan-600"
-                                  title="Edit question"
-                                >
-                                  <Pencil className="w-3 h-3" />
-                                </Button>
-                                <QuestionProofLinker
-                                   questionId={q.id}
-                                   evidenceGroupId={selectedGroupId}
-                                   caseId={activeCase.id}
-                                   proofItems={proofItems}
-                                   calloutNames={calloutNames}
-                                   calloutWitnesses={calloutWitnesses}
-                                 />
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleRemoveQuestion(q.id)}
-                                  className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                                >
-                                  ✕
-                                </Button>
-                              </div>
-                            </div>
-                            {/* Linked proofs display */}
-                            {linkedProofsForQ.length > 0 && (
-                              <div className="border-t border-gray-200 pt-2 space-y-1">
-                                <p className="text-[10px] font-semibold text-gray-600 uppercase">Linked Proof:</p>
-                                {linkedProofsForQ.map((proof) => (
-                                  <div key={proof.id} className="text-xs text-gray-700 bg-gray-100 rounded p-1.5 flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-medium">{proof.label}</p>
-                                      {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
-                                        <p className="text-gray-600">↳ {calloutNames[proof.callout_id]}</p>
-                                      )}
-                                      {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
-                                        <p className="text-blue-600">👤 {calloutWitnesses[proof.callout_id]}</p>
-                                      )}
-                                      <p className="text-gray-500">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
-                                    </div>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}
-                                      className="h-6 w-6 p-0 text-gray-500 hover:text-cyan-600 flex-shrink-0 mt-0.5"
-                                      title="View proof"
-                                    >
-                                      <ExternalLink className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 mt-4 py-4 border border-dashed border-gray-700 rounded">
-                        <p className="text-sm">No questions yet</p>
-                        <p className="text-xs mt-1">Create questions linked to this evidence group</p>
-                      </div>
-                    )}
-                  </div>
+                  <HierarchicalQuestionsList
+                    questions={linkedQuestions}
+                    evidenceGroupId={selectedGroupId}
+                    caseId={activeCase.id}
+                    proofItems={proofItems}
+                    calloutNames={calloutNames}
+                    calloutWitnesses={calloutWitnesses}
+                    allWitnesses={allWitnesses}
+                    onQuestionCreated={(newQ) => {
+                      setLinkedQuestions(qs => [...qs, newQ]);
+                      // Link to evidence group if parent
+                      if (!newQ.parent_id) {
+                        base44.entities.QuestionEvidenceGroups.create({
+                          case_id: activeCase.id,
+                          question_id: newQ.id,
+                          evidence_group_id: selectedGroupId,
+                        });
+                      }
+                    }}
+                    onQuestionUpdated={(updatedQ) => {
+                      setLinkedQuestions(qs => qs.map(q => q.id === updatedQ.id ? updatedQ : q));
+                    }}
+                    onQuestionRemoved={(questionId) => {
+                      setLinkedQuestions(qs => qs.filter(q => q.id !== questionId));
+                    }}
+                  />
                 )}
               </div>
             </>
@@ -947,89 +860,7 @@ export default function ProofLibrary() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Question Modal */}
-      <Dialog open={showAddQuestionModal} onOpenChange={setShowAddQuestionModal}>
-        <DialogContent className="bg-white border-gray-300">
-          <DialogHeader>
-            <DialogTitle>Add Question for {selectedGroup?.title}</DialogTitle>
-          </DialogHeader>
-          {editing && (
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-gray-900">Question *</label>
-                <Textarea
-                  value={editing.question_text}
-                  onChange={(e) => setEditing({ ...editing, question_text: e.target.value })}
-                  className="mt-1 bg-white border-gray-300 text-gray-900"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-900">Witness *</label>
-                <Select value={editing.party_id || ""} onValueChange={(v) => setEditing({ ...editing, party_id: v })}>
-                  <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900">
-                    <SelectValue placeholder="Select witness..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-300">
-                   {proofWitnessesForGroup.map(w => <SelectItem key={w.id} value={w.id}>{w.display_name || `${w.first_name || ''} ${w.last_name}`.trim()}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-900">Type</label>
-                  <Select value={editing.exam_type} onValueChange={(v) => setEditing({ ...editing, exam_type: v })}>
-                    <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-300">
-                      <SelectItem value="Direct">Direct</SelectItem>
-                      <SelectItem value="Cross">Cross</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-900">Importance</label>
-                  <Select value={editing.importance || "Med"} onValueChange={(v) => setEditing({ ...editing, importance: v })}>
-                    <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-300">
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Med">Medium</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-900">Goal</label>
-                <Input
-                  value={editing.goal || ""}
-                  onChange={(e) => setEditing({ ...editing, goal: e.target.value })}
-                  className="mt-1 bg-white border-gray-300 text-gray-900"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-900">Expected Answer</label>
-                <Input
-                  value={editing.expected_answer || ""}
-                  onChange={(e) => setEditing({ ...editing, expected_answer: e.target.value })}
-                  className="mt-1 bg-white border-gray-300 text-gray-900"
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAddQuestionModal(false); setEditing(null); }}>
-              Cancel
-            </Button>
-            <Button onClick={async () => { await handleCreateQuestion(editing); setShowAddQuestionModal(false); setEditing(null); }} className="bg-cyan-600 hover:bg-cyan-700">
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       <ProofViewerModal
         proofItem={selectedProofItem}
