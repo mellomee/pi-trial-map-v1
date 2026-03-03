@@ -48,6 +48,14 @@ export default function HierarchicalQuestionsList({
     }
   }, [collapseAll]);
 
+  const loadProofItemsCache = () => {
+    const pMap = {};
+    proofItems.forEach(p => {
+      pMap[p.id] = p;
+    });
+    setCachedProofItems(pMap);
+  };
+
   const loadLinkedProofs = async () => {
     if (!evidenceGroupId) return;
     try {
