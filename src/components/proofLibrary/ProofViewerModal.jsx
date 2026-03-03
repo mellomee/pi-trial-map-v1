@@ -363,23 +363,30 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                     </div>
 
                     {/* ADMITTED */}
-                    <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 min-w-0 ${jx?.admitted_no ? 'border-green-500/40' : 'border-[#1e2a45]'}`}>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1">Admitted</p>
-                      {jx?.admitted_no ? (
-                        <>
-                          <p className="text-xl font-bold text-green-300 leading-none">#{jx.admitted_no}</p>
-                          {jx.admitted_date && (
-                            <p className="text-[11px] text-gray-300 mt-1">{jx.admitted_date}</p>
+                    {(() => {
+                      const isAdmitted = jx && (jx.admitted_no || jx.status === 'Admitted');
+                      return (
+                        <div className={`bg-[#131a2e] border rounded-lg p-3 flex flex-col gap-1 min-w-0 ${isAdmitted ? 'border-green-500/40' : 'border-[#1e2a45]'}`}>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1">Admitted</p>
+                          {isAdmitted ? (
+                            <>
+                              {jx.admitted_no && (
+                                <p className="text-xl font-bold text-green-300 leading-none">#{jx.admitted_no}</p>
+                              )}
+                              {jx.admitted_date && (
+                                <p className="text-[11px] text-gray-300 mt-1">{jx.admitted_date}</p>
+                              )}
+                              {jx.admitted_by && (
+                                <p className="text-[11px] text-gray-400">By: {jx.admitted_by}</p>
+                              )}
+                              <Badge className="mt-1 w-fit text-[10px] bg-green-500/20 text-green-400">✓ Admitted</Badge>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 italic text-xs mt-1">Not admitted</p>
                           )}
-                          {jx.admitted_by && (
-                            <p className="text-[11px] text-gray-400">By: {jx.admitted_by}</p>
-                          )}
-                          <Badge className="mt-1 w-fit text-[10px] bg-green-500/20 text-green-400">✓ Admitted</Badge>
-                        </>
-                      ) : (
-                        <p className="text-gray-500 italic text-xs mt-1">Not admitted</p>
-                      )}
-                    </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
