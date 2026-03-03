@@ -20,6 +20,7 @@ export default function ProofLibrary() {
   const [evidenceGroups, setEvidenceGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [proofItems, setProofItems] = useState([]);
+  const [calloutNames, setCalloutNames] = useState({}); // proofItemId -> callout name
   const [allTrialPoints, setAllTrialPoints] = useState([]);
   const [linkedTrialPoints, setLinkedTrialPoints] = useState([]);
   const [allWitnesses, setAllWitnesses] = useState([]);
