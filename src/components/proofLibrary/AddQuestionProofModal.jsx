@@ -100,40 +100,6 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
     base44.entities.Callouts.filter({ extract_id: selectedExtract.id }).then(setCallouts);
   }, [selectedExtract?.id]);
 
-  // Load highlights for selected callout
-  useEffect(() => {
-    if (!selectedCallout?.id) return;
-    base44.entities.Highlights.filter({ callout_id: selectedCallout.id }).then(setHighlights);
-  }, [selectedCallout?.id]);
-
-  // Load PDF for selected extract
-  useEffect(() => {
-    if (!selectedExtract?.extract_file_url?.toLowerCase().includes('.pdf')) {
-      setPdfDoc(null);
-      return;
-    }
-    pdfjs.getDocument(selectedExtract.extract_file_url).promise.then(doc => {
-      setPdfDoc(doc);
-      setNumPages(doc.numPages);
-      setPageNum(selectedCallout?.page_number || 1);
-    });
-  }, [selectedExtract, selectedCallout]);
-
-  // Render PDF page
-  useEffect(() => {
-    if (!pdfDoc || !canvasRef.current) return;
-    let cancelled = false;
-    pdfDoc.getPage(pageNum).then(page => {
-      if (cancelled) return;
-      const vp = page.getViewport({ scale });
-      const canvas = canvasRef.current;
-      canvas.width = vp.width;
-      canvas.height = vp.height;
-      page.render({ canvasContext: canvas.getContext("2d"), viewport: vp });
-    });
-    return () => { cancelled = true; };
-  }, [pdfDoc, pageNum, scale]);
-
   // Handle adding clip as proof
   const handleAddClipProof = async () => {
     if (!selectedClip) return;
