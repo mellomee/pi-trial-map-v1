@@ -387,6 +387,13 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Proof Viewer Modal for Extract Preview */}
+        <ProofViewerModal
+          proofItem={viewerProofItem}
+          isOpen={showProofViewer}
+          onClose={() => setShowProofViewer(false)}
+        />
       </DialogContent>
     </Dialog>
   );
