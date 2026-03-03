@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Plus, ChevronDown, ChevronRight, Link2, ExternalLink } from 'lucide-react';
 import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
-import AddQuestionProofModal from '@/components/proofLibrary/AddQuestionProofModal';
+import AddQuestionProofModal from '@/components/proofLibrary/AddQuestionProofModal.jsx';
 
 export default function HierarchicalQuestionsList({
   questions,
