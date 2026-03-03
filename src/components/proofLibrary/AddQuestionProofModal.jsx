@@ -386,18 +386,29 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                 <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
                   {/* 3-column metadata tiles */}
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
-                      <p className="text-xl font-bold text-yellow-300">#2</p>
-                      <p className="text-xs text-gray-300">Color photocopy of photograph</p>
-                      <p className="text-[10px] text-cyan-400 mt-1">KEROLES</p>
+                      <p className="text-xl font-bold text-yellow-300">{selectedExtract.depo_exhibit_no || '#—'}</p>
+                      <p className="text-xs text-gray-300">{selectedExtract.depo_exhibit_title}</p>
+                      {selectedExtract.deponent_name && <p className="text-[10px] text-cyan-400">{selectedExtract.deponent_name}</p>}
+                      {selectedExtract.extract_file_url && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setViewingFile(selectedExtract)}
+                          className="h-6 text-cyan-400 hover:text-cyan-300 p-0 text-[10px]"
+                        >
+                          <Eye className="w-3 h-3 mr-1" /> View File
+                        </Button>
+                      )}
                     </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
-                      <p className="text-gray-400 text-xs">Not on joint list</p>
-                      <p className="text-[10px] text-gray-400 mt-2">1 pg extracted</p>
+                      <p className="text-gray-400 text-xs">{selectedExtract.marked_no ? `Exhibit ${selectedExtract.marked_no}` : 'Not on joint list'}</p>
+                      {selectedExtract.marked_date && <p className="text-[10px] text-gray-500">{selectedExtract.marked_date}</p>}
+                      {!selectedExtract.marked_no && <p className="text-[10px] text-gray-400 mt-2">Not marked yet</p>}
                     </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
                       <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
                       <p className="text-gray-400 text-xs">Not admitted</p>
                     </div>
