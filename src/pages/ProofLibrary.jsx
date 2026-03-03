@@ -740,7 +740,7 @@ export default function ProofLibrary() {
         onProofAdded={async (proofItem) => {
           setShowAddProofModal(false);
           await linkWitnessesToProof(proofItem);
-          await loadGroupDetails();
+          await loadGroupDetails(selectedGroupId);
         }}
       />
 
