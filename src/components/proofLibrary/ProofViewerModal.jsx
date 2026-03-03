@@ -129,7 +129,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
     } else {
       setDepoClip(null);setDeposition(null);setExtract(null);
       setExtractMeta(null);setCallouts([]);setHighlights([]);
-      setSelectedCallout(null);setViewingFile(null);
+      setSelectedCallout(null);setViewingFile(null);setCaseParties({});
     }
   }, [isOpen, proofItem?.id]);
 
