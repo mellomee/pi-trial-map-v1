@@ -33,6 +33,8 @@ export default function HierarchicalQuestionsList({
   const [showProofDetails, setShowProofDetails] = useState(false);
   const [showAddProofModal, setShowAddProofModal] = useState(false);
   const [selectedQuestionForProof, setSelectedQuestionForProof] = useState(null);
+  const [cachedProofItems, setCachedProofItems] = useState({});
+  const [collapseAll, setCollapseAll] = useState(false);
 
   useEffect(() => {
     loadLinkedProofs();
