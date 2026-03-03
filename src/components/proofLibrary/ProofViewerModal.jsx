@@ -265,17 +265,35 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
   };
 
   const handleSetAsProofCallout = async () => {
-    if (!selectedCallout || !proofItem) return;
-    await base44.entities.ProofItems.update(proofItem.id, { callout_id: selectedCallout.id });
-    if (onCalloutSelected) onCalloutSelected(proofItem.id, selectedCallout);
+    const targetProof = selectedProofInList || proofItem;
+    if (!selectedCallout || !targetProof) return;
+    await base44.entities.ProofItems.update(targetProof.id, { callout_id: selectedCallout.id });
+    if (onCalloutSelected) onCalloutSelected(targetProof.id, selectedCallout);
     // Don't close — update local proofItem reference so badge shows immediately
     setCallouts(prev => [...prev]); // trigger re-render
   };
 
+  const handleLinkProofToQuestion = async () => {
+    if (onProofSelected && selectedProofInList) {
+      onProofSelected(selectedProofInList);
+    }
+  };
+
   const selectedCalloutIdx = callouts.findIndex((c) => c.id === selectedCallout?.id);
-  const isCurrentProofCallout = proofItem?.callout_id && selectedCallout?.id === proofItem?.callout_id;
+  const targetProof = selectedProofInList || proofItem;
+  const isCurrentProofCallout = targetProof?.callout_id && selectedCallout?.id === targetProof?.callout_id;
 
   const jx = extractMeta?.jointExhibit;
+  
+  const filteredProofItems = availableProofItems.filter(p => {
+    if (!witnessFilter) return true;
+    // For extracts with callouts, check if the callout's witness matches filter
+    if (p.type === 'extract' && p.callout_id) {
+      const calloutWitness = callouts.find(c => c.id === p.callout_id)?.witness_id;
+      return calloutWitness === witnessFilter;
+    }
+    return true;
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
