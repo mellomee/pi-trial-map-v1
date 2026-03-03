@@ -625,100 +625,32 @@ export default function ProofLibrary() {
 
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
-                  <div className="space-y-3">
-                    <Button
-                      onClick={() => { setEditing({ party_id: '', exam_type: 'Direct', question_text: '', goal: '', expected_answer: '', status: 'NotAsked', importance: 'Med', ask_if_time: true }); setShowAddQuestionModal(true); }}
-                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
-                    >
-                      <Plus className="w-3 h-3 mr-2" />
-                      Add Question
-                    </Button>
-                    {linkedQuestions.length > 0 ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-400">Questions for this group ({linkedQuestions.length}):</p>
-                        {linkedQuestions.map((q) => {
-                          const linkedProofIds = questionProofLinks[q.id] || [];
-                          const linkedProofsForQ = proofItems.filter(p => linkedProofIds.includes(p.id));
-                          return (
-                          <div key={q.id} className="bg-gray-50 border border-gray-200 rounded p-3 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900">{q.question_text}</p>
-                                <div className="flex gap-2 mt-1 flex-wrap">
-                                  <span className="text-xs text-gray-600">{q.exam_type}</span>
-                                  <span className="text-xs text-blue-600 font-medium">👤 {getPartyName(q.party_id)}</span>
-                                  {q.goal && <span className="text-xs text-gray-600">Goal: {q.goal}</span>}
-                                  {q.expected_answer && <span className="text-xs text-cyan-600">Expected: {q.expected_answer}</span>}
-                                </div>
-                              </div>
-                              <div className="flex gap-1 flex-shrink-0">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => { setEditing({ ...q }); setShowAddQuestionModal(true); }}
-                                  className="h-7 w-7 p-0 text-gray-400 hover:text-cyan-600"
-                                  title="Edit question"
-                                >
-                                  <Pencil className="w-3 h-3" />
-                                </Button>
-                                <QuestionProofLinker
-                                   questionId={q.id}
-                                   evidenceGroupId={selectedGroupId}
-                                   caseId={activeCase.id}
-                                   proofItems={proofItems}
-                                   calloutNames={calloutNames}
-                                   calloutWitnesses={calloutWitnesses}
-                                 />
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleRemoveQuestion(q.id)}
-                                  className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                                >
-                                  ✕
-                                </Button>
-                              </div>
-                            </div>
-                            {/* Linked proofs display */}
-                            {linkedProofsForQ.length > 0 && (
-                              <div className="border-t border-gray-200 pt-2 space-y-1">
-                                <p className="text-[10px] font-semibold text-gray-600 uppercase">Linked Proof:</p>
-                                {linkedProofsForQ.map((proof) => (
-                                  <div key={proof.id} className="text-xs text-gray-700 bg-gray-100 rounded p-1.5 flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-medium">{proof.label}</p>
-                                      {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
-                                        <p className="text-gray-600">↳ {calloutNames[proof.callout_id]}</p>
-                                      )}
-                                      {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
-                                        <p className="text-blue-600">👤 {calloutWitnesses[proof.callout_id]}</p>
-                                      )}
-                                      <p className="text-gray-500">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
-                                    </div>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}
-                                      className="h-6 w-6 p-0 text-gray-500 hover:text-cyan-600 flex-shrink-0 mt-0.5"
-                                      title="View proof"
-                                    >
-                                      <ExternalLink className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 mt-4 py-4 border border-dashed border-gray-700 rounded">
-                        <p className="text-sm">No questions yet</p>
-                        <p className="text-xs mt-1">Create questions linked to this evidence group</p>
-                      </div>
-                    )}
-                  </div>
+                  <HierarchicalQuestionsList
+                    questions={linkedQuestions}
+                    evidenceGroupId={selectedGroupId}
+                    caseId={activeCase.id}
+                    proofItems={proofItems}
+                    calloutNames={calloutNames}
+                    calloutWitnesses={calloutWitnesses}
+                    allWitnesses={allWitnesses}
+                    onQuestionCreated={(newQ) => {
+                      setLinkedQuestions(qs => [...qs, newQ]);
+                      // Link to evidence group if parent
+                      if (!newQ.parent_id) {
+                        base44.entities.QuestionEvidenceGroups.create({
+                          case_id: activeCase.id,
+                          question_id: newQ.id,
+                          evidence_group_id: selectedGroupId,
+                        });
+                      }
+                    }}
+                    onQuestionUpdated={(updatedQ) => {
+                      setLinkedQuestions(qs => qs.map(q => q.id === updatedQ.id ? updatedQ : q));
+                    }}
+                    onQuestionRemoved={(questionId) => {
+                      setLinkedQuestions(qs => qs.filter(q => q.id !== questionId));
+                    }}
+                  />
                 )}
               </div>
             </>
