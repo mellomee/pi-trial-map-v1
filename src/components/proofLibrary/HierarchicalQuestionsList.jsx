@@ -139,7 +139,12 @@ export default function HierarchicalQuestionsList({
         await base44.entities.Questions.update(editingQuestion.id, editingQuestion);
         onQuestionUpdated && onQuestionUpdated(editingQuestion);
       } else {
-        const newQ = await base44.entities.Questions.create(editingQuestion);
+        let newQ = await base44.entities.Questions.create(editingQuestion);
+        // Safety check: ensure child question has the correct evidence group id
+        if (!newQ.primary_evidence_group_id && evidenceGroup?.id) {
+          await base44.entities.Questions.update(newQ.id, { primary_evidence_group_id: evidenceGroup.id });
+          newQ.primary_evidence_group_id = evidenceGroup.id;
+        }
         onQuestionCreated && onQuestionCreated(newQ);
         if (parentQuestionForChild) {
           setExpandedParents(prev => new Set([...prev, parentQuestionForChild.id]));
