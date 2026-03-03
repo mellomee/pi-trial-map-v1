@@ -120,6 +120,148 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
   const getWitness = (witId) => witnesses.find(w => w.id === witId);
 
+  // Build hierarchy from parent_id relationships
+  const buildQuestionTree = (allQuestions) => {
+    const tree = [];
+    const qMap = {};
+
+    // First pass: index all questions
+    allQuestions.forEach(q => {
+      qMap[q.id] = { ...q, children: [] };
+    });
+
+    // Second pass: build parent-child relationships
+    allQuestions.forEach(q => {
+      if (q.parent_id && qMap[q.parent_id]) {
+        // This is a child question
+        qMap[q.parent_id].children.push(qMap[q.id]);
+      } else {
+        // This is a root question
+        tree.push(qMap[q.id]);
+      }
+    });
+
+    return tree;
+  };
+
+  const questionTree = buildQuestionTree(questions);
+
+  // Render question and its children recursively
+  const renderQuestion = (q, depth = 0) => {
+    const witness = getWitness(q.party_id);
+    const links = linkedProof[q.id] || [];
+    const isExpanded = expandedQuestion === q.id;
+    const hasChildren = q.children && q.children.length > 0;
+
+    return (
+      <div key={q.id}>
+        <div style={{ marginLeft: `${depth * 20}px` }}>
+          <Card className="bg-gray-800 border-gray-700">
+            <CardContent className="p-3">
+              <Collapsible open={isExpanded} onOpenChange={(open) => setExpandedQuestion(open ? q.id : null)}>
+                <div className="flex items-start gap-2">
+                  {hasChildren ? (
+                    <CollapsibleTrigger asChild>
+                      <button className="text-gray-400 hover:text-white flex-shrink-0 pt-0.5">
+                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+                    </CollapsibleTrigger>
+                  ) : (
+                    <div className="w-4 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
+                    <div className="flex gap-2 mt-1 flex-wrap">
+                      <Badge variant="outline" className="text-xs text-gray-400">{witness?.first_name} {witness?.last_name}</Badge>
+                      <Badge className={q.exam_type === 'Direct' ? 'bg-green-500/20 text-green-400 text-xs' : 'bg-red-500/20 text-red-400 text-xs'}>
+                        {q.exam_type}
+                      </Badge>
+                      {q.question_type && <Badge className="bg-blue-500/20 text-blue-300 text-xs">{q.question_type}</Badge>}
+                      <Badge variant="outline" className="text-xs text-gray-400">{links.length} proof</Badge>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleRemoveQuestion(q.id)}
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                  >
+                    ✕
+                  </Button>
+                </div>
+
+                <CollapsibleContent className="mt-3 space-y-2 border-t border-gray-700 pt-2">
+                  {/* Linked Proof Section */}
+                  {links.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-400 font-semibold">LINKED PROOF</p>
+                      {links.map((link) => {
+                        const proof = proofItems.find(p => 
+                          (link.link_type === 'DepoClip' && p.source_id === link.link_id && p.type === 'depoClip') ||
+                          (link.link_type === 'JointExhibit' && p.source_id === link.link_id && p.type === 'jointExhibit')
+                        );
+                        return (
+                          <div key={link.id} className="flex items-start justify-between gap-2 bg-[#131a2e] p-2 rounded text-xs">
+                            <button
+                              onClick={() => proof && (setSelectedProofItem(proof), setShowProofModal(true))}
+                              className="flex-1 text-left text-gray-300 hover:text-cyan-400 truncate"
+                            >
+                              {proof?.label}
+                            </button>
+                            <button
+                              onClick={() => handleUnlinkProof(q.id, link.id)}
+                              className="text-gray-400 hover:text-red-400 flex-shrink-0"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Add Proof Section */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-400 font-semibold">ADD PROOF</p>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {proofItems.map((proof) => {
+                        const isLinked = links.some(l => l.link_id === proof.source_id);
+                        return (
+                          <button
+                            key={proof.id}
+                            onClick={() => !isLinked && handleLinkProof(q.id, proof)}
+                            disabled={isLinked}
+                            className={`w-full text-left p-2 rounded text-xs transition-colors ${
+                              isLinked
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                : 'bg-[#0a0f1e] text-gray-300 hover:bg-cyan-900 hover:text-cyan-300'
+                            }`}
+                          >
+                            {proof.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Render child questions */}
+                  {hasChildren && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-cyan-400 font-semibold">{q.children.length} {q.question_type === 'Follow-Up' ? 'FOLLOW-UPS' : 'IMPEACHMENTS'}</p>
+                      <div className="space-y-2">
+                        {q.children.map(child => renderQuestion(child, depth + 1))}
+                      </div>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
   if (!evidenceGroup) {
     return <div className="text-center text-gray-500 py-8">Select an evidence group to view questions</div>;
   }
