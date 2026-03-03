@@ -35,6 +35,9 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
   const [loading, setLoading] = useState(false);
   const [parties, setParties] = useState({});
   const [depositions, setDepositions] = useState({});
+  const [viewingFile, setViewingFile] = useState(null);
+  const [depoExhibits, setDepoExhibits] = useState({});
+  const [jointExhibits, setJointExhibits] = useState({});
 
   const canvasRef = React.useRef(null);
 
