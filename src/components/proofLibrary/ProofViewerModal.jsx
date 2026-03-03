@@ -472,7 +472,9 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                     </div>
 
                     <div className="flex gap-2 overflow-x-auto pb-2">
-                      {callouts.map((c, idx) =>
+                      {callouts.map((c, idx) => {
+                        const witName = c.witness_id ? caseParties[c.witness_id] : null;
+                        return (
                 <button key={c.id} onClick={() => setSelectedCallout(c)}
                 className={`flex-shrink-0 rounded border-2 transition-all relative ${selectedCallout?.id === c.id ? 'border-cyan-400 shadow-lg shadow-cyan-500/20' : 'border-[#1e2a45] hover:border-gray-500'}`}>
                           {proofItem?.callout_id === c.id &&
@@ -487,9 +489,11 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                               <Image className="w-5 h-5 text-gray-600" />
                             </div>
                   }
-                          {c.name && <p className="text-[9px] text-gray-400 text-center px-1 py-0.5 truncate w-20">{c.name}</p>}
+                          {c.name && <p className="text-[9px] text-gray-400 text-center px-1 pt-0.5 truncate w-20">{c.name}</p>}
+                          {witName && <p className="text-[9px] text-cyan-400 text-center px-1 pb-0.5 truncate w-20">{witName}</p>}
                         </button>
-                )}
+                        );
+                      })}
                     </div>
 
                     {selectedCallout &&
