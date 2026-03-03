@@ -8,12 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Image } from 'lucide-react';
 import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
 
-const COLOR_CSS = {
-  yellow: "rgba(255,220,0,0.40)",
-  red:    "rgba(239,68,68,0.40)",
-  green:  "rgba(34,197,94,0.40)",
-  blue:   "rgba(59,130,246,0.40)",
-};
+
 
 export default function AddQuestionProofModal({ isOpen, onClose, question, evidenceGroupId, caseId, onProofLinked }) {
   const [proofTab, setProofTab] = useState('depoClip');
