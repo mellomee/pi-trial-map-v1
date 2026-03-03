@@ -62,12 +62,24 @@ export default function LinkedProofsViewer({ questionId, evidenceGroupId, onPrev
             <p className="text-xs text-gray-500">No proofs linked to this question</p>
           ) : (
             linkedProofs.map(proof => (
-              <Card key={proof.id} className="bg-gray-700 border-gray-600">
-                <CardContent className="p-2">
-                  <p className="text-xs font-medium text-gray-200">{proof.label}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{proof.type}</p>
-                </CardContent>
-              </Card>
+              <div key={proof.id} className="flex items-center gap-2 bg-gray-700 border border-gray-600 rounded p-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-gray-200 truncate">{proof.label}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{proof.type}</p>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  {onPreview && (
+                    <button onClick={() => onPreview(proof)} className="text-gray-400 hover:text-cyan-400">
+                      <Eye className="w-3 h-3" />
+                    </button>
+                  )}
+                  {onUnlink && (
+                    <button onClick={() => onUnlink(proof.linkId)} className="text-gray-400 hover:text-red-400">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
             ))
           )}
         </div>
