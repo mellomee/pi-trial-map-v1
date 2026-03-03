@@ -175,12 +175,44 @@ export default function HierarchicalQuestionsList({
                 </div>
               </div>
             </div>
-            <div className="flex gap-1 flex-shrink-0">
+            <div className="flex gap-0.5 flex-shrink-0">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => { setSelectedQuestionForProof(q); setShowAddProofModal(true); }}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-cyan-400"
+                title="Link proof"
+              >
+                <Link2 className="w-3 h-3" />
+              </Button>
+              {!q.parent_id && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleAddChild(q, 'Follow-Up')}
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-blue-400"
+                    title="Add follow-up"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleAddChild(q, 'Impeachment')}
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-purple-400"
+                    title="Add impeachment"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => handleEditQuestion(q)}
-                className="h-7 w-7 p-0 text-gray-400 hover:text-cyan-400"
+                className="h-6 w-6 p-0 text-gray-400 hover:text-cyan-400"
+                title="Edit"
               >
                 <Pencil className="w-3 h-3" />
               </Button>
@@ -188,7 +220,8 @@ export default function HierarchicalQuestionsList({
                 size="sm"
                 variant="ghost"
                 onClick={() => handleDeleteQuestion(q.id)}
-                className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
+                title="Delete"
               >
                 <Trash2 className="w-3 h-3" />
               </Button>
