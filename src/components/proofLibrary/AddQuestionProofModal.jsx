@@ -1,11 +1,7 @@
 import React from 'react';
 import LinkQuestionProofModal from '@/components/proofLibrary/LinkQuestionProofModal';
 
-
-
 export default function AddQuestionProofModal({ isOpen, onClose, question, evidenceGroupId, caseId, onProofLinked }) {
-  const [showLinkModal, setShowLinkModal] = useState(false);
-
   if (!isOpen) return null;
 
   return (
@@ -18,6 +14,4 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
       onProofLinked={onProofLinked}
     />
   );
-
-
-              }
+}
