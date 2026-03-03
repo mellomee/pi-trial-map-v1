@@ -170,7 +170,7 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
         </DialogHeader>
 
         {error && (
-          <div className="bg-red-900/50 border border-red-700 rounded p-3 text-sm text-red-200">
+          <div className="bg-red-50 border border-red-300 rounded p-3 text-sm text-red-700">
             {error}
           </div>
         )}
