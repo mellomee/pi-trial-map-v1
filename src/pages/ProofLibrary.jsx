@@ -641,14 +641,31 @@ export default function ProofLibrary() {
                     {linkedQuestions.length > 0 ? (
                       <div className="space-y-2">
                         <p className="text-xs text-gray-400">Questions for this group ({linkedQuestions.length}):</p>
-                        {linkedQuestions.map((q) => (
-                          <div key={q.id} className="bg-gray-800 border border-gray-700 rounded p-3">
+                        {linkedQuestions.map((q) => {
+                          const linkedProofIds = questionProofLinks[q.id] || [];
+                          const linkedProofsForQ = proofItems.filter(p => linkedProofIds.includes(p.id));
+                          return (
+                          <div key={q.id} className="bg-gray-50 border border-gray-200 rounded p-3 space-y-2">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
-                                <p className="text-xs text-gray-500 mt-1">{q.exam_type} • {getPartyName(q.party_id)}</p>
+                                <p className="text-sm font-medium text-gray-900">{q.question_text}</p>
+                                <div className="flex gap-2 mt-1 flex-wrap">
+                                  <span className="text-xs text-gray-600">{q.exam_type}</span>
+                                  <span className="text-xs text-blue-600 font-medium">👤 {getPartyName(q.party_id)}</span>
+                                  {q.goal && <span className="text-xs text-gray-600">Goal: {q.goal}</span>}
+                                  {q.expected_answer && <span className="text-xs text-cyan-600">Expected: {q.expected_answer}</span>}
+                                </div>
                               </div>
-                              <div className="flex gap-1">
+                              <div className="flex gap-1 flex-shrink-0">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => { setEditing({ ...q }); setShowAddQuestionModal(true); }}
+                                  className="h-7 w-7 p-0 text-gray-400 hover:text-cyan-600"
+                                  title="Edit question"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </Button>
                                 <QuestionProofLinker
                                    questionId={q.id}
                                    evidenceGroupId={selectedGroupId}
@@ -667,8 +684,38 @@ export default function ProofLibrary() {
                                 </Button>
                               </div>
                             </div>
+                            {/* Linked proofs display */}
+                            {linkedProofsForQ.length > 0 && (
+                              <div className="border-t border-gray-200 pt-2 space-y-1">
+                                <p className="text-[10px] font-semibold text-gray-600 uppercase">Linked Proof:</p>
+                                {linkedProofsForQ.map((proof) => (
+                                  <div key={proof.id} className="text-xs text-gray-700 bg-gray-100 rounded p-1.5 flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium">{proof.label}</p>
+                                      {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                                        <p className="text-gray-600">↳ {calloutNames[proof.callout_id]}</p>
+                                      )}
+                                      {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                                        <p className="text-blue-600">👤 {calloutWitnesses[proof.callout_id]}</p>
+                                      )}
+                                      <p className="text-gray-500">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                    </div>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}
+                                      className="h-6 w-6 p-0 text-gray-500 hover:text-cyan-600 flex-shrink-0 mt-0.5"
+                                      title="View proof"
+                                    >
+                                      <ExternalLink className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center text-gray-500 mt-4 py-4 border border-dashed border-gray-700 rounded">
