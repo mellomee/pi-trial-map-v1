@@ -46,7 +46,7 @@ function ClipDetailCard({ clip, depositionName, deponentName, onAdd, loading }) 
 }
 
 // ─── Callout picker (shared with extract panel) ───────────────────────────────
-function CalloutPicker({ callouts, selectedCallout, setSelectedCallout, proofCalloutId }) {
+function CalloutPicker({ callouts, selectedCallout, setSelectedCallout, proofCalloutId, caseParties = {} }) {
   const [highlights, setHighlights] = useState([]);
   const idx = callouts.findIndex(c => c.id === selectedCallout?.id);
 
