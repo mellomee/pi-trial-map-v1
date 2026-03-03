@@ -405,24 +405,29 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
     try {
       const label = selectedExtract.extract_title_internal || selectedExtract.extract_title_official;
 
-      // Check if this evidence group already has a ProofItem for this extract
-      const existing = await base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: evidenceGroupId });
-      const existingProofIds = existing.map(l => l.proof_item_id);
-      const existingForExtract = existingProofIds.length > 0
-        ? await base44.entities.ProofItems.filter({ case_id: caseId, type: 'extract', source_id: selectedExtract.id })
-        : [];
-      const alreadyInGroup = existingForExtract.find(p => existingProofIds.includes(p.id));
+      // Check if THIS evidence group already has a ProofItem for this extract (to avoid duplicates within same group)
+      const groupLinks = await base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: evidenceGroupId });
+      const groupProofIds = groupLinks.map(l => l.proof_item_id);
+
+      let alreadyInThisGroup = null;
+      if (groupProofIds.length > 0) {
+        // Only look among ProofItems that belong to THIS group
+        for (const pid of groupProofIds) {
+          const items = await base44.entities.ProofItems.filter({ id: pid, type: 'extract', source_id: selectedExtract.id });
+          if (items.length > 0) { alreadyInThisGroup = items[0]; break; }
+        }
+      }
 
       let proofItem;
-      if (alreadyInGroup) {
-        // Update callout if user picked one
+      if (alreadyInThisGroup) {
+        // Already in this group — just update callout if selected
         if (selectedCallout) {
-          proofItem = await base44.entities.ProofItems.update(alreadyInGroup.id, { callout_id: selectedCallout.id });
+          proofItem = await base44.entities.ProofItems.update(alreadyInThisGroup.id, { callout_id: selectedCallout.id });
         } else {
-          proofItem = alreadyInGroup;
+          proofItem = alreadyInThisGroup;
         }
       } else {
-        // Create a fresh ProofItem for this group (independent callout_id)
+        // Always create a brand-new ProofItem for this evidence group so callout_id is independent
         proofItem = await base44.entities.ProofItems.create({
           case_id: caseId,
           type: 'extract',
