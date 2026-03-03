@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, ChevronDown, Trash2 } from 'lucide-react';
 import ProofViewerModal from './ProofViewerModal';
+import QuestionProofLinkerModal from './QuestionProofLinkerModal';
 
 export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, caseId }) {
   const [questions, setQuestions] = useState([]);
