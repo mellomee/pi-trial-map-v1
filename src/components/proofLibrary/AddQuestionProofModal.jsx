@@ -548,26 +548,30 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-cyan-400 uppercase">Callouts ({callouts.length})</p>
                       <div className="flex gap-2 overflow-x-auto pb-2">
-                        {callouts.map((callout, idx) => (
-                          <button
-                            key={callout.id}
-                            onClick={() => setSelectedCallout(callout)}
-                            className={`flex-shrink-0 rounded border-2 transition-all ${
-                              selectedCallout?.id === callout.id
-                                ? 'border-cyan-400 shadow-lg shadow-cyan-500/20'
-                                : 'border-gray-700 hover:border-gray-500'
-                            }`}
-                          >
-                            {callout.snapshot_image_url ? (
-                              <img src={callout.snapshot_image_url} alt={callout.name} className="h-20 w-24 object-cover rounded" />
-                            ) : (
-                              <div className="h-20 w-24 flex items-center justify-center bg-gray-800 rounded">
-                                <Image className="w-5 h-5 text-gray-600" />
-                              </div>
-                            )}
-                            {callout.name && <p className="text-[9px] text-gray-400 text-center px-1 py-0.5 truncate w-24">{callout.name}</p>}
-                          </button>
-                        ))}
+                        {callouts.map((callout, idx) => {
+                          const witName = callout.witness_id ? caseParties[callout.witness_id] : null;
+                          return (
+                            <button
+                              key={callout.id}
+                              onClick={() => setSelectedCallout(callout)}
+                              className={`flex-shrink-0 rounded border-2 transition-all ${
+                                selectedCallout?.id === callout.id
+                                  ? 'border-cyan-400 shadow-lg shadow-cyan-500/20'
+                                  : 'border-gray-700 hover:border-gray-500'
+                              }`}
+                            >
+                              {callout.snapshot_image_url ? (
+                                <img src={callout.snapshot_image_url} alt={callout.name} className="h-20 w-24 object-cover rounded" />
+                              ) : (
+                                <div className="h-20 w-24 flex items-center justify-center bg-gray-800 rounded">
+                                  <Image className="w-5 h-5 text-gray-600" />
+                                </div>
+                              )}
+                              {callout.name && <p className="text-[9px] text-gray-400 text-center px-1 pt-0.5 truncate w-24">{callout.name}</p>}
+                              {witName && <p className="text-[9px] text-cyan-400 text-center px-1 pb-0.5 truncate w-24">{witName}</p>}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
