@@ -18,6 +18,7 @@ export default function HierarchicalQuestionsList({
   calloutNames,
   calloutWitnesses,
   allWitnesses,
+  questionProofLinks,
   onQuestionCreated,
   onQuestionUpdated,
   onQuestionRemoved,
@@ -26,7 +27,11 @@ export default function HierarchicalQuestionsList({
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [parentQuestionForChild, setParentQuestionForChild] = useState(null);
-  const [linkedProofsByQuestion, setLinkedProofsByQuestion] = useState({});
+  const [linkedProofsByQuestion, setLinkedProofsByQuestion] = useState(questionProofLinks || {});
+  const [selectedProofItem, setSelectedProofItem] = useState(null);
+  const [showProofDetails, setShowProofDetails] = useState(false);
+  const [showAddProofModal, setShowAddProofModal] = useState(false);
+  const [selectedQuestionForProof, setSelectedQuestionForProof] = useState(null);
 
   useEffect(() => {
     loadLinkedProofs();
