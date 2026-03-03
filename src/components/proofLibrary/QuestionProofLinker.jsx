@@ -106,7 +106,7 @@ export default function QuestionProofLinker({ questionId, evidenceGroupId, caseI
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button variant="outline" onClick={() => setIsOpen(false)} className="border-gray-300 text-gray-700">
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={loading} className="bg-cyan-600 hover:bg-cyan-700">
