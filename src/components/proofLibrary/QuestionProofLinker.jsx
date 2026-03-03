@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import { Link2 } from 'lucide-react';
 
-export default function QuestionProofLinker({ questionId, evidenceGroupId, caseId, proofItems }) {
+export default function QuestionProofLinker({ questionId, evidenceGroupId, caseId, proofItems, calloutNames = {}, calloutWitnesses = {} }) {
   const [isOpen, setIsOpen] = useState(false);
   const [linkedProofIds, setLinkedProofIds] = useState([]);
   const [loading, setLoading] = useState(false);
