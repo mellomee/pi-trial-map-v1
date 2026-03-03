@@ -904,7 +904,7 @@ export default function ProofLibrary() {
         </DialogContent>
       </Dialog>
 
-      <ProofDetailsModal proofItem={selectedProofItem} isOpen={showProofDetails} onClose={() => setShowProofDetails(false)} />
+      <ProofViewerModal proofItem={selectedProofItem} isOpen={showProofDetails} onClose={() => setShowProofDetails(false)} />
     </div>
   );
 }
