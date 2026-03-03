@@ -78,15 +78,8 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
       }
       setDepoClips(witClips);
 
-      // Filter extracts for witness (via callouts)
-      const witExtracts = [];
-      for (const extract of allExtracts) {
-        const extractCallouts = await base44.entities.Callouts.filter({ extract_id: extract.id });
-        if (extractCallouts.some(co => co.witness_id === question.party_id)) {
-          witExtracts.push(extract);
-        }
-      }
-      setExtracts(witExtracts);
+      // Load all extracts (callout selection filters by witness)
+      setExtracts(allExtracts);
     } catch (error) {
       console.error('Error loading proofs:', error);
     } finally {
