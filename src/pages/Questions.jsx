@@ -205,23 +205,32 @@ export default function Questions() {
       </div>
 
       {/* Render question hierarchy */}
-      <div className="space-y-2">
-        {filtered.map((q) => {
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="questions">
+          {(provided) => (
+      <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
+        {filtered.map((q, idx) => {
           const renderQuestion = (qNode, depth = 0) => {
             const linkedProofIds = questionProofs[qNode.id] || [];
             const hasChildren = qNode.children && qNode.children.length > 0;
+            const isRootQuestion = depth === 0;
 
             return (
               <div key={qNode.id}>
-                <Card className={`bg-[#131a2e] border-[#1e2a45] ${depth > 0 ? 'ml-6' : ''}`}>
-                  <CardContent className="py-3 space-y-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex gap-2 items-baseline">
-                          {depth === 0 && <span className="text-sm font-semibold text-cyan-400">•</span>}
-                          {depth > 0 && <span className="text-xs text-gray-500 ml-1">↳</span>}
-                          <p className="text-sm text-white">{qNode.question_text}</p>
-                        </div>
+                {isRootQuestion ? (
+                  <Draggable draggableId={qNode.id} index={idx}>
+                    {(provided, snapshot) => (
+                  <div ref={provided.innerRef} {...provided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
+                    <Card className={`bg-[#131a2e] border-[#1e2a45]`}>
+                      <CardContent className="py-3 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-2 flex-1">
+                            <button {...provided.dragHandleProps} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5">
+                              <GripVertical className="w-3 h-3" />
+                            </button>
+                            <span className="text-sm font-semibold text-cyan-400">{idx + 1}.</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white">{qNode.question_text}</p>
                         <div className="flex gap-2 mt-2 flex-wrap">
                           <Badge className={qNode.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{qNode.exam_type}</Badge>
                           <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(qNode.party_id)}</Badge>
