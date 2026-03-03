@@ -620,51 +620,13 @@ export default function ProofLibrary() {
 
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
-                  <div className="space-y-3">
-                    <Button
-                      onClick={() => { setEditing({ party_id: '', exam_type: 'Direct', question_text: '', goal: '', expected_answer: '', status: 'NotAsked', importance: 'Med', ask_if_time: true }); setShowAddQuestionModal(true); }}
-                      className="bg-cyan-600 hover:bg-cyan-700 w-full"
-                    >
-                      <Plus className="w-3 h-3 mr-2" />
-                      Add Question
-                    </Button>
-                    {linkedQuestions.length > 0 ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-400">Questions for this group ({linkedQuestions.length}):</p>
-                        {linkedQuestions.map((q) => (
-                          <div key={q.id} className="bg-gray-800 border border-gray-700 rounded p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
-                                <p className="text-xs text-gray-500 mt-1">{q.exam_type} • {getPartyName(q.party_id)}</p>
-                              </div>
-                              <div className="flex gap-1">
-                                <QuestionProofLinker
-                                  questionId={q.id}
-                                  evidenceGroupId={selectedGroupId}
-                                  caseId={activeCase.id}
-                                  proofItems={proofItems}
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleRemoveQuestion(q.id)}
-                                  className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                                >
-                                  ✕
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center text-gray-500 mt-4 py-4 border border-dashed border-gray-700 rounded">
-                        <p className="text-sm">No questions yet</p>
-                        <p className="text-xs mt-1">Create questions linked to this evidence group</p>
-                      </div>
-                    )}
-                  </div>
+                  <QuestionsTab
+                    evidenceGroup={selectedGroup}
+                    witnesses={proofWitnessesForGroup}
+                    proofItems={proofItems}
+                    caseId={activeCase?.id}
+                    linkedTrialPoints={linkedTrialPoints}
+                  />
                 )}
               </div>
             </>
