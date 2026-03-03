@@ -4,10 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
-import { pdfjs } from 'react-pdf';
+import { Badge } from '@/components/ui/badge';
+import { Search, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, FileText, Image } from 'lucide-react';
+import * as pdfjs from 'pdfjs-dist';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const COLOR_CSS = {
   yellow: "rgba(255,220,0,0.40)",
