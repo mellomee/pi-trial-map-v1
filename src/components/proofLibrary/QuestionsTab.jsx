@@ -295,8 +295,7 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
         </DialogContent>
       </Dialog>
 
-      {/* Proof Details Modal */}
-      <ProofDetailsModal proofItem={selectedProofItem} isOpen={showProofModal} onClose={() => setShowProofModal(false)} />
+      <ProofViewerModal proofItem={selectedProofItem} isOpen={showProofModal} onClose={() => setShowProofModal(false)} />
     </div>
   );
 }
