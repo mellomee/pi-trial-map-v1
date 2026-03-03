@@ -62,6 +62,8 @@ export default function ProofLibrary() {
       setLinkedTrialPoints([]);
       setLinkedWitnesses([]);
       setLinkedQuestions([]);
+      setProofWitnessesForGroup([]);
+      setCalloutWitnesses({});
       loadGroupDetails(selectedGroupId);
     }
   }, [selectedGroupId]);
