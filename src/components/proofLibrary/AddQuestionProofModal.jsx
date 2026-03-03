@@ -256,15 +256,15 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                           : 'border-gray-700 bg-gray-800 hover:border-gray-500'
                       }`}
                     >
-                      <p className="text-xs font-medium text-gray-200 truncate">{clip.clip_title || clip.start_cite}</p>
-                      <div className="flex gap-1 mt-0.5 flex-wrap items-center">
+                      <div className="flex gap-1 items-center">
+                        <p className="text-xs font-medium text-gray-200 truncate flex-1">{clip.clip_title || clip.start_cite}</p>
                         {clip.direction && (
                           <Badge className={clip.direction === 'HelpsUs' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} size="sm">
                             {clip.direction === 'HelpsUs' ? '✓' : '✗'}
                           </Badge>
                         )}
-                        <span className="text-[10px] text-gray-500">{clip.start_cite}</span>
                       </div>
+                      <p className="text-[10px] text-gray-500 mt-0.5">{clip.start_cite}</p>
                     </button>
                   ))}
                 </div>
