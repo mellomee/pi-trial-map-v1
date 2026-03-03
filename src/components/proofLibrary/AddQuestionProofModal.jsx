@@ -105,11 +105,85 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
     }
   };
 
-  // Load callouts for selected extract
+  // Load extract metadata and callouts
   useEffect(() => {
     if (!selectedExtract?.id) return;
-    base44.entities.Callouts.filter({ extract_id: selectedExtract.id }).then(setCallouts);
+    loadExtractMetadata();
   }, [selectedExtract?.id]);
+
+  const loadExtractMetadata = async () => {
+    try {
+      const [cos, sources, jointExhibits] = await Promise.all([
+        base44.entities.Callouts.filter({ extract_id: selectedExtract.id }),
+        base44.entities.ExtractSources.filter({ exhibit_extract_id: selectedExtract.id }),
+        base44.entities.JointExhibits.filter({ exhibit_extract_id: selectedExtract.id })
+      ]);
+
+      setCallouts(cos);
+
+      let sourceDepoExhibit = null, deponent = null;
+      const primarySrc = sources[0] || null;
+      const depoExhibitId = primarySrc?.source_depo_exhibit_id || selectedExtract.source_depo_exhibit_id;
+      const deponentPartyId = primarySrc?.source_deponent_party_id;
+
+      const [depoExhibits, pts] = await Promise.all([
+        depoExhibitId ? base44.entities.DepositionExhibits.filter({ id: depoExhibitId }) : Promise.resolve([]),
+        deponentPartyId ? base44.entities.Parties.filter({ id: deponentPartyId }) : Promise.resolve([])
+      ]);
+
+      if (depoExhibits.length > 0) sourceDepoExhibit = depoExhibits[0];
+      if (pts.length > 0) deponent = pts[0];
+
+      if (!deponent && sourceDepoExhibit?.deposition_id) {
+        const deps = await base44.entities.Depositions.filter({ id: sourceDepoExhibit.deposition_id });
+        if (deps.length > 0 && deps[0].party_id) {
+          const pts2 = await base44.entities.Parties.filter({ id: deps[0].party_id });
+          if (pts2.length > 0) deponent = pts2[0];
+        }
+      }
+
+      if (!deponent) {
+        const ews = await base44.entities.ExtractWitnesses.filter({ extract_id: selectedExtract.id });
+        if (ews.length > 0) {
+          const pts3 = await base44.entities.Parties.filter({ id: ews[0].witness_id });
+          if (pts3.length > 0) deponent = pts3[0];
+        }
+      }
+
+      if (!deponent && sourceDepoExhibit?.deponent_name) {
+        deponent = { display_name: sourceDepoExhibit.deponent_name };
+      }
+
+      let jx = jointExhibits[0] || null;
+      if (!jx && depoExhibitId) {
+        const [byPrimary, byMaster] = await Promise.all([
+          base44.entities.JointExhibits.filter({ primary_depo_exhibit_id: depoExhibitId }),
+          base44.entities.JointExhibits.filter({ master_exhibit_id: depoExhibitId })
+        ]);
+        jx = byPrimary[0] || byMaster[0] || null;
+      }
+
+      if (!jx && selectedExtract.case_id) {
+        const allJx = await base44.entities.JointExhibits.filter({ case_id: selectedExtract.case_id });
+        jx = allJx.find((j) =>
+          j.exhibit_extract_id === selectedExtract.id ||
+          j.primary_depo_exhibit_id === depoExhibitId ||
+          j.master_exhibit_id === depoExhibitId ||
+          (Array.isArray(j.source_depo_exhibit_ids) && j.source_depo_exhibit_ids.includes(depoExhibitId))
+        ) || null;
+      }
+
+      let admittedRecord = null;
+      if (jx) {
+        const admRecs = await base44.entities.AdmittedExhibits.filter({ joint_exhibit_id: jx.id });
+        admittedRecord = admRecs[0] || null;
+      }
+
+      setSelectedExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx, admittedRecord });
+    } catch (error) {
+      console.error('Error loading extract metadata:', error);
+    }
+  };
 
   // Load highlights for selected callout
   useEffect(() => {
