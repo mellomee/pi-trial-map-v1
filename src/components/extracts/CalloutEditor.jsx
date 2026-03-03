@@ -351,10 +351,10 @@ export default function CalloutEditor({ extract }) {
                   <User className="w-3 h-3 mr-1 text-cyan-400 flex-shrink-0" />
                   <SelectValue placeholder="Witness…" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
-                  <SelectItem value="none" className="text-xs">— No witness —</SelectItem>
+                <SelectContent className="bg-[#131a2e] border-[#1e2a45]">
+                  <SelectItem value="none" className="text-xs text-slate-200 focus:bg-cyan-600 focus:text-white">— No witness —</SelectItem>
                   {parties.map(p => (
-                    <SelectItem key={p.id} value={p.id} className="text-xs">
+                    <SelectItem key={p.id} value={p.id} className="text-xs text-slate-200 focus:bg-cyan-600 focus:text-white">
                       {p.display_name || `${p.first_name || ""} ${p.last_name}`.trim()}
                     </SelectItem>
                   ))}
