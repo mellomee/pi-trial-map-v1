@@ -28,7 +28,7 @@ export default function ProofLibrary() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [centerTab, setCenterTab] = useState('proof');
-  const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
+
   const [selectedProofItem, setSelectedProofItem] = useState(null);
   const [showProofDetails, setShowProofDetails] = useState(false);
 
