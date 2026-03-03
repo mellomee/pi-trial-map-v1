@@ -404,7 +404,10 @@ export default function CalloutEditor({ extract }) {
               <div className="flex-1 overflow-y-auto">
                 {callouts.map(c => {
                   const isSelected = selectedCalloutId === c.id;
-                  const hlsForThis = isSelected ? highlights : [];
+                  const witnessForCallout = c.witness_id ? parties.find(p => p.id === c.witness_id) : null;
+                  const witnessName = witnessForCallout
+                    ? (witnessForCallout.display_name || `${witnessForCallout.first_name || ""} ${witnessForCallout.last_name}`.trim())
+                    : null;
                   return (
                     <div key={c.id} className={`border-b border-[#1e2a45] ${isSelected ? "bg-orange-500/10" : ""}`}>
                       <div className="flex items-center gap-1 px-2 py-2">
@@ -414,6 +417,11 @@ export default function CalloutEditor({ extract }) {
                             {c.name || `p.${c.page_number} callout`}
                           </p>
                           <p className="text-[9px] text-slate-600">p.{c.page_number}{!c.snapshot_image_url ? " · ⚠ no snapshot" : ""}</p>
+                          {witnessName && (
+                            <p className="text-[9px] text-cyan-500 flex items-center gap-0.5 mt-0.5">
+                              <User className="w-2.5 h-2.5" />{witnessName}
+                            </p>
+                          )}
                         </button>
                         <button onClick={() => toggleJurySafe(c)} title={c.jury_safe ? "Jury-safe ON" : "Off"}
                           className={`p-1 rounded ${c.jury_safe ? "text-green-400" : "text-slate-600 hover:text-slate-400"}`}>
