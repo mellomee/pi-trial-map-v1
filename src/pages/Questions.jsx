@@ -50,67 +50,62 @@ export default function Questions() {
     if (!qs.length) return;
     const qIds = qs.map(q => q.id);
 
-    // Fetch QuestionProofItems for all questions in parallel
-    const allProofLinks = await Promise.all(
-      qIds.map(qId => base44.entities.QuestionProofItems.filter({ question_id: qId }))
-    );
+    // Fetch all in bulk by case_id — avoids N parallel requests that hit rate limits
+    const [allProofLinks, allEvidenceLinks, allTpLinks, allTps] = await Promise.all([
+      base44.entities.QuestionProofItems.filter({ case_id: caseId }),
+      base44.entities.QuestionEvidenceGroups.filter({ case_id: caseId }),
+      base44.entities.EvidenceGroupTrialPoints.filter({ case_id: caseId }),
+      base44.entities.TrialPoints.filter({ case_id: caseId }),
+    ]);
 
-    // Build proof count map and collect all proof item ids
+    // --- Proof counts + proof item lookup ---
+    const qIdSet = new Set(qIds);
+    const relevantProofLinks = allProofLinks.filter(l => qIdSet.has(l.question_id));
+
     const countMap = {};
-    const proofIdToQIds = {}; // proofItemId -> [questionId, ...]
-    allProofLinks.forEach((links, i) => {
-      countMap[qIds[i]] = links.length;
-      links.forEach(l => {
-        if (!proofIdToQIds[l.proof_item_id]) proofIdToQIds[l.proof_item_id] = [];
-        proofIdToQIds[l.proof_item_id].push(qIds[i]);
-      });
+    const proofIdToQIds = {};
+    relevantProofLinks.forEach(l => {
+      countMap[l.question_id] = (countMap[l.question_id] || 0) + 1;
+      if (!proofIdToQIds[l.proof_item_id]) proofIdToQIds[l.proof_item_id] = [];
+      proofIdToQIds[l.proof_item_id].push(l.question_id);
     });
     setProofCounts(countMap);
 
-    // Fetch all unique proof items
     const uniqueProofIds = Object.keys(proofIdToQIds);
     if (uniqueProofIds.length > 0) {
-      const items = await Promise.all(uniqueProofIds.map(pid => base44.entities.ProofItems.filter({ id: pid })));
-      const pMap = {}; // qId -> ProofItem[]
-      items.forEach(arr => {
-        if (!arr.length) return;
-        const item = arr[0];
-        (proofIdToQIds[item.id] || []).forEach(qId => {
+      // Fetch all proof items for this case in one call
+      const allProofItems = await base44.entities.ProofItems.filter({ case_id: caseId });
+      const proofItemMap = {};
+      allProofItems.forEach(pi => { proofItemMap[pi.id] = pi; });
+
+      const pMap = {};
+      uniqueProofIds.forEach(pid => {
+        const pi = proofItemMap[pid];
+        if (!pi) return;
+        (proofIdToQIds[pid] || []).forEach(qId => {
           if (!pMap[qId]) pMap[qId] = [];
-          pMap[qId].push(item);
+          pMap[qId].push(pi);
         });
       });
       setProofItemsForQ(pMap);
     }
 
-    // Fetch TrialPoint links (via EvidenceGroupTrialPoints + QuestionEvidenceGroups)
-    const qEvidenceLinks = await Promise.all(
-      qIds.map(qId => base44.entities.QuestionEvidenceGroups.filter({ question_id: qId }))
-    );
-    const groupIds = [...new Set(qEvidenceLinks.flat().map(l => l.evidence_group_id))];
-    if (groupIds.length === 0) return;
+    // --- Trial points via evidence groups ---
+    const tpMap = {};
+    allTps.forEach(tp => { tpMap[tp.id] = tp; });
 
-    const tpLinks = await Promise.all(
-      groupIds.map(gId => base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: gId }))
-    );
-    const allTpIds = [...new Set(tpLinks.flat().map(l => l.trial_point_id))];
-    if (!allTpIds.length) return;
+    // group_id -> first trial_point_id
+    const groupToTp = {};
+    allTpLinks.forEach(l => {
+      if (!groupToTp[l.evidence_group_id]) groupToTp[l.evidence_group_id] = l.trial_point_id;
+    });
 
-    const tpRecords = await Promise.all(allTpIds.map(tpId => base44.entities.TrialPoints.filter({ id: tpId })));
-    const tpMap = {}; // tpId -> trial point
-    tpRecords.flat().forEach(tp => { tpMap[tp.id] = tp; });
-
-    // Map question -> first trial point via its evidence group
+    // question_id -> trial point text
     const qTpMap = {};
-    qEvidenceLinks.forEach((links, i) => {
-      const qId = qIds[i];
-      for (const l of links) {
-        const groupTpLinks = tpLinks[groupIds.indexOf(l.evidence_group_id)] || [];
-        if (groupTpLinks.length > 0) {
-          const tp = tpMap[groupTpLinks[0].trial_point_id];
-          if (tp) { qTpMap[qId] = tp.point_text; break; }
-        }
-      }
+    allEvidenceLinks.forEach(l => {
+      if (!qIdSet.has(l.question_id) || qTpMap[l.question_id]) return;
+      const tpId = groupToTp[l.evidence_group_id];
+      if (tpId && tpMap[tpId]) qTpMap[l.question_id] = tpMap[tpId].point_text;
     });
     setTrialPoints(qTpMap);
   };
