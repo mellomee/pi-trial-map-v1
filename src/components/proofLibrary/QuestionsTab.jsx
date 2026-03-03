@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, ChevronDown, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Plus, ChevronDown, Trash2, Eye } from 'lucide-react';
 import ProofViewerModal from './ProofViewerModal';
 
 export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, caseId }) {
