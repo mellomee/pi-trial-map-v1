@@ -352,9 +352,9 @@ export default function CalloutEditor({ extract }) {
                   <SelectValue placeholder="Witness…" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
-                  <SelectItem value="none" className="text-xs text-slate-200 focus:bg-cyan-600 focus:text-white">— No witness —</SelectItem>
+                  <SelectItem value="none" className="text-xs">— No witness —</SelectItem>
                   {parties.map(p => (
-                    <SelectItem key={p.id} value={p.id} className="text-xs text-slate-200 focus:bg-cyan-600 focus:text-white">
+                    <SelectItem key={p.id} value={p.id} className="text-xs">
                       {p.display_name || `${p.first_name || ""} ${p.last_name}`.trim()}
                     </SelectItem>
                   ))}
@@ -462,9 +462,9 @@ export default function CalloutEditor({ extract }) {
                               <SelectValue placeholder="Assign witness…" />
                             </SelectTrigger>
                             <SelectContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
-                              <SelectItem value="none" className="text-xs text-slate-200 focus:bg-cyan-600 focus:text-white">— No witness —</SelectItem>
+                              <SelectItem value="none" className="text-xs">— No witness —</SelectItem>
                               {parties.map(p => (
-                                <SelectItem key={p.id} value={p.id} className="text-xs text-slate-200 focus:bg-cyan-600 focus:text-white">
+                                <SelectItem key={p.id} value={p.id} className="text-xs">
                                   {p.display_name || `${p.first_name || ""} ${p.last_name}`.trim()}
                                 </SelectItem>
                               ))}
