@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Link2, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Link2, GripVertical, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import BranchBuilder from "@/components/runner/BranchBuilder";
