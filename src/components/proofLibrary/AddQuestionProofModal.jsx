@@ -23,6 +23,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
   const [extracts, setExtracts] = useState([]);
   const [selectedClip, setSelectedClip] = useState(null);
   const [selectedExtract, setSelectedExtract] = useState(null);
+  const [selectedExtractMeta, setSelectedExtractMeta] = useState(null);
   const [selectedCallout, setSelectedCallout] = useState(null);
   const [callouts, setCallouts] = useState([]);
   const [highlights, setHighlights] = useState([]);
