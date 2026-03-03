@@ -38,7 +38,15 @@ export default function HierarchicalQuestionsList({
 
   useEffect(() => {
     loadLinkedProofs();
-  }, [questions, evidenceGroupId]);
+    loadProofItemsCache();
+  }, [questions, evidenceGroupId, proofItems]);
+  
+  useEffect(() => {
+    if (collapseAll) {
+      setExpandedParents(new Set());
+      setCollapseAll(false);
+    }
+  }, [collapseAll]);
 
   const loadLinkedProofs = async () => {
     if (!evidenceGroupId) return;
