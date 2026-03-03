@@ -319,75 +319,34 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                 </div>
               </div>
 
-              {/* Extract Details - Full width */}
+              {/* Extract Details - ProofViewerModal */}
               {selectedExtract && (
-                <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
-                  {/* 3-column metadata tiles */}
-                  <div className="grid grid-cols-3 gap-3">
-                    {/* Original Column */}
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
-                      <button
-                        onClick={() => setViewingFile({ type: 'original', url: selectedExtract.extract_file_url, label: selectedExtract.title })}
-                        className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors"
-                      >
-                        {viewingFile?.type === 'original' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        {viewingFile?.type === 'original' ? 'Hide File' : 'View File'}
-                      </button>
-                    </div>
-
-                    {/* Marked Column */}
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
-                      <p className="text-gray-400 text-xs">Status</p>
-                      {selectedExtract.extract_file_url && (
-                        <button
-                          onClick={() => setViewingFile({ type: 'marked', url: selectedExtract.extract_file_url, label: `Extract – ${selectedExtract.title}` })}
-                          className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors"
-                        >
-                          {viewingFile?.type === 'marked' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                          {viewingFile?.type === 'marked' ? 'Hide File' : 'View File'}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Admitted Column */}
-                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-2">
-                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
-                      <p className="text-gray-400 text-xs">Not admitted</p>
-                    </div>
+                <div className="space-y-3">
+                  <div className="border border-gray-700 rounded bg-gray-950 p-3">
+                    <p className="text-xs font-semibold text-cyan-400 uppercase mb-3">Preview</p>
+                    <Button
+                      onClick={() => {
+                        const proofItem = {
+                          id: selectedExtract.id,
+                          type: 'extract',
+                          label: selectedExtract.title,
+                          source_id: selectedExtract.id,
+                        };
+                        setViewerProofItem(proofItem);
+                        setShowProofViewer(true);
+                      }}
+                      className="w-full bg-cyan-600 hover:bg-cyan-700"
+                    >
+                      View Extract
+                    </Button>
                   </div>
-
-                  {/* File Viewer */}
-                  {viewingFile && (
-                    <div className="border border-gray-700 rounded bg-black p-3">
-                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-700">
-                        <span className="text-xs text-cyan-400 font-semibold">{viewingFile.label}</span>
-                        <button onClick={() => setViewingFile(null)} className="text-gray-400 hover:text-white">×</button>
-                      </div>
-                      {viewingFile.url?.toLowerCase().endsWith('.pdf') ? (
-                        <iframe
-                          src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewingFile.url)}&embedded=true`}
-                          className="w-full rounded"
-                          style={{ height: '400px', border: 'none' }}
-                          title={viewingFile.label}
-                        />
-                      ) : (
-                        <img 
-                          src={viewingFile.url} 
-                          alt={viewingFile.label}
-                          className="w-full max-h-96 object-contain rounded"
-                        />
-                      )}
-                    </div>
-                  )}
 
                   {/* Callouts row - only show if there are callouts */}
                   {callouts.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
                       <p className="text-xs font-semibold text-cyan-400 uppercase">Callouts ({callouts.length})</p>
                       <div className="flex gap-2 overflow-x-auto pb-2">
-                        {callouts.map((callout, idx) => (
+                        {callouts.map((callout) => (
                           <button
                             key={callout.id}
                             onClick={() => setSelectedCallout(callout)}
@@ -408,38 +367,6 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Full-width preview */}
-                  {selectedCallout && (
-                    <div className="border border-gray-700 rounded bg-black p-3 flex items-center justify-center min-h-64">
-                      {selectedCallout.snapshot_image_url ? (
-                        <div className="relative max-w-full">
-                          <img 
-                            src={selectedCallout.snapshot_image_url} 
-                            alt="Callout" 
-                            className="max-w-full max-h-96 object-contain"
-                          />
-                          {/* Highlights overlay */}
-                          {highlights.map(hl =>
-                            (hl.rects_norm || []).map((r, ri) => (
-                              <div key={`${hl.id}-${ri}`} style={{
-                                position: "absolute",
-                                left: `${r.x * 100}%`, top: `${r.y * 100}%`,
-                                width: `${r.w * 100}%`, height: `${r.h * 100}%`,
-                                background: COLOR_CSS[hl.color] || COLOR_CSS.yellow,
-                                pointerEvents: "none",
-                              }} />
-                            ))
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-center text-gray-600">
-                          <Image className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">No snapshot</p>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
