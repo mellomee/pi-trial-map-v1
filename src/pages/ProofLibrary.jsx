@@ -306,7 +306,7 @@ export default function ProofLibrary() {
         }
       }
       setShowAssignWitnessModal(false);
-      await loadGroupDetails();
+      await loadGroupDetails(selectedGroupId);
     } catch (error) {
       console.error('Error assigning witnesses:', error);
     }
