@@ -151,8 +151,13 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
 
   const loadDetails = async () => {
     setLoading(true);
+    const targetProof = selectedProofInList || proofItem;
+    if (!targetProof) {
+      setLoading(false);
+      return;
+    }
     try {
-      if (proofItem.type === 'depoClip') {
+      if (targetProof.type === 'depoClip') {
         const clips = await base44.entities.DepoClips.filter({ id: proofItem.source_id });
         if (clips.length > 0) {
           setDepoClip(clips[0]);
