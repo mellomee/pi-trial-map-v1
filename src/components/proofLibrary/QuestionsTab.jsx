@@ -151,42 +151,47 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
       {questions.length > 0 ? (
         <div className="space-y-2">
-          {questions.map((q) => {
-            const witness = getWitness(q.party_id);
-            const links = linkedProof[q.id] || [];
-            const isExpanded = expandedQuestion === q.id;
-            
-            return (
-              <Card key={q.id} className="bg-gray-800 border-gray-700">
-                <CardContent className="p-3">
-                  <Collapsible open={isExpanded} onOpenChange={(open) => setExpandedQuestion(open ? q.id : null)}>
-                    <div className="flex items-start gap-2">
-                      <CollapsibleTrigger asChild>
-                        <button className="text-gray-400 hover:text-white flex-shrink-0 pt-0.5">
-                          <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </button>
-                      </CollapsibleTrigger>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-100">{q.question_text}</p>
-                        <div className="flex gap-2 mt-1 flex-wrap">
-                          <Badge variant="outline" className="text-xs text-gray-400">{witness?.first_name} {witness?.last_name}</Badge>
-                          <Badge className={q.exam_type === 'Direct' ? 'bg-green-500/20 text-green-400 text-xs' : 'bg-red-500/20 text-red-400 text-xs'}>
-                            {q.exam_type}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs text-gray-400">{links.length} proof</Badge>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveQuestion(q.id)}
-                        className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
-                      >
-                        ✕
-                      </Button>
-                    </div>
+          {questions.map((q, idx) => {
+                const witness = getWitness(q.party_id);
+                const links = linkedProof[q.id] || [];
+                const children = childQuestions[q.id] || [];
+                const isExpanded = expandedQuestion === q.id;
 
-                    <CollapsibleContent className="mt-3 space-y-2 border-t border-gray-700 pt-2">
+                return (
+                  <div key={q.id}>
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardContent className="p-3">
+                        <Collapsible open={isExpanded} onOpenChange={(open) => setExpandedQuestion(open ? q.id : null)}>
+                          <div className="flex items-start gap-2">
+                            {children.length > 0 && (
+                              <CollapsibleTrigger asChild>
+                                <button className="text-gray-400 hover:text-white flex-shrink-0 pt-0.5">
+                                  <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </button>
+                              </CollapsibleTrigger>
+                            )}
+                            {children.length === 0 && <div className="w-4 flex-shrink-0" />}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-100"><span className="text-cyan-400 font-bold">{idx + 1}.</span> {q.question_text}</p>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                <Badge variant="outline" className="text-xs text-gray-400">{witness?.first_name} {witness?.last_name}</Badge>
+                                <Badge className={q.exam_type === 'Direct' ? 'bg-green-500/20 text-green-400 text-xs' : 'bg-red-500/20 text-red-400 text-xs'}>
+                                  {q.exam_type}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs text-gray-400">{links.length} proof</Badge>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRemoveQuestion(q.id)}
+                              className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+
+                          <CollapsibleContent className="mt-3 space-y-2 border-t border-gray-700 pt-2">
                       {/* Linked Proof Section */}
                       {links.length > 0 && (
                         <div className="space-y-2">
