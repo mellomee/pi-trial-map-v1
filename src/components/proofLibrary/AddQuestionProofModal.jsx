@@ -545,7 +545,9 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-cyan-400 uppercase">Callouts ({callouts.length})</p>
                       <div className="flex gap-2 overflow-x-auto pb-2">
-                        {callouts.map((callout, idx) => (
+                        {callouts.map((callout, idx) => {
+                          const witName = callout.witness_id ? caseParties[callout.witness_id] : null;
+                          return (
                           <button
                             key={callout.id}
                             onClick={() => setSelectedCallout(callout)}
@@ -562,9 +564,11 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                                 <Image className="w-5 h-5 text-gray-600" />
                               </div>
                             )}
-                            {callout.name && <p className="text-[9px] text-gray-400 text-center px-1 py-0.5 truncate w-24">{callout.name}</p>}
+                            {callout.name && <p className="text-[9px] text-gray-400 text-center px-1 pt-0.5 truncate w-24">{callout.name}</p>}
+                            {witName && <p className="text-[9px] text-cyan-400 text-center px-1 pb-0.5 truncate w-24">{witName}</p>}
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
