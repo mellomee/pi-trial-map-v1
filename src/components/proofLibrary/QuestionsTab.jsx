@@ -40,13 +40,22 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
       const filtered = allQ.filter(q => witIds.includes(q.party_id) && !q.parent_id);
       setQuestions(filtered);
 
-      // Load linked proof for each question (including follow-up children)
+      // Load child questions and linked proofs for each parent
       const proofMap = {};
+      const childMap = {};
       for (const q of filtered) {
+        // Load linked proofs for parent
         const links = await base44.entities.QuestionProofItems.filter({ question_id: q.id });
         proofMap[q.id] = links;
+        
+        // Load child questions
+        const children = allQ.filter(child => child.parent_id === q.id);
+        if (children.length > 0) {
+          childMap[q.id] = children;
+        }
       }
       setLinkedProof(proofMap);
+      setChildQuestions(childMap);
     } catch (error) {
       console.error('Error loading questions:', error);
     }
