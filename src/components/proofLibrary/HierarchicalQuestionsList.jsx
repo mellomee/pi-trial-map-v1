@@ -310,32 +310,44 @@ export default function HierarchicalQuestionsList({
   return (
     <>
       <div className="space-y-3">
-        <Button
-          onClick={() => {
-            setParentQuestionForChild(null);
-            setEditingQuestion({
-              party_id: '',
-              exam_type: 'Direct',
-              question_text: '',
-              goal: '',
-              expected_answer: '',
-              status: 'NotAsked',
-              importance: 'Med',
-              live_notes: '',
-              case_id: caseId,
-              primary_evidence_group_id: evidenceGroupId,
-            });
-            setShowModal(true);
-          }}
-          className="bg-cyan-600 hover:bg-cyan-700 w-full"
-        >
-          <Plus className="w-3 h-3 mr-2" />
-          Add Question
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              setParentQuestionForChild(null);
+              setEditingQuestion({
+                party_id: '',
+                exam_type: 'Direct',
+                question_text: '',
+                goal: '',
+                expected_answer: '',
+                status: 'NotAsked',
+                importance: 'Med',
+                live_notes: '',
+                case_id: caseId,
+                primary_evidence_group_id: evidenceGroupId,
+              });
+              setShowModal(true);
+            }}
+            className="bg-cyan-600 hover:bg-cyan-700 flex-1"
+          >
+            <Plus className="w-3 h-3 mr-2" />
+            Add Question
+          </Button>
+          {parentQuestions.length > 0 && (
+            <Button
+              onClick={() => setCollapseAll(true)}
+              variant="outline"
+              className="border-gray-600 text-gray-400 hover:text-gray-200"
+              title="Collapse all"
+            >
+              –
+            </Button>
+          )}
+        </div>
 
         {parentQuestions.length > 0 ? (
           <div className="space-y-2">
-            {parentQuestions.map(q => renderQuestion(q))}
+            {parentQuestions.map((q, idx) => renderQuestion(q, false, idx, parentQuestions.length))}
           </div>
         ) : (
           <div className="text-center text-gray-500 mt-4 py-4 border border-dashed border-gray-700 rounded">
