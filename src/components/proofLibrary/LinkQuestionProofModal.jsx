@@ -91,9 +91,34 @@ export default function LinkQuestionProofModal({
     }
   };
 
-  const handleProofClick = (proof) => {
+  const handleProofSelect = (proof) => {
     setSelectedProof(proof);
-    setShowProofViewer(true);
+  };
+
+  const handlePreview = () => {
+    if (selectedProof) {
+      setPreviewProof(selectedProof);
+      setShowProofViewer(true);
+    }
+  };
+
+  const handleLinkProof = async () => {
+    if (!selectedProof?.id || !question?.id || !evidenceGroupId) return;
+
+    try {
+      // Create link between question and proof
+      await base44.entities.QuestionProofItems.create({
+        case_id: caseId,
+        evidence_group_id: evidenceGroupId,
+        question_id: question.id,
+        proof_item_id: selectedProof.id,
+      });
+
+      onProofLinked?.();
+      onClose();
+    } catch (error) {
+      console.error('Error linking proof to question:', error);
+    }
   };
 
   const handleProofCalloutSelected = async (proofId, callout) => {
