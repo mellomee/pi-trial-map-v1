@@ -28,6 +28,7 @@ export default function ProofLibrary() {
   const [linkedWitnesses, setLinkedWitnesses] = useState([]);
   const [proofWitnessesForGroup, setProofWitnessesForGroup] = useState([]); // deduplicated witnesses from proof items
   const [linkedQuestions, setLinkedQuestions] = useState([]);
+  const [questionProofLinks, setQuestionProofLinks] = useState({}); // questionId -> array of proofItemIds
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [centerTab, setCenterTab] = useState('proof');
