@@ -47,20 +47,35 @@ function CalloutImageWithHighlights({ callout, highlights }) {
 }
 
 function InlineFileViewer({ url, label, onClose }) {
+  const [page, setPage] = useState(1);
   if (!url) return null;
 
   const lowerUrl = url.toLowerCase().split('?')[0];
   const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp');
 
-  // Use Google Docs viewer to render PDFs inline without download
-  const pdfViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+  // Use Google Docs viewer for PDFs — append page param
+  const pdfViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true#page=${page}`;
 
   return (
     <div className="border border-[#1e2a45] rounded-lg overflow-hidden bg-[#0a0f1e]">
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e2a45] bg-[#131a2e]">
         <span className="text-xs text-cyan-400 font-semibold truncate">{label}</span>
         <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-          <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-gray-400 hover:text-cyan-300">Open in tab ↗</a>
+          {!isImage && (
+            <>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="text-[11px] text-gray-400 hover:text-cyan-300 disabled:opacity-30 px-1"
+              >‹ Prev</button>
+              <span className="text-[11px] text-gray-500">Pg {page}</span>
+              <button
+                onClick={() => setPage(p => p + 1)}
+                className="text-[11px] text-gray-400 hover:text-cyan-300 px-1"
+              >Next ›</button>
+            </>
+          )}
+          <a href={url} download className="text-[11px] text-gray-400 hover:text-cyan-300">Download ↓</a>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-lg leading-none">×</button>
         </div>
       </div>
@@ -70,6 +85,7 @@ function InlineFileViewer({ url, label, onClose }) {
         </div>
       ) : (
         <iframe
+          key={page}
           src={pdfViewerUrl}
           className="w-full"
           style={{ height: '560px', border: 'none' }}
