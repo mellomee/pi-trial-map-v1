@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search, ExternalLink, Pencil } from 'lucide-react';
-import QuestionsListWithProofs from '@/components/proofLibrary/QuestionsListWithProofs';
 import { toast } from 'sonner';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
@@ -626,7 +625,7 @@ export default function ProofLibrary() {
 
                 {/* Questions Tab */}
                 {centerTab === 'questions' && (
-                  <QuestionsListWithProofs
+                  <HierarchicalQuestionsList
                     questions={linkedQuestions}
                     evidenceGroupId={selectedGroupId}
                     caseId={activeCase.id}
@@ -634,9 +633,23 @@ export default function ProofLibrary() {
                     calloutNames={calloutNames}
                     calloutWitnesses={calloutWitnesses}
                     allWitnesses={allWitnesses}
-                    onQuestionEdit={(q) => { setEditing({ ...q }); setShowAddQuestionModal(true); }}
-                    onQuestionRemove={(qId) => handleRemoveQuestion(qId)}
-                    onProofAdded={() => loadGroupDetails(selectedGroupId)}
+                    onQuestionCreated={(newQ) => {
+                      setLinkedQuestions(qs => [...qs, newQ]);
+                      // Link to evidence group if parent
+                      if (!newQ.parent_id) {
+                        base44.entities.QuestionEvidenceGroups.create({
+                          case_id: activeCase.id,
+                          question_id: newQ.id,
+                          evidence_group_id: selectedGroupId,
+                        });
+                      }
+                    }}
+                    onQuestionUpdated={(updatedQ) => {
+                      setLinkedQuestions(qs => qs.map(q => q.id === updatedQ.id ? updatedQ : q));
+                    }}
+                    onQuestionRemoved={(questionId) => {
+                      setLinkedQuestions(qs => qs.filter(q => q.id !== questionId));
+                    }}
                   />
                 )}
               </div>
