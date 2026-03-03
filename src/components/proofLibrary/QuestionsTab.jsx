@@ -36,14 +36,15 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
       }
       
       const allQ = await base44.entities.Questions.filter({ case_id: caseId });
-      // Only load parent questions (no parent_id)
+      // Only load parent questions (no parent_id) with matching witness
       const filtered = allQ.filter(q => witIds.includes(q.party_id) && !q.parent_id);
       setQuestions(filtered);
 
-      // Build map of child questions by parent_id
+      // Build map of child questions by parent_id - filter to only children of loaded parents
+      const parentIds = new Set(filtered.map(q => q.id));
       const childMap = {};
       allQ.forEach(q => {
-        if (q.parent_id) {
+        if (q.parent_id && parentIds.has(q.parent_id)) {
           if (!childMap[q.parent_id]) childMap[q.parent_id] = [];
           childMap[q.parent_id].push(q);
         }
@@ -52,16 +53,15 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
       // Load linked proof for each question (parent + child)
       const proofMap = {};
-      for (const q of filtered) {
+      const allQuestionsToLoad = [...filtered];
+      for (const parentId of parentIds) {
+        const kids = childMap[parentId] || [];
+        allQuestionsToLoad.push(...kids);
+      }
+
+      for (const q of allQuestionsToLoad) {
         const links = await base44.entities.QuestionLinks.filter({ question_id: q.id });
         proofMap[q.id] = links.filter(l => l.link_type === 'DepoClip' || l.link_type === 'JointExhibit');
-        
-        // Load proof for child questions too
-        const kids = childMap[q.id] || [];
-        for (const kid of kids) {
-          const childLinks = await base44.entities.QuestionLinks.filter({ question_id: kid.id });
-          proofMap[kid.id] = childLinks.filter(l => l.link_type === 'DepoClip' || l.link_type === 'JointExhibit');
-        }
       }
       setLinkedProof(proofMap);
     } catch (error) {
