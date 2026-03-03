@@ -713,11 +713,11 @@ export default function ProofLibrary() {
           {editingGroup && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Title</label>
+                <label className="text-sm font-medium text-gray-900">Title</label>
                 <Input
                   value={editingGroup.title}
                   onChange={(e) => setEditingGroup({ ...editingGroup, title: e.target.value })}
-                  className="mt-1 bg-gray-800 border-gray-700"
+                  className="mt-1 bg-white border-gray-300 text-gray-900"
                 />
               </div>
               <div>
