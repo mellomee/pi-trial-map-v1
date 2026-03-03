@@ -860,12 +860,12 @@ export default function ProofLibrary() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Witness *</label>
+                <label className="text-sm font-medium text-gray-900">Witness *</label>
                 <Select value={editing.party_id || ""} onValueChange={(v) => setEditing({ ...editing, party_id: v })}>
-                  <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                  <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900">
                     <SelectValue placeholder="Select witness..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectContent className="bg-white border-gray-300">
                     {linkedWitnesses.map(w => <SelectItem key={w.id} value={w.id}>{w.first_name} {w.last_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
