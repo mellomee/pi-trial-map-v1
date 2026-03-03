@@ -773,10 +773,10 @@ export default function ProofLibrary() {
             <DialogTitle>Link Trial Points</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 max-h-96 overflow-y-auto">
-            {allTrialPoints.map((tp) => {
-              const isLinked = linkedTrialPoints.some((l) => l.id === tp.id);
-              return (
-                <label key={tp.id} className="flex items-start gap-3 p-2 border border-gray-700 rounded cursor-pointer hover:bg-gray-800">
+          {allTrialPoints.map((tp) => {
+            const isLinked = linkedTrialPoints.some((l) => l.id === tp.id);
+            return (
+              <label key={tp.id} className="flex items-start gap-3 p-2 border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
                   <input
                     type="checkbox"
                     checked={isLinked}
