@@ -21,12 +21,8 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
   const [linkedProof, setLinkedProof] = useState({});
 
   useEffect(() => {
-     if (evidenceGroup?.id) loadQuestions();
-   }, [evidenceGroup?.id]);
-
-  const refetchQuestions = async () => {
-    await loadQuestions();
-  };
+    if (evidenceGroup?.id) loadQuestions();
+  }, [evidenceGroup?.id]);
 
   const loadQuestions = async () => {
     try {
