@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Link2, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Link2, GripVertical, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import BranchBuilder from "@/components/runner/BranchBuilder";
@@ -28,6 +28,9 @@ export default function Questions() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
+  const [questionProofs, setQuestionProofs] = useState({}); // questionId -> array of proofItems
+  const [calloutNames, setCalloutNames] = useState({});
+  const [calloutWitnesses, setCalloutWitnesses] = useState({});
 
   const load = async () => {
     if (!activeCase) return;
@@ -37,6 +40,42 @@ export default function Questions() {
     ]);
     setQuestions(q);
     setParties(p);
+
+    // Load question-proof links
+    const allQPLinks = await base44.entities.QuestionProofItems.filter({ case_id: activeCase.id });
+    const qMap = {};
+    const cnMap = {};
+    const cwMap = {};
+
+    for (const link of allQPLinks) {
+      if (!qMap[link.question_id]) qMap[link.question_id] = [];
+      qMap[link.question_id].push(link.proof_item_id);
+    }
+    setQuestionProofs(qMap);
+
+    // Load proof item details and callout info
+    const uniqueProofIds = [...new Set(allQPLinks.map(l => l.proof_item_id))];
+    if (uniqueProofIds.length > 0) {
+      const proofs = await base44.entities.ProofItems.filter({ id: { $in: uniqueProofIds } });
+      const calloutIds = proofs.filter(p => p.callout_id).map(p => p.callout_id);
+      if (calloutIds.length > 0) {
+        const callouts = await base44.entities.Callouts.filter({ id: { $in: calloutIds } });
+        callouts.forEach(c => cnMap[c.id] = c.name);
+        // Load witness info for callouts
+        const witnessIds = callouts.filter(c => c.witness_id).map(c => c.witness_id);
+        if (witnessIds.length > 0) {
+          const witnesses = await base44.entities.Parties.filter({ id: { $in: witnessIds } });
+          callouts.forEach(c => {
+            if (c.witness_id) {
+              const wit = witnesses.find(w => w.id === c.witness_id);
+              cwMap[c.id] = wit ? (wit.display_name || `${wit.first_name} ${wit.last_name}`.trim()) : null;
+            }
+          });
+        }
+      }
+    }
+    setCalloutNames(cnMap);
+    setCalloutWitnesses(cwMap);
   };
   
   useEffect(() => {
@@ -153,6 +192,7 @@ export default function Questions() {
                 const witKey = q.party_id || "unassigned";
                 const witIndex = grouped[witKey].indexOf(q) + 1;
 
+                const linkedProofIds = questionProofs[q.id] || [];
                 return (
                 <Draggable key={q.id} draggableId={q.id} index={idx}>
                   {(provided, snapshot) => (
@@ -162,27 +202,43 @@ export default function Questions() {
                       className={snapshot.isDragging ? "opacity-50" : ""}
                     >
                       <Card className="bg-[#131a2e] border-[#1e2a45]">
-                        <CardContent className="py-3 flex items-start justify-between gap-3">
-                          <div {...provided.dragHandleProps} className="text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing flex-shrink-0 pt-0.5">
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex gap-2 items-baseline">
-                              <span className="text-sm font-semibold text-cyan-400">{witIndex}.</span>
-                              <p className="text-sm text-white">{q.question_text}</p>
+                        <CardContent className="py-3 space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div {...provided.dragHandleProps} className="text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing flex-shrink-0 pt-0.5">
+                              <GripVertical className="w-4 h-4" />
                             </div>
-                            <div className="flex gap-2 mt-2 flex-wrap">
-                              <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
-                              <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
-                              <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex gap-2 items-baseline">
+                                <span className="text-sm font-semibold text-cyan-400">{witIndex}.</span>
+                                <p className="text-sm text-white">{q.question_text}</p>
+                              </div>
+                              <div className="flex gap-2 mt-2 flex-wrap">
+                                <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
+                                <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
+                                <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
+                              </div>
+                              {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
+                              {q.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {q.expected_answer}</p>}
                             </div>
-                            {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
-                            {q.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {q.expected_answer}</p>}
+                            <div className="flex gap-1 flex-shrink-0 items-center">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
+                            </div>
                           </div>
-                          <div className="flex gap-1 flex-shrink-0 items-center">
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
-                          </div>
+                          {linkedProofIds.length > 0 && (
+                            <div className="border-t border-slate-700 pt-2 ml-2 space-y-1">
+                              <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
+                              {linkedProofIds.map((proofId) => {
+                                // Find proof details from stored data if available
+                                const proofLabel = `Proof ${proofId.slice(0, 8)}`;
+                                return (
+                                  <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-1.5">
+                                    <p className="font-medium">{proofLabel}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     </div>
