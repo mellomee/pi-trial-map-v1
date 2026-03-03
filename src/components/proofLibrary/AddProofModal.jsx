@@ -146,6 +146,7 @@ function ExtractDetailPanel({ extract, caseId, selectedCallout, setSelectedCallo
   const [meta, setMeta] = useState(null);
   const [callouts, setCallouts] = useState([]);
   const [metaLoading, setMetaLoading] = useState(false);
+  const [caseParties, setCaseParties] = useState({});
 
   useEffect(() => {
     if (!extract) return;
