@@ -40,6 +40,42 @@ export default function Questions() {
     ]);
     setQuestions(q);
     setParties(p);
+
+    // Load question-proof links
+    const allQPLinks = await base44.entities.QuestionProofItems.filter({ case_id: activeCase.id });
+    const qMap = {};
+    const cnMap = {};
+    const cwMap = {};
+
+    for (const link of allQPLinks) {
+      if (!qMap[link.question_id]) qMap[link.question_id] = [];
+      qMap[link.question_id].push(link.proof_item_id);
+    }
+    setQuestionProofs(qMap);
+
+    // Load proof item details and callout info
+    const uniqueProofIds = [...new Set(allQPLinks.map(l => l.proof_item_id))];
+    if (uniqueProofIds.length > 0) {
+      const proofs = await base44.entities.ProofItems.filter({ id: { $in: uniqueProofIds } });
+      const calloutIds = proofs.filter(p => p.callout_id).map(p => p.callout_id);
+      if (calloutIds.length > 0) {
+        const callouts = await base44.entities.Callouts.filter({ id: { $in: calloutIds } });
+        callouts.forEach(c => cnMap[c.id] = c.name);
+        // Load witness info for callouts
+        const witnessIds = callouts.filter(c => c.witness_id).map(c => c.witness_id);
+        if (witnessIds.length > 0) {
+          const witnesses = await base44.entities.Parties.filter({ id: { $in: witnessIds } });
+          callouts.forEach(c => {
+            if (c.witness_id) {
+              const wit = witnesses.find(w => w.id === c.witness_id);
+              cwMap[c.id] = wit ? (wit.display_name || `${wit.first_name} ${wit.last_name}`.trim()) : null;
+            }
+          });
+        }
+      }
+    }
+    setCalloutNames(cnMap);
+    setCalloutWitnesses(cwMap);
   };
   
   useEffect(() => {
