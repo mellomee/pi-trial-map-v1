@@ -872,12 +872,12 @@ export default function ProofLibrary() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium">Type</label>
+                  <label className="text-sm font-medium text-gray-900">Type</label>
                   <Select value={editing.exam_type} onValueChange={(v) => setEditing({ ...editing, exam_type: v })}>
-                    <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                    <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectContent className="bg-white border-gray-300">
                       <SelectItem value="Direct">Direct</SelectItem>
                       <SelectItem value="Cross">Cross</SelectItem>
                     </SelectContent>
