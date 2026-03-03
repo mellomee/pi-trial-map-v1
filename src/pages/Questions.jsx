@@ -136,9 +136,24 @@ export default function Questions() {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="questions-list">
-          {(provided) => (
+          {(provided) => {
+            // Group by witness and number questions sequentially per witness
+            const grouped = {};
+            filtered.forEach(q => {
+              const witKey = q.party_id || "unassigned";
+              if (!grouped[witKey]) grouped[witKey] = [];
+              grouped[witKey].push(q);
+            });
+            const displayList = Object.values(grouped).flat();
+
+            return (
             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-              {filtered.map((q, idx) => (
+              {displayList.map((q, idx) => {
+                // Calculate witness-specific number
+                const witKey = q.party_id || "unassigned";
+                const witIndex = grouped[witKey].indexOf(q) + 1;
+
+                return (
                 <Draggable key={q.id} draggableId={q.id} index={idx}>
                   {(provided, snapshot) => (
                     <div
@@ -152,18 +167,19 @@ export default function Questions() {
                             <GripVertical className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white">{q.question_text}</p>
+                            <div className="flex gap-2 items-baseline">
+                              <span className="text-sm font-semibold text-cyan-400">{witIndex}.</span>
+                              <p className="text-sm text-white">{q.question_text}</p>
+                            </div>
                             <div className="flex gap-2 mt-2 flex-wrap">
                               <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
                               <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
                               <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
                             </div>
                             {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
+                            {q.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {q.expected_answer}</p>}
                           </div>
                           <div className="flex gap-1 flex-shrink-0 items-center">
-                            <Link to={`${createPageUrl("QuestionDetail")}?id=${q.id}`}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" title="Manage Links"><Link2 className="w-3 h-3" /></Button>
-                            </Link>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
                           </div>
@@ -172,10 +188,12 @@ export default function Questions() {
                     </div>
                   )}
                 </Draggable>
-              ))}
+                );
+              })}
               {provided.placeholder}
             </div>
-          )}
+            );
+          }}
         </Droppable>
       </DragDropContext>
 
