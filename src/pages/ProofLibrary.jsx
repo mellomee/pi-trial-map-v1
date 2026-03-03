@@ -729,12 +729,12 @@ export default function ProofLibrary() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Priority</label>
+                <label className="text-sm font-medium text-gray-900">Priority</label>
                 <Select value={editingGroup.priority} onValueChange={(v) => setEditingGroup({ ...editingGroup, priority: v })}>
-                  <SelectTrigger className="mt-1 bg-gray-800 border-gray-700">
+                  <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectContent className="bg-white border-gray-300">
                     <SelectItem value="High">High</SelectItem>
                     <SelectItem value="Med">Medium</SelectItem>
                     <SelectItem value="Low">Low</SelectItem>
