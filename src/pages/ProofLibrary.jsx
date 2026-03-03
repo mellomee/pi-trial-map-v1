@@ -827,8 +827,8 @@ export default function ProofLibrary() {
                     className="mt-1"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-100">{wit.display_name || wit.last_name}</p>
-                    <p className="text-xs text-gray-500">{wit.party_type}</p>
+                    <p className="text-sm font-medium text-gray-900">{wit.display_name || wit.last_name}</p>
+                    <p className="text-xs text-gray-600">{wit.party_type}</p>
                   </div>
                 </label>
               );
