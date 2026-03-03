@@ -26,15 +26,19 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
   const loadQuestions = async () => {
     try {
-      // Load questions by witnesses in this group
+      // Load questions for this evidence group
       const witIds = witnesses.map(w => w.id);
       if (witIds.length === 0) {
         setQuestions([]);
         return;
       }
       
-      const allQ = await base44.entities.Questions.filter({ case_id: caseId });
-      const filtered = allQ.filter(q => witIds.includes(q.party_id));
+      // Query questions scoped to this evidence group AND by witness
+      const allQ = await base44.entities.Questions.filter({ 
+        case_id: caseId,
+        primary_evidence_group_id: evidenceGroup.id,
+      });
+      const filtered = allQ.filter(q => witIds.includes(q.party_id) || q.parent_id);
       setQuestions(filtered);
 
       // Load linked proof for each question
