@@ -433,7 +433,7 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
                     </div>
                   )}
 
-                  {/* Callouts row */}
+                  {/* Callouts row - only show if there are callouts */}
                   {callouts.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-cyan-400 uppercase">Callouts ({callouts.length})</p>
