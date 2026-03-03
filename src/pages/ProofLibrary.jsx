@@ -111,6 +111,19 @@ export default function ProofLibrary() {
       const wits = allPartiesInCase.filter(p => witIdsForGroup.includes(p.id));
 
       setProofItems(allProof);
+
+      // Load callout names for extract-type proof items
+      const calloutMap = {};
+      const extractProofs = allProof.filter(p => p.type === 'extract' && p.callout_id);
+      if (extractProofs.length > 0) {
+        const calloutIds = [...new Set(extractProofs.map(p => p.callout_id))];
+        for (const cid of calloutIds) {
+          const cos = await base44.entities.Callouts.filter({ id: cid });
+          if (cos.length > 0) calloutMap[cid] = cos[0].name;
+        }
+      }
+      setCalloutNames(calloutMap);
+
       setLinkedTrialPoints(tps);
       setLinkedWitnesses(wits);
       setLinkedQuestions(qs);
