@@ -114,20 +114,49 @@ export default function ProofLibrary() {
 
       setProofItems(allProof);
 
-      // Load callout names for extract-type proof items
+      // Load callout data (name + witness_id) for extract-type proof items
       const calloutMap = {};
+      const calloutWitMap = {}; // proofItemId -> witness name
       const extractProofs = allProof.filter(p => p.type === 'extract' && p.callout_id);
+      const partyMap = {};
+      allPartiesInCase.forEach(p => { partyMap[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
+
       if (extractProofs.length > 0) {
         const calloutIds = [...new Set(extractProofs.map(p => p.callout_id))];
         for (const cid of calloutIds) {
           const cos = await base44.entities.Callouts.filter({ id: cid });
-          if (cos.length > 0) calloutMap[cid] = cos[0].name;
+          if (cos.length > 0) {
+            calloutMap[cid] = cos[0].name;
+            if (cos[0].witness_id) {
+              calloutWitMap[cid] = partyMap[cos[0].witness_id] || null;
+            }
+          }
         }
       }
       setCalloutNames(calloutMap);
+      setCalloutWitnesses(calloutWitMap);
+
+      // Build deduplicated witness list from ALL proof items in this group:
+      // depoClip witnesses from ProofItemWitnesses + callout witnesses from extract proofs
+      const witIdSet = new Set(witIdsForGroup);
+      extractProofs.forEach(p => {
+        const witName = p.callout_id ? calloutWitMap[p.callout_id] : null;
+        // We don't have the id directly from name — we need to find by matching name
+      });
+      // Better: collect witness_ids from callouts directly
+      const extractCalloutIds = extractProofs.map(p => p.callout_id).filter(Boolean);
+      // Already fetched above in cos loop — rebuild with witness_ids
+      const calloutWitIds = [];
+      for (const cid of extractCalloutIds) {
+        const cos = await base44.entities.Callouts.filter({ id: cid });
+        if (cos.length > 0 && cos[0].witness_id) calloutWitIds.push(cos[0].witness_id);
+      }
+      calloutWitIds.forEach(id => witIdSet.add(id));
+      const allWitsForGroup = allPartiesInCase.filter(p => witIdSet.has(p.id));
 
       setLinkedTrialPoints(tps);
-      setLinkedWitnesses(wits);
+      setLinkedWitnesses(wits); // keep existing (depoClip witnesses via ProofItemWitnesses)
+      setProofWitnessesForGroup(allWitsForGroup); // full list including callout witnesses
       setLinkedQuestions(qs);
       // Cache trial points & witnesses globally so add modals are fast
       setAllTrialPoints(allTPsInCase);
