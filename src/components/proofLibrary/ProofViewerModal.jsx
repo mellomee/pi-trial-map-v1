@@ -52,38 +52,29 @@ function InlineFileViewer({ url, label, onClose }) {
   const lowerUrl = url.toLowerCase().split('?')[0];
   const isImage = lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.gif') || lowerUrl.endsWith('.webp');
 
+  // Use Google Docs viewer to render PDFs inline without download
+  const pdfViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+
   return (
     <div className="border border-[#1e2a45] rounded-lg overflow-hidden bg-[#0a0f1e]">
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e2a45] bg-[#131a2e]">
         <span className="text-xs text-cyan-400 font-semibold truncate">{label}</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-white ml-2 flex-shrink-0 text-lg leading-none">×</button>
+        <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-gray-400 hover:text-cyan-300">Open in tab ↗</a>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-lg leading-none">×</button>
+        </div>
       </div>
       {isImage ? (
         <div className="p-2 flex justify-center bg-black">
           <img src={url} alt={label} className="max-w-full max-h-[520px] object-contain" />
         </div>
       ) : (
-        // PDF: use <object> which renders inline in browser without triggering download
-        <object
-          data={url + '#toolbar=1&navpanes=0&scrollbar=1'}
-          type="application/pdf"
+        <iframe
+          src={pdfViewerUrl}
           className="w-full"
-          style={{ height: '540px' }}
-        >
-          {/* Fallback if browser can't embed the PDF */}
-          <div className="flex flex-col items-center justify-center h-64 text-gray-400 text-sm gap-3">
-            <FileText className="w-10 h-10 opacity-30" />
-            <p>Your browser cannot display this PDF inline.</p>
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-cyan-400 hover:underline text-xs"
-            >
-              Open in new tab
-            </a>
-          </div>
-        </object>
+          style={{ height: '560px', border: 'none' }}
+          title={label}
+        />
       )}
     </div>
   );
