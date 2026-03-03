@@ -285,7 +285,7 @@ export default function ProofLibrary() {
       for (const link of links) {
         await base44.entities.EvidenceGroupTrialPoints.delete(link.id);
       }
-      await loadGroupDetails();
+      await loadGroupDetails(selectedGroupId);
     } catch (error) {
       console.error('Error removing trial point:', error);
     }
