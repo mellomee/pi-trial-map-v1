@@ -71,8 +71,13 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
 
       // Build maps
       const partiesMap = {};
-      allParties.forEach(p => { partiesMap[p.id] = p; });
+      const partiesNameMap = {};
+      allParties.forEach(p => { 
+        partiesMap[p.id] = p;
+        partiesNameMap[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim();
+      });
       setParties(partiesMap);
+      setCaseParties(partiesNameMap);
 
       const depsMap = {};
       allDeps.forEach(d => { depsMap[d.id] = d; });
