@@ -10,11 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Link2, GripVertical } from "lucide-react";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import BranchBuilder from "@/components/runner/BranchBuilder";
+import { Plus, Pencil, Trash2, Search, GripVertical, BookOpen, FileText, Video, ChevronRight, Target } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import BranchBuilder from "@/components/runner/BranchBuilder";
+import ProofViewerModal from "@/components/proofLibrary/ProofViewerModal";
 
 const EMPTY = { party_id: "", exam_type: "Direct", order_index: 0, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "", is_branch_root: false, branch_prompt: "", importance: "Med", ask_if_time: true };
 
@@ -29,6 +28,16 @@ export default function Questions() {
   const [open, setOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
 
+  // Proof data
+  const [questionProofMap, setQuestionProofMap] = useState({}); // questionId -> ProofItem[]
+  const [calloutNames, setCalloutNames] = useState({}); // calloutId -> name
+  const [calloutWitnesses, setCalloutWitnesses] = useState({}); // calloutId -> witness name
+  const [trialPointMap, setTrialPointMap] = useState({}); // questionId -> TrialPoint[]
+
+  // Proof viewer
+  const [selectedProofItem, setSelectedProofItem] = useState(null);
+  const [showProofModal, setShowProofModal] = useState(false);
+
   const load = async () => {
     if (!activeCase) return;
     const [q, p] = await Promise.all([
@@ -37,11 +46,79 @@ export default function Questions() {
     ]);
     setQuestions(q);
     setParties(p);
+    await loadProofData(q, p, activeCase.id);
   };
-  
-  useEffect(() => {
-    load();
-  }, [activeCase]);
+
+  const loadProofData = async (qs, ps, caseId) => {
+    try {
+      // Load all QuestionProofItems + ProofItems for this case
+      const [qpLinks, allProofItems] = await Promise.all([
+        base44.entities.QuestionProofItems.filter({ case_id: caseId }),
+        base44.entities.ProofItems.filter({ case_id: caseId }),
+      ]);
+
+      // Build questionId -> ProofItems map
+      const proofMap = {};
+      for (const q of qs) {
+        const links = qpLinks.filter(l => l.question_id === q.id);
+        proofMap[q.id] = links.map(l => allProofItems.find(p => p.id === l.proof_item_id)).filter(Boolean);
+      }
+      setQuestionProofMap(proofMap);
+
+      // Resolve callout names + witnesses for extract type proofs
+      const allCalloutIds = [...new Set(
+        Object.values(proofMap).flat().filter(p => p?.type === 'extract' && p?.callout_id).map(p => p.callout_id)
+      )];
+      if (allCalloutIds.length > 0) {
+        const partyLookup = {};
+        ps.forEach(p => { partyLookup[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
+        const nameMap = {};
+        const witMap = {};
+        await Promise.all(allCalloutIds.map(async cid => {
+          const cos = await base44.entities.Callouts.filter({ id: cid });
+          if (cos.length > 0) {
+            nameMap[cid] = cos[0].name;
+            if (cos[0].witness_id) witMap[cid] = partyLookup[cos[0].witness_id] || null;
+          }
+        }));
+        setCalloutNames(nameMap);
+        setCalloutWitnesses(witMap);
+      }
+
+      // Load trial points linked via QuestionLinks
+      const [qLinks, tps] = await Promise.all([
+        base44.entities.QuestionLinks.filter({ case_id: caseId, link_type: 'TrialPoint' }),
+        base44.entities.TrialPoints.filter({ case_id: caseId }),
+      ]);
+      const tpLookup = {};
+      tps.forEach(tp => { tpLookup[tp.id] = tp; });
+      const tpMap = {};
+      for (const ql of qLinks) {
+        if (!tpMap[ql.question_id]) tpMap[ql.question_id] = [];
+        if (tpLookup[ql.link_id]) tpMap[ql.question_id].push(tpLookup[ql.link_id]);
+      }
+      // Also check EvidenceGroup trial points via primary_evidence_group_id
+      const egLinks = await base44.entities.EvidenceGroupTrialPoints.filter({ case_id: caseId });
+      for (const q of qs) {
+        if (q.primary_evidence_group_id) {
+          const egTps = egLinks.filter(l => l.evidence_group_id === q.primary_evidence_group_id);
+          for (const etp of egTps) {
+            if (tpLookup[etp.trial_point_id]) {
+              if (!tpMap[q.id]) tpMap[q.id] = [];
+              if (!tpMap[q.id].find(t => t.id === etp.trial_point_id)) {
+                tpMap[q.id].push(tpLookup[etp.trial_point_id]);
+              }
+            }
+          }
+        }
+      }
+      setTrialPointMap(tpMap);
+    } catch (e) {
+      console.error('Error loading proof data:', e);
+    }
+  };
+
+  useEffect(() => { load(); }, [activeCase]);
 
   const save = async () => {
     const data = { ...editing, case_id: activeCase.id };
@@ -65,20 +142,16 @@ export default function Questions() {
   const saveQuestionsOrder = async (reorderedQuestions) => {
     for (let i = 0; i < reorderedQuestions.length; i++) {
       const q = reorderedQuestions[i];
-      if (q.order_index !== i) {
-        await base44.entities.Questions.update(q.id, { order_index: i });
-      }
+      if (q.order_index !== i) await base44.entities.Questions.update(q.id, { order_index: i });
     }
   };
 
   const onDragEnd = (result) => {
-    const { source, destination, draggableId } = result;
+    const { source, destination } = result;
     if (!destination || source.index === destination.index) return;
-
     const newQuestions = Array.from(filtered);
     const [moved] = newQuestions.splice(source.index, 1);
     newQuestions.splice(destination.index, 0, moved);
-    
     const reordered = newQuestions.map((q, i) => ({ ...q, order_index: i }));
     setQuestions(qs => qs.map(q => reordered.find(r => r.id === q.id) || q));
     saveQuestionsOrder(reordered);
@@ -86,7 +159,7 @@ export default function Questions() {
 
   const getPartyName = (pid) => {
     const p = parties.find(x => x.id === pid);
-    return p ? `${p.first_name} ${p.last_name}` : "Unassigned";
+    return p ? (p.display_name || `${p.first_name || ''} ${p.last_name}`.trim()) : "Unassigned";
   };
 
   const filtered = questions.filter(q => {
@@ -95,6 +168,42 @@ export default function Questions() {
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
     return matchSearch && matchParty && matchType;
   }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+  // Build per-witness numbering: group filtered by party_id, sort by order_index, assign number
+  const questionNumbers = (() => {
+    // Group by party_id and assign sequential numbers per witness
+    const byParty = {};
+    // Sort by order_index first
+    const sorted = [...filtered].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+    sorted.forEach(q => {
+      if (!byParty[q.party_id]) byParty[q.party_id] = [];
+      byParty[q.party_id].push(q.id);
+    });
+    const numMap = {};
+    Object.values(byParty).forEach(ids => {
+      ids.forEach((id, i) => { numMap[id] = i + 1; });
+    });
+    return numMap;
+  })();
+
+  // When "All Witnesses", sort by witness then order_index so same-numbered questions cluster together
+  const displayList = selectedPartyId === "all"
+    ? [...filtered].sort((a, b) => {
+        const numDiff = (questionNumbers[a.id] || 0) - (questionNumbers[b.id] || 0);
+        if (numDiff !== 0) return numDiff;
+        return (a.party_id || '').localeCompare(b.party_id || '');
+      })
+    : filtered;
+
+  const getProofSubtitle = (proof) => {
+    if (proof.type === 'depoClip') return null;
+    if (proof.callout_id) {
+      const name = calloutNames[proof.callout_id];
+      const wit = calloutWitnesses[proof.callout_id];
+      return [name, wit].filter(Boolean).join(' · ') || null;
+    }
+    return null;
+  };
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
@@ -120,7 +229,7 @@ export default function Questions() {
             <SelectTrigger className="w-48 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select witness..." /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Witnesses</SelectItem>
-              {parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}
+              {parties.map(p => <SelectItem key={p.id} value={p.id}>{p.display_name || `${p.first_name || ''} ${p.last_name}`.trim()}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -138,50 +247,108 @@ export default function Questions() {
         <Droppable droppableId="questions-list">
           {(provided) => (
             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-              {filtered.map((q, idx) => (
-                <Draggable key={q.id} draggableId={q.id} index={idx}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      className={snapshot.isDragging ? "opacity-50" : ""}
-                    >
-                      <Card className="bg-[#131a2e] border-[#1e2a45]">
-                        <CardContent className="py-3 flex items-start justify-between gap-3">
-                          <div {...provided.dragHandleProps} className="text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing flex-shrink-0 pt-0.5">
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white">{q.question_text}</p>
-                            <div className="flex gap-2 mt-2 flex-wrap">
-                              <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
-                              <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
-                              <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
+              {displayList.map((q, idx) => {
+                const proofs = questionProofMap[q.id] || [];
+                const hasProof = proofs.length > 0;
+                const trialPoints = trialPointMap[q.id] || [];
+                const qNum = questionNumbers[q.id];
+
+                return (
+                  <Draggable key={q.id} draggableId={q.id} index={idx}>
+                    {(provided, snapshot) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps} className={snapshot.isDragging ? "opacity-50" : ""}>
+                        <Card className="bg-[#131a2e] border-[#1e2a45]">
+                          <CardContent className="py-3 flex items-start justify-between gap-3">
+                            <div {...provided.dragHandleProps} className="text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing flex-shrink-0 pt-1">
+                              <GripVertical className="w-4 h-4" />
                             </div>
-                            {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
-                          </div>
-                          <div className="flex gap-1 flex-shrink-0 items-center">
-                            <Link to={`${createPageUrl("QuestionDetail")}?id=${q.id}`}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" title="Manage Links"><Link2 className="w-3 h-3" /></Button>
-                            </Link>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
+
+                            {/* Question number badge */}
+                            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-cyan-600/20 text-cyan-400 text-xs font-bold flex items-center justify-center mt-0.5">
+                              {qNum}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white leading-snug">{q.question_text}</p>
+
+                              {/* Meta badges */}
+                              <div className="flex gap-2 mt-2 flex-wrap items-center">
+                                <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
+                                <Badge variant="outline" className="text-slate-400 border-slate-600 text-[10px]">{getPartyName(q.party_id)}</Badge>
+                                {q.importance && q.importance !== 'Med' && (
+                                  <Badge className={q.importance === 'High' ? 'bg-orange-500/20 text-orange-400 text-[10px]' : 'bg-gray-500/20 text-gray-400 text-[10px]'}>
+                                    {q.importance}
+                                  </Badge>
+                                )}
+                                {/* Proof indicator */}
+                                {hasProof && (
+                                  <span className="text-[10px] text-purple-400 font-medium flex items-center gap-0.5">
+                                    <BookOpen className="w-3 h-3" /> {proofs.length} proof
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Trial point */}
+                              {trialPoints.length > 0 && (
+                                <div className="mt-1.5 flex items-center gap-1">
+                                  <Target className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                                  <span className="text-[11px] text-yellow-400 truncate">{trialPoints[0].point_text}</span>
+                                </div>
+                              )}
+
+                              {/* Expected answer */}
+                              {q.expected_answer && (
+                                <p className="text-[11px] text-slate-500 mt-1 border-l-2 border-slate-700 pl-2 italic truncate">
+                                  A: {q.expected_answer}
+                                </p>
+                              )}
+
+                              {/* Proof items — clickable */}
+                              {hasProof && (
+                                <div className="mt-2 flex flex-col gap-1">
+                                  {proofs.map(proof => {
+                                    const subtitle = getProofSubtitle(proof);
+                                    return (
+                                      <button
+                                        key={proof.id}
+                                        onClick={() => { setSelectedProofItem(proof); setShowProofModal(true); }}
+                                        className="flex items-center gap-1.5 text-left bg-[#0a0f1e] border border-[#1e2a45] rounded px-2 py-1.5 hover:border-cyan-500/50 hover:bg-cyan-900/20 transition-colors group"
+                                      >
+                                        {proof.type === 'depoClip'
+                                          ? <Video className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                                          : <FileText className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                                        }
+                                        <span className="text-[11px] text-slate-300 group-hover:text-cyan-300 flex-1 truncate">{proof.label}</span>
+                                        {subtitle && <span className="text-[10px] text-slate-500 truncate flex-shrink-0">{subtitle}</span>}
+                                        <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 flex-shrink-0" />
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex gap-1 flex-shrink-0 items-start">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
               {provided.placeholder}
             </div>
           )}
         </Droppable>
       </DragDropContext>
 
+      {/* Edit/Add Question Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent key={modalKey} className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Add"} Question</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-slate-100">{editing?.id ? "Edit" : "Add"} Question</DialogTitle></DialogHeader>
           {editing && (
             <div className="space-y-3">
               <div><Label className="text-slate-400 text-xs">Question</Label><Textarea value={editing.question_text} onChange={e => setEditing({ ...editing, question_text: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={3} /></div>
@@ -190,7 +357,7 @@ export default function Questions() {
                   <Label className="text-slate-400 text-xs">Witness</Label>
                   <Select value={editing.party_id || ""} onValueChange={v => setEditing({ ...editing, party_id: v })}>
                     <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select..." /></SelectTrigger>
-                    <SelectContent>{parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{parties.map(p => <SelectItem key={p.id} value={p.id}>{p.display_name || `${p.first_name || ''} ${p.last_name}`.trim()}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
@@ -247,8 +414,6 @@ export default function Questions() {
                 <div><Label className="text-slate-400 text-xs">Branch Prompt</Label><Input value={editing.branch_prompt || ""} onChange={e => setEditing({ ...editing, branch_prompt: e.target.value })} placeholder="e.g. If they deny, go to impeachment branch" className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" /></div>
               )}
               <div><Label className="text-slate-400 text-xs">Live Notes</Label><Textarea value={editing.live_notes || ""} onChange={e => setEditing({ ...editing, live_notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} /></div>
-
-              {/* Branching panel — only shown when editing an existing question */}
               {editing.id && (
                 <div className="mt-4 pt-4 border-t border-[#1e2a45]">
                   <BranchBuilder
@@ -265,7 +430,6 @@ export default function Questions() {
                         is_branch_root: false,
                         importance: "High",
                       });
-                      // auto-create a branch rule pointing to it
                       await base44.entities.QuestionBranches.create({
                         case_id: activeCase.id,
                         from_question_id: editing.id,
@@ -287,6 +451,12 @@ export default function Questions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ProofViewerModal
+        proofItem={selectedProofItem}
+        isOpen={showProofModal}
+        onClose={() => setShowProofModal(false)}
+      />
     </div>
   );
 }

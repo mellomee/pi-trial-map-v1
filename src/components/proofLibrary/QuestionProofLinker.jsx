@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Link2 } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 
 export default function QuestionProofLinker({ questionId, evidenceGroupId, caseId, proofItems }) {
   const [isOpen, setIsOpen] = useState(false);
