@@ -34,14 +34,15 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
       }
       
       const allQ = await base44.entities.Questions.filter({ case_id: caseId });
-      const filtered = allQ.filter(q => witIds.includes(q.party_id));
+      // Load only parent questions (no parent_id) for this witness group
+      const filtered = allQ.filter(q => witIds.includes(q.party_id) && !q.parent_id);
       setQuestions(filtered);
 
-      // Load linked proof for each question
+      // Load linked proof for each question (including follow-up children)
       const proofMap = {};
       for (const q of filtered) {
-        const links = await base44.entities.QuestionLinks.filter({ question_id: q.id });
-        proofMap[q.id] = links.filter(l => l.link_type === 'DepoClip' || l.link_type === 'JointExhibit');
+        const links = await base44.entities.QuestionProofItems.filter({ question_id: q.id });
+        proofMap[q.id] = links;
       }
       setLinkedProof(proofMap);
     } catch (error) {
