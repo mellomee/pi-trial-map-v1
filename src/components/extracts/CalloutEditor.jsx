@@ -117,6 +117,37 @@ export default function CalloutEditor({ extract }) {
     });
   }, [fileUrl]);
 
+  // Load parties and resolve default witness from source depo exhibit
+  useEffect(() => {
+    if (!extract?.case_id) return;
+    base44.entities.Parties.filter({ case_id: extract.case_id }).then(setParties);
+
+    // Resolve default witness from source depo exhibit
+    const resolveDefaultWitness = async () => {
+      const depoExhibitId = extract.source_depo_exhibit_id;
+      if (!depoExhibitId) return;
+      const depoExhibits = await base44.entities.DepositionExhibits.filter({ id: depoExhibitId });
+      if (!depoExhibits.length) return;
+      const de = depoExhibits[0];
+      // Try deponent_party_id from deposition
+      if (de.deposition_id) {
+        const deps = await base44.entities.Depositions.filter({ id: de.deposition_id });
+        if (deps.length && deps[0].party_id) {
+          setDefaultWitnessId(deps[0].party_id);
+          setPendingWitnessId(deps[0].party_id);
+          return;
+        }
+      }
+      // Try ExtractWitnesses
+      const ews = await base44.entities.ExtractWitnesses.filter({ extract_id: extract.id });
+      if (ews.length) {
+        setDefaultWitnessId(ews[0].witness_id);
+        setPendingWitnessId(ews[0].witness_id);
+      }
+    };
+    resolveDefaultWitness();
+  }, [extract?.id, extract?.case_id, extract?.source_depo_exhibit_id]);
+
   // Load callouts
   const loadCallouts = useCallback(async () => {
     if (!extractId) return;
