@@ -814,7 +814,7 @@ export default function ProofLibrary() {
             {allWitnesses.map((wit) => {
               const isAssigned = linkedWitnesses.some((l) => l.id === wit.id);
               return (
-                <label key={wit.id} className="flex items-start gap-3 p-2 border border-gray-700 rounded cursor-pointer hover:bg-gray-800">
+                <label key={wit.id} className="flex items-start gap-3 p-2 border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
                   <input
                     type="checkbox"
                     checked={isAssigned}
