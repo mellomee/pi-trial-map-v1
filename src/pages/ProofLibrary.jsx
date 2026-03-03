@@ -480,6 +480,9 @@ export default function ProofLibrary() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-100">{proof.label}</p>
+                              {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] ? (
+                                <p className="text-xs text-cyan-400 mt-0.5">↳ {calloutNames[proof.callout_id]}</p>
+                              ) : null}
                               <p className="text-xs text-gray-500 mt-1">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
                             </div>
                             <Button
