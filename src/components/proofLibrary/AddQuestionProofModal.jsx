@@ -144,6 +144,34 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
     return () => { cancelled = true; };
   }, [pdfDoc, pageNum, scale]);
 
+  // Load PDF for file viewer
+  useEffect(() => {
+    if (!viewingFile?.extract_file_url?.toLowerCase().includes('.pdf')) {
+      setFileViewerPdfDoc(null);
+      return;
+    }
+    pdfjs.getDocument(viewingFile.extract_file_url).promise.then(doc => {
+      setFileViewerPdfDoc(doc);
+      setFileViewerNumPages(doc.numPages);
+      setFileViewerPage(1);
+    });
+  }, [viewingFile]);
+
+  // Render file viewer PDF page
+  useEffect(() => {
+    if (!fileViewerPdfDoc || !fileViewerCanvasRef.current) return;
+    let cancelled = false;
+    fileViewerPdfDoc.getPage(fileViewerPage).then(page => {
+      if (cancelled) return;
+      const vp = page.getViewport({ scale: fileViewerScale });
+      const canvas = fileViewerCanvasRef.current;
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      page.render({ canvasContext: canvas.getContext("2d"), viewport: vp });
+    });
+    return () => { cancelled = true; };
+  }, [fileViewerPdfDoc, fileViewerPage, fileViewerScale]);
+
   // Handle adding clip as proof
   const handleAddClipProof = async () => {
     if (!selectedClip) return;
