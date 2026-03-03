@@ -184,6 +184,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           }
           console.log('[ProofViewer] jointExhibit found:', JSON.stringify(jx));
 
+          console.log('[ProofViewer] jx.admitted_no:', jx?.admitted_no, '| jx.status:', jx?.status, '| ext.extract_page_count:', ext.extract_page_count);
           setExtractMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx });
         }
 
