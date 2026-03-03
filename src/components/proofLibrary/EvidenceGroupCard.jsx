@@ -9,8 +9,8 @@ export default function EvidenceGroupCard({ group, isSelected, onSelect, onEdit,
       onClick={() => onSelect(group.id)}
       className={`p-3 cursor-pointer transition-all ${
         isSelected
-          ? 'border-cyan-400 bg-cyan-500/10 shadow-md'
-          : 'border-gray-600 hover:border-gray-500 hover:bg-gray-900/50'
+          ? 'border-cyan-400 bg-cyan-900/40 shadow-md ring-1 ring-cyan-400/50'
+          : 'border-gray-600 bg-[#131a2e] hover:border-gray-400 hover:bg-[#1a2340]'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
