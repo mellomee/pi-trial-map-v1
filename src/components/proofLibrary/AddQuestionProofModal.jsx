@@ -321,114 +321,116 @@ export default function AddQuestionProofModal({ isOpen, onClose, question, evide
 
             {/* Exhibit Extracts Tab */}
             <TabsContent value="extract" className="space-y-3 mt-4">
-              <div className="grid grid-cols-4 gap-3 h-96">
-                {/* Extracts list */}
-                <div className="border border-gray-700 rounded bg-gray-950 flex flex-col">
-                  <div className="relative px-3 py-2 border-b border-gray-700">
-                    <Search className="absolute left-6 top-3 w-3 h-3 text-gray-500" />
-                    <Input
-                      placeholder="Search..."
-                      value={searchExtract}
-                      onChange={(e) => setSearchExtract(e.target.value)}
-                      className="pl-7 h-7 text-xs bg-gray-800 border-gray-700 text-gray-100"
-                    />
-                  </div>
-                  <div className="flex-1 overflow-y-auto space-y-1 p-2">
-                    {extracts.filter(e =>
-                      e.title?.toLowerCase().includes(searchExtract.toLowerCase()) ||
-                      e.marked_title?.toLowerCase().includes(searchExtract.toLowerCase())
-                    ).map(extract => (
-                      <button
-                        key={extract.id}
-                        onClick={() => { setSelectedExtract(extract); setSelectedCallout(null); }}
-                        className={`w-full text-left p-2 rounded text-xs border transition-colors ${
-                          selectedExtract?.id === extract.id
-                            ? 'border-cyan-400 bg-cyan-500/10 text-cyan-200'
-                            : 'border-gray-700 bg-gray-800 hover:border-gray-500 text-gray-300'
-                        }`}
-                      >
-                        <p className="font-medium truncate">{extract.title || extract.marked_title}</p>
-                        <p className="text-[10px] text-gray-500">#{extract.marked_no}</p>
-                      </button>
-                    ))}
-                  </div>
+              {/* Extracts list - Full width */}
+              <div className="border border-gray-700 rounded bg-gray-950">
+                <div className="px-3 py-2 border-b border-gray-700">
+                  <p className="text-xs font-semibold text-gray-400 uppercase">Exhibit Extracts ({extracts.length})</p>
                 </div>
-
-                {/* Callouts list */}
-                <div className="border border-gray-700 rounded bg-gray-950 flex flex-col">
-                  <div className="px-3 py-2 border-b border-gray-700 text-[10px] font-semibold text-gray-400 uppercase">Callouts</div>
-                  <div className="flex-1 overflow-y-auto space-y-1 p-2">
-                    {selectedExtract ? (
-                      callouts.map(callout => (
-                        <button
-                          key={callout.id}
-                          onClick={() => setSelectedCallout(callout)}
-                          className={`w-full text-left p-2 rounded text-xs border transition-colors ${
-                            selectedCallout?.id === callout.id
-                              ? 'border-orange-400 bg-orange-500/10 text-orange-200'
-                              : 'border-gray-700 bg-gray-800 hover:border-gray-500 text-gray-300'
-                          }`}
-                        >
-                          <p className="font-medium truncate">{callout.name}</p>
-                          <p className="text-[10px] text-gray-500 mt-0.5">p.{callout.page_number}</p>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="text-gray-500 text-[10px] text-center py-8">Select extract first</div>
-                    )}
-                  </div>
+                <div className="grid grid-cols-3 gap-2 p-2 max-h-24 overflow-y-auto">
+                  {extracts.filter(e =>
+                    e.title?.toLowerCase().includes(searchExtract.toLowerCase()) ||
+                    e.marked_title?.toLowerCase().includes(searchExtract.toLowerCase())
+                  ).map(extract => (
+                    <button
+                      key={extract.id}
+                      onClick={() => { setSelectedExtract(extract); setSelectedCallout(null); }}
+                      className={`text-left p-2 rounded border transition-colors ${
+                        selectedExtract?.id === extract.id
+                          ? 'border-cyan-400 bg-cyan-500/10'
+                          : 'border-gray-700 bg-gray-800 hover:border-gray-500'
+                      }`}
+                    >
+                      <p className="text-xs font-medium text-gray-200 truncate">{extract.title || extract.marked_title}</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">#{extract.marked_no}</p>
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                {/* Callout preview */}
-                <div className="col-span-2 border border-gray-700 rounded bg-gray-950 flex flex-col overflow-hidden">
-                  {selectedCallout ? (
-                    <>
-                      <div className="px-3 py-2 border-b border-gray-700 space-y-1">
-                        <p className="text-xs font-semibold text-cyan-300">{selectedCallout.name}</p>
-                        <div className="flex gap-2 flex-wrap">
-                          <Badge className="bg-purple-500/20 text-purple-300 text-[10px]">Callout</Badge>
-                          {selectedCallout.jury_safe && <Badge className="bg-green-500/20 text-green-400 text-[10px]">Jury Safe</Badge>}
-                        </div>
-                      </div>
-                      <div className="flex-1 overflow-auto flex items-center justify-center p-2 bg-black">
-                        {selectedCallout.snapshot_image_url ? (
-                          <div className="relative">
-                            <img 
-                              src={selectedCallout.snapshot_image_url} 
-                              alt="Callout" 
-                              className="max-w-full max-h-96 object-contain"
-                            />
-                            {/* Highlights overlay */}
-                            {highlights.map(hl =>
-                              (hl.rects_norm || []).map((r, ri) => (
-                                <div key={`${hl.id}-${ri}`} style={{
-                                  position: "absolute",
-                                  left: `${r.x * 100}%`, top: `${r.y * 100}%`,
-                                  width: `${r.w * 100}%`, height: `${r.h * 100}%`,
-                                  background: COLOR_CSS[hl.color] || COLOR_CSS.yellow,
-                                  pointerEvents: "none",
-                                }} />
-                              ))
+              {/* Extract Details - Full width */}
+              {selectedExtract && (
+                <div className="border border-gray-700 rounded bg-gray-950 p-3 space-y-3">
+                  {/* 3-column metadata tiles */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Original</p>
+                      <p className="text-xl font-bold text-yellow-300">#2</p>
+                      <p className="text-xs text-gray-300">Color photocopy of photograph</p>
+                      <p className="text-[10px] text-cyan-400 mt-1">KEROLES</p>
+                    </div>
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Marked</p>
+                      <p className="text-gray-400 text-xs">Not on joint list</p>
+                      <p className="text-[10px] text-gray-400 mt-2">1 pg extracted</p>
+                    </div>
+                    <div className="bg-gray-900 border border-gray-700 rounded p-3 space-y-1">
+                      <p className="text-[10px] text-gray-500 uppercase font-semibold">Admitted</p>
+                      <p className="text-gray-400 text-xs">Not admitted</p>
+                    </div>
+                  </div>
+
+                  {/* Callouts row */}
+                  {callouts.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-cyan-400 uppercase">Callouts ({callouts.length})</p>
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {callouts.map((callout, idx) => (
+                          <button
+                            key={callout.id}
+                            onClick={() => setSelectedCallout(callout)}
+                            className={`flex-shrink-0 rounded border-2 transition-all ${
+                              selectedCallout?.id === callout.id
+                                ? 'border-cyan-400 shadow-lg shadow-cyan-500/20'
+                                : 'border-gray-700 hover:border-gray-500'
+                            }`}
+                          >
+                            {callout.snapshot_image_url ? (
+                              <img src={callout.snapshot_image_url} alt={callout.name} className="h-20 w-24 object-cover rounded" />
+                            ) : (
+                              <div className="h-20 w-24 flex items-center justify-center bg-gray-800 rounded">
+                                <Image className="w-5 h-5 text-gray-600" />
+                              </div>
                             )}
-                          </div>
-                        ) : (
-                          <div className="text-center text-gray-600">
-                            <Image className="w-8 h-8 mx-auto mb-1 opacity-30" />
-                            <p className="text-[10px]">No snapshot</p>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      <div className="text-center">
-                        <Image className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs">Select a callout to preview</p>
+                            {callout.name && <p className="text-[9px] text-gray-400 text-center px-1 py-0.5 truncate w-24">{callout.name}</p>}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}
+
+                  {/* Full-width preview */}
+                  {selectedCallout && (
+                    <div className="border border-gray-700 rounded bg-black p-3 flex items-center justify-center min-h-64">
+                      {selectedCallout.snapshot_image_url ? (
+                        <div className="relative max-w-full">
+                          <img 
+                            src={selectedCallout.snapshot_image_url} 
+                            alt="Callout" 
+                            className="max-w-full max-h-96 object-contain"
+                          />
+                          {/* Highlights overlay */}
+                          {highlights.map(hl =>
+                            (hl.rects_norm || []).map((r, ri) => (
+                              <div key={`${hl.id}-${ri}`} style={{
+                                position: "absolute",
+                                left: `${r.x * 100}%`, top: `${r.y * 100}%`,
+                                width: `${r.w * 100}%`, height: `${r.h * 100}%`,
+                                background: COLOR_CSS[hl.color] || COLOR_CSS.yellow,
+                                pointerEvents: "none",
+                              }} />
+                            ))
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-600">
+                          <Image className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                          <p className="text-sm">No snapshot</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
               <div className="flex gap-2 pt-3">
                 <Button variant="outline" onClick={onClose} className="border-gray-700 text-gray-300 flex-1">
