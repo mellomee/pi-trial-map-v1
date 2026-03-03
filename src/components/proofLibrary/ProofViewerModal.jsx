@@ -41,7 +41,7 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose }) {
       } else if (proofItem.type === 'extract') {
         const [extracts, cos] = await Promise.all([
           base44.entities.ExhibitExtracts.filter({ id: proofItem.source_id }),
-          base44.entities.ExhibitCallouts.filter({ extract_id: proofItem.source_id }),
+          base44.entities.Callouts.filter({ extract_id: proofItem.source_id }),
         ]);
         if (extracts.length > 0) setExtract(extracts[0]);
         setCallouts(cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0)));
