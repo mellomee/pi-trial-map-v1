@@ -33,11 +33,23 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
         return;
       }
       
-      // Query questions scoped to this evidence group AND by witness
-      const allQ = await base44.entities.Questions.filter({ 
+      // Load root questions scoped to this evidence group
+      const roots = await base44.entities.Questions.filter({ 
         case_id: caseId,
         primary_evidence_group_id: evidenceGroup.id,
+        parent_id: null,
       });
+      
+      // Collect all root IDs for child lookup
+      const rootIds = roots.map(r => r.id);
+      
+      // Load all children of these roots (resilient to missing group id on child)
+      const allChildren = rootIds.length > 0 
+        ? await base44.entities.Questions.filter({ parent_id: { $in: rootIds } })
+        : [];
+      
+      // Combine roots + children
+      const allQ = [...roots, ...allChildren];
       const filtered = allQ.filter(q => witIds.includes(q.party_id) || q.parent_id);
       setQuestions(filtered);
 
