@@ -11,12 +11,7 @@ import * as pdfjs from 'pdfjs-dist';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const COLOR_CSS = {
-  yellow: "rgba(255,220,0,0.40)",
-  red:    "rgba(239,68,68,0.40)",
-  green:  "rgba(34,197,94,0.40)",
-  blue:   "rgba(59,130,246,0.40)",
-};
+
 
 export default function AddQuestionProofModal({ isOpen, onClose, question, evidenceGroupId, caseId, onProofLinked }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
