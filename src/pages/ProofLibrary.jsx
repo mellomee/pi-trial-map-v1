@@ -889,6 +889,17 @@ export default function ProofLibrary() {
           setSelectedProofItem(prev => prev?.id === proofItemId ? { ...prev, callout_id: callout.id } : prev);
         }}
       />
+
+      <ProofInUseModal
+        isOpen={!!proofInUseModalProof}
+        proof={proofInUseModalProof}
+        caseId={activeCase?.id}
+        onClose={() => setProofInUseModalProof(null)}
+        onProofDeleted={() => {
+          if (proofInUseModalProof) doDeleteProof(proofInUseModalProof.id);
+          setProofInUseModalProof(null);
+        }}
+      />
     </div>
   );
 }
