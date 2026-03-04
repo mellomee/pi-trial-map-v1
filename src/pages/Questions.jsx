@@ -285,9 +285,7 @@ export default function Questions() {
                       )}
                     </Draggable>
                   );
-                };
-
-              })}
+                  })}
               {provided.placeholder}
             </div>
           )}
