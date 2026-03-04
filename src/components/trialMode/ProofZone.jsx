@@ -18,6 +18,11 @@ const typeBadgeColor = (type) => {
 };
 
 function ProofCard({ proof, isSelected, onClick }) {
+  // For depoClips, prefer clip_title (topic_tag) over the raw label
+  const displayLabel = proof.type === 'depoClip'
+    ? (proof.clip_title || proof.topic_tag || proof.label)
+    : proof.label;
+
   return (
     <button
       onClick={onClick}
@@ -31,7 +36,7 @@ function ProofCard({ proof, isSelected, onClick }) {
         {typeIcon(proof.type)}
         <div className="flex-1 min-w-0">
           <p className={`text-xs font-medium line-clamp-2 leading-snug ${isSelected ? 'text-cyan-200' : 'text-slate-200'}`}>
-            {proof.label}
+            {displayLabel}
           </p>
           {proof.meta && (
             <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{proof.meta}</p>
