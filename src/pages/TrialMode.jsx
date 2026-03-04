@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import WitnessQuestionsList from "@/components/trialMode/WitnessQuestionsList";
@@ -17,6 +17,8 @@ import {
 } from "@/components/trialMode/trialModeResolvers";
 import { useSearchParams } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+
+const PERSIST_KEY = "trialMode_state";
 
 export default function TrialMode() {
   const { activeCase, loading } = useActiveCase();
