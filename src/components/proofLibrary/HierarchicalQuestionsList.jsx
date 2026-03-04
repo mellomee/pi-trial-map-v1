@@ -179,86 +179,60 @@ export default function HierarchicalQuestionsList({
     }
   };
 
-  const renderQuestion = (q, isChild = false, index = 0, parentCount = 0) => {
+  const renderQuestion = (q, index = 0) => {
     const linkedProofIds = linkedProofsByQuestion[q.id] || [];
     const children = getChildQuestions(q.id);
-    const isExpanded = expandedParents.has(q.id);
-    const num = isChild ? '' : `${index + 1}.`;
+    const hasChildren = children.length > 0;
+    const num = `${index + 1}.`;
 
     return (
-      <div key={q.id} className="space-y-2">
-        <div className={`bg-gray-700 border border-gray-600 rounded p-3 ${isChild ? 'ml-6 bg-gray-750' : ''}`}>
+      <div key={q.id}>
+        <div className="bg-gray-700 border border-gray-600 rounded p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <div className="flex gap-2 items-start">
-                {children.length > 0 && (
+              <p className="text-sm font-medium text-gray-100">
+                <span className="text-cyan-400">{num}</span> {q.question_text}
+              </p>
+              <div className="flex gap-2 mt-1 flex-wrap items-center">
+                <Badge className="bg-blue-500/20 text-blue-400 text-xs">{q.exam_type}</Badge>
+                <Badge variant="outline" className="text-gray-400 border-gray-600 text-xs">{getWitnessName(q.party_id)}</Badge>
+                {hasChildren && (
                   <button
-                    onClick={() => toggleParent(q.id)}
-                    className="text-cyan-400 hover:text-cyan-300 flex-shrink-0 mt-0.5"
+                    onClick={() => setChildrenModal(q)}
+                    className="flex items-center gap-1 text-purple-400 hover:text-purple-300 text-xs"
+                    title={`${children.length} child question(s)`}
                   >
-                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    <GitBranch className="w-3 h-3" />
+                    <span>{children.length} child{children.length > 1 ? 'ren' : ''}</span>
                   </button>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-100">{num && <span className="text-cyan-400">{num}</span>} {q.question_text}</p>
-                  <div className="flex gap-2 mt-1 flex-wrap items-center">
-                    <Badge className="bg-blue-500/20 text-blue-400 text-xs">{q.exam_type}</Badge>
-                    {q.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{q.question_type}</Badge>}
-                    <Badge variant="outline" className="text-gray-400 border-gray-600 text-xs">{getWitnessName(q.party_id)}</Badge>
-                    {q.goal && <span className="text-xs text-gray-400">Goal: {q.goal}</span>}
-                    {q.expected_answer && <span className="text-xs text-cyan-400">Expected: {q.expected_answer}</span>}
-                  </div>
-                </div>
+                {q.goal && <span className="text-xs text-gray-400">Goal: {q.goal}</span>}
               </div>
             </div>
             <div className="flex gap-0.5 flex-shrink-0">
-              <Button
-                size="sm"
-                variant="ghost"
+              <Button size="sm" variant="ghost"
                 onClick={() => { setSelectedQuestionForProof(q); setShowAddProofModal(true); }}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-cyan-400"
-                title="Link proof"
-              >
+                className="h-6 w-6 p-0 text-gray-400 hover:text-cyan-400" title="Link proof">
                 <Link2 className="w-3 h-3" />
               </Button>
-              {!q.parent_id && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleAddChild(q, 'Follow-Up')}
-                    className="h-6 w-6 p-0 text-gray-400 hover:text-blue-400"
-                    title="Add follow-up"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleAddChild(q, 'Impeachment')}
-                    className="h-6 w-6 p-0 text-gray-400 hover:text-purple-400"
-                    title="Add impeachment"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                </>
-              )}
-              <Button
-                size="sm"
-                variant="ghost"
+              <Button size="sm" variant="ghost"
+                onClick={() => handleAddChild(q, 'Follow-Up')}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-blue-400" title="Add follow-up">
+                <Plus className="w-3 h-3" />
+              </Button>
+              <Button size="sm" variant="ghost"
+                onClick={() => handleAddChild(q, 'Impeachment')}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-purple-400" title="Add impeachment">
+                <Copy className="w-3 h-3" />
+              </Button>
+              <Button size="sm" variant="ghost"
                 onClick={() => handleEditQuestion(q)}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-cyan-400"
-                title="Edit"
-              >
+                className="h-6 w-6 p-0 text-gray-400 hover:text-cyan-400" title="Edit">
                 <Pencil className="w-3 h-3" />
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
+              <Button size="sm" variant="ghost"
                 onClick={() => handleDeleteQuestion(q.id)}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
-                title="Delete"
-              >
+                className="h-6 w-6 p-0 text-gray-400 hover:text-red-400" title="Delete">
                 <Trash2 className="w-3 h-3" />
               </Button>
             </div>
@@ -278,18 +252,11 @@ export default function HierarchicalQuestionsList({
                       {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
                         <p className="text-gray-400">↳ {calloutNames[proof.callout_id]}</p>
                       )}
-                      {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
-                        <p className="text-blue-400">👤 {calloutWitnesses[proof.callout_id]}</p>
-                      )}
                       <p className="text-gray-500">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
+                    <Button size="icon" variant="ghost"
                       onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}
-                      className="h-5 w-5 p-0 text-gray-500 hover:text-cyan-400 flex-shrink-0"
-                      title="View proof"
-                    >
+                      className="h-5 w-5 p-0 text-gray-500 hover:text-cyan-400 flex-shrink-0" title="View proof">
                       <ExternalLink className="w-3 h-3" />
                     </Button>
                   </div>
@@ -297,16 +264,7 @@ export default function HierarchicalQuestionsList({
               })}
             </div>
           )}
-
-
         </div>
-
-        {/* Child questions */}
-        {isExpanded && children.length > 0 && (
-          <div className="space-y-2">
-            {children.map((child, idx) => renderQuestion(child, true, idx))}
-          </div>
-        )}
       </div>
     );
   };
