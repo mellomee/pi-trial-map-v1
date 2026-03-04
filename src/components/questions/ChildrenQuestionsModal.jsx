@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { GripVertical, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { base44 } from "@/api/base44Client";
+import ProofViewerModal from "@/components/proofLibrary/ProofViewerModal";
 
 export default function ChildrenQuestionsModal({
   isOpen,
