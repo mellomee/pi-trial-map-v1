@@ -18,6 +18,7 @@ const NAV_SECTIONS = [
       { name: "Trial Points", icon: Target, page: "TrialPoints" },
       { name: "Questions", icon: HelpCircle, page: "Questions" },
       { name: "Trial Mode", icon: Zap, page: "TrialMode" },
+      { name: "Jury View", icon: Monitor, page: "JuryView" },
       { name: "Transcripts", icon: FileText, page: "Transcripts" },
     ],
   },
