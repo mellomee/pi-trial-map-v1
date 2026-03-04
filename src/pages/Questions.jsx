@@ -218,7 +218,7 @@ export default function Questions() {
                 const linkedProofIds = questionProofs[q.id] || [];
                 const hasChildren = q.children && q.children.length > 0;
                 const qNode = q;
-                return (
+                return (<>
                     <Draggable key={qNode.id} draggableId={qNode.id} index={idx}>
                       {(provided, snapshot) => (
                         <div ref={provided.innerRef} {...provided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
