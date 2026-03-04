@@ -288,7 +288,6 @@ export default function Questions() {
                   );
                 };
 
-                return renderQuestion(q, 0);
               })}
               {provided.placeholder}
             </div>
