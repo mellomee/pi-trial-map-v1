@@ -92,26 +92,21 @@ export default function ChildrenQuestionsModal({
                 {(provided) => (
                   <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
                     {localChildren.map((child, idx) => {
-                      const linkedProofIds = (proofItemsMap && child.id)
-                        ? Object.keys(proofItemsMap).filter(pid =>
-                            // We don't have questionProofs here; show proof count from parent's data
-                            false
-                          )
-                        : [];
+                      const linkedProofIds = linkedProofsByQuestion[child.id] || [];
 
                       return (
                         <Draggable key={child.id} draggableId={child.id} index={idx}>
-                          {(provided, snapshot) => (
+                          {(dragProvided, snapshot) => (
                             <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
+                              ref={dragProvided.innerRef}
+                              {...dragProvided.draggableProps}
                               className={snapshot.isDragging ? "opacity-60" : ""}
                             >
                               <Card className="bg-[#131a2e] border-[#1e2a45]">
                                 <CardContent className="py-3">
                                   <div className="flex items-start gap-2">
                                     <button
-                                      {...provided.dragHandleProps}
+                                      {...dragProvided.dragHandleProps}
                                       className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5"
                                     >
                                       <GripVertical className="w-3 h-3" />
@@ -136,6 +131,28 @@ export default function ChildrenQuestionsModal({
                                         </Badge>
                                       </div>
                                       {child.goal && <p className="text-xs text-slate-500 mt-1">Goal: {child.goal}</p>}
+
+                                      {/* Linked proof from Proof Library */}
+                                      {linkedProofIds.length > 0 && (
+                                        <div className="mt-2 border-t border-slate-700 pt-2 space-y-1">
+                                          <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
+                                          {linkedProofIds.map(proofId => {
+                                            const proof = proofItemsMap?.[proofId];
+                                            if (!proof) return (
+                                              <p key={proofId} className="text-xs text-slate-500 italic">Proof #{proofId.slice(0,8)}…</p>
+                                            );
+                                            return (
+                                              <div key={proofId} className="text-xs bg-slate-700/30 rounded p-2 space-y-0.5">
+                                                <p className="text-slate-100 font-medium">{proof.label}</p>
+                                                {proof.type === 'extract' && proof.callout_id && calloutNames?.[proof.callout_id] && (
+                                                  <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
+                                                )}
+                                                <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
                                     </div>
                                     <div className="flex gap-1 flex-shrink-0">
                                       <Button
