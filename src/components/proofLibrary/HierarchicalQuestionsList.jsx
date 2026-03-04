@@ -194,14 +194,19 @@ export default function HierarchicalQuestionsList({
                   </button>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-100">{num && <span className="text-cyan-400">{num}</span>} {q.question_text}</p>
-                  <div className="flex gap-2 mt-1 flex-wrap items-center">
-                    <Badge className="bg-blue-500/20 text-blue-400 text-xs">{q.exam_type}</Badge>
-                    {q.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{q.question_type}</Badge>}
-                    <Badge variant="outline" className="text-gray-400 border-gray-600 text-xs">{getWitnessName(q.party_id)}</Badge>
-                    {q.goal && <span className="text-xs text-gray-400">Goal: {q.goal}</span>}
-                    {q.expected_answer && <span className="text-xs text-cyan-400">Expected: {q.expected_answer}</span>}
-                  </div>
+                <p className="text-sm font-medium text-gray-100">{num && <span className="text-cyan-400">{num}</span>} {q.question_text}</p>
+                <div className="flex gap-2 mt-1 flex-wrap items-center">
+                  <Badge className="bg-blue-500/20 text-blue-400 text-xs">{q.exam_type}</Badge>
+                  {q.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{q.question_type}</Badge>}
+                  <Badge variant="outline" className="text-gray-400 border-gray-600 text-xs">{getWitnessName(q.party_id)}</Badge>
+                  {q.goal && <span className="text-xs text-gray-400">Goal: {q.goal}</span>}
+                  {q.expected_answer && <span className="text-xs text-cyan-400">Expected: {q.expected_answer}</span>}
+                </div>
+                <div className="mt-1 font-mono text-[9px] text-yellow-600/70 space-y-0.5">
+                  <p>id: {q.id}</p>
+                  <p>parent_id: {q.parent_id || 'none'}</p>
+                  <p>eg_id: {q.primary_evidence_group_id || 'none'}</p>
+                </div>
                 </div>
               </div>
             </div>
