@@ -145,12 +145,18 @@ export default function ChildrenQuestionsModal({
                                               <p key={proofId} className="text-xs text-slate-500 italic">Proof #{proofId.slice(0,8)}…</p>
                                             );
                                             return (
-                                              <div key={proofId} className="text-xs bg-slate-700/30 rounded p-2 space-y-0.5">
-                                                <p className="text-slate-100 font-medium">{proof.label}</p>
-                                                {proof.type === 'extract' && proof.callout_id && calloutNames?.[proof.callout_id] && (
-                                                  <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
-                                                )}
-                                                <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                              <div key={proofId} className="text-xs bg-slate-700/30 rounded p-2 flex items-start justify-between gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                  <p className="text-slate-100 font-medium">{proof.label}</p>
+                                                  {proof.type === 'extract' && proof.callout_id && calloutNames?.[proof.callout_id] && (
+                                                    <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
+                                                  )}
+                                                  <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                                </div>
+                                                <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-slate-500 hover:text-cyan-400 flex-shrink-0"
+                                                  onClick={() => { setSelectedProofItem(proof); setShowProofViewer(true); }}>
+                                                  <ExternalLink className="w-3 h-3" />
+                                                </Button>
                                               </div>
                                             );
                                           })}
