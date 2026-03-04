@@ -23,6 +23,8 @@ export default function ChildrenQuestionsModal({
   const [localChildren, setLocalChildren] = useState([]);
   const [saving, setSaving] = useState(false);
   const [linkedProofsByQuestion, setLinkedProofsByQuestion] = useState({});
+  const [selectedProofItem, setSelectedProofItem] = useState(null);
+  const [showProofViewer, setShowProofViewer] = useState(false);
 
   useEffect(() => {
     if (parent?.children) {
