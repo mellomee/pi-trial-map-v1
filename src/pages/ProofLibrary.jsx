@@ -255,7 +255,23 @@ export default function ProofLibrary() {
     }
   };
 
-  const handleRemoveProof = async (proofItemId) => {
+  const handleRemoveProof = async (proof) => {
+    try {
+      // Check if any questions use this proof
+      const qpLinks = await base44.entities.QuestionProofItems.filter({ proof_item_id: proof.id });
+      if (qpLinks.length > 0) {
+        // Show the "in use" modal instead of deleting
+        setProofInUseModalProof(proof);
+        return;
+      }
+      // Safe to delete: remove from evidence group
+      await doDeleteProof(proof.id);
+    } catch (error) {
+      console.error('Error removing proof:', error);
+    }
+  };
+
+  const doDeleteProof = async (proofItemId) => {
     try {
       const links = await base44.entities.EvidenceGroupProofItems.filter({
         evidence_group_id: selectedGroupId,
@@ -264,11 +280,6 @@ export default function ProofLibrary() {
       for (const link of links) {
         await base44.entities.EvidenceGroupProofItems.delete(link.id);
       }
-      // Also remove any question-to-proof mappings
-      const qpLinks = await base44.entities.QuestionProofItems.filter({ proof_item_id: proofItemId });
-      for (const link of qpLinks) {
-        await base44.entities.QuestionProofItems.delete(link.id);
-      }
       // Remove proof item witness associations
       const piWits = await base44.entities.ProofItemWitnesses.filter({ proof_item_id: proofItemId });
       for (const link of piWits) {
@@ -276,7 +287,7 @@ export default function ProofLibrary() {
       }
       await loadGroupDetails(selectedGroupId);
     } catch (error) {
-      console.error('Error removing proof:', error);
+      console.error('Error deleting proof:', error);
     }
   };
 
