@@ -303,6 +303,11 @@ export default function Questions() {
                                 <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(qNode.party_id)}</Badge>
                                 {qNode.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{qNode.question_type}</Badge>}
                               </div>
+                              <div className="mt-1 font-mono text-[9px] text-yellow-600/70 space-y-0.5">
+                                <p>id: {qNode.id}</p>
+                                <p>parent_id: {qNode.parent_id || 'none'}</p>
+                                <p>eg_id: {qNode.primary_evidence_group_id || 'none'}</p>
+                              </div>
                             </div>
                             <div className="flex gap-1 flex-shrink-0 items-center">
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...qNode }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
