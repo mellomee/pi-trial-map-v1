@@ -117,10 +117,10 @@ export default function QuestionWorkspace({
           </Card>
         )}
 
-        {/* Linked Evidence Groups */}
+        {/* Linked Buckets */}
         {evidenceGroups.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-slate-300">Linked Evidence Groups</h3>
+            <h3 className="text-sm font-semibold text-slate-300">Linked Buckets</h3>
             <div className="space-y-2">
               {evidenceGroups.map(eg => (
                 <Card key={eg.id} className="bg-[#131a2e] border-[#1e2a45] p-3">
