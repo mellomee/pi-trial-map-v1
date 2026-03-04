@@ -202,7 +202,7 @@ export default function HierarchicalQuestionsList({
                   {q.goal && <span className="text-xs text-gray-400">Goal: {q.goal}</span>}
                   {q.expected_answer && <span className="text-xs text-cyan-400">Expected: {q.expected_answer}</span>}
                 </div>
-                <div className="mt-1 font-mono text-[9px] text-yellow-600/70 space-y-0.5">
+                <div className="mt-1 font-mono text-[10px] text-yellow-400 bg-yellow-400/10 rounded px-1 py-0.5 space-y-0.5">
                   <p>id: {q.id}</p>
                   <p>parent_id: {q.parent_id || 'none'}</p>
                   <p>eg_id: {q.primary_evidence_group_id || 'none'}</p>
