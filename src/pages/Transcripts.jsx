@@ -258,6 +258,16 @@ export default function Transcripts() {
         )}
       </div>
 
+      {/* Depo Clips Viewer */}
+      <DepoClipsViewer
+        isOpen={clipsViewerOpen}
+        onClose={() => setClipsViewerOpen(false)}
+        caseId={activeCase?.id}
+        defaultDepositionId={selectedDepoId}
+        depositions={depositions}
+        parties={parties}
+      />
+
       {/* Clip dialog */}
       <Dialog open={clipDialog} onOpenChange={setClipDialog}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
