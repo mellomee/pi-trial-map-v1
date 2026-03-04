@@ -53,6 +53,13 @@ export default function TrialMode() {
     loadCaseData();
   }, [activeCase?.id]);
 
+  // Persist state whenever it changes
+  useEffect(() => {
+    if (!activeCase?.id) return;
+    const state = { witnessId: selectedWitnessId, questionId: selectedQuestionId, examType, panelVisible, caseId: activeCase.id };
+    localStorage.setItem(PERSIST_KEY, JSON.stringify(state));
+  }, [selectedWitnessId, selectedQuestionId, examType, panelVisible, activeCase?.id]);
+
   const loadCaseData = async () => {
     const [witnessesList, session] = await Promise.all([
       getWitnessesForCase(activeCase.id),
@@ -62,11 +69,23 @@ export default function TrialMode() {
     setTrialSession(session);
 
     const witnessIdParam = searchParams.get("witnessId");
-    const firstWitnessId = witnessIdParam || (witnessesList.length > 0 ? witnessesList[0].id : null);
-    if (firstWitnessId) {
-      setSelectedWitnessId(firstWitnessId);
-      const qs = await getQuestionsForWitness(activeCase.id, firstWitnessId);
+
+    // Use saved state if same case, otherwise fallback
+    const saved = (() => { try { return JSON.parse(localStorage.getItem(PERSIST_KEY) || '{}'); } catch { return {}; } })();
+    const savedWitnessId = saved.caseId === activeCase.id ? saved.witnessId : null;
+    const savedQuestionId = saved.caseId === activeCase.id ? saved.questionId : null;
+
+    const resolvedWitnessId = witnessIdParam || savedWitnessId || (witnessesList.length > 0 ? witnessesList[0].id : null);
+    if (resolvedWitnessId) {
+      setSelectedWitnessId(resolvedWitnessId);
+      const qs = await getQuestionsForWitness(activeCase.id, resolvedWitnessId);
       setQuestions(qs);
+      // Restore last question
+      if (savedQuestionId) {
+        setSelectedQuestionId(savedQuestionId);
+        const links = await resolveQuestionLinks(savedQuestionId, activeCase.id);
+        setResolvedLinks(links);
+      }
     }
   };
 
