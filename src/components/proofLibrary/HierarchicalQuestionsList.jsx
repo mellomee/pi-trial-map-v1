@@ -26,6 +26,7 @@ export default function HierarchicalQuestionsList({
   onQuestionRemoved,
 }) {
   const [expandedParents, setExpandedParents] = useState(new Set());
+  const [childrenModal, setChildrenModal] = useState(null); // parent question whose children popup is open
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [parentQuestionForChild, setParentQuestionForChild] = useState(null);
