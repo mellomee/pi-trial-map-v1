@@ -161,17 +161,14 @@ export default function Questions() {
     return tree;
   };
 
-  // Build the full tree from ALL questions first, then filter only at the root level.
-  // This ensures child questions (which may not match filters directly) are always included.
-  const sortedAll = [...questions].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-  const fullTree = buildQuestionTree(sortedAll);
-
-  const filtered = fullTree.filter(q => {
+  const allFiltered = questions.filter(q => {
     const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
     const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
     return matchSearch && matchParty && matchType;
-  });
+  }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+  const filtered = buildQuestionTree(allFiltered);
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
@@ -245,11 +242,6 @@ export default function Questions() {
                                       </div>
                                       {qNode.goal && <p className="text-xs text-slate-500 mt-1">Goal: {qNode.goal}</p>}
                                       {qNode.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {qNode.expected_answer}</p>}
-                                      <div className="mt-1 font-mono text-[10px] text-yellow-400 bg-yellow-400/10 rounded px-1 py-0.5 space-y-0.5">
-                                        <p>id: {qNode.id}</p>
-                                        <p>parent_id: {qNode.parent_id || 'none'}</p>
-                                        <p>eg_id: {qNode.primary_evidence_group_id || 'none'}</p>
-                                      </div>
                                     </div>
                                   </div>
                                   <div className="flex gap-1 flex-shrink-0 items-center">
@@ -305,11 +297,6 @@ export default function Questions() {
                                 <Badge className={qNode.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{qNode.exam_type}</Badge>
                                 <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(qNode.party_id)}</Badge>
                                 {qNode.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{qNode.question_type}</Badge>}
-                              </div>
-                              <div className="mt-1 font-mono text-[10px] text-yellow-400 bg-yellow-400/10 rounded px-1 py-0.5 space-y-0.5">
-                                <p>id: {qNode.id}</p>
-                                <p>parent_id: {qNode.parent_id || 'none'}</p>
-                                <p>eg_id: {qNode.primary_evidence_group_id || 'none'}</p>
                               </div>
                             </div>
                             <div className="flex gap-1 flex-shrink-0 items-center">
