@@ -161,14 +161,17 @@ export default function Questions() {
     return tree;
   };
 
-  const allFiltered = questions.filter(q => {
+  // Build the full tree from ALL questions first, then filter only at the root level.
+  // This ensures child questions (which may not match filters directly) are always included.
+  const sortedAll = [...questions].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  const fullTree = buildQuestionTree(sortedAll);
+
+  const filtered = fullTree.filter(q => {
     const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
     const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
     return matchSearch && matchParty && matchType;
-  }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-
-  const filtered = buildQuestionTree(allFiltered);
+  });
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
