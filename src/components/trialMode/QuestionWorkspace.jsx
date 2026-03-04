@@ -42,8 +42,8 @@ export default function QuestionWorkspace({
   };
 
   return (
-    <div className="flex-1 bg-[#0a0f1e] overflow-y-auto">
-      <div className="p-6 space-y-6 max-w-4xl">
+    <div className="flex-1 min-w-0 w-full bg-[#0a0f1e] overflow-y-auto">
+      <div className="p-6 space-y-6 max-w-2xl">
         
         {/* Question header */}
         <div className="space-y-3">
