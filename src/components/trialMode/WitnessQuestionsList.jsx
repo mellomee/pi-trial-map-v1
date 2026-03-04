@@ -42,7 +42,7 @@ export default function WitnessQuestionsList({
   const selectedWitness = witnesses.find(w => w.id === selectedWitnessId);
 
   return (
-    <div className="flex flex-col h-full bg-[#0f1629] border-r border-[#1e2a45]">
+    <div className="flex flex-col h-full w-full bg-[#0f1629] border-r border-[#1e2a45]">
       {/* Witness selector */}
       <div className="p-4 border-b border-[#1e2a45] space-y-2">
         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Witness</label>
