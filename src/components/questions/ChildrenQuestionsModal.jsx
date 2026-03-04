@@ -207,5 +207,11 @@ export default function ChildrenQuestionsModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    <ProofViewerModal
+      proofItem={selectedProofItem}
+      isOpen={showProofViewer}
+      onClose={() => setShowProofViewer(false)}
+    />
   );
 }
