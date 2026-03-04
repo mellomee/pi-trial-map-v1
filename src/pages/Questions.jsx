@@ -216,12 +216,10 @@ export default function Questions() {
           {(provided) => (
             <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
               {filtered.map((q, idx) => {
-                const renderQuestion = (qNode, depth = 0) => {
-                  const linkedProofIds = questionProofs[qNode.id] || [];
-                  const hasChildren = qNode.children && qNode.children.length > 0;
-                  const isRootQuestion = depth === 0;
-
-                  return (
+                const linkedProofIds = questionProofs[q.id] || [];
+                const hasChildren = q.children && q.children.length > 0;
+                const qNode = q;
+                return (
                     <Draggable key={qNode.id} draggableId={qNode.id} index={idx}>
                       {(provided, snapshot) => (
                         <div ref={provided.innerRef} {...provided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
