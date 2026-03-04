@@ -428,7 +428,7 @@ export default function ProofLibrary() {
       <div className="border-b border-gray-700 p-4 bg-[#0f1629] flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold text-cyan-400">Proof Library</h1>
-          <p className="text-sm text-gray-400">Gather and organize evidence by argument themes</p>
+          <p className="text-sm text-gray-400">Gather and organize evidence by bucket</p>
         </div>
         <Button
           variant="outline"
@@ -445,13 +445,14 @@ export default function ProofLibrary() {
         {/* Left Panel: Evidence Groups */}
         <div className="w-72 border-r border-gray-700 flex flex-col bg-[#0f1629] overflow-hidden">
           <div className="p-4 border-b border-gray-700 space-y-3">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Buckets</p>
             <Button
               onClick={() => setShowNewGroupModal(true)}
               className="w-full bg-cyan-600 hover:bg-cyan-700"
               size="sm"
             >
               <Plus className="w-4 h-4 mr-2" />
-              New Evidence Group
+              New Bucket
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -674,7 +675,7 @@ export default function ProofLibrary() {
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
-                <p className="text-lg">Select an evidence group to view proof</p>
+                <p className="text-lg">Select a bucket to view proof</p>
               </div>
             </div>
           )}
@@ -685,7 +686,7 @@ export default function ProofLibrary() {
       <Dialog open={showNewGroupModal} onOpenChange={setShowNewGroupModal}>
         <DialogContent className="bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle>Create Evidence Group</DialogTitle>
+            <DialogTitle>Create Bucket</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -743,7 +744,7 @@ export default function ProofLibrary() {
       <Dialog open={showEditGroupModal} onOpenChange={setShowEditGroupModal}>
         <DialogContent className="bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle>Edit Evidence Group</DialogTitle>
+            <DialogTitle>Edit Bucket</DialogTitle>
           </DialogHeader>
           {editingGroup && (
             <div className="space-y-4">
