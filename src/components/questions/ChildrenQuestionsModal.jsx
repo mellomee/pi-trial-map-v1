@@ -78,7 +78,7 @@ export default function ChildrenQuestionsModal({
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-[#0f1629] border-[#1e2a45] text-slate-200 max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-cyan-300 text-sm font-semibold">
