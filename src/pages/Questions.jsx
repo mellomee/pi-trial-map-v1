@@ -273,15 +273,29 @@ export default function Questions() {
                                   const proof = proofItemsMap[proofId];
                                   if (!proof) return null;
                                   return (
-                                    <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 space-y-1">
-                                      <p className="font-medium text-slate-100">{proof.label}</p>
-                                      {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
-                                        <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
-                                      )}
-                                      {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
-                                        <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
-                                      )}
-                                      <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                    <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-slate-100">{proof.label}</p>
+                                        {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                                          <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
+                                        )}
+                                        {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                                          <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
+                                        )}
+                                        <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                      </div>
+                                      <div className="flex gap-0.5 flex-shrink-0">
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-slate-500 hover:text-cyan-400"
+                                          title="Preview proof"
+                                          onClick={() => { setSelectedProofItem(proof); setShowProofViewer(true); }}>
+                                          <ExternalLink className="w-3 h-3" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400"
+                                          title="Remove proof link"
+                                          onClick={() => unlinkProof(q.id, proofId)}>
+                                          <X className="w-3 h-3" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   );
                                 })}
