@@ -34,14 +34,12 @@ export default function TrialMode() {
   const [trialSession, setTrialSession] = useState(null);
   const [publishedProof, setPublishedProof] = useState(null);
 
-  // Load data on case change
   useEffect(() => {
     if (!activeCase?.id) {
       setWitnesses([]);
       setQuestions([]);
       return;
     }
-
     loadCaseData();
   }, [activeCase?.id]);
 
@@ -54,7 +52,6 @@ export default function TrialMode() {
     setWitnesses(witnessesList);
     setTrialSession(session);
 
-    // Pre-select first witness if coming from deep link
     const witnessIdParam = searchParams.get("witnessId");
     if (witnessIdParam) {
       setSelectedWitnessId(witnessIdParam);
@@ -67,7 +64,6 @@ export default function TrialMode() {
     }
   };
 
-  // When witness changes, load their questions
   const handleSelectWitness = async (witnessId) => {
     setSelectedWitnessId(witnessId);
     setSelectedQuestionId(null);
@@ -75,14 +71,12 @@ export default function TrialMode() {
     setQuestions(qs);
   };
 
-  // When question changes, resolve its links
   const handleSelectQuestion = async (questionId) => {
     setSelectedQuestionId(questionId);
     const links = await resolveQuestionLinks(questionId, activeCase.id);
     setResolvedLinks(links);
   };
 
-  // Update question and refresh
   const handleUpdateQuestion = async (updated) => {
     await updateQuestionStatus(updated.id, {
       question_text: updated.question_text,
@@ -92,21 +86,18 @@ export default function TrialMode() {
     setSelectedQuestionId(updated.id);
   };
 
-  // Status change
   const handleStatusChange = async (status) => {
     if (!selectedQuestionId) return;
     await updateQuestionStatus(selectedQuestionId, { status });
     setQuestions(q => q.map(qq => qq.id === selectedQuestionId ? { ...qq, status } : qq));
   };
 
-  // Publish proof to jury
   const handlePublishProof = async (proofItem) => {
     if (!trialSession) return;
     await publishProofToJury(trialSession.id, proofItem.id);
     setPublishedProof(proofItem);
   };
 
-  // Clear jury display
   const handleClearJury = async () => {
     if (!trialSession) return;
     await clearJuryDisplay(trialSession.id);
@@ -126,42 +117,39 @@ export default function TrialMode() {
 
   return (
     <div className="flex h-screen bg-[#0a0f1e] overflow-hidden">
-      {/* Left: Witness & Questions — fixed width */}
       <div className="w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0 flex flex-col h-full overflow-hidden">
-      <WitnessQuestionsList
-        witnesses={witnesses}
-        questions={questions}
-        selectedWitnessId={selectedWitnessId}
-        onSelectWitness={handleSelectWitness}
-        selectedQuestionId={selectedQuestionId}
-        onSelectQuestion={handleSelectQuestion}
-        examType={examType}
-        onExamTypeChange={setExamType}
-      />
+        <WitnessQuestionsList
+          witnesses={witnesses}
+          questions={questions}
+          selectedWitnessId={selectedWitnessId}
+          onSelectWitness={handleSelectWitness}
+          selectedQuestionId={selectedQuestionId}
+          onSelectQuestion={handleSelectQuestion}
+          examType={examType}
+          onExamTypeChange={setExamType}
+        />
       </div>
 
-      {/* Center: Question workspace — takes remaining space */}
       <div className="flex-1 min-w-0 overflow-hidden flex flex-col h-full">
-      <QuestionWorkspace
-        question={selectedQuestion}
-        evidenceGroups={resolvedLinks.evidenceGroups}
-        trialPoints={resolvedLinks.trialPoints}
-        proofItems={resolvedLinks.proofItems}
-        onUpdateQuestion={handleUpdateQuestion}
-        onStatusChange={handleStatusChange}
-        onPreviewProof={(proof) => console.log("Preview:", proof)}
-        onPublishProof={handlePublishProof}
-      />
+        <QuestionWorkspace
+          question={selectedQuestion}
+          evidenceGroups={resolvedLinks.evidenceGroups}
+          trialPoints={resolvedLinks.trialPoints}
+          proofItems={resolvedLinks.proofItems}
+          onUpdateQuestion={handleUpdateQuestion}
+          onStatusChange={handleStatusChange}
+          onPreviewProof={(proof) => console.log("Preview:", proof)}
+          onPublishProof={handlePublishProof}
+        />
       </div>
 
-      {/* Right: Jury controls — fixed width */}
       <div className="w-56 min-w-[14rem] max-w-[14rem] flex-shrink-0 flex flex-col h-full overflow-hidden">
-      <JuryControls
-        caseId={activeCase.id}
-        trialSession={trialSession}
-        onPublish={handlePublishProof}
-        publishedProof={publishedProof}
-      />
+        <JuryControls
+          caseId={activeCase.id}
+          trialSession={trialSession}
+          onPublish={handlePublishProof}
+          publishedProof={publishedProof}
+        />
       </div>
     </div>
   );
