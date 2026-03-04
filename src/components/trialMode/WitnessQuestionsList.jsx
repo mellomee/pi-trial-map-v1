@@ -64,7 +64,7 @@ export default function WitnessQuestionsList({
         <>
           {/* Exam type toggle */}
           <div className="p-4 border-b border-[#1e2a45] flex gap-2">
-            {['Direct', 'Cross'].map(type => (
+            {['Direct', 'Cross', 'Repair'].map(type => (
               <Button
                 key={type}
                 variant={examType === type ? 'default' : 'outline'}
