@@ -547,7 +547,7 @@ export default function ProofLibrary() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={(e) => { e.stopPropagation(); handleRemoveProof(proof.id); }}
+                              onClick={(e) => { e.stopPropagation(); handleRemoveProof(proof); }}
                               className="h-7 w-7 p-0 text-gray-400 hover:text-red-400"
                             >
                               ✕
