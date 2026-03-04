@@ -125,8 +125,9 @@ export default function TrialMode() {
   }
 
   return (
-    <div className="flex h-screen bg-[#0a0f1e]">
-      {/* Left: Witness & Questions */}
+    <div className="flex h-screen bg-[#0a0f1e] overflow-hidden">
+      {/* Left: Witness & Questions — fixed width */}
+      <div className="w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0 flex flex-col h-full overflow-hidden">
       <WitnessQuestionsList
         witnesses={witnesses}
         questions={questions}
