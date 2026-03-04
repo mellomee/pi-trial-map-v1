@@ -109,7 +109,11 @@ export default function ProofLibrary() {
 
       const allProof = allProofInCase.filter(p => proofIds.has(p.id));
       const tps = allTPsInCase.filter(tp => tpIds.has(tp.id));
-      const qs = allQsInCase.filter(q => qIds.has(q.id));
+      // Include parent questions AND all their child questions (child questions are not in QuestionEvidenceGroups)
+      const parentQs = allQsInCase.filter(q => qIds.has(q.id));
+      const parentQIds = new Set(parentQs.map(q => q.id));
+      const childQs = allQsInCase.filter(q => q.parent_id && parentQIds.has(q.parent_id));
+      const qs = [...parentQs, ...childQs];
 
       const witIdsForGroup = [...new Set(
         allProofWitLinks.filter(l => proofIds.has(l.proof_item_id)).map(l => l.witness_id)
