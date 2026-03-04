@@ -311,7 +311,7 @@ export default function HierarchicalQuestionsList({
 
         {parentQuestions.length > 0 ? (
           <div className="space-y-2">
-            {parentQuestions.map((q, idx) => renderQuestion(q, false, idx, parentQuestions.length))}
+            {parentQuestions.map((q, idx) => renderQuestion(q, idx))}
           </div>
         ) : (
           <div className="text-center text-gray-500 mt-4 py-4 border border-dashed border-gray-700 rounded">
