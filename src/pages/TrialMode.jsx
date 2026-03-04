@@ -138,8 +138,10 @@ export default function TrialMode() {
         examType={examType}
         onExamTypeChange={setExamType}
       />
+      </div>
 
-      {/* Center: Question workspace */}
+      {/* Center: Question workspace — takes remaining space */}
+      <div className="flex-1 min-w-0 overflow-hidden flex flex-col h-full">
       <QuestionWorkspace
         question={selectedQuestion}
         evidenceGroups={resolvedLinks.evidenceGroups}
@@ -150,14 +152,17 @@ export default function TrialMode() {
         onPreviewProof={(proof) => console.log("Preview:", proof)}
         onPublishProof={handlePublishProof}
       />
+      </div>
 
-      {/* Right: Jury controls */}
+      {/* Right: Jury controls — fixed width */}
+      <div className="w-56 min-w-[14rem] max-w-[14rem] flex-shrink-0 flex flex-col h-full overflow-hidden">
       <JuryControls
         caseId={activeCase.id}
         trialSession={trialSession}
         onPublish={handlePublishProof}
         publishedProof={publishedProof}
       />
+      </div>
     </div>
   );
 }
