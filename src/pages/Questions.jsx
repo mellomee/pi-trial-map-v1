@@ -242,7 +242,7 @@ export default function Questions() {
                                       </div>
                                       {qNode.goal && <p className="text-xs text-slate-500 mt-1">Goal: {qNode.goal}</p>}
                                       {qNode.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {qNode.expected_answer}</p>}
-                                      <div className="mt-1 font-mono text-[9px] text-yellow-600/70 space-y-0.5">
+                                      <div className="mt-1 font-mono text-[10px] text-yellow-400 bg-yellow-400/10 rounded px-1 py-0.5 space-y-0.5">
                                         <p>id: {qNode.id}</p>
                                         <p>parent_id: {qNode.parent_id || 'none'}</p>
                                         <p>eg_id: {qNode.primary_evidence_group_id || 'none'}</p>
