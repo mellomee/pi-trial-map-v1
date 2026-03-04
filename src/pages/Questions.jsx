@@ -29,6 +29,7 @@ export default function Questions() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
+  const [childrenModal, setChildrenModal] = useState(null); // parent question node
   const [questionProofs, setQuestionProofs] = useState({}); // questionId -> array of proofItems
   const [calloutNames, setCalloutNames] = useState({});
   const [calloutWitnesses, setCalloutWitnesses] = useState({});
