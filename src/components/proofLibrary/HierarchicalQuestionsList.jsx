@@ -254,11 +254,18 @@ export default function HierarchicalQuestionsList({
                       )}
                       <p className="text-gray-500">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
                     </div>
-                    <Button size="icon" variant="ghost"
-                      onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}
-                      className="h-5 w-5 p-0 text-gray-500 hover:text-cyan-400 flex-shrink-0" title="View proof">
-                      <ExternalLink className="w-3 h-3" />
-                    </Button>
+                    <div className="flex gap-0.5 flex-shrink-0">
+                      <Button size="icon" variant="ghost"
+                        onClick={() => { setSelectedProofItem(proof); setShowProofDetails(true); }}
+                        className="h-5 w-5 p-0 text-gray-500 hover:text-cyan-400" title="View proof">
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost"
+                        onClick={() => handleUnlinkProofFromParent(q.id, proofId)}
+                        className="h-5 w-5 p-0 text-gray-500 hover:text-red-400" title="Remove proof link">
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
