@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { base44 } from '@/api/base44Client';
-import { Send, Square, Eye, EyeOff, Monitor, Info } from 'lucide-react';
+import { Send, Square, Eye, EyeOff, Monitor, Info, Video } from 'lucide-react';
 
 function DepoClipPreview({ proof }) {
   const [clip, setClip] = useState(null);
