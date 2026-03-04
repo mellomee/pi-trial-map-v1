@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Bookmark, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Bookmark, X, ChevronLeft, ChevronRight, Film } from "lucide-react";
+import DepoClipsViewer from "@/components/transcripts/DepoClipsViewer";
 import { debounce } from "lodash";
 
 const PAGE_SIZE = 100;
@@ -26,6 +27,7 @@ export default function Transcripts() {
   const [clips, setClips] = useState([]);
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
   const [clipDialog, setClipDialog] = useState(false);
+  const [clipsViewerOpen, setClipsViewerOpen] = useState(false);
   const [clipForm, setClipForm] = useState({ topic_tag: "", direction: "HelpsUs", impeachment_ready: false, notes: "" });
   const [page, setPage] = useState(0);
   const lastClickedIdx = useRef(null);
@@ -160,6 +162,14 @@ export default function Transcripts() {
             </Button>
             <Button variant="ghost" size="sm" className="text-slate-400" onClick={() => setSelectedRows(new Set())}>
               <X className="w-3 h-3 mr-1" /> Clear
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-slate-600 text-slate-400 hover:bg-slate-700/30"
+              onClick={() => setClipsViewerOpen(true)}
+            >
+              <Film className="w-3 h-3 mr-1" /> View Clips
             </Button>
           </div>
         </div>
