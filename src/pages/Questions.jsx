@@ -221,115 +221,72 @@ export default function Questions() {
                   const hasChildren = qNode.children && qNode.children.length > 0;
                   const isRootQuestion = depth === 0;
 
-                  if (isRootQuestion) {
-                    return (
-                      <Draggable key={qNode.id} draggableId={qNode.id} index={idx}>
-                        {(provided, snapshot) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
-                            <Card className="bg-[#131a2e] border-[#1e2a45]">
-                              <CardContent className="py-3 space-y-2">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex items-start gap-2 flex-1">
-                                    <button {...provided.dragHandleProps} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5">
-                                      <GripVertical className="w-3 h-3" />
-                                    </button>
-                                    <span className="text-sm font-semibold text-cyan-400">{idx + 1}.</span>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-white">{qNode.question_text}</p>
-                                      <div className="flex gap-2 mt-2 flex-wrap">
-                                        <Badge className={qNode.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{qNode.exam_type}</Badge>
-                                        <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(qNode.party_id)}</Badge>
-                                        <Badge variant="outline" className="text-slate-500 border-slate-600">{qNode.status}</Badge>
-                                        {qNode.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{qNode.question_type}</Badge>}
-                                      </div>
-                                      {qNode.goal && <p className="text-xs text-slate-500 mt-1">Goal: {qNode.goal}</p>}
-                                      {qNode.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {qNode.expected_answer}</p>}
+                  return (
+                    <Draggable key={qNode.id} draggableId={qNode.id} index={idx}>
+                      {(provided, snapshot) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
+                          <Card className="bg-[#131a2e] border-[#1e2a45]">
+                            <CardContent className="py-3 space-y-2">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-2 flex-1">
+                                  <button {...provided.dragHandleProps} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5">
+                                    <GripVertical className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-sm font-semibold text-cyan-400">{idx + 1}.</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-white">{qNode.question_text}</p>
+                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                      <Badge className={qNode.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{qNode.exam_type}</Badge>
+                                      <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(qNode.party_id)}</Badge>
+                                      <Badge variant="outline" className="text-slate-500 border-slate-600">{qNode.status}</Badge>
+                                      {qNode.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{qNode.question_type}</Badge>}
                                     </div>
-                                  </div>
-                                  <div className="flex gap-1 flex-shrink-0 items-center">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...qNode }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(qNode.id)}><Trash2 className="w-3 h-3" /></Button>
+                                    {qNode.goal && <p className="text-xs text-slate-500 mt-1">Goal: {qNode.goal}</p>}
+                                    {qNode.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {qNode.expected_answer}</p>}
                                   </div>
                                 </div>
-                                {linkedProofIds.length > 0 && (
-                                  <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
-                                    <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
-                                    {linkedProofIds.map((proofId) => {
-                                      const proof = proofItemsMap[proofId];
-                                      if (!proof) return null;
-                                      return (
-                                        <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 space-y-1">
-                                          <p className="font-medium text-slate-100">{proof.label}</p>
-                                          {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
-                                            <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
-                                          )}
-                                          {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
-                                            <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
-                                          )}
-                                          <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </CardContent>
-                            </Card>
-                            {hasChildren && (
-                              <div className="space-y-2 ml-6">
-                                {qNode.children.map((child) => renderQuestion(child, depth + 1))}
+                                <div className="flex gap-1 flex-shrink-0 items-center">
+                                  {hasChildren && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-purple-400 hover:text-purple-300"
+                                      title={`${qNode.children.length} child question(s)`}
+                                      onClick={() => setChildrenModal(qNode)}
+                                    >
+                                      <GitBranch className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...qNode }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(qNode.id)}><Trash2 className="w-3 h-3" /></Button>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </Draggable>
-                    );
-                  }
-
-                  return (
-                    <div key={qNode.id}>
-                      <Card className="bg-[#131a2e] border-[#1e2a45]">
-                        <CardContent className="py-3 space-y-2">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex gap-2 items-baseline">
-                                <span className="text-xs text-gray-500">↳</span>
-                                <p className="text-sm text-white">{qNode.question_text}</p>
-                              </div>
-                              <div className="flex gap-2 mt-2 flex-wrap">
-                                <Badge className={qNode.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{qNode.exam_type}</Badge>
-                                <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(qNode.party_id)}</Badge>
-                                {qNode.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{qNode.question_type}</Badge>}
-                              </div>
-                            </div>
-                            <div className="flex gap-1 flex-shrink-0 items-center">
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...qNode }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(qNode.id)}><Trash2 className="w-3 h-3" /></Button>
-                            </div>
-                          </div>
-                          {linkedProofIds.length > 0 && (
-                            <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
-                              <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
-                              {linkedProofIds.map((proofId) => {
-                                const proof = proofItemsMap[proofId];
-                                if (!proof) return null;
-                                return (
-                                  <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 space-y-1">
-                                    <p className="font-medium text-slate-100">{proof.label}</p>
-                                    {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
-                                      <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
-                                    )}
-                                    {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
-                                      <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
-                                    )}
-                                    <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
+                              {linkedProofIds.length > 0 && (
+                                <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
+                                  <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
+                                  {linkedProofIds.map((proofId) => {
+                                    const proof = proofItemsMap[proofId];
+                                    if (!proof) return null;
+                                    return (
+                                      <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 space-y-1">
+                                        <p className="font-medium text-slate-100">{proof.label}</p>
+                                        {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                                          <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
+                                        )}
+                                        {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                                          <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
+                                        )}
+                                        <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
+                    </Draggable>
                   );
                 };
 
