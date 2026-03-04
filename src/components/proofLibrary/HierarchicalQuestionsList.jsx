@@ -158,6 +158,17 @@ export default function HierarchicalQuestionsList({
     }
   };
 
+  const handleUnlinkProofFromParent = async (questionId, proofId) => {
+    const links = await base44.entities.QuestionProofItems.filter({ question_id: questionId, proof_item_id: proofId });
+    for (const link of links) {
+      await base44.entities.QuestionProofItems.delete(link.id);
+    }
+    setLinkedProofsByQuestion(prev => ({
+      ...prev,
+      [questionId]: (prev[questionId] || []).filter(id => id !== proofId),
+    }));
+  };
+
   const handleDeleteQuestion = async (questionId) => {
     if (!confirm('Delete this question?')) return;
     try {
