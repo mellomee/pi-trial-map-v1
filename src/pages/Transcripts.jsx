@@ -261,7 +261,7 @@ export default function Transcripts() {
               ))}
             </div>
             <div>
-              <Label className="text-slate-400 text-xs">Topic Tag</Label>
+              <Label className="text-slate-400 text-xs">Title</Label>
               <Input value={clipForm.topic_tag} onChange={e => setClipForm({ ...clipForm, topic_tag: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. Light was green" />
             </div>
             <div>
