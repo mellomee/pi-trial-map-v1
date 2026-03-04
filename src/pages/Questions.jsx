@@ -136,6 +136,12 @@ export default function Questions() {
     saveQuestionsOrder(reordered);
   };
 
+  const unlinkProof = async (questionId, proofId) => {
+    const links = await base44.entities.QuestionProofItems.filter({ question_id: questionId, proof_item_id: proofId });
+    for (const link of links) await base44.entities.QuestionProofItems.delete(link.id);
+    setQuestionProofs(prev => ({ ...prev, [questionId]: (prev[questionId] || []).filter(id => id !== proofId) }));
+  };
+
   const getPartyName = (pid) => {
     const p = parties.find(x => x.id === pid);
     return p ? `${p.first_name} ${p.last_name}` : "Unassigned";
