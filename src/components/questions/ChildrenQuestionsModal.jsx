@@ -214,5 +214,6 @@ export default function ChildrenQuestionsModal({
       isOpen={showProofViewer}
       onClose={() => setShowProofViewer(false)}
     />
+    </>
   );
 }
