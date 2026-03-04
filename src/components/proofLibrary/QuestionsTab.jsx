@@ -179,6 +179,11 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
                       {q.question_type && <Badge className="bg-blue-500/20 text-blue-300 text-xs">{q.question_type}</Badge>}
                       <Badge variant="outline" className="text-xs text-gray-400">{links.length} proof</Badge>
                     </div>
+                    <div className="mt-1 font-mono text-[9px] text-yellow-600/70 space-y-0.5">
+                      <p>id: {q.id}</p>
+                      <p>parent_id: {q.parent_id || 'none'}</p>
+                      <p>eg_id: {q.primary_evidence_group_id || 'none'}</p>
+                    </div>
                   </div>
                   <Button
                     size="sm"
