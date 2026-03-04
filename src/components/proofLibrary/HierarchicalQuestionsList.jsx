@@ -320,6 +320,31 @@ export default function HierarchicalQuestionsList({
         )}
       </div>
 
+      {/* Children questions popup */}
+      <ProofLibraryChildrenModal
+        isOpen={!!childrenModal}
+        onClose={() => setChildrenModal(null)}
+        parent={childrenModal}
+        allQuestions={questions}
+        evidenceGroupId={evidenceGroupId}
+        caseId={caseId}
+        allWitnesses={allWitnesses}
+        proofItems={proofItems}
+        calloutNames={calloutNames}
+        calloutWitnesses={calloutWitnesses}
+        onEdit={(child) => {
+          setChildrenModal(null);
+          handleEditQuestion(child);
+        }}
+        onDelete={async (childId) => {
+          await handleDeleteQuestion(childId);
+          // refresh childrenModal if still open
+        }}
+        onReordered={() => {
+          // parent will reload questions via onQuestionCreated/Updated callbacks
+        }}
+      />
+
       {/* Proof viewer modal */}
       <ProofViewerModal
         proofItem={selectedProofItem}
