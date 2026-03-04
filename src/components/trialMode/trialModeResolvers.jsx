@@ -32,11 +32,22 @@ export async function resolveQuestionLinks(questionId, caseId) {
     });
 
     const proofItemIds = egProofItemLinks.map(link => link.proof_item_id);
-    const proofItems = proofItemIds.length
+    let proofItems = proofItemIds.length
       ? await Promise.all(
           proofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))
         ).then(results => results.flat())
       : [];
+
+    // Enrich depoClip proof items with their title (topic_tag)
+    proofItems = await Promise.all(proofItems.map(async (pi) => {
+      if (pi.type === 'depoClip' && pi.source_id) {
+        const clips = await base44.entities.DepoClips.filter({ id: pi.source_id });
+        if (clips[0]?.topic_tag) {
+          return { ...pi, clip_title: clips[0].topic_tag };
+        }
+      }
+      return pi;
+    }));
 
     // Step 4: Get TrialPoints linked to those groups
     const egTrialPointLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
