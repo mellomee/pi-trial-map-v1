@@ -21,12 +21,32 @@ export default function ChildrenQuestionsModal({
 }) {
   const [localChildren, setLocalChildren] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [linkedProofsByQuestion, setLinkedProofsByQuestion] = useState({});
 
   useEffect(() => {
     if (parent?.children) {
       setLocalChildren([...parent.children].sort((a, b) => (a.order_index || 0) - (b.order_index || 0)));
     }
   }, [parent]);
+
+  useEffect(() => {
+    if (isOpen && localChildren.length > 0) {
+      loadLinkedProofs();
+    }
+  }, [isOpen, localChildren]);
+
+  const loadLinkedProofs = async () => {
+    // Load QuestionProofItems links for all children
+    const childIds = localChildren.map(c => c.id);
+    const proofMap = {};
+    await Promise.all(childIds.map(async (qId) => {
+      const links = await base44.entities.QuestionProofItems.filter({ question_id: qId });
+      if (links.length > 0) {
+        proofMap[qId] = links.map(l => l.proof_item_id);
+      }
+    }));
+    setLinkedProofsByQuestion(proofMap);
+  };
 
   const onDragEnd = async (result) => {
     const { source, destination } = result;
