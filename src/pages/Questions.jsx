@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, GripVertical, GitBranch } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, GripVertical, GitBranch, X, ExternalLink } from "lucide-react";
 import ChildrenQuestionsModal from "@/components/questions/ChildrenQuestionsModal";
+import ProofViewerModal from "@/components/proofLibrary/ProofViewerModal";
 import { createPageUrl } from "@/utils";
 import BranchBuilder from "@/components/runner/BranchBuilder";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
