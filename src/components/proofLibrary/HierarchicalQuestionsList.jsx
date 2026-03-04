@@ -139,16 +139,20 @@ export default function HierarchicalQuestionsList({
       if (editingQuestion.id) {
         await base44.entities.Questions.update(editingQuestion.id, editingQuestion);
         onQuestionUpdated && onQuestionUpdated(editingQuestion);
+        setShowModal(false);
+        setEditingQuestion(null);
+        setParentQuestionForChild(null);
       } else {
         const newQ = await base44.entities.Questions.create(editingQuestion);
         onQuestionCreated && onQuestionCreated(newQ);
+        setShowModal(false);
+        setEditingQuestion(null);
+        // After saving a child, open the children modal for the parent
         if (parentQuestionForChild) {
-          setExpandedParents(prev => new Set([...prev, parentQuestionForChild.id]));
+          setChildrenModal(parentQuestionForChild);
         }
+        setParentQuestionForChild(null);
       }
-      setShowModal(false);
-      setEditingQuestion(null);
-      setParentQuestionForChild(null);
     } catch (error) {
       console.error('Error saving question:', error);
     }
