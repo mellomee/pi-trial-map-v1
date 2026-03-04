@@ -24,12 +24,15 @@ export default function TrialMode() {
   const { activeCase, loading } = useActiveCase();
   const [searchParams] = useSearchParams();
 
+  // Restore persisted state
+  const savedState = (() => { try { return JSON.parse(localStorage.getItem(PERSIST_KEY) || '{}'); } catch { return {}; } })();
+
   const [witnesses, setWitnesses] = useState([]);
   const [questions, setQuestions] = useState([]);
-  const [selectedWitnessId, setSelectedWitnessId] = useState(null);
-  const [selectedQuestionId, setSelectedQuestionId] = useState(null);
-  const [examType, setExamType] = useState("Main");
-  const [panelVisible, setPanelVisible] = useState(true);
+  const [selectedWitnessId, setSelectedWitnessId] = useState(savedState.witnessId || null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState(savedState.questionId || null);
+  const [examType, setExamType] = useState(savedState.examType || "Main");
+  const [panelVisible, setPanelVisible] = useState(savedState.panelVisible !== false);
 
   const [resolvedLinks, setResolvedLinks] = useState({
     evidenceGroups: [],
