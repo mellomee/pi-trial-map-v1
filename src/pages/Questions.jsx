@@ -34,6 +34,8 @@ export default function Questions() {
   const [calloutNames, setCalloutNames] = useState({});
   const [calloutWitnesses, setCalloutWitnesses] = useState({});
   const [proofItemsMap, setProofItemsMap] = useState({}); // proofId -> proof details
+  const [selectedProofItem, setSelectedProofItem] = useState(null);
+  const [showProofViewer, setShowProofViewer] = useState(false);
 
   const load = async () => {
     if (!activeCase) return;
