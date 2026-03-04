@@ -207,7 +207,7 @@ export default function ChildrenQuestionsModal({
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
+      </Dialog>
 
     <ProofViewerModal
       proofItem={selectedProofItem}
