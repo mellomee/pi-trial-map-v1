@@ -294,6 +294,19 @@ export default function Questions() {
         </Droppable>
       </DragDropContext>
 
+      <ChildrenQuestionsModal
+        isOpen={!!childrenModal}
+        onClose={() => setChildrenModal(null)}
+        parent={childrenModal}
+        proofItemsMap={proofItemsMap}
+        calloutNames={calloutNames}
+        calloutWitnesses={calloutWitnesses}
+        getPartyName={getPartyName}
+        onEdit={(child) => { setChildrenModal(null); setEditing({ ...child }); setOpen(true); setModalKey(k => k + 1); }}
+        onDelete={remove}
+        onReordered={load}
+      />
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent key={modalKey} className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Add"} Question</DialogTitle></DialogHeader>
