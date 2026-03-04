@@ -1,0 +1,95 @@
+import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const statusColors = {
+  NotAsked: 'bg-slate-700 text-slate-300',
+  Asked: 'bg-green-800 text-green-200',
+  NeedsFollowUp: 'bg-red-800 text-red-200',
+  Skipped: 'bg-gray-700 text-gray-300',
+};
+
+const statusIcons = {
+  Asked: '✓',
+  NeedsFollowUp: '✗',
+  Skipped: '—',
+  NotAsked: '',
+};
+
+const examTypeLabel = (type) => {
+  if (type === 'Direct' || type === 'Cross') return 'Main';
+  return type || '';
+};
+
+const examTypeBadgeColor = (type) => {
+  if (type === 'Direct') return 'bg-blue-900 text-blue-300';
+  if (type === 'Cross') return 'bg-purple-900 text-purple-300';
+  if (type === 'Repair') return 'bg-amber-900 text-amber-300';
+  return 'bg-slate-800 text-slate-400';
+};
+
+export default function ChildQuestionsZone({ parentQuestion, childQuestions }) {
+  if (!parentQuestion) {
+    return (
+      <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] items-center justify-center text-slate-600">
+        <p className="text-xs">No question selected</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45]">
+      <div className="px-4 py-2 border-b border-[#1e2a45] flex items-center gap-2 flex-shrink-0">
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          Follow-ups & Impeachment ({childQuestions.length})
+        </span>
+      </div>
+
+      {childQuestions.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-slate-600">
+          <p className="text-xs">No child questions</p>
+        </div>
+      ) : (
+        <ScrollArea className="flex-1">
+          <div className="p-3 space-y-2">
+            {childQuestions.map((q, idx) => (
+              <div
+                key={q.id}
+                className="bg-[#0f1629] border border-[#1e2a45] rounded-lg p-3"
+              >
+                <div className="flex items-start gap-2 mb-1.5">
+                  <span className="text-xs text-slate-600 flex-shrink-0 mt-0.5">{idx + 1}.</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="text-xs text-slate-200 leading-snug line-clamp-3 flex-1">{q.question_text}</p>
+                      {statusIcons[q.status] && (
+                        <span className={`text-sm font-bold flex-shrink-0 ml-1 ${q.status === 'Asked' ? 'text-green-400' : q.status === 'NeedsFollowUp' ? 'text-red-400' : 'text-slate-500'}`}>
+                          {statusIcons[q.status]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-1 mt-1.5 flex-wrap">
+                      {q.question_type && (
+                        <span className="text-[10px] text-slate-500 bg-[#131a2e] px-1.5 py-0.5 rounded">
+                          {q.question_type}
+                        </span>
+                      )}
+                      {q.exam_type && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${examTypeBadgeColor(q.exam_type)}`}>
+                          {examTypeLabel(q.exam_type)}
+                        </span>
+                      )}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${statusColors[q.status] || statusColors.NotAsked}`}>
+                        {q.status === 'NotAsked' ? 'Not Asked' : q.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      )}
+    </div>
+  );
+}
