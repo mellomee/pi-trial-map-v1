@@ -23,6 +23,7 @@ export default function RunnerZone({
   bucketName,
   onStatusChange,
   onSelectQuestion,
+  childQuestions,
 }) {
   const [timerRunning, setTimerRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
