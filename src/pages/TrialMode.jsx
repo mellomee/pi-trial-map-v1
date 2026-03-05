@@ -177,6 +177,15 @@ export default function TrialMode() {
 
   const handlePublishProof = async (proofItem) => {
     if (!trialSession || !proofItem) return;
+    // For extract proofs, verify admitted status before publishing
+    if (proofItem.type === 'extract' && proofItem.source_id) {
+      const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: proofItem.source_id });
+      const jx = jxs[0];
+      if (!jx || jx.status !== 'Admitted' || !jx.admitted_no) {
+        // Not admitted — don't publish, the ProofZone Admit button handles this
+        return;
+      }
+    }
     await publishProofToJury(trialSession.id, proofItem.id);
     setPublishedProof(proofItem);
     window.__trialModePublished = true;
