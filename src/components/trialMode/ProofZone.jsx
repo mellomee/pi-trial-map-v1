@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { base44 } from '@/api/base44Client';
 import { FileText, Image, Video, Play, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
-import QuickAdmitModal from './QuickAdmitModal';
+import QuickAdmitModal from '@/components/trialMode/QuickAdmitModal';
 
 const typeIcon = (type) => {
   if (type === 'depoClip') return <FileText className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />;
