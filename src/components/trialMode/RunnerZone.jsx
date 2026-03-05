@@ -203,14 +203,17 @@ export default function RunnerZone({
           )}
         </div>
 
-        {/* Next question preview */}
+        {/* Next question preview — more visible */}
         {nextQuestion && (
           <div
-            className="bg-[#0f1629] border border-[#1e2a45] rounded-lg px-3 py-2 cursor-pointer hover:border-cyan-500/40 transition-colors"
+            className="bg-[#0d1525] border border-cyan-700/40 rounded-lg px-3 py-2.5 cursor-pointer hover:border-cyan-500/70 hover:bg-[#111c35] transition-colors group"
             onClick={() => onSelectQuestion(nextQuestion.id)}
           >
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Next → Q{questionIndex + 2}</p>
-            <p className="text-xs text-slate-400 line-clamp-1">{nextQuestion.question_text}</p>
+            <p className="text-[10px] font-bold text-cyan-500/80 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <span>↓ Next</span>
+              <span className="text-slate-500 font-normal">Q{questionIndex + 2}</span>
+            </p>
+            <p className="text-sm text-slate-300 group-hover:text-cyan-100 transition-colors line-clamp-2 leading-snug">{nextQuestion.question_text}</p>
           </div>
         )}
       </div>
