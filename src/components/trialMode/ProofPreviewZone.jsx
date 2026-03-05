@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { base44 } from '@/api/base44Client';
-import { Send, Square, Eye, EyeOff, Monitor, Info, Video } from 'lucide-react';
+import { Send, Square, Eye, EyeOff, Monitor, Video, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 
 function DepoClipPreview({ proof }) {
   const [clip, setClip] = useState(null);
@@ -24,41 +24,38 @@ function DepoClipPreview({ proof }) {
 
   if (!clip) return <div className="text-xs text-slate-500 p-4">Loading clip...</div>;
 
-  // Parse lines into LASTNAME-Page-Line format
   const lines = (clip.clip_text || '').split('\n').filter(Boolean);
 
   return (
-    <div className="space-y-3">
-      {depo && (
-        <div className="text-xs text-slate-400 bg-[#0f1629] px-3 py-2 rounded border border-[#1e2a45]">
-          <span className="text-slate-500">Deposition: </span>{depo.sheet_name}
-          {depo.taken_date && <span className="ml-2 text-slate-500">{depo.taken_date}</span>}
-        </div>
-      )}
-      <div className="text-xs text-slate-400">
-        <span className="text-slate-500">Cite: </span>
-        <span className="font-mono text-cyan-300">{clip.start_cite} – {clip.end_cite}</span>
+    <div className="space-y-2">
+      {/* Depo + cite metadata */}
+      <div className="flex flex-wrap gap-2 text-[10px]">
+        {depo && (
+          <span className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1 text-slate-400">
+            {depo.sheet_name}{depo.taken_date ? ` · ${depo.taken_date}` : ''}
+          </span>
+        )}
+        <span className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1 font-mono text-cyan-300">
+          {clip.start_cite} – {clip.end_cite}
+        </span>
       </div>
-      {/* 2-column transcript view */}
-      <div className="bg-[#0f1629] rounded border border-[#1e2a45] overflow-hidden">
-        <div className="grid grid-cols-2 text-[10px] text-slate-500 px-3 py-1.5 border-b border-[#1e2a45]">
-          <span>CITE</span>
-          <span>TEXT</span>
-        </div>
-        <ScrollArea className="max-h-48">
-          <div className="p-2 space-y-1.5">
+
+      {/* Transcript lines */}
+      <div className="bg-[#0f1629] rounded-lg border border-[#1e2a45] overflow-hidden">
+        <ScrollArea className="max-h-64">
+          <div className="p-1">
             {lines.map((line, i) => {
               const parts = line.match(/^(\d+:\d+)\s+(.*)$/);
               if (parts) {
                 return (
-                  <div key={i} className="grid grid-cols-2 gap-3 py-1 border-b border-[#1e2a45]/50">
-                    <span className="text-[11px] font-mono text-cyan-400 font-bold">{parts[1]}</span>
-                    <span className="text-[12px] text-slate-100 leading-snug">{parts[2]}</span>
+                  <div key={i} className="flex gap-0 group">
+                    <span className="text-[11px] font-mono text-cyan-500 font-bold w-14 flex-shrink-0 py-1.5 px-2 bg-[#0a0f1e]/60 border-r border-[#1e2a45]">{parts[1]}</span>
+                    <span className="text-[12px] text-slate-100 leading-relaxed py-1.5 px-3 flex-1">{parts[2]}</span>
                   </div>
                 );
               }
               return (
-                <div key={i} className="text-[12px] text-slate-300 py-1">{line}</div>
+                <div key={i} className="text-[12px] text-slate-300 py-1.5 px-2">{line}</div>
               );
             })}
           </div>
@@ -68,68 +65,153 @@ function DepoClipPreview({ proof }) {
   );
 }
 
-function ExtractPreview({ proof, showCallout, showHighlight }) {
+function ExtractPreview({ proof, showCallout, showHighlight, onPublish, isPublishing, onUnpublish }) {
   const [extract, setExtract] = useState(null);
-  const [callout, setCallout] = useState(null);
+  const [callouts, setCallouts] = useState([]);
   const [jx, setJx] = useState(null);
+  const [selectedCalloutIdx, setSelectedCalloutIdx] = useState(0);
+  const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
-    if (proof?.source_id) {
-      base44.entities.ExhibitExtracts.filter({ id: proof.source_id }).then(r => {
-        if (r[0]) {
-          setExtract(r[0]);
+    if (!proof?.source_id) return;
+    setSelectedCalloutIdx(0);
+    base44.entities.ExhibitExtracts.filter({ id: proof.source_id }).then(r => {
+      if (r[0]) {
+        setExtract(r[0]);
+        // Load all callouts for this extract
+        base44.entities.Callouts.filter({ extract_id: r[0].id }).then(cs => {
+          // If a specific callout_id is set, put it first
           if (proof.callout_id) {
-            base44.entities.Callouts.filter({ id: proof.callout_id }).then(c => setCallout(c[0] || null));
+            const sorted = [...cs].sort((a, b) => (a.id === proof.callout_id ? -1 : b.id === proof.callout_id ? 1 : 0));
+            setCallouts(sorted);
+          } else {
+            setCallouts(cs);
           }
-          // Find joint exhibit
-          base44.entities.JointExhibits.filter({ exhibit_extract_id: r[0].id }).then(j => setJx(j[0] || null));
-        }
-      });
-    }
+        });
+        base44.entities.JointExhibits.filter({ exhibit_extract_id: r[0].id }).then(j => setJx(j[0] || null));
+      }
+    });
   }, [proof?.source_id, proof?.callout_id]);
 
   if (!extract) return <div className="text-xs text-slate-500 p-4">Loading extract...</div>;
 
-  // Resolve the internal_name from the extract or its linked joint exhibit
   const internalName = extract.internal_name || jx?.internal_name || extract.title || jx?.marked_title || '—';
+  const currentCallout = callouts[selectedCalloutIdx] || null;
 
   return (
     <div className="space-y-3">
-      {/* Metadata */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-[#0f1629] border border-[#1e2a45] rounded p-2">
-          <p className="text-[10px] text-slate-500 mb-0.5">Internal Name</p>
-          <p className="text-slate-200 font-medium">{internalName}</p>
+      {/* Metadata row */}
+      <div className="flex gap-2 text-xs flex-wrap">
+        <div className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1">
+          <span className="text-slate-500 text-[10px]">Internal: </span>
+          <span className="text-slate-200">{internalName}</span>
         </div>
-        <div className="bg-[#0f1629] border border-[#1e2a45] rounded p-2">
-          <p className="text-[10px] text-slate-500 mb-0.5">Marked #</p>
-          <p className="text-yellow-300 font-bold">{jx?.marked_no ? `#${jx.marked_no}` : '—'}</p>
-        </div>
-        <div className="bg-[#0f1629] border border-[#1e2a45] rounded p-2">
-          <p className="text-[10px] text-slate-500 mb-0.5">Admitted #</p>
-          <p className="text-green-300 font-bold">{jx?.admitted_no ? `#${jx.admitted_no}` : '—'}</p>
-        </div>
-        {callout && (
-          <div className="bg-[#0f1629] border border-[#1e2a45] rounded p-2">
-            <p className="text-[10px] text-slate-500 mb-0.5">Callout</p>
-            <p className="text-slate-200">{callout.name || `Page ${callout.page_number}`}</p>
+        {jx?.marked_no && (
+          <div className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1">
+            <span className="text-slate-500 text-[10px]">Marked: </span>
+            <span className="text-yellow-300 font-bold">#{jx.marked_no}</span>
+          </div>
+        )}
+        {jx?.admitted_no && (
+          <div className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1">
+            <span className="text-slate-500 text-[10px]">Admitted: </span>
+            <span className="text-green-300 font-bold">#{jx.admitted_no}</span>
           </div>
         )}
       </div>
-      {/* Callout image */}
-      {callout?.snapshot_image_url && showCallout && (
-        <div className="bg-black rounded border border-[#1e2a45] overflow-hidden">
-          <img
-            src={callout.snapshot_image_url}
-            alt={callout.name}
-            className="w-full max-h-64 object-contain"
-          />
-        </div>
-      )}
-      {!showCallout && (
-        <div className="bg-[#0f1629] border border-dashed border-[#1e2a45] rounded p-6 text-center">
-          <EyeOff className="w-6 h-6 text-slate-600 mx-auto mb-1" />
-          <p className="text-xs text-slate-600">Callout hidden</p>
+
+      {/* Thumbnail strip + main view */}
+      {callouts.length > 0 ? (
+        <>
+          {/* Thumbnail strip for quick page navigation */}
+          {callouts.length > 1 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {callouts.map((c, idx) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    setSelectedCalloutIdx(idx);
+                    // If currently published, republish this page
+                    if (isPublishing && onPublish) {
+                      const updatedProof = { ...proof, callout_id: c.id };
+                      onPublish(updatedProof);
+                    }
+                  }}
+                  className={`relative flex-shrink-0 w-16 h-20 rounded border overflow-hidden transition-all ${
+                    idx === selectedCalloutIdx ? 'border-cyan-400 ring-1 ring-cyan-400' : 'border-[#1e2a45] hover:border-cyan-500/40'
+                  }`}
+                >
+                  {c.snapshot_image_url ? (
+                    <img src={c.snapshot_image_url} alt={`p${idx + 1}`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-[#0f1629] flex items-center justify-center">
+                      <span className="text-[9px] text-slate-500">pg {idx + 1}</span>
+                    </div>
+                  )}
+                  <span className="absolute bottom-0 right-0 bg-black/70 text-[8px] text-slate-300 px-1 py-0.5">{idx + 1}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Main callout display */}
+          {currentCallout?.snapshot_image_url && showCallout ? (
+            <div className="relative bg-black rounded-lg border border-[#1e2a45] overflow-hidden">
+              {/* Zoom controls */}
+              <div className="absolute top-2 right-2 flex gap-1 z-10">
+                <button onClick={() => setZoom(z => Math.min(z + 0.25, 3))} className="bg-black/60 hover:bg-black/80 text-white p-1 rounded text-[10px]">
+                  <ZoomIn className="w-3 h-3" />
+                </button>
+                <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} className="bg-black/60 hover:bg-black/80 text-white p-1 rounded text-[10px]">
+                  <ZoomOut className="w-3 h-3" />
+                </button>
+                <button onClick={() => setZoom(1)} className="bg-black/60 hover:bg-black/80 text-white px-1.5 py-1 rounded text-[9px]">
+                  {Math.round(zoom * 100)}%
+                </button>
+              </div>
+              <ScrollArea className="max-h-72">
+                <div className="overflow-x-auto">
+                  <img
+                    src={currentCallout.snapshot_image_url}
+                    alt={currentCallout.name}
+                    style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: zoom !== 1 ? `${100 / zoom}%` : '100%' }}
+                    className="block"
+                  />
+                </div>
+              </ScrollArea>
+              {/* Nav arrows for multi-page */}
+              {callouts.length > 1 && (
+                <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                  <button
+                    onClick={() => setSelectedCalloutIdx(i => Math.max(i - 1, 0))}
+                    disabled={selectedCalloutIdx === 0}
+                    className="bg-black/60 hover:bg-black/80 text-white p-1 rounded disabled:opacity-30"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="bg-black/60 text-[10px] text-slate-300 px-2 py-1 rounded">
+                    {selectedCalloutIdx + 1} / {callouts.length}
+                  </span>
+                  <button
+                    onClick={() => setSelectedCalloutIdx(i => Math.min(i + 1, callouts.length - 1))}
+                    disabled={selectedCalloutIdx === callouts.length - 1}
+                    className="bg-black/60 hover:bg-black/80 text-white p-1 rounded disabled:opacity-30"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-[#0f1629] border border-dashed border-[#1e2a45] rounded-lg p-6 text-center">
+              <EyeOff className="w-5 h-5 text-slate-600 mx-auto mb-1" />
+              <p className="text-xs text-slate-600">Callout hidden</p>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="bg-[#0f1629] border border-dashed border-[#1e2a45] rounded-lg p-6 text-center">
+          <p className="text-xs text-slate-600">No callouts found for this extract</p>
         </div>
       )}
     </div>
@@ -158,51 +240,44 @@ export default function ProofPreviewZone({
     );
   }
 
+  // Derive clip title for depoClip
+  const clipTitle = selectedProof.type === 'depoClip'
+    ? (selectedProof.clip_title || selectedProof.topic_tag || null)
+    : null;
+
   return (
     <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45]">
       {/* Header */}
-      <div className="px-3 py-2 border-b border-[#1e2a45] flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs font-semibold text-slate-300 truncate">{selectedProof.label}</span>
+      <div className="px-3 py-2 border-b border-[#1e2a45] flex items-center justify-between flex-shrink-0 gap-2">
+        <div className="flex flex-col min-w-0 flex-1">
+          {/* Attorney-only clip title */}
+          {clipTitle && (
+            <span className="text-[11px] font-semibold text-amber-300 truncate">{clipTitle}</span>
+          )}
+          <span className="text-[10px] text-slate-500 truncate">{selectedProof.label}</span>
           {isPublishing && (
-            <Badge className="bg-red-700 text-red-100 text-[10px] px-1.5 py-0 animate-pulse flex-shrink-0">
+            <Badge className="bg-red-700 text-red-100 text-[10px] px-1.5 py-0 animate-pulse w-fit mt-0.5">
               LIVE
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-1 flex-shrink-0">
           {selectedProof.type === 'extract' && (
-            <>
-              <button
-                onClick={() => setShowCallout(v => !v)}
-                className={`text-[10px] px-2 py-1 rounded border transition-colors ${showCallout ? 'border-cyan-500 text-cyan-300' : 'border-[#1e2a45] text-slate-500'}`}
-              >
-                {showCallout ? <Eye className="w-3 h-3 inline mr-1" /> : <EyeOff className="w-3 h-3 inline mr-1" />}
-                Callout
-              </button>
-              <button
-                onClick={() => setShowHighlight(v => !v)}
-                className={`text-[10px] px-2 py-1 rounded border transition-colors ${showHighlight ? 'border-cyan-500 text-cyan-300' : 'border-[#1e2a45] text-slate-500'}`}
-              >
-                Highlight
-              </button>
-            </>
+            <button
+              onClick={() => setShowCallout(v => !v)}
+              className={`text-[10px] px-2 py-1 rounded border transition-colors ${showCallout ? 'border-cyan-500 text-cyan-300' : 'border-[#1e2a45] text-slate-500'}`}
+            >
+              {showCallout ? <Eye className="w-3 h-3 inline mr-1" /> : <EyeOff className="w-3 h-3 inline mr-1" />}
+              Callout
+            </button>
           )}
           {isPublishing ? (
-            <Button
-              size="sm"
-              onClick={onUnpublish}
-              className="h-7 text-xs bg-red-700 hover:bg-red-600 px-2 gap-1"
-            >
+            <Button size="sm" onClick={onUnpublish} className="h-7 text-xs bg-red-700 hover:bg-red-600 px-2 gap-1">
               <Square className="w-3 h-3" />
               Unpublish
             </Button>
           ) : (
-            <Button
-              size="sm"
-              onClick={() => onPublish(selectedProof)}
-              className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1"
-            >
+            <Button size="sm" onClick={() => onPublish(selectedProof)} className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1">
               <Monitor className="w-3 h-3" />
               Publish
             </Button>
@@ -219,6 +294,9 @@ export default function ProofPreviewZone({
               proof={selectedProof}
               showCallout={showCallout}
               showHighlight={showHighlight}
+              onPublish={onPublish}
+              isPublishing={isPublishing}
+              onUnpublish={onUnpublish}
             />
           )}
           {selectedProof.type === 'videoClip' && (
