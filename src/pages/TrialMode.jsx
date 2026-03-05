@@ -5,7 +5,7 @@ import WitnessQuestionsList from "@/components/trialMode/WitnessQuestionsList";
 import RunnerZone from "@/components/trialMode/RunnerZone";
 import ChildQuestionsZone from "@/components/trialMode/ChildQuestionsZone";
 import ProofZone from "@/components/trialMode/ProofZone";
-import ProofPreviewZone from "@/components/trialMode/ProofPreviewZone.jsx";
+import ProofPreviewZone from "@/components/trialMode/ProofPreviewZone";
 import {
   resolveQuestionLinks,
   getWitnessesForCase,
