@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { base44 } from '@/api/base44Client';
-import { FileText, Image, Video } from 'lucide-react';
+import { FileText, Image, Video, BookOpen } from 'lucide-react';
 
 const statusColors = {
   NotAsked: 'bg-slate-700 text-slate-300',
