@@ -50,12 +50,13 @@ function ProofCard({ proof, isSelected, onClick }) {
   );
 }
 
-export default function ProofZone({ proofItems, selectedProofId, onSelectProof }) {
+export default function ProofZone({ proofItems, selectedProofId, onSelectProof, childQuestionActive }) {
   if (!proofItems || proofItems.length === 0) {
     return (
       <div className="flex flex-col h-full bg-[#0a0f1e] border-l border-[#1e2a45]">
         <div className="px-4 py-2 border-b border-[#1e2a45]">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Proof (0)</span>
+          {childQuestionActive && <span className="ml-2 text-[10px] text-cyan-400">child</span>}
         </div>
         <div className="flex-1 flex items-center justify-center text-slate-600">
           <p className="text-xs text-center px-4">No proofs linked<br />to this question</p>
