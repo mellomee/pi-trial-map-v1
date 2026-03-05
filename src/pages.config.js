@@ -60,7 +60,6 @@ import Extracts from './pages/Extracts';
 import Import from './pages/Import';
 import JointExhibitPrint from './pages/JointExhibitPrint';
 import JointExhibits from './pages/JointExhibits';
-import JuryView from './pages/JuryView';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
 import Present from './pages/Present';
@@ -95,7 +94,6 @@ export const PAGES = {
     "Import": Import,
     "JointExhibitPrint": JointExhibitPrint,
     "JointExhibits": JointExhibits,
-    "JuryView": JuryView,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
     "Present": Present,
