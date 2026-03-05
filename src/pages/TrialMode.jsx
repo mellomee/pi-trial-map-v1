@@ -409,6 +409,14 @@ export default function TrialMode() {
               selectedProofId={selectedProof?.id}
               onSelectProof={(proof) => setSelectedProof(proof)}
               childQuestionActive={!!selectedChildQuestionId}
+              onProofAdmitted={() => {
+                // Re-resolve proof list so admitted status updates
+                if (selectedChildQuestionId && childResolvedLinks) {
+                  resolveQuestionLinks(selectedChildQuestionId, activeCase.id).then(setChildResolvedLinks);
+                } else if (selectedQuestionId) {
+                  resolveQuestionLinks(selectedQuestionId, activeCase.id).then(setResolvedLinks);
+                }
+              }}
             />
           </div>
         </div>
