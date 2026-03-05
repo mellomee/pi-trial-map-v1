@@ -261,7 +261,6 @@ export default function TrialMode() {
   if (loading) return <div className="flex items-center justify-center h-screen bg-[#0a0f1e] text-slate-400">Loading...</div>;
   if (!activeCase) return <div className="flex items-center justify-center h-screen bg-[#0a0f1e] text-slate-400"><p>Please select a case to begin</p></div>;
 
-  const topH = `${layout.topPct}%`;
   const leftW = `${layout.leftPct}%`;
 
   return (
