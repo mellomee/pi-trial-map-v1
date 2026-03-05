@@ -294,6 +294,7 @@ export default function TrialMode() {
             examType={examType}
             onExamTypeChange={setExamType}
             onCollapse={() => setPanelVisible(false)}
+            selectedQuestionBucket={bucketName}
           />
         </div>
       ) : (
