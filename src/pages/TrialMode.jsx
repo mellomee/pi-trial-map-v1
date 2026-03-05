@@ -21,7 +21,7 @@ import { ChevronRight, AlertTriangle, X } from "lucide-react";
 const PERSIST_KEY = "trialMode_state";
 const LAYOUT_KEY = "trialMode_layout";
 
-const DEFAULT_LAYOUT = { topPct: 50, leftPct: 50 }; // percent splits
+const DEFAULT_LAYOUT = { topBPct: 50, topCPct: 50, leftPct: 50 }; // percent splits — B and C heights independent
 
 function loadPersisted(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || 'null') || fallback; }
