@@ -341,11 +341,11 @@ export default function TrialMode() {
             />
           </div>
 
-          {/* Vertical divider */}
+          {/* Vertical divider B|C */}
           <div
-            onMouseDown={startDragV}
+            onMouseDown={startDragVTop}
             className="w-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-col-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
-            title="Drag to resize"
+            title="Drag to resize B|C"
           />
 
           {/* Zone C */}
