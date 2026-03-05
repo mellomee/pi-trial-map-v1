@@ -339,6 +339,12 @@ export default function TrialMode() {
               bucketName={bucketName}
               onStatusChange={handleStatusChange}
               onSelectQuestion={handleSelectQuestion}
+              onSelectCurrentQuestion={() => {
+                // Deselect child, revert Zone E to parent proof
+                setSelectedChildQuestionId(null);
+                setChildResolvedLinks(null);
+                setSelectedProof(null);
+              }}
             />
           </div>
 
