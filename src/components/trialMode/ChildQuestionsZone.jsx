@@ -76,9 +76,6 @@ export default function ChildQuestionsZone({ parentQuestion, childQuestions, sel
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           Child Questions ({childQuestions.length})
         </span>
-        {selectedChildId && (
-          <span className="text-[10px] text-cyan-400 ml-1">• proof filtered</span>
-        )}
       </div>
 
       {childQuestions.length === 0 ? (
