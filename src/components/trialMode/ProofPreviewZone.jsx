@@ -90,13 +90,16 @@ function ExtractPreview({ proof, showCallout, showHighlight }) {
 
   if (!extract) return <div className="text-xs text-slate-500 p-4">Loading extract...</div>;
 
+  // Resolve the internal_name from the extract or its linked joint exhibit
+  const internalName = extract.internal_name || jx?.internal_name || extract.title || jx?.marked_title || '—';
+
   return (
     <div className="space-y-3">
       {/* Metadata */}
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="bg-[#0f1629] border border-[#1e2a45] rounded p-2">
           <p className="text-[10px] text-slate-500 mb-0.5">Internal Name</p>
-          <p className="text-slate-200 font-medium">{extract.internal_name || extract.title || '—'}</p>
+          <p className="text-slate-200 font-medium">{internalName}</p>
         </div>
         <div className="bg-[#0f1629] border border-[#1e2a45] rounded p-2">
           <p className="text-[10px] text-slate-500 mb-0.5">Marked #</p>
