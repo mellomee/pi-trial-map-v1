@@ -122,13 +122,17 @@ export default function RunnerZone({
       {/* Scrollable question + answer content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {/* Question number + text + status inline */}
-        <div className="flex items-start gap-2 flex-wrap">
+        <button
+          className="flex items-start gap-2 w-full text-left group"
+          onClick={onSelectCurrentQuestion}
+          title="Click to show proofs for this question"
+        >
           <span className="text-[11px] text-slate-500 font-semibold mt-1.5 flex-shrink-0">Q{questionIndex + 1}</span>
-          <h1 className="text-xl font-bold text-white leading-snug flex-1">{question.question_text}</h1>
+          <h1 className="text-xl font-bold text-white leading-snug flex-1 group-hover:text-cyan-100 transition-colors">{question.question_text}</h1>
           {question.status === 'Asked' && <span className="text-green-400 text-base flex-shrink-0 mt-1">✓</span>}
           {question.status === 'NeedsFollowUp' && <span className="text-red-400 text-base flex-shrink-0 mt-1">✗</span>}
           {question.status === 'Skipped' && <span className="text-slate-500 text-base flex-shrink-0 mt-1">—</span>}
-        </div>
+        </button>
 
         {/* Expected answer — arrow + colored text, no label */}
         {question.expected_answer && (
