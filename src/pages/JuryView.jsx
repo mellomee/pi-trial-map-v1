@@ -114,18 +114,9 @@ export default function JuryView() {
     });
   }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof]);
 
-  // Waiting screen
+  // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
-    return (
-      <div className="fixed inset-0 bg-[#020510] flex flex-col items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-[#0f1629] border border-[#1e2a45] flex items-center justify-center mx-auto animate-pulse">
-            <div className="w-3 h-3 bg-cyan-500 rounded-full" />
-          </div>
-          <p className="text-slate-500 text-sm tracking-wide uppercase">Waiting for attorney...</p>
-        </div>
-      </div>
-    );
+    return <div className="fixed inset-0 bg-black" />;
   }
 
   // Build exhibit label: only "Exhibit X" using admitted number
