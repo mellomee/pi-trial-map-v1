@@ -24,6 +24,7 @@ export default function ProofLibrary() {
   const [proofItems, setProofItems] = useState([]);
   const [calloutNames, setCalloutNames] = useState({}); // calloutId -> callout name
   const [calloutWitnesses, setCalloutWitnesses] = useState({}); // proofItemId -> witness name string
+  const [proofJointExhibits, setProofJointExhibits] = useState({}); // extractSourceId -> { marked_no, marked_title, internal_name, status, admitted_no }
   const [allTrialPoints, setAllTrialPoints] = useState([]);
   const [linkedTrialPoints, setLinkedTrialPoints] = useState([]);
   const [allWitnesses, setAllWitnesses] = useState([]);
