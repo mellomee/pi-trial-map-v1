@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Play, Pause, Square, CheckCircle, XCircle, SkipForward, RotateCcw } from 'lucide-react';
+import { Clock, Play, Pause, Square, CheckCircle, XCircle, SkipForward, RotateCcw, BookOpen } from 'lucide-react';
 
 const examTypeLabel = (type) => {
   if (type === 'Direct' || type === 'Cross') return 'Main';
