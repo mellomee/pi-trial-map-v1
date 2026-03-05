@@ -324,12 +324,12 @@ export default function TrialMode() {
         </div>
       )}
 
-      {/* Center: resizable 2x2 grid (B, C, D, E) */}
-      <div ref={containerRef} className="flex-1 min-w-0 flex flex-col h-full relative select-none">
-        {/* Top row: B + C */}
-        <div className="flex overflow-hidden" style={{ height: topH }}>
+      {/* Center: B/D left column + C/E right column, each independently resizable */}
+      <div ref={containerRef} className="flex-1 min-w-0 flex h-full relative select-none">
+        {/* Left column: B (top) + D (bottom) */}
+        <div className="flex flex-col overflow-hidden" style={{ width: leftW }}>
           {/* Zone B */}
-          <div className="overflow-hidden" style={{ width: leftW }}>
+          <div className="overflow-hidden" style={{ height: `${layout.topBPct}%` }}>
             <RunnerZone
               question={selectedQuestion}
               nextQuestion={nextQuestion}
@@ -342,35 +342,15 @@ export default function TrialMode() {
             />
           </div>
 
-          {/* Vertical divider */}
+          {/* Horizontal divider for B/D */}
           <div
-            onMouseDown={startDragV}
-            className="w-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-col-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
-            title="Drag to resize"
+            onMouseDown={startDragHB}
+            className="h-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-row-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
+            title="Drag to resize B/D"
           />
 
-          {/* Zone C */}
-          <div className="overflow-hidden flex-1">
-            <ProofPreviewZone
-              selectedProof={selectedProof}
-              isPublishing={!!(publishedProof && selectedProof && publishedProof.id === selectedProof.id)}
-              onPublish={handlePublishProof}
-              onUnpublish={handleClearJury}
-            />
-          </div>
-        </div>
-
-        {/* Horizontal divider */}
-        <div
-          onMouseDown={startDragH}
-          className="h-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-row-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
-          title="Drag to resize"
-        />
-
-        {/* Bottom row: D + E */}
-        <div className="flex overflow-hidden flex-1">
           {/* Zone D */}
-          <div className="overflow-hidden" style={{ width: leftW }}>
+          <div className="overflow-hidden flex-1">
             <ChildQuestionsZone
               parentQuestion={selectedQuestion}
               childQuestions={childQuestions}
@@ -378,11 +358,32 @@ export default function TrialMode() {
               onSelectChild={handleSelectChildQuestion}
             />
           </div>
+        </div>
 
-          {/* Vertical divider (synced) */}
+        {/* Vertical divider */}
+        <div
+          onMouseDown={startDragV}
+          className="w-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-col-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
+          title="Drag to resize"
+        />
+
+        {/* Right column: C (top) + E (bottom) */}
+        <div className="flex flex-col overflow-hidden flex-1">
+          {/* Zone C */}
+          <div className="overflow-hidden" style={{ height: `${layout.topCPct}%` }}>
+            <ProofPreviewZone
+              selectedProof={selectedProof}
+              isPublishing={!!(publishedProof && selectedProof && publishedProof.id === selectedProof.id)}
+              onPublish={handlePublishProof}
+              onUnpublish={handleClearJury}
+            />
+          </div>
+
+          {/* Horizontal divider for C/E */}
           <div
-            onMouseDown={startDragV}
-            className="w-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-col-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
+            onMouseDown={startDragHC}
+            className="h-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-row-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
+            title="Drag to resize C/E"
           />
 
           {/* Zone E */}
