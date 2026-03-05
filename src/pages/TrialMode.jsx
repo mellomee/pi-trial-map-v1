@@ -154,6 +154,13 @@ export default function TrialMode() {
     }
   };
 
+  // Switch Zone E back to parent question proof
+  const handleShowParentProof = () => {
+    setSelectedChildQuestionId(null);
+    setChildResolvedLinks(null);
+    setSelectedProof(null);
+  };
+
   // The proof items currently shown in Zone E
   const activeProofItems = childResolvedLinks ? childResolvedLinks.proofItems : resolvedLinks.proofItems;
 
