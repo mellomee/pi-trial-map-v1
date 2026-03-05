@@ -192,7 +192,7 @@ export default function TrialMode() {
       if (!isDraggingH.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const y = (ev.clientY || ev.touches?.[0]?.clientY) - rect.top;
-      const pct = Math.min(Math.max((y / rect.height) * 100, 20), 80);
+      const pct = Math.min(Math.max((y / rect.height) * 100, 15), 85);
       setLayout(l => ({ ...l, topPct: pct }));
     };
     const onUp = () => { isDraggingH.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
@@ -200,15 +200,32 @@ export default function TrialMode() {
     document.addEventListener('mouseup', onUp);
   }, []);
 
-  const startDragV = useCallback((e) => {
+  // Top-row vertical divider (B | C)
+  const startDragVTop = useCallback((e) => {
     e.preventDefault();
     isDraggingV.current = true;
     const onMove = (ev) => {
       if (!isDraggingV.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const x = (ev.clientX || ev.touches?.[0]?.clientX) - rect.left;
-      const pct = Math.min(Math.max((x / rect.width) * 100, 20), 80);
-      setLayout(l => ({ ...l, leftPct: pct }));
+      const pct = Math.min(Math.max((x / rect.width) * 100, 15), 85);
+      setLayout(l => ({ ...l, topLeftPct: pct }));
+    };
+    const onUp = () => { isDraggingV.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, []);
+
+  // Bottom-row vertical divider (D | E)
+  const startDragVBot = useCallback((e) => {
+    e.preventDefault();
+    isDraggingV.current = true;
+    const onMove = (ev) => {
+      if (!isDraggingV.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = (ev.clientX || ev.touches?.[0]?.clientX) - rect.left;
+      const pct = Math.min(Math.max((x / rect.width) * 100, 15), 85);
+      setLayout(l => ({ ...l, botLeftPct: pct }));
     };
     const onUp = () => { isDraggingV.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
     document.addEventListener('mousemove', onMove);
