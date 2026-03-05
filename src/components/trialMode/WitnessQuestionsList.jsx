@@ -108,6 +108,14 @@ export default function WitnessQuestionsList({
             </div>
           </div>
 
+          {/* Bucket name if available */}
+          {selectedQuestionBucket && (
+            <div className="px-3 py-1.5 border-b border-[#1e2a45] bg-cyan-500/5">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Bucket</p>
+              <p className="text-xs text-cyan-300 font-medium truncate">{selectedQuestionBucket}</p>
+            </div>
+          )}
+
           {/* Question count */}
           <div className="px-3 py-1.5 border-b border-[#1e2a45] flex items-center justify-between">
             <span className="text-xs text-slate-500">{filteredQuestions.length} questions</span>
