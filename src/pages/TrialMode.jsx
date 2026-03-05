@@ -369,7 +369,7 @@ export default function TrialMode() {
         {/* Bottom row: D + E */}
         <div className="flex overflow-hidden flex-1">
           {/* Zone D */}
-          <div className="overflow-hidden" style={{ width: leftW }}>
+          <div className="overflow-hidden" style={{ width: botLeftW }}>
             <ChildQuestionsZone
               parentQuestion={selectedQuestion}
               childQuestions={childQuestions}
