@@ -11,6 +11,8 @@ function DepoClipPreview({ proof }) {
 
   useEffect(() => {
     if (!proof?.source_id) return;
+    setClip(null);
+    setDepo(null);
     base44.entities.DepoClips.filter({ id: proof.source_id }).then(r => {
       if (r[0]) {
         setClip(r[0]);
@@ -37,20 +39,21 @@ function DepoClipPreview({ proof }) {
           {clip.start_cite} – {clip.end_cite}
         </span>
       </div>
+      {/* Two-section layout: cite block on left, text stacked below */}
       <div className="bg-[#0f1629] rounded-lg border border-[#1e2a45] overflow-hidden">
         <ScrollArea className="max-h-64">
-          <div className="p-1">
+          <div className="divide-y divide-[#1e2a45]/60">
             {lines.map((line, i) => {
               const parts = line.match(/^(\d+:\d+)\s+(.*)$/);
               if (parts) {
                 return (
-                  <div key={i} className="flex gap-0 group">
-                    <span className="text-[11px] font-mono text-cyan-500 font-bold w-14 flex-shrink-0 py-1.5 px-2 bg-[#0a0f1e]/60 border-r border-[#1e2a45]">{parts[1]}</span>
-                    <span className="text-[12px] text-slate-100 leading-relaxed py-1.5 px-3 flex-1">{parts[2]}</span>
+                  <div key={i} className="flex flex-col px-3 py-1.5 hover:bg-white/3 group">
+                    <span className="font-mono text-cyan-400 text-[10px] font-bold tracking-wider leading-none mb-1">{parts[1]}</span>
+                    <span className="text-[13px] text-white leading-snug">{parts[2]}</span>
                   </div>
                 );
               }
-              return <div key={i} className="text-[12px] text-slate-300 py-1.5 px-2">{line}</div>;
+              return <div key={i} className="text-[13px] text-slate-300 px-3 py-1.5">{line}</div>;
             })}
           </div>
         </ScrollArea>
