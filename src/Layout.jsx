@@ -145,6 +145,7 @@ export default function Layout({ children, currentPageName }) {
                   <Link
                     key={item.page}
                     to={createPageUrl(item.page)}
+                    onClick={(e) => handleNavClick(e, item.page)}
                     className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors ${
                       isActive
                         ? "bg-cyan-500/10 text-cyan-400 border-l-2 border-cyan-400"
