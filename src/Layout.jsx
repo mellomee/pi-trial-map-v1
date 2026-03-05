@@ -55,11 +55,26 @@ const NAV_SECTIONS = [
 export default function Layout({ children, currentPageName }) {
   const [collapsed, setCollapsed] = useState(currentPageName === 'JuryView');
   const { activeCase } = useActiveCase();
+  const [warnNav, setWarnNav] = useState(null); // pending page name
+  const navigate = useNavigate();
 
   // Auto-collapse sidebar on JuryView
   useEffect(() => {
     if (currentPageName === 'JuryView') setCollapsed(true);
   }, [currentPageName]);
+
+  const handleNavClick = (e, page) => {
+    if (currentPageName === 'TrialMode' && window.__trialModePublished && page !== 'TrialMode') {
+      e.preventDefault();
+      setWarnNav(page);
+    }
+  };
+
+  const confirmNav = () => {
+    window.__trialModePublished = false;
+    navigate(createPageUrl(warnNav));
+    setWarnNav(null);
+  };
 
   return (
     <div className="flex h-screen bg-[#0a0f1e] text-slate-200 overflow-hidden">
