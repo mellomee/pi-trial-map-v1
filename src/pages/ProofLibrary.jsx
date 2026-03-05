@@ -147,6 +147,19 @@ export default function ProofLibrary() {
       setCalloutNames(calloutMap);
       setCalloutWitnesses(calloutWitMap);
 
+      // For extract-type proof items, fetch the JointExhibit (marked_no, admitted_no, title)
+      const extractSourceIds = [...new Set(allProof.filter(p => p.type === 'extract' && p.source_id).map(p => p.source_id))];
+      const jxMap = {};
+      if (extractSourceIds.length > 0) {
+        const allJxs = await base44.entities.JointExhibits.filter({ case_id: activeCase.id });
+        allJxs.forEach(jx => {
+          if (jx.exhibit_extract_id && extractSourceIds.includes(jx.exhibit_extract_id)) {
+            jxMap[jx.exhibit_extract_id] = jx;
+          }
+        });
+      }
+      setProofJointExhibits(jxMap);
+
       // Build deduplicated witness list from ALL proof items in this group:
       // depoClip witnesses from ProofItemWitnesses + callout witnesses from extract proofs
       const witIdSet = new Set(witIdsForGroup);
