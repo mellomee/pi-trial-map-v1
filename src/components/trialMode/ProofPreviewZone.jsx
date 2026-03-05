@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { base44 } from '@/api/base44Client';
-import { Monitor, Square, Video } from 'lucide-react';
+import { Monitor, Square, Video, Lock } from 'lucide-react';
 import ExtractViewerZone from './ExtractViewerZone';
 
 // ---------- DepoClip Preview ----------
