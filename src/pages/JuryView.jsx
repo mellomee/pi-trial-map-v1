@@ -150,24 +150,22 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && callout?.snapshot_image_url && (
-        <div className="w-full h-full flex flex-col items-stretch px-4 py-4">
-          {/* Minimal exhibit label top-right */}
+        <div className="w-full h-full flex flex-col" style={{ padding: exhibitLabel ? '0' : '0' }}>
+          {/* Exhibit label — absolute top-right overlay */}
           {exhibitLabel && (
-            <div className="flex justify-end mb-2 flex-shrink-0">
-              <span className="text-slate-300 text-base font-semibold bg-black/40 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
+            <div className="absolute top-3 right-4 z-10">
+              <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
             </div>
           )}
-          {/* Full-width image */}
-          <div className="flex-1 flex items-center justify-center overflow-hidden">
-            <div className="relative w-full h-full flex items-center justify-center">
-              <div className="relative inline-block max-w-full max-h-full">
-                <img
-                  src={callout.snapshot_image_url}
-                  alt="Evidence"
-                  className="block max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] object-contain shadow-2xl"
-                />
-                <HighlightOverlay highlights={highlights} />
-              </div>
+          {/* Fill entire screen with image */}
+          <div className="w-full h-full flex items-center justify-center overflow-hidden">
+            <div className="relative" style={{ maxWidth: '100vw', maxHeight: '100vh' }}>
+              <img
+                src={callout.snapshot_image_url}
+                alt="Evidence"
+                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain' }}
+              />
+              <HighlightOverlay highlights={highlights} />
             </div>
           </div>
         </div>
