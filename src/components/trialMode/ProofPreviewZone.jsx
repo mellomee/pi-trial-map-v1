@@ -198,13 +198,8 @@ function ExtractPreview({ proof, showCallout, onPublish, isPublishing }) {
             </button>
           </div>
           <ScrollArea className="max-h-72">
-            <div className="overflow-x-auto">
-              <img
-                src={currentCallout.snapshot_image_url}
-                alt={currentCallout.name}
-                style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: zoom !== 1 ? `${100 / zoom}%` : '100%' }}
-                className="block"
-              />
+            <div className="overflow-x-auto" style={{ transform: zoom !== 1 ? `scale(${zoom})` : undefined, transformOrigin: 'top left', width: zoom !== 1 ? `${100 / zoom}%` : '100%' }}>
+              <CalloutImage callout={currentCallout} />
             </div>
           </ScrollArea>
           {callouts.length > 1 && (
