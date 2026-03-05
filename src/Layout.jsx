@@ -78,6 +78,24 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="flex h-screen bg-[#0a0f1e] text-slate-200 overflow-hidden">
+      {/* Unpublish nav warning */}
+      {warnNav && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+          <div className="bg-[#0f1629] border border-amber-500/40 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-300">Jury Display is Active</p>
+                <p className="text-xs text-slate-400 mt-1">Evidence is still published to the jury. Unpublish before leaving?</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={confirmNav} className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold py-2 rounded-lg transition-colors">Leave Anyway</button>
+              <button onClick={() => setWarnNav(null)} className="flex-1 bg-[#1e2a45] hover:bg-[#263354] text-slate-300 text-xs font-semibold py-2 rounded-lg transition-colors">Stay Here</button>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`
         :root {
           --bg-primary: #0a0f1e;
