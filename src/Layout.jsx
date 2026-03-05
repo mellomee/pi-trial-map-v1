@@ -126,7 +126,7 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className={`flex-1 overflow-y-auto ${currentPageName === 'JuryView' ? 'overflow-hidden' : ''}`}>
         {children}
       </main>
 
