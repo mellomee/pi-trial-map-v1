@@ -52,8 +52,13 @@ export default function TrialMode() {
   const [selectedProof, setSelectedProof] = useState(null);
 
   // Resizable layout state
-  const [layout, setLayout] = useState(savedLayout);
-  const isDraggingH = useRef(false); // horizontal divider (top/bottom rows)
+  const [layout, setLayout] = useState({
+    topBPct: savedLayout.topBPct ?? savedLayout.topPct ?? 50,
+    topCPct: savedLayout.topCPct ?? savedLayout.topPct ?? 50,
+    leftPct: savedLayout.leftPct ?? 50,
+  });
+  const isDraggingHB = useRef(false); // horizontal divider for B/D column
+  const isDraggingHC = useRef(false); // horizontal divider for C/E column
   const isDraggingV = useRef(false); // vertical divider (left/right cols)
   const containerRef = useRef(null);
 
