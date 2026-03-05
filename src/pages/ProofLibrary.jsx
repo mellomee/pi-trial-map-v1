@@ -551,6 +551,29 @@ export default function ProofLibrary() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-100">{proof.label}</p>
+                              {proof.type === 'extract' && (() => {
+                                const jx = proofJointExhibits[proof.source_id];
+                                if (!jx) return null;
+                                const name = jx.internal_name || jx.marked_title;
+                                const isAdmitted = jx.status === 'Admitted' && jx.admitted_no;
+                                return (
+                                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    <span className="text-[11px] text-yellow-400 font-semibold bg-yellow-900/20 border border-yellow-700/30 px-1.5 py-0.5 rounded">
+                                      #{jx.marked_no}
+                                    </span>
+                                    {name && <span className="text-[11px] text-gray-400 truncate max-w-[140px]">{name}</span>}
+                                    {isAdmitted ? (
+                                      <span className="text-[11px] text-green-300 bg-green-900/20 border border-green-700/30 px-1.5 py-0.5 rounded font-medium">
+                                        ✓ Ex. {jx.admitted_no}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] text-slate-400 bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded">
+                                        {jx.status}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                               {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] ? (
                                 <p className="text-xs text-cyan-400 mt-0.5">↳ {calloutNames[proof.callout_id]}</p>
                               ) : null}
