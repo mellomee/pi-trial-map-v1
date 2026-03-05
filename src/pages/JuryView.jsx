@@ -128,19 +128,20 @@ export default function JuryView() {
     );
   }
 
+  // Build exhibit label: only "Exhibit X" using admitted number
+  const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
+
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
       {proofItem.type === 'depoClip' && depoClip && (
-        <div className="w-full h-full flex flex-col justify-center px-16 py-12 max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="mb-8 flex flex-wrap gap-4 items-baseline">
+        <div className="w-full h-full flex flex-col justify-center px-8 py-8 max-w-[92vw] mx-auto">
+          <div className="mb-6 flex flex-wrap gap-4 items-baseline">
             {depo && (
               <span className="text-slate-400 text-xl font-semibold tracking-wide uppercase">{depo.sheet_name}</span>
             )}
             <span className="text-cyan-300 font-mono text-lg">{depoClip.start_cite} – {depoClip.end_cite}</span>
           </div>
-          {/* Transcript lines */}
-          <div className="space-y-0 overflow-y-auto max-h-[70vh]">
+          <div className="overflow-y-auto max-h-[75vh] space-y-0">
             {(depoClip.clip_text || '').split('\n').filter(Boolean).map((line, i) => {
               const parts = line.match(/^(\d+:\d+)\s+(.*)$/);
               if (parts) {
@@ -158,31 +159,24 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && callout?.snapshot_image_url && (
-        <div className="w-full h-full flex flex-col items-center justify-center p-8">
-          {/* Exhibit badges */}
-          {jx && (
-            <div className="flex gap-4 mb-4 items-center">
-              {jx.internal_name && (
-                <span className="text-slate-300 text-lg font-semibold">{jx.internal_name}</span>
-              )}
-              {jx.marked_no && (
-                <span className="bg-yellow-600/30 border border-yellow-500/40 text-yellow-200 text-base font-bold px-3 py-1 rounded">#{jx.marked_no}</span>
-              )}
-              {jx.admitted_no && (
-                <span className="bg-green-600/30 border border-green-500/40 text-green-200 text-base font-bold px-3 py-1 rounded">Admitted #{jx.admitted_no}</span>
-              )}
+        <div className="w-full h-full flex flex-col items-stretch px-4 py-4">
+          {/* Minimal exhibit label top-right */}
+          {exhibitLabel && (
+            <div className="flex justify-end mb-2 flex-shrink-0">
+              <span className="text-slate-300 text-base font-semibold bg-black/40 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
             </div>
           )}
-          {/* Image with highlights */}
-          <div className="relative max-w-full max-h-[85vh] flex-1 flex items-center justify-center">
-            <div className="relative inline-block">
-              <img
-                src={callout.snapshot_image_url}
-                alt="Evidence"
-                className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded"
-                style={{ display: 'block' }}
-              />
-              <HighlightOverlay highlights={highlights} />
+          {/* Full-width image */}
+          <div className="flex-1 flex items-center justify-center overflow-hidden">
+            <div className="relative w-full h-full flex items-center justify-center">
+              <div className="relative inline-block max-w-full max-h-full">
+                <img
+                  src={callout.snapshot_image_url}
+                  alt="Evidence"
+                  className="block max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] object-contain shadow-2xl"
+                />
+                <HighlightOverlay highlights={highlights} />
+              </div>
             </div>
           </div>
         </div>
