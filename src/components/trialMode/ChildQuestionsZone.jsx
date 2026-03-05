@@ -28,7 +28,7 @@ const examTypeBadgeColor = (type) => {
   return 'bg-slate-800 text-slate-400';
 };
 
-export default function ChildQuestionsZone({ parentQuestion, childQuestions }) {
+export default function ChildQuestionsZone({ parentQuestion, childQuestions, selectedChildId, onSelectChild }) {
   if (!parentQuestion) {
     return (
       <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] items-center justify-center text-slate-600">
@@ -43,6 +43,9 @@ export default function ChildQuestionsZone({ parentQuestion, childQuestions }) {
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           Child Questions ({childQuestions.length})
         </span>
+        {selectedChildId && (
+          <span className="text-[10px] text-cyan-400 ml-1">• proof filtered</span>
+        )}
       </div>
 
       {childQuestions.length === 0 ? (
@@ -52,41 +55,49 @@ export default function ChildQuestionsZone({ parentQuestion, childQuestions }) {
       ) : (
         <ScrollArea className="flex-1">
           <div className="p-3 space-y-2">
-            {childQuestions.map((q, idx) => (
-              <div
-                key={q.id}
-                className="bg-[#0f1629] border border-[#1e2a45] rounded-lg p-3"
-              >
-                <div className="flex items-start gap-2 mb-1.5">
-                  <span className="text-xs text-slate-600 flex-shrink-0 mt-0.5">{idx + 1}.</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-1">
-                      <p className="text-xs text-slate-200 leading-snug line-clamp-3 flex-1">{q.question_text}</p>
-                      {statusIcons[q.status] && (
-                        <span className={`text-sm font-bold flex-shrink-0 ml-1 ${q.status === 'Asked' ? 'text-green-400' : q.status === 'NeedsFollowUp' ? 'text-red-400' : 'text-slate-500'}`}>
-                          {statusIcons[q.status]}
+            {childQuestions.map((q, idx) => {
+              const isSelected = selectedChildId === q.id;
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => onSelectChild && onSelectChild(q)}
+                  className={`w-full text-left rounded-lg p-3 border transition-colors ${
+                    isSelected
+                      ? 'bg-cyan-500/20 border-cyan-400'
+                      : 'bg-[#0f1629] border-[#1e2a45] hover:bg-[#131a2e] hover:border-cyan-500/30'
+                  }`}
+                >
+                  <div className="flex items-start gap-2 mb-1.5">
+                    <span className={`text-xs flex-shrink-0 mt-0.5 font-bold ${isSelected ? 'text-cyan-400' : 'text-slate-600'}`}>{idx + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1">
+                        <p className={`text-xs leading-snug line-clamp-3 flex-1 ${isSelected ? 'text-cyan-200' : 'text-slate-200'}`}>{q.question_text}</p>
+                        {statusIcons[q.status] && (
+                          <span className={`text-sm font-bold flex-shrink-0 ml-1 ${q.status === 'Asked' ? 'text-green-400' : q.status === 'NeedsFollowUp' ? 'text-red-400' : 'text-slate-500'}`}>
+                            {statusIcons[q.status]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-1 mt-1.5 flex-wrap">
+                        {q.question_type && (
+                          <span className="text-[10px] text-slate-500 bg-[#131a2e] px-1.5 py-0.5 rounded">
+                            {q.question_type}
+                          </span>
+                        )}
+                        {q.exam_type && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${examTypeBadgeColor(q.exam_type)}`}>
+                            {examTypeLabel(q.exam_type)}
+                          </span>
+                        )}
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${statusColors[q.status] || statusColors.NotAsked}`}>
+                          {q.status === 'NotAsked' ? 'Not Asked' : q.status}
                         </span>
-                      )}
-                    </div>
-                    <div className="flex gap-1 mt-1.5 flex-wrap">
-                      {q.question_type && (
-                        <span className="text-[10px] text-slate-500 bg-[#131a2e] px-1.5 py-0.5 rounded">
-                          {q.question_type}
-                        </span>
-                      )}
-                      {q.exam_type && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${examTypeBadgeColor(q.exam_type)}`}>
-                          {examTypeLabel(q.exam_type)}
-                        </span>
-                      )}
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${statusColors[q.status] || statusColors.NotAsked}`}>
-                        {q.status === 'NotAsked' ? 'Not Asked' : q.status}
-                      </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </ScrollArea>
       )}
