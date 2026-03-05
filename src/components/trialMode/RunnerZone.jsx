@@ -23,6 +23,7 @@ export default function RunnerZone({
   bucketName,
   onStatusChange,
   onSelectQuestion,
+  onShowParentProof,
   childQuestions,
 }) {
   const [timerRunning, setTimerRunning] = useState(false);
