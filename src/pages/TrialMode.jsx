@@ -53,7 +53,9 @@ export default function TrialMode() {
 
   // Resizable layout state
   const [layout, setLayout] = useState(savedLayout);
-  const isDraggingH = useRef(false); // horizontal divider (top/bottom rows)
+  const isDraggingH = useRef(false);
+  const isDraggingHL = useRef(false); // horizontal left (B|D)
+  const isDraggingHR = useRef(false); // horizontal right (C|E)
   const isDraggingV = useRef(false); // vertical divider (left/right cols)
   const containerRef = useRef(null);
 
