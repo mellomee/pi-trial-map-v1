@@ -30,7 +30,7 @@ const examTypeBadgeColor = (type) => {
   return 'bg-slate-800 text-slate-400';
 };
 
-// Check if a child question has any proof linked
+// Check if a child question has any proof linked (via QuestionProofItems OR QuestionEvidenceGroups)
 function useChildProofFlags(childQuestions) {
   const [flags, setFlags] = useState({}); // { [questionId]: boolean }
 
@@ -39,6 +39,10 @@ function useChildProofFlags(childQuestions) {
     let cancelled = false;
     Promise.all(
       childQuestions.map(async (q) => {
+        // Check direct QuestionProofItems first (used by child questions)
+        const direct = await base44.entities.QuestionProofItems.filter({ question_id: q.id });
+        if (direct.length > 0) return [q.id, true];
+        // Also check via EvidenceGroups
         const links = await base44.entities.QuestionEvidenceGroups.filter({ question_id: q.id });
         if (!links.length) return [q.id, false];
         const egIds = links.map(l => l.evidence_group_id);
