@@ -10,65 +10,49 @@ export async function resolveQuestionLinks(questionId, caseId) {
   if (!questionId) return { evidenceGroups: [], proofItems: [], trialPoints: [] };
 
   try {
-    // Step 1: Get EvidenceGroups linked to this question
-    const questionEvidenceGroupLinks = await base44.entities.QuestionEvidenceGroups.filter({
-      question_id: questionId,
-    });
+    // Path A: Direct QuestionProofItems links (used by child questions and direct-linked proofs)
+    const directProofLinks = await base44.entities.QuestionProofItems.filter({ question_id: questionId });
 
-    if (questionEvidenceGroupLinks.length === 0) {
-      return { evidenceGroups: [], proofItems: [], trialPoints: [] };
-    }
-
+    // Path B: EvidenceGroup-based links
+    const questionEvidenceGroupLinks = await base44.entities.QuestionEvidenceGroups.filter({ question_id: questionId });
     const egIds = questionEvidenceGroupLinks.map(link => link.evidence_group_id);
 
-    // Step 2: Fetch the EvidenceGroups
-    const evidenceGroups = await Promise.all(
-      egIds.map(egId => base44.entities.EvidenceGroups.filter({ id: egId }))
-    ).then(results => results.flat());
+    // Fetch evidence groups in parallel with EG proof items
+    const [evidenceGroups, egProofItemLinks] = egIds.length
+      ? await Promise.all([
+          Promise.all(egIds.map(egId => base44.entities.EvidenceGroups.filter({ id: egId }))).then(r => r.flat()),
+          base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: { $in: egIds } }),
+        ])
+      : [[], []];
 
-    // Step 3: Get ProofItems for those groups
-    const egProofItemLinks = await base44.entities.EvidenceGroupProofItems.filter({
-      evidence_group_id: { $in: egIds },
-    });
+    // Merge proof item IDs from both paths, deduplicating
+    const egProofItemIds = egProofItemLinks.map(l => l.proof_item_id);
+    const directProofItemIds = directProofLinks.map(l => l.proof_item_id);
+    const allProofItemIds = [...new Set([...egProofItemIds, ...directProofItemIds])];
 
-    const proofItemIds = egProofItemLinks.map(link => link.proof_item_id);
-    let proofItems = proofItemIds.length
-      ? await Promise.all(
-          proofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))
-        ).then(results => results.flat())
+    let proofItems = allProofItemIds.length
+      ? await Promise.all(allProofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))).then(r => r.flat())
       : [];
 
     // Enrich depoClip proof items with their title (topic_tag)
     proofItems = await Promise.all(proofItems.map(async (pi) => {
       if (pi.type === 'depoClip' && pi.source_id) {
         const clips = await base44.entities.DepoClips.filter({ id: pi.source_id });
-        if (clips[0]?.topic_tag) {
-          return { ...pi, clip_title: clips[0].topic_tag };
-        }
+        if (clips[0]?.topic_tag) return { ...pi, clip_title: clips[0].topic_tag };
       }
       return pi;
     }));
 
-    // Step 4: Get TrialPoints linked to those groups
-    const egTrialPointLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
-      evidence_group_id: { $in: egIds },
-    });
-
-    const trialPointIds = egTrialPointLinks.map(link => link.trial_point_id);
+    // TrialPoints linked to those groups
+    const egTrialPointLinks = egIds.length
+      ? await base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: { $in: egIds } })
+      : [];
+    const trialPointIds = egTrialPointLinks.map(l => l.trial_point_id);
     const trialPoints = trialPointIds.length
-      ? await Promise.all(
-          trialPointIds.map(tpId => base44.entities.TrialPoints.filter({ id: tpId }))
-        ).then(results => results.flat())
+      ? await Promise.all(trialPointIds.map(tpId => base44.entities.TrialPoints.filter({ id: tpId }))).then(r => r.flat())
       : [];
 
-    return {
-      evidenceGroups,
-      proofItems,
-      trialPoints,
-      questionEvidenceGroupLinks,
-      egProofItemLinks,
-      egTrialPointLinks,
-    };
+    return { evidenceGroups, proofItems, trialPoints, questionEvidenceGroupLinks, egProofItemLinks, egTrialPointLinks };
   } catch (error) {
     console.error('Error resolving question links:', error);
     return { evidenceGroups: [], proofItems: [], trialPoints: [] };
