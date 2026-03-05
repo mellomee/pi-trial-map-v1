@@ -103,7 +103,7 @@ export default function RunnerZone({
         </div>
         <div className="flex items-center gap-1.5 min-w-0">
           {bucketName && (
-            <span className="text-[10px] text-cyan-400 font-medium truncate max-w-[100px]" title={bucketName}>{bucketName}</span>
+            <span className="text-[10px] bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 font-semibold truncate max-w-[120px] px-2 py-0.5 rounded" title={bucketName}>📂 {bucketName}</span>
           )}
           {question.exam_type && (
             <Badge className={`text-[10px] px-1 py-0 h-4 ${examTypeBadgeColor(question.exam_type)}`}>
@@ -123,7 +123,7 @@ export default function RunnerZone({
         {/* Status badge */}
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Q{questionIndex + 1}</span>
-          {question.status === 'Asked' && <span className="text-green-400 text-xs font-bold">✓ Expected</span>}
+          {question.status === 'Asked' && <span className="text-green-400 text-lg font-bold leading-none">✓</span>}
           {question.status === 'NeedsFollowUp' && <span className="text-red-400 text-xs font-bold">✗ Unexpected</span>}
           {question.status === 'Skipped' && <span className="text-slate-500 text-xs">— Skipped</span>}
         </div>
