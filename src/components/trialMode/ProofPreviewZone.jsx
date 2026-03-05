@@ -155,12 +155,35 @@ function ExtractPreview({ proof, showCallout, onPublish, isPublishing }) {
           </div>
           <ScrollArea className="max-h-72">
             <div className="overflow-x-auto">
-              <img
-                src={currentCallout.snapshot_image_url}
-                alt={currentCallout.name}
-                style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: zoom !== 1 ? `${100 / zoom}%` : '100%' }}
-                className="block"
-              />
+              <div className="relative inline-block w-full">
+                <img
+                  src={currentCallout.snapshot_image_url}
+                  alt={currentCallout.name}
+                  style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: zoom !== 1 ? `${100 / zoom}%` : '100%' }}
+                  className="block"
+                />
+                {/* Highlight overlay */}
+                {(highlightsByCallout[currentCallout.id] || []).map((h, hi) =>
+                  (h.rects_norm || []).map((rect, ri) => {
+                    const colorMap = { yellow: 'rgba(253,224,71,0.45)', red: 'rgba(239,68,68,0.4)', green: 'rgba(34,197,94,0.4)', blue: 'rgba(59,130,246,0.4)' };
+                    return (
+                      <div
+                        key={`${hi}-${ri}`}
+                        style={{
+                          position: 'absolute',
+                          left: `${rect.x * 100 * zoom}%`,
+                          top: `${rect.y * 100 * zoom}%`,
+                          width: `${rect.w * 100 * zoom}%`,
+                          height: `${rect.h * 100 * zoom}%`,
+                          backgroundColor: colorMap[h.color] || colorMap.yellow,
+                          pointerEvents: 'none',
+                          mixBlendMode: 'multiply',
+                        }}
+                      />
+                    );
+                  })
+                )}
+              </div>
             </div>
           </ScrollArea>
           {callouts.length > 1 && (
