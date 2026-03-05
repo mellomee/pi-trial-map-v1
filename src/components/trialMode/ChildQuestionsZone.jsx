@@ -30,7 +30,34 @@ const examTypeBadgeColor = (type) => {
   return 'bg-slate-800 text-slate-400';
 };
 
+// Check if a child question has any proof linked
+function useChildProofFlags(childQuestions) {
+  const [flags, setFlags] = useState({}); // { [questionId]: boolean }
+
+  useEffect(() => {
+    if (!childQuestions?.length) { setFlags({}); return; }
+    let cancelled = false;
+    Promise.all(
+      childQuestions.map(async (q) => {
+        const links = await base44.entities.QuestionEvidenceGroups.filter({ question_id: q.id });
+        if (!links.length) return [q.id, false];
+        const egIds = links.map(l => l.evidence_group_id);
+        const piLinks = await base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: { $in: egIds } });
+        return [q.id, piLinks.length > 0];
+      })
+    ).then(results => {
+      if (cancelled) return;
+      setFlags(Object.fromEntries(results));
+    });
+    return () => { cancelled = true; };
+  }, [childQuestions?.map(q => q.id).join(',')]);
+
+  return flags;
+}
+
 export default function ChildQuestionsZone({ parentQuestion, childQuestions, selectedChildId, onSelectChild }) {
+  const proofFlags = useChildProofFlags(childQuestions);
+
   if (!parentQuestion) {
     return (
       <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] items-center justify-center text-slate-600">
@@ -59,6 +86,7 @@ export default function ChildQuestionsZone({ parentQuestion, childQuestions, sel
           <div className="p-3 space-y-2">
             {childQuestions.map((q, idx) => {
               const isSelected = selectedChildId === q.id;
+              const hasProof = proofFlags[q.id];
               return (
                 <button
                   key={q.id}
@@ -69,16 +97,21 @@ export default function ChildQuestionsZone({ parentQuestion, childQuestions, sel
                       : 'bg-[#0f1629] border-[#1e2a45] hover:bg-[#131a2e] hover:border-cyan-500/30'
                   }`}
                 >
-                  <div className="flex items-start gap-2 mb-1.5">
+                  <div className="flex items-start gap-2">
                     <span className={`text-xs flex-shrink-0 mt-0.5 font-bold ${isSelected ? 'text-cyan-400' : 'text-slate-600'}`}>{idx + 1}.</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-1">
                         <p className={`text-xs leading-snug line-clamp-3 flex-1 ${isSelected ? 'text-cyan-200' : 'text-slate-200'}`}>{q.question_text}</p>
-                        {statusIcons[q.status] && (
-                          <span className={`text-sm font-bold flex-shrink-0 ml-1 ${q.status === 'Asked' ? 'text-green-400' : q.status === 'NeedsFollowUp' ? 'text-red-400' : 'text-slate-500'}`}>
-                            {statusIcons[q.status]}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-1">
+                          {hasProof && (
+                            <span title="Has linked proof" className="w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0" />
+                          )}
+                          {statusIcons[q.status] && (
+                            <span className={`text-sm font-bold ${q.status === 'Asked' ? 'text-green-400' : q.status === 'NeedsFollowUp' ? 'text-red-400' : 'text-slate-500'}`}>
+                              {statusIcons[q.status]}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex gap-1 mt-1.5 flex-wrap">
                         {q.question_type && (
