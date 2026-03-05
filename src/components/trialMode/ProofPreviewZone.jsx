@@ -59,6 +59,59 @@ function DepoClipPreview({ proof }) {
   );
 }
 
+const HIGHLIGHT_COLORS = {
+  yellow: { fill: 'rgba(251,191,36,0.35)', stroke: 'rgba(251,191,36,0.9)' },
+  red:    { fill: 'rgba(239,68,68,0.32)',  stroke: 'rgba(239,68,68,0.9)' },
+  green:  { fill: 'rgba(34,197,94,0.32)',  stroke: 'rgba(34,197,94,0.9)' },
+  blue:   { fill: 'rgba(59,130,246,0.32)', stroke: 'rgba(59,130,246,0.9)' },
+};
+
+function CalloutImage({ callout }) {
+  const imgRef = React.useRef(null);
+  const [imgSize, setImgSize] = React.useState(null);
+  const [highlights, setHighlights] = React.useState([]);
+
+  React.useEffect(() => {
+    if (!callout?.id) return;
+    base44.entities.Highlights.filter({ callout_id: callout.id }).then(setHighlights);
+  }, [callout?.id]);
+
+  return (
+    <div className="relative inline-block w-full">
+      <img
+        ref={imgRef}
+        src={callout.snapshot_image_url}
+        alt={callout.name || 'Callout'}
+        className="block w-full"
+        draggable={false}
+        onLoad={(e) => {
+          const el = e.currentTarget;
+          setImgSize({ width: el.clientWidth, height: el.clientHeight });
+        }}
+      />
+      {imgSize && highlights.map(hl => {
+        const colors = HIGHLIGHT_COLORS[hl.color] || HIGHLIGHT_COLORS.yellow;
+        return (hl.rects_norm || []).map((r, ri) => (
+          <div
+            key={`${hl.id}-${ri}`}
+            style={{
+              position: 'absolute',
+              left: r.x * imgSize.width,
+              top: r.y * imgSize.height,
+              width: r.w * imgSize.width,
+              height: r.h * imgSize.height,
+              backgroundColor: colors.fill,
+              border: `1.5px solid ${colors.stroke}`,
+              borderRadius: 2,
+              pointerEvents: 'none',
+            }}
+          />
+        ));
+      })}
+    </div>
+  );
+}
+
 function ExtractPreview({ proof, showCallout, onPublish, isPublishing }) {
   const [callouts, setCallouts] = useState([]);
   const [jx, setJx] = useState(null);
