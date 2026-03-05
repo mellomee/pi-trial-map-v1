@@ -111,6 +111,17 @@ export default function RunnerZone({
               {examTypeLabel(question.exam_type)}
             </Badge>
           )}
+          {onShowParentProof && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onShowParentProof}
+              className="h-6 w-6 p-0 text-cyan-400 hover:text-cyan-200"
+              title="Show this question's proof in Zone E"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
         <div className="text-[10px] text-slate-500 flex-shrink-0">
           <span className="text-slate-300 font-semibold">{questionIndex + 1}</span>
