@@ -130,6 +130,11 @@ export default function RunnerZone({
         >
           <span className="text-[11px] text-slate-500 font-semibold mt-1.5 flex-shrink-0">Q{questionIndex + 1}</span>
           <h1 className="text-xl font-bold text-white leading-snug flex-1 group-hover:text-cyan-100 transition-colors">{question.question_text}</h1>
+          {hasProof && (
+            <span title="Has linked proof — click to load" className="mt-1 flex-shrink-0">
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+            </span>
+          )}
           {question.status === 'Asked' && <span className="text-green-400 text-base flex-shrink-0 mt-1">✓</span>}
           {question.status === 'NeedsFollowUp' && <span className="text-red-400 text-base flex-shrink-0 mt-1">✗</span>}
           {question.status === 'Skipped' && <span className="text-slate-500 text-base flex-shrink-0 mt-1">—</span>}
