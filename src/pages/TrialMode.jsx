@@ -21,7 +21,7 @@ import { ChevronRight, AlertTriangle, X } from "lucide-react";
 const PERSIST_KEY = "trialMode_state";
 const LAYOUT_KEY = "trialMode_layout";
 
-const DEFAULT_LAYOUT = { topPct: 50, topLeftPct: 50, botLeftPct: 50, leftSplitPct: 50, rightSplitPct: 50 }; // independent splits
+const DEFAULT_LAYOUT = { topPct: 50, leftPct: 50 }; // percent splits
 
 function loadPersisted(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || 'null') || fallback; }
@@ -53,9 +53,7 @@ export default function TrialMode() {
 
   // Resizable layout state
   const [layout, setLayout] = useState(savedLayout);
-  const isDraggingH = useRef(false);
-  const isDraggingHL = useRef(false); // horizontal left (B|D)
-  const isDraggingHR = useRef(false); // horizontal right (C|E)
+  const isDraggingH = useRef(false); // horizontal divider (top/bottom rows)
   const isDraggingV = useRef(false); // vertical divider (left/right cols)
   const containerRef = useRef(null);
 
@@ -156,13 +154,6 @@ export default function TrialMode() {
     }
   };
 
-  // Switch Zone E back to parent question proof
-  const handleShowParentProof = () => {
-    setSelectedChildQuestionId(null);
-    setChildResolvedLinks(null);
-    setSelectedProof(null);
-  };
-
   // The proof items currently shown in Zone E
   const activeProofItems = childResolvedLinks ? childResolvedLinks.proofItems : resolvedLinks.proofItems;
 
@@ -201,7 +192,7 @@ export default function TrialMode() {
       if (!isDraggingH.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const y = (ev.clientY || ev.touches?.[0]?.clientY) - rect.top;
-      const pct = Math.min(Math.max((y / rect.height) * 100, 15), 85);
+      const pct = Math.min(Math.max((y / rect.height) * 100, 20), 80);
       setLayout(l => ({ ...l, topPct: pct }));
     };
     const onUp = () => { isDraggingH.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
@@ -209,32 +200,15 @@ export default function TrialMode() {
     document.addEventListener('mouseup', onUp);
   }, []);
 
-  // Top-row vertical divider (B | C)
-  const startDragVTop = useCallback((e) => {
+  const startDragV = useCallback((e) => {
     e.preventDefault();
     isDraggingV.current = true;
     const onMove = (ev) => {
       if (!isDraggingV.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const x = (ev.clientX || ev.touches?.[0]?.clientX) - rect.left;
-      const pct = Math.min(Math.max((x / rect.width) * 100, 15), 85);
-      setLayout(l => ({ ...l, topLeftPct: pct }));
-    };
-    const onUp = () => { isDraggingV.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  }, []);
-
-  // Bottom-row vertical divider (D | E)
-  const startDragVBot = useCallback((e) => {
-    e.preventDefault();
-    isDraggingV.current = true;
-    const onMove = (ev) => {
-      if (!isDraggingV.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = (ev.clientX || ev.touches?.[0]?.clientX) - rect.left;
-      const pct = Math.min(Math.max((x / rect.width) * 100, 15), 85);
-      setLayout(l => ({ ...l, botLeftPct: pct }));
+      const pct = Math.min(Math.max((x / rect.width) * 100, 20), 80);
+      setLayout(l => ({ ...l, leftPct: pct }));
     };
     const onUp = () => { isDraggingV.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
     document.addEventListener('mousemove', onMove);
@@ -268,8 +242,7 @@ export default function TrialMode() {
   if (!activeCase) return <div className="flex items-center justify-center h-screen bg-[#0a0f1e] text-slate-400"><p>Please select a case to begin</p></div>;
 
   const topH = `${layout.topPct}%`;
-  const topLeftW = `${layout.topLeftPct ?? 50}%`;
-  const botLeftW = `${layout.botLeftPct ?? 50}%`;
+  const leftW = `${layout.leftPct}%`;
 
   return (
     <div className="flex h-screen bg-[#0a0f1e] overflow-hidden">
@@ -337,7 +310,7 @@ export default function TrialMode() {
         {/* Top row: B + C */}
         <div className="flex overflow-hidden" style={{ height: topH }}>
           {/* Zone B */}
-          <div className="overflow-hidden" style={{ width: topLeftW }}>
+          <div className="overflow-hidden" style={{ width: leftW }}>
             <RunnerZone
               question={selectedQuestion}
               nextQuestion={nextQuestion}
@@ -347,15 +320,14 @@ export default function TrialMode() {
               bucketName={bucketName}
               onStatusChange={handleStatusChange}
               onSelectQuestion={handleSelectQuestion}
-              onShowParentProof={selectedChildQuestionId ? handleShowParentProof : null}
             />
           </div>
 
-          {/* Vertical divider B|C */}
+          {/* Vertical divider */}
           <div
-            onMouseDown={startDragVTop}
+            onMouseDown={startDragV}
             className="w-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-col-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
-            title="Drag to resize B|C"
+            title="Drag to resize"
           />
 
           {/* Zone C */}
@@ -379,7 +351,7 @@ export default function TrialMode() {
         {/* Bottom row: D + E */}
         <div className="flex overflow-hidden flex-1">
           {/* Zone D */}
-          <div className="overflow-hidden" style={{ width: botLeftW }}>
+          <div className="overflow-hidden" style={{ width: leftW }}>
             <ChildQuestionsZone
               parentQuestion={selectedQuestion}
               childQuestions={childQuestions}
@@ -388,11 +360,10 @@ export default function TrialMode() {
             />
           </div>
 
-          {/* Vertical divider D|E */}
+          {/* Vertical divider (synced) */}
           <div
-            onMouseDown={startDragVBot}
+            onMouseDown={startDragV}
             className="w-1.5 bg-[#1e2a45] hover:bg-cyan-500/40 cursor-col-resize flex-shrink-0 transition-colors z-10 active:bg-cyan-400/60"
-            title="Drag to resize D|E"
           />
 
           {/* Zone E */}

@@ -15,43 +15,28 @@ export async function resolveQuestionLinks(questionId, caseId) {
       question_id: questionId,
     });
 
-    // Step 1b: Get direct QuestionProofItems links (used by child questions)
-    const directProofItemLinks = await base44.entities.QuestionProofItems.filter({ question_id: questionId });
+    if (questionEvidenceGroupLinks.length === 0) {
+      return { evidenceGroups: [], proofItems: [], trialPoints: [] };
+    }
 
     const egIds = questionEvidenceGroupLinks.map(link => link.evidence_group_id);
 
     // Step 2: Fetch the EvidenceGroups
-    const evidenceGroups = egIds.length
-      ? await Promise.all(egIds.map(egId => base44.entities.EvidenceGroups.filter({ id: egId }))).then(r => r.flat())
-      : [];
+    const evidenceGroups = await Promise.all(
+      egIds.map(egId => base44.entities.EvidenceGroups.filter({ id: egId }))
+    ).then(results => results.flat());
 
-    // Step 3a: Get ProofItems via EvidenceGroups
-    let proofItemsFromGroups = [];
-    if (egIds.length) {
-      const egProofItemLinks = await base44.entities.EvidenceGroupProofItems.filter({
-        evidence_group_id: { $in: egIds },
-      });
-      const piIds = egProofItemLinks.map(l => l.proof_item_id);
-      proofItemsFromGroups = piIds.length
-        ? await Promise.all(piIds.map(id => base44.entities.ProofItems.filter({ id }))).then(r => r.flat())
-        : [];
-    }
-
-    // Step 3b: Get ProofItems via direct links
-    let proofItemsDirect = [];
-    if (directProofItemLinks.length) {
-      proofItemsDirect = await Promise.all(
-        directProofItemLinks.map(l => base44.entities.ProofItems.filter({ id: l.proof_item_id }))
-      ).then(r => r.flat());
-    }
-
-    // Merge, dedupe by id
-    const seen = new Set();
-    let proofItems = [...proofItemsFromGroups, ...proofItemsDirect].filter(pi => {
-      if (seen.has(pi.id)) return false;
-      seen.add(pi.id);
-      return true;
+    // Step 3: Get ProofItems for those groups
+    const egProofItemLinks = await base44.entities.EvidenceGroupProofItems.filter({
+      evidence_group_id: { $in: egIds },
     });
+
+    const proofItemIds = egProofItemLinks.map(link => link.proof_item_id);
+    let proofItems = proofItemIds.length
+      ? await Promise.all(
+          proofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))
+        ).then(results => results.flat())
+      : [];
 
     // Enrich depoClip proof items with their title (topic_tag)
     proofItems = await Promise.all(proofItems.map(async (pi) => {
@@ -65,13 +50,15 @@ export async function resolveQuestionLinks(questionId, caseId) {
     }));
 
     // Step 4: Get TrialPoints linked to those groups
-    const egTrialPointLinks = egIds.length
-      ? await base44.entities.EvidenceGroupTrialPoints.filter({ evidence_group_id: { $in: egIds } })
-      : [];
+    const egTrialPointLinks = await base44.entities.EvidenceGroupTrialPoints.filter({
+      evidence_group_id: { $in: egIds },
+    });
 
     const trialPointIds = egTrialPointLinks.map(link => link.trial_point_id);
     const trialPoints = trialPointIds.length
-      ? await Promise.all(trialPointIds.map(tpId => base44.entities.TrialPoints.filter({ id: tpId }))).then(r => r.flat())
+      ? await Promise.all(
+          trialPointIds.map(tpId => base44.entities.TrialPoints.filter({ id: tpId }))
+        ).then(results => results.flat())
       : [];
 
     return {
@@ -79,6 +66,7 @@ export async function resolveQuestionLinks(questionId, caseId) {
       proofItems,
       trialPoints,
       questionEvidenceGroupLinks,
+      egProofItemLinks,
       egTrialPointLinks,
     };
   } catch (error) {

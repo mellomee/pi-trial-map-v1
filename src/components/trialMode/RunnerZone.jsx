@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Play, Pause, Square, CheckCircle, XCircle, SkipForward, RotateCcw, BookOpen } from 'lucide-react';
+import { Clock, Play, Pause, Square, CheckCircle, XCircle, SkipForward, RotateCcw } from 'lucide-react';
 
 const examTypeLabel = (type) => {
   if (type === 'Direct' || type === 'Cross') return 'Main';
@@ -23,7 +23,6 @@ export default function RunnerZone({
   bucketName,
   onStatusChange,
   onSelectQuestion,
-  onShowParentProof,
   childQuestions,
 }) {
   const [timerRunning, setTimerRunning] = useState(false);
@@ -104,23 +103,12 @@ export default function RunnerZone({
         </div>
         <div className="flex items-center gap-1.5 min-w-0">
           {bucketName && (
-            <span className="text-[10px] bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 font-semibold truncate max-w-[120px] px-2 py-0.5 rounded" title={bucketName}>📂 {bucketName}</span>
+            <span className="text-[10px] text-cyan-400 font-medium truncate max-w-[100px]" title={bucketName}>{bucketName}</span>
           )}
           {question.exam_type && (
             <Badge className={`text-[10px] px-1 py-0 h-4 ${examTypeBadgeColor(question.exam_type)}`}>
               {examTypeLabel(question.exam_type)}
             </Badge>
-          )}
-          {onShowParentProof && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onShowParentProof}
-              className="h-6 w-6 p-0 text-cyan-400 hover:text-cyan-200"
-              title="Show this question's proof in Zone E"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-            </Button>
           )}
         </div>
         <div className="text-[10px] text-slate-500 flex-shrink-0">
@@ -132,19 +120,21 @@ export default function RunnerZone({
 
       {/* Scrollable question + answer content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {/* Question number + text + status on one line */}
-        <div className="flex items-start gap-2">
-          <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex-shrink-0 mt-1.5">Q{questionIndex + 1}</span>
-          <h1 className="text-xl font-bold text-white leading-snug flex-1">{question.question_text}</h1>
-          {question.status === 'Asked' && <span className="text-green-400 text-xl font-bold leading-snug flex-shrink-0 mt-0.5">✓</span>}
-          {question.status === 'NeedsFollowUp' && <span className="text-red-400 text-sm font-bold flex-shrink-0 mt-1">✗</span>}
-          {question.status === 'Skipped' && <span className="text-slate-500 text-sm flex-shrink-0 mt-1">—</span>}
+        {/* Status badge */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Q{questionIndex + 1}</span>
+          {question.status === 'Asked' && <span className="text-green-400 text-xs font-bold">✓ Expected</span>}
+          {question.status === 'NeedsFollowUp' && <span className="text-red-400 text-xs font-bold">✗ Unexpected</span>}
+          {question.status === 'Skipped' && <span className="text-slate-500 text-xs">— Skipped</span>}
         </div>
 
-        {/* Expected answer — curved arrow pointing from question above */}
+        {/* Current question */}
+        <h1 className="text-xl font-bold text-white leading-snug">{question.question_text}</h1>
+
+        {/* Expected answer — arrow + colored text, no label */}
         {question.expected_answer && (
-          <div className="flex gap-2 items-start pl-6">
-            <span className="text-amber-400 text-base flex-shrink-0 mt-0.5" title="Expected answer">↳</span>
+          <div className="flex gap-2 items-start pl-2">
+            <span className="text-amber-400 text-base flex-shrink-0 mt-0.5">↓</span>
             <p className="text-sm text-amber-200/80 leading-relaxed italic">{question.expected_answer}</p>
           </div>
         )}
