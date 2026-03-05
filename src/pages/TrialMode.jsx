@@ -21,7 +21,7 @@ import { ChevronRight, AlertTriangle, X } from "lucide-react";
 const PERSIST_KEY = "trialMode_state";
 const LAYOUT_KEY = "trialMode_layout";
 
-const DEFAULT_LAYOUT = { topPct: 50, topLeftPct: 50, botLeftPct: 50 }; // independent splits
+const DEFAULT_LAYOUT = { topPct: 50, topLeftPct: 50, botLeftPct: 50, leftSplitPct: 50, rightSplitPct: 50 }; // independent splits
 
 function loadPersisted(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || 'null') || fallback; }
