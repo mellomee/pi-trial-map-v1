@@ -140,19 +140,23 @@ export default function RunnerZone({
           {question.status === 'Skipped' && <span className="text-slate-500 text-base flex-shrink-0 mt-1">—</span>}
         </button>
 
-        {/* Expected answer — arrow + colored text, no label */}
+        {/* Expected answer — curved arrow + answer */}
         {question.expected_answer && (
           <div className="flex gap-2 items-start pl-2">
-            <span className="text-amber-400 text-base flex-shrink-0 mt-0.5">↓</span>
+            <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+              {question.admission_obtained && (
+                <span className="text-green-400 text-base leading-none">✓</span>
+              )}
+              <span className="text-amber-400 text-lg leading-none" title="Expected Answer">↩</span>
+            </div>
             <p className="text-sm text-amber-200/80 leading-relaxed italic">{question.expected_answer}</p>
           </div>
         )}
 
-        {/* Goal */}
+        {/* Goal — de-emphasized */}
         {question.goal && (
-          <div className="bg-[#0f1629] border-l-2 border-cyan-700 pl-3 py-1.5 rounded-r">
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Goal</p>
-            <p className="text-xs text-slate-300">{question.goal}</p>
+          <div className="pl-2">
+            <p className="text-[10px] text-slate-600 leading-relaxed">{question.goal}</p>
           </div>
         )}
       </div>
