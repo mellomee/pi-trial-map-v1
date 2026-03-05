@@ -174,12 +174,14 @@ export default function TrialMode() {
     if (!trialSession || !proofItem) return;
     await publishProofToJury(trialSession.id, proofItem.id);
     setPublishedProof(proofItem);
+    window.__trialModePublished = true;
   };
 
   const handleClearJury = async () => {
     if (!trialSession) return;
     await clearJuryDisplay(trialSession.id);
     setPublishedProof(null);
+    window.__trialModePublished = false;
   };
 
   // Resizing logic
