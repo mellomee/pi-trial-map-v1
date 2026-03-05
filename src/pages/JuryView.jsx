@@ -125,7 +125,7 @@ export default function JuryView() {
   return (
     <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
       {proofItem.type === 'depoClip' && depoClip && (
-        <div className="w-full h-full flex flex-col justify-center px-8 py-8 max-w-[92vw] mx-auto">
+        <div className="w-full h-full flex flex-col justify-center px-10 py-10">
           <div className="mb-6 flex flex-wrap gap-4 items-baseline">
             {depo && (
               <span className="text-slate-400 text-xl font-semibold tracking-wide uppercase">{depo.sheet_name}</span>
