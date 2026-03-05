@@ -64,6 +64,7 @@ function DepoClipPreview({ proof }) {
 
 function ExtractPreview({ proof, showCallout, onPublish, isPublishing }) {
   const [callouts, setCallouts] = useState([]);
+  const [highlightsByCallout, setHighlightsByCallout] = useState({});
   const [jx, setJx] = useState(null);
   const [selectedCalloutIdx, setSelectedCalloutIdx] = useState(0);
   const [zoom, setZoom] = useState(1);
@@ -72,16 +73,21 @@ function ExtractPreview({ proof, showCallout, onPublish, isPublishing }) {
     if (!proof?.source_id) return;
     setSelectedCalloutIdx(0);
     setZoom(1);
-    base44.entities.ExhibitExtracts.filter({ id: proof.source_id }).then(r => {
+    setHighlightsByCallout({});
+    base44.entities.ExhibitExtracts.filter({ id: proof.source_id }).then(async r => {
       if (r[0]) {
-        base44.entities.Callouts.filter({ extract_id: r[0].id }).then(cs => {
-          if (proof.callout_id) {
-            const sorted = [...cs].sort((a, b) => (a.id === proof.callout_id ? -1 : b.id === proof.callout_id ? 1 : 0));
-            setCallouts(sorted);
-          } else {
-            setCallouts(cs);
-          }
-        });
+        let cs = await base44.entities.Callouts.filter({ extract_id: r[0].id });
+        if (proof.callout_id) {
+          cs = [...cs].sort((a, b) => (a.id === proof.callout_id ? -1 : b.id === proof.callout_id ? 1 : 0));
+        }
+        setCallouts(cs);
+        // Load highlights for all callouts
+        const hMap = {};
+        await Promise.all(cs.map(async (c) => {
+          const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
+          hMap[c.id] = hs;
+        }));
+        setHighlightsByCallout(hMap);
         base44.entities.JointExhibits.filter({ exhibit_extract_id: r[0].id }).then(j => setJx(j[0] || null));
       }
     });
