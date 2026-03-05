@@ -3,8 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { base44 } from '@/api/base44Client';
-import { Monitor, Square, Eye, EyeOff, Video, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { Monitor, Square, Video } from 'lucide-react';
+import ExtractViewerZone from './ExtractViewerZone';
 
+// ---------- DepoClip Preview ----------
 function DepoClipPreview({ proof }) {
   const [clip, setClip] = useState(null);
   const [depo, setDepo] = useState(null);
@@ -39,7 +41,6 @@ function DepoClipPreview({ proof }) {
           {clip.start_cite} – {clip.end_cite}
         </span>
       </div>
-      {/* Two-section layout: cite block on left, text stacked below */}
       <div className="bg-[#0f1629] rounded-lg border border-[#1e2a45] overflow-hidden">
         <ScrollArea className="max-h-64">
           <div className="divide-y divide-[#1e2a45]/60">
@@ -62,158 +63,19 @@ function DepoClipPreview({ proof }) {
   );
 }
 
-function ExtractPreview({ proof, showCallout, onPublish, isPublishing }) {
-  const [callouts, setCallouts] = useState([]);
-  const [highlightsByCallout, setHighlightsByCallout] = useState({});
-  const [jx, setJx] = useState(null);
-  const [selectedCalloutIdx, setSelectedCalloutIdx] = useState(0);
-  const [zoom, setZoom] = useState(1);
-
-  useEffect(() => {
-    if (!proof?.source_id) return;
-    setSelectedCalloutIdx(0);
-    setZoom(1);
-    setHighlightsByCallout({});
-    base44.entities.ExhibitExtracts.filter({ id: proof.source_id }).then(async r => {
-      if (r[0]) {
-        let cs = await base44.entities.Callouts.filter({ extract_id: r[0].id });
-        if (proof.callout_id) {
-          cs = [...cs].sort((a, b) => (a.id === proof.callout_id ? -1 : b.id === proof.callout_id ? 1 : 0));
-        }
-        setCallouts(cs);
-        // Load highlights for all callouts
-        const hMap = {};
-        await Promise.all(cs.map(async (c) => {
-          const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
-          hMap[c.id] = hs;
-        }));
-        setHighlightsByCallout(hMap);
-        base44.entities.JointExhibits.filter({ exhibit_extract_id: r[0].id }).then(j => setJx(j[0] || null));
-      }
-    });
-  }, [proof?.source_id, proof?.callout_id]);
-
-  const currentCallout = callouts[selectedCalloutIdx] || null;
-  const internalName = jx?.internal_name || jx?.marked_title || '—';
-
-  return (
-    <div className="space-y-3">
-      <div className="flex gap-2 text-xs flex-wrap">
-        <div className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1">
-          <span className="text-slate-500 text-[10px]">Internal: </span>
-          <span className="text-slate-200">{internalName}</span>
-        </div>
-        {jx?.marked_no && (
-          <div className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1">
-            <span className="text-slate-500 text-[10px]">Marked: </span>
-            <span className="text-yellow-300 font-bold">#{jx.marked_no}</span>
-          </div>
-        )}
-        {jx?.admitted_no && (
-          <div className="bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1">
-            <span className="text-slate-500 text-[10px]">Admitted: </span>
-            <span className="text-green-300 font-bold">#{jx.admitted_no}</span>
-          </div>
-        )}
-      </div>
-
-      {callouts.length > 1 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {callouts.map((c, idx) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedCalloutIdx(idx)}
-              className={`relative flex-shrink-0 w-16 h-20 rounded border overflow-hidden transition-all ${
-                idx === selectedCalloutIdx ? 'border-cyan-400 ring-1 ring-cyan-400' : 'border-[#1e2a45] hover:border-cyan-500/40'
-              }`}
-            >
-              {c.snapshot_image_url ? (
-                <img src={c.snapshot_image_url} alt={`p${idx + 1}`} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-[#0f1629] flex items-center justify-center">
-                  <span className="text-[9px] text-slate-500">pg {idx + 1}</span>
-                </div>
-              )}
-              <span className="absolute bottom-0 right-0 bg-black/70 text-[8px] text-slate-300 px-1 py-0.5">{idx + 1}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {callouts.length > 0 && currentCallout?.snapshot_image_url && showCallout ? (
-        <div className="relative bg-black rounded-lg border border-[#1e2a45] overflow-hidden">
-          <div className="absolute top-2 right-2 flex gap-1 z-10">
-            <button onClick={() => setZoom(z => Math.min(z + 0.25, 3))} className="bg-black/60 hover:bg-black/80 text-white p-1 rounded">
-              <ZoomIn className="w-3 h-3" />
-            </button>
-            <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} className="bg-black/60 hover:bg-black/80 text-white p-1 rounded">
-              <ZoomOut className="w-3 h-3" />
-            </button>
-            <button onClick={() => setZoom(1)} className="bg-black/60 hover:bg-black/80 text-white px-1.5 py-1 rounded text-[9px]">
-              {Math.round(zoom * 100)}%
-            </button>
-          </div>
-          <ScrollArea className="max-h-72">
-            <div className="overflow-x-auto">
-              <div className="relative inline-block w-full">
-                <img
-                  src={currentCallout.snapshot_image_url}
-                  alt={currentCallout.name}
-                  style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: zoom !== 1 ? `${100 / zoom}%` : '100%' }}
-                  className="block"
-                />
-                {/* Highlight overlay */}
-                {(highlightsByCallout[currentCallout.id] || []).map((h, hi) =>
-                  (h.rects_norm || []).map((rect, ri) => {
-                    const colorMap = { yellow: 'rgba(253,224,71,0.45)', red: 'rgba(239,68,68,0.4)', green: 'rgba(34,197,94,0.4)', blue: 'rgba(59,130,246,0.4)' };
-                    return (
-                      <div
-                        key={`${hi}-${ri}`}
-                        style={{
-                          position: 'absolute',
-                          left: `${rect.x * 100 * zoom}%`,
-                          top: `${rect.y * 100 * zoom}%`,
-                          width: `${rect.w * 100 * zoom}%`,
-                          height: `${rect.h * 100 * zoom}%`,
-                          backgroundColor: colorMap[h.color] || colorMap.yellow,
-                          pointerEvents: 'none',
-                          mixBlendMode: 'multiply',
-                        }}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </ScrollArea>
-          {callouts.length > 1 && (
-            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
-              <button onClick={() => setSelectedCalloutIdx(i => Math.max(i - 1, 0))} disabled={selectedCalloutIdx === 0} className="bg-black/60 hover:bg-black/80 text-white p-1 rounded disabled:opacity-30">
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <span className="bg-black/60 text-[10px] text-slate-300 px-2 py-1 rounded">{selectedCalloutIdx + 1} / {callouts.length}</span>
-              <button onClick={() => setSelectedCalloutIdx(i => Math.min(i + 1, callouts.length - 1))} disabled={selectedCalloutIdx === callouts.length - 1} className="bg-black/60 hover:bg-black/80 text-white p-1 rounded disabled:opacity-30">
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-        </div>
-      ) : callouts.length === 0 ? (
-        <div className="bg-[#0f1629] border border-dashed border-[#1e2a45] rounded-lg p-6 text-center">
-          <p className="text-xs text-slate-600">No callouts found for this extract</p>
-        </div>
-      ) : (
-        <div className="bg-[#0f1629] border border-dashed border-[#1e2a45] rounded-lg p-6 text-center">
-          <EyeOff className="w-5 h-5 text-slate-600 mx-auto mb-1" />
-          <p className="text-xs text-slate-600">Callout hidden</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
+// ---------- Main ProofPreviewZone ----------
 export default function ProofPreviewZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
-  const [showCallout, setShowCallout] = useState(true);
+  // For extract type, delegate entirely to ExtractViewerZone (which has its own full-height layout)
+  if (selectedProof?.type === 'extract') {
+    return (
+      <ExtractViewerZone
+        selectedProof={selectedProof}
+        isPublishing={isPublishing}
+        onPublish={onPublish}
+        onUnpublish={onUnpublish}
+      />
+    );
+  }
 
   if (!selectedProof) {
     return (
@@ -243,15 +105,6 @@ export default function ProofPreviewZone({ selectedProof, isPublishing, onPublis
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          {selectedProof.type === 'extract' && (
-            <button
-              onClick={() => setShowCallout(v => !v)}
-              className={`text-[10px] px-2 py-1 rounded border transition-colors ${showCallout ? 'border-cyan-500 text-cyan-300' : 'border-[#1e2a45] text-slate-500'}`}
-            >
-              {showCallout ? <Eye className="w-3 h-3 inline mr-1" /> : <EyeOff className="w-3 h-3 inline mr-1" />}
-              Callout
-            </button>
-          )}
           {isPublishing ? (
             <Button size="sm" onClick={onUnpublish} className="h-7 text-xs bg-red-700 hover:bg-red-600 px-2 gap-1">
               <Square className="w-3 h-3" />
@@ -269,9 +122,6 @@ export default function ProofPreviewZone({ selectedProof, isPublishing, onPublis
       <ScrollArea className="flex-1">
         <div className="p-3">
           {selectedProof.type === 'depoClip' && <DepoClipPreview proof={selectedProof} />}
-          {selectedProof.type === 'extract' && (
-            <ExtractPreview proof={selectedProof} showCallout={showCallout} onPublish={onPublish} isPublishing={isPublishing} />
-          )}
           {selectedProof.type === 'videoClip' && (
             <div className="text-center py-8 text-slate-500">
               <Video className="w-8 h-8 mx-auto mb-2 opacity-30" />
