@@ -190,17 +190,32 @@ export default function TrialMode() {
   };
 
   // Resizing logic
-  const startDragH = useCallback((e) => {
+  const startDragHB = useCallback((e) => {
     e.preventDefault();
-    isDraggingH.current = true;
+    isDraggingHB.current = true;
     const onMove = (ev) => {
-      if (!isDraggingH.current || !containerRef.current) return;
+      if (!isDraggingHB.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const y = (ev.clientY || ev.touches?.[0]?.clientY) - rect.top;
-      const pct = Math.min(Math.max((y / rect.height) * 100, 20), 80);
-      setLayout(l => ({ ...l, topPct: pct }));
+      const pct = Math.min(Math.max((y / rect.height) * 100, 15), 85);
+      setLayout(l => ({ ...l, topBPct: pct }));
     };
-    const onUp = () => { isDraggingH.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    const onUp = () => { isDraggingHB.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, []);
+
+  const startDragHC = useCallback((e) => {
+    e.preventDefault();
+    isDraggingHC.current = true;
+    const onMove = (ev) => {
+      if (!isDraggingHC.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const y = (ev.clientY || ev.touches?.[0]?.clientY) - rect.top;
+      const pct = Math.min(Math.max((y / rect.height) * 100, 15), 85);
+      setLayout(l => ({ ...l, topCPct: pct }));
+    };
+    const onUp = () => { isDraggingHC.current = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   }, []);
