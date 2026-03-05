@@ -25,6 +25,7 @@ export default function RunnerZone({
   onSelectQuestion,
   onSelectCurrentQuestion,
   childQuestions,
+  hasProof,
 }) {
   const [timerRunning, setTimerRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
