@@ -50,8 +50,13 @@ const NAV_SECTIONS = [
 ];
 
 export default function Layout({ children, currentPageName }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(currentPageName === 'JuryView');
   const { activeCase } = useActiveCase();
+
+  // Auto-collapse sidebar on JuryView
+  useEffect(() => {
+    if (currentPageName === 'JuryView') setCollapsed(true);
+  }, [currentPageName]);
 
   return (
     <div className="flex h-screen bg-[#0a0f1e] text-slate-200 overflow-hidden">
