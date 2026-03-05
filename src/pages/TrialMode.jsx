@@ -345,6 +345,7 @@ export default function TrialMode() {
               bucketName={bucketName}
               onStatusChange={handleStatusChange}
               onSelectQuestion={handleSelectQuestion}
+              onShowParentProof={selectedChildQuestionId ? handleShowParentProof : null}
             />
           </div>
 
