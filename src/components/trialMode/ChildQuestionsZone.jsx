@@ -103,9 +103,9 @@ export default function ChildQuestionsZone({ parentQuestion, childQuestions, sel
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-1">
                         <p className={`text-xs leading-snug line-clamp-3 flex-1 ${isSelected ? 'text-cyan-200' : 'text-slate-200'}`}>{q.question_text}</p>
-                        <div className="flex items-center gap-1 flex-shrink-0 ml-1">
+                        <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
                           {hasProof && (
-                            <span title="Has linked proof" className="w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0" />
+                            <BookOpen className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" title="Has linked proof" />
                           )}
                           {statusIcons[q.status] && (
                             <span className={`text-sm font-bold ${q.status === 'Asked' ? 'text-green-400' : q.status === 'NeedsFollowUp' ? 'text-red-400' : 'text-slate-500'}`}>
@@ -114,6 +114,10 @@ export default function ChildQuestionsZone({ parentQuestion, childQuestions, sel
                           )}
                         </div>
                       </div>
+                      {/* Expected answer */}
+                      {q.expected_answer && (
+                        <p className="text-[10px] text-amber-300/70 italic mt-1 line-clamp-2 leading-snug">↳ {q.expected_answer}</p>
+                      )}
                       <div className="flex gap-1 mt-1.5 flex-wrap">
                         {q.question_type && (
                           <span className="text-[10px] text-slate-500 bg-[#131a2e] px-1.5 py-0.5 rounded">
