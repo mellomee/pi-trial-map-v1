@@ -328,7 +328,7 @@ export default function TrialMode() {
         {/* Top row: B + C */}
         <div className="flex overflow-hidden" style={{ height: topH }}>
           {/* Zone B */}
-          <div className="overflow-hidden" style={{ width: leftW }}>
+          <div className="overflow-hidden" style={{ width: topLeftW }}>
             <RunnerZone
               question={selectedQuestion}
               nextQuestion={nextQuestion}
