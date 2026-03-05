@@ -24,7 +24,6 @@ export default function ProofLibrary() {
   const [proofItems, setProofItems] = useState([]);
   const [calloutNames, setCalloutNames] = useState({}); // calloutId -> callout name
   const [calloutWitnesses, setCalloutWitnesses] = useState({}); // proofItemId -> witness name string
-  const [proofJointExhibits, setProofJointExhibits] = useState({}); // extractSourceId -> { marked_no, marked_title, internal_name, status, admitted_no }
   const [allTrialPoints, setAllTrialPoints] = useState([]);
   const [linkedTrialPoints, setLinkedTrialPoints] = useState([]);
   const [allWitnesses, setAllWitnesses] = useState([]);
@@ -146,19 +145,6 @@ export default function ProofLibrary() {
       }
       setCalloutNames(calloutMap);
       setCalloutWitnesses(calloutWitMap);
-
-      // For extract-type proof items, fetch the JointExhibit (marked_no, admitted_no, title)
-      const extractSourceIds = [...new Set(allProof.filter(p => p.type === 'extract' && p.source_id).map(p => p.source_id))];
-      const jxMap = {};
-      if (extractSourceIds.length > 0) {
-        const allJxs = await base44.entities.JointExhibits.filter({ case_id: activeCase.id });
-        allJxs.forEach(jx => {
-          if (jx.exhibit_extract_id && extractSourceIds.includes(jx.exhibit_extract_id)) {
-            jxMap[jx.exhibit_extract_id] = jx;
-          }
-        });
-      }
-      setProofJointExhibits(jxMap);
 
       // Build deduplicated witness list from ALL proof items in this group:
       // depoClip witnesses from ProofItemWitnesses + callout witnesses from extract proofs
@@ -551,29 +537,6 @@ export default function ProofLibrary() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-100">{proof.label}</p>
-                              {proof.type === 'extract' && (() => {
-                                const jx = proofJointExhibits[proof.source_id];
-                                if (!jx) return null;
-                                const name = jx.internal_name || jx.marked_title;
-                                const isAdmitted = jx.status === 'Admitted' && jx.admitted_no;
-                                return (
-                                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                    <span className="text-[11px] text-yellow-400 font-semibold bg-yellow-900/20 border border-yellow-700/30 px-1.5 py-0.5 rounded">
-                                      #{jx.marked_no}
-                                    </span>
-                                    {name && <span className="text-[11px] text-gray-400 truncate max-w-[140px]">{name}</span>}
-                                    {isAdmitted ? (
-                                      <span className="text-[11px] text-green-300 bg-green-900/20 border border-green-700/30 px-1.5 py-0.5 rounded font-medium">
-                                        ✓ Ex. {jx.admitted_no}
-                                      </span>
-                                    ) : (
-                                      <span className="text-[11px] text-slate-400 bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded">
-                                        {jx.status}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
                               {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] ? (
                                 <p className="text-xs text-cyan-400 mt-0.5">↳ {calloutNames[proof.callout_id]}</p>
                               ) : null}
