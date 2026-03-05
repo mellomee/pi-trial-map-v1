@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Users, Target, HelpCircle, Play, Swords, FileText,
-  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Monitor
+  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Monitor, AlertTriangle, X
 } from "lucide-react";
 import FloatingChat from "@/components/chat/FloatingChat";
 import useActiveCase from "@/components/hooks/useActiveCase";
+
+// Global flag: TrialMode sets this when jury proof is published
+window.__trialModePublished = window.__trialModePublished || false;
 
 const NAV_SECTIONS = [
   {
