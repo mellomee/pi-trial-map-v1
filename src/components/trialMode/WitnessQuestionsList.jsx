@@ -30,8 +30,7 @@ export default function WitnessQuestionsList({
   examType,
   onExamTypeChange,
   onCollapse,
-  allQuestions, // all questions for bucket reference
-  evidenceGroupMap, // id -> eg
+  selectedQuestionBucket,
 }) {
   const [searchText, setSearchText] = useState('');
 
@@ -110,7 +109,7 @@ export default function WitnessQuestionsList({
           </div>
 
           {/* Question count */}
-          <div className="px-3 py-1.5 border-b border-[#1e2a45]">
+          <div className="px-3 py-1.5 border-b border-[#1e2a45] flex items-center justify-between">
             <span className="text-xs text-slate-500">{filteredQuestions.length} questions</span>
           </div>
 
