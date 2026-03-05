@@ -46,19 +46,19 @@ function DepoClipPreview({ proof }) {
           <span>TEXT</span>
         </div>
         <ScrollArea className="max-h-48">
-          <div className="p-2 space-y-0.5">
+          <div className="p-2 space-y-1.5">
             {lines.map((line, i) => {
               const parts = line.match(/^(\d+:\d+)\s+(.*)$/);
               if (parts) {
                 return (
-                  <div key={i} className="grid grid-cols-2 gap-2 py-0.5">
-                    <span className="text-[11px] font-mono text-cyan-400">{parts[1]}</span>
-                    <span className="text-[11px] text-slate-200">{parts[2]}</span>
+                  <div key={i} className="grid grid-cols-2 gap-3 py-1 border-b border-[#1e2a45]/50">
+                    <span className="text-[11px] font-mono text-cyan-400 font-bold">{parts[1]}</span>
+                    <span className="text-[12px] text-slate-100 leading-snug">{parts[2]}</span>
                   </div>
                 );
               }
               return (
-                <div key={i} className="col-span-2 text-[11px] text-slate-300 py-0.5">{line}</div>
+                <div key={i} className="text-[12px] text-slate-300 py-1">{line}</div>
               );
             })}
           </div>
