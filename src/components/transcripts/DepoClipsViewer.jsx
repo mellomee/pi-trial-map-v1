@@ -121,6 +121,21 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
                           </SelectContent>
                         </Select>
                       </div>
+                      <div>
+                        <Label className="text-slate-400 text-xs">Clip Tag</Label>
+                        <Select value={editForm.clip_tag || '__none__'} onValueChange={v => setEditForm({ ...editForm, clip_tag: v === '__none__' ? '' : v })}>
+                          <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] w-36 mt-1">
+                            <SelectValue placeholder="None" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">None</SelectItem>
+                            <SelectItem value="Scene">Scene</SelectItem>
+                            <SelectItem value="Scope">Scope</SelectItem>
+                            <SelectItem value="Credibility">Credibility</SelectItem>
+                            <SelectItem value="Opinion">Opinion</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="flex items-end gap-2 pb-1">
                         <Switch checked={editForm.impeachment_ready} onCheckedChange={v => setEditForm({ ...editForm, impeachment_ready: v })} />
                         <Label className="text-xs text-slate-400">Impeachment Ready</Label>
@@ -153,10 +168,13 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
                         </p>
                         <p className="text-xs font-mono text-cyan-400 mt-0.5">{clip.start_cite} – {clip.end_cite}</p>
                       </div>
-                      <div className="flex gap-1 flex-shrink-0">
+                      <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
                         <Badge className={clip.direction === 'HelpsUs' ? 'bg-green-900 text-green-200 text-[10px]' : 'bg-red-900 text-red-200 text-[10px]'}>
                           {clip.direction === 'HelpsUs' ? 'Helps' : 'Hurts'}
                         </Badge>
+                        {clip.clip_tag && (
+                          <Badge className={`text-[10px] ${CLIP_TAG_COLORS[clip.clip_tag] || 'bg-slate-700 text-slate-300'}`}>{clip.clip_tag}</Badge>
+                        )}
                         {clip.impeachment_ready && (
                           <Badge className="bg-amber-900 text-amber-200 text-[10px]">Impeachment</Badge>
                         )}
