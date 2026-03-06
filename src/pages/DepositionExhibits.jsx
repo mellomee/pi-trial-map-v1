@@ -481,7 +481,15 @@ export default function DepositionExhibits() {
         ) : (
           Object.entries(grouped || {}).map(([grp, items]) => {
             const isOpen = expandedGroups.has(grp);
-            const unmarkedInGroup = items.filter(ex => !ex.joint_exhibit_id);
+            const jointExtractIds = new Set(joints.map(j => j.exhibit_extract_id).filter(Boolean));
+            const hasExtractOnJointList = (ex) => {
+              const exts = extracts.filter(e =>
+                e.source_depo_exhibit_id === ex.id ||
+                (e.source_depo_exhibit_ids || []).includes(ex.id)
+              );
+              return exts.some(e => jointExtractIds.has(e.id));
+            };
+            const unmarkedInGroup = items.filter(ex => !hasExtractOnJointList(ex));
             const allMarked = unmarkedInGroup.length === 0;
             return (
               <div key={grp}>
