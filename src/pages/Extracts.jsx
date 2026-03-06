@@ -295,7 +295,7 @@ export default function Extracts() {
   const saveExtract = async () => {
     if (!editExtract || !activeCase) return;
     setSaving(true);
-    const isGroup = (editExtract.source_depo_exhibit_ids || []).length > 1 || !!editExtract._groupName;
+    const useGroup = editExtract._useGroup;
     const payload = {
       case_id: activeCase.id,
       extract_title_official: editExtract.extract_title_official,
@@ -306,10 +306,10 @@ export default function Extracts() {
       extract_page_end: editExtract.extract_page_end ? Number(editExtract.extract_page_end) : null,
       extract_page_count: editExtract.extract_page_count ? Number(editExtract.extract_page_count) : null,
     };
-    if (isGroup) {
+    if (useGroup) {
       payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_ids || [];
       payload.primary_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null;
-      payload.source_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null;
+      payload.source_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null; // keep legacy in sync
     } else {
       payload.source_depo_exhibit_id = editExtract.source_depo_exhibit_id || null;
       payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_id ? [editExtract.source_depo_exhibit_id] : [];
@@ -338,14 +338,16 @@ export default function Extracts() {
   };
 
   const openEditExtract = (ex) => {
-    const ids = ex.source_depo_exhibit_ids || (ex.source_depo_exhibit_id ? [ex.source_depo_exhibit_id] : []);
-    // Determine group name from primary depo exhibit
-    const primaryId = ex.primary_depo_exhibit_id || ex.source_depo_exhibit_id;
-    const primaryDepo = primaryId ? depoById[primaryId] : null;
+    const groupIds = ex.source_depo_exhibit_ids?.length
+      ? ex.source_depo_exhibit_ids
+      : ex.source_depo_exhibit_id ? [ex.source_depo_exhibit_id] : [];
+    // Detect group name from source exhibits
+    const firstDepo = depoById[ex.primary_depo_exhibit_id || groupIds[0]];
+    const groupName = firstDepo?.group_name || null;
     setEditExtract({
       ...ex,
-      source_depo_exhibit_ids: ids,
-      _groupName: primaryDepo?.group_name || null,
+      source_depo_exhibit_ids: groupIds,
+      _groupName: groupName,
     });
   };
 
@@ -632,25 +634,34 @@ export default function Extracts() {
                   placeholder="Sightlines blocked" />
               </div>
 
-              {/* Source: single or group toggle */}
+              {/* Source Depo Exhibit(s) */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <Label className="text-xs text-slate-400">Source Depo Exhibit(s)</Label>
-                  <div className="flex gap-1 bg-[#0a0f1e] rounded p-0.5 border border-[#1e2a45]">
-                    <button onClick={() => setEditExtract(p => ({ ...p, _useGroup: false }))}
-                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${!editExtract._useGroup ? "bg-cyan-600/30 text-cyan-300" : "text-slate-500"}`}>
-                      Single
-                    </button>
-                    <button onClick={() => setEditExtract(p => ({ ...p, _useGroup: true }))}
-                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${editExtract._useGroup ? "bg-cyan-600/30 text-cyan-300" : "text-slate-500"}`}>
-                      Group
-                    </button>
+                <Label className="text-xs text-slate-400 block mb-1.5">Source Depo Exhibit(s)</Label>
+                {editExtract._groupName ? (
+                  // Group mode: show only exhibits from this group, let user pick primary
+                  <div>
+                    <p className="text-[10px] text-slate-400 mb-1.5 flex items-center gap-1">
+                      <Users className="w-3 h-3 text-indigo-400" />
+                      Group: <span className="text-indigo-300 font-medium">{editExtract._groupName}</span>
+                      <span className="text-slate-600 ml-1">— star the exhibit whose file should be the primary attachment</span>
+                    </p>
+                    <DepoGroupSelector
+                      depoExhibits={depoExhibits.filter(d => d.group_name === editExtract._groupName)}
+                      selectedIds={editExtract.source_depo_exhibit_ids || []}
+                      primaryId={editExtract.primary_depo_exhibit_id || ""}
+                      onChange={ids => setEditExtract(p => ({ ...p, source_depo_exhibit_ids: ids }))}
+                      onPrimaryChange={id => setEditExtract(p => ({ ...p, primary_depo_exhibit_id: id }))}
+                    />
+                    {(editExtract.source_depo_exhibit_ids || []).length > 0 && !editExtract.extract_file_url && (
+                      <p className="text-[10px] text-slate-500 mt-1.5">
+                        Primary file: <span className="text-cyan-400">{depoLabel(editExtract.primary_depo_exhibit_id || editExtract.source_depo_exhibit_ids[0])}</span>'s attachment
+                      </p>
+                    )}
                   </div>
-                </div>
-
-                {!editExtract._useGroup ? (
+                ) : (
+                  // Single mode
                   <Select value={editExtract.source_depo_exhibit_id || "none"}
-                    onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v }))}>
+                    onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v, source_depo_exhibit_ids: v === "none" ? [] : [v] }))}>
                     <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs">
                       <SelectValue placeholder="Select source exhibit…" />
                     </SelectTrigger>
@@ -663,24 +674,6 @@ export default function Extracts() {
                       ))}
                     </SelectContent>
                   </Select>
-                ) : (
-                  <div>
-                    <p className="text-[10px] text-slate-500 mb-1.5 flex items-center gap-1">
-                      <Star className="w-3 h-3 text-amber-400" /> Check exhibits in the group · star = primary attachment
-                    </p>
-                    <DepoGroupSelector
-                      depoExhibits={depoExhibits}
-                      selectedIds={editExtract.source_depo_exhibit_ids || []}
-                      primaryId={editExtract.primary_depo_exhibit_id || ""}
-                      onChange={ids => setEditExtract(p => ({ ...p, source_depo_exhibit_ids: ids }))}
-                      onPrimaryChange={id => setEditExtract(p => ({ ...p, primary_depo_exhibit_id: id }))}
-                    />
-                    {(editExtract.source_depo_exhibit_ids || []).length > 0 && !editExtract.extract_file_url && (
-                      <p className="text-[10px] text-slate-500 mt-1.5">
-                        Primary file: <span className="text-cyan-400">{depoLabel(editExtract.primary_depo_exhibit_id || editExtract.source_depo_exhibit_ids[0])}</span>'s attachment
-                      </p>
-                    )}
-                  </div>
                 )}
               </div>
 
