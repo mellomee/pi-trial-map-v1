@@ -227,7 +227,7 @@ export default function Transcripts() {
                         isSelected
                           ? "bg-cyan-500/20"
                           : isFlagged
-                          ? "bg-amber-500/10"
+                          ? "bg-yellow-400/25 border-l-2 border-yellow-400"
                           : "hover:bg-white/5"
                       }`}
                     >

@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Pencil, Trash2, Check, X } from 'lucide-react';
 
@@ -22,12 +21,15 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
   }, [defaultDepositionId]);
 
   useEffect(() => {
-    if (!selectedDepoId || !caseId) { setClips([]); return; }
+    if (!caseId) { setClips([]); return; }
     loadClips();
   }, [selectedDepoId, caseId]);
 
   const loadClips = () => {
-    base44.entities.DepoClips.filter({ deposition_id: selectedDepoId }).then(c =>
+    const filter = selectedDepoId === '__all__' || !selectedDepoId
+      ? { case_id: caseId }
+      : { deposition_id: selectedDepoId };
+    base44.entities.DepoClips.filter(filter).then(c =>
       setClips(c.sort((a, b) => (a.start_cite || '').localeCompare(b.start_cite || '')))
     );
   };
@@ -68,11 +70,12 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
         </DialogHeader>
 
         <div className="flex items-center gap-3 mb-2">
-          <Select value={selectedDepoId} onValueChange={setSelectedDepoId}>
+          <Select value={selectedDepoId || '__all__'} onValueChange={v => setSelectedDepoId(v === '__all__' ? '' : v)}>
             <SelectTrigger className="w-64 bg-[#131a2e] border-[#1e2a45]">
               <SelectValue placeholder="Select deposition..." />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="__all__">All Clips</SelectItem>
               {depositions.map(d => (
                 <SelectItem key={d.id} value={d.id}>{getDepoLabel(d)}</SelectItem>
               ))}
@@ -81,7 +84,7 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
           <span className="text-xs text-slate-500">{clips.length} clips</span>
         </div>
 
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="space-y-2 pr-2">
             {clips.length === 0 ? (
               <div className="text-center py-12 text-slate-500 text-sm">No clips for this deposition.</div>
@@ -166,7 +169,7 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
