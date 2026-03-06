@@ -86,21 +86,14 @@ export default function DepositionExhibits() {
 
   // Helper: get extracts for a given depo exhibit id
   const extractsForExhibit = (depoExhibitId) =>
-    extracts.filter(e => e.source_depo_exhibit_id === depoExhibitId);
+    extracts.filter(e =>
+      e.source_depo_exhibit_id === depoExhibitId ||
+      (e.source_depo_exhibit_ids || []).includes(depoExhibitId)
+    );
 
-  // Main "Mark as Joint" entry point — handles 0/1/>1 extracts
-  const initiateMarkAsJoint = (ex) => {
-    const exts = extractsForExhibit(ex.id);
-    if (exts.length === 0) {
-      // No extracts — create one first, then mark
-      setExtractModalTarget({ exhibit: ex, thenMark: true });
-    } else if (exts.length === 1) {
-      // Exactly one extract — go straight to mark modal
-      setMarkJointTarget({ exhibit: ex, extract: exts[0] });
-    } else {
-      // Multiple extracts — pick one
-      setSelectExtractTarget({ exhibit: ex, extracts: exts });
-    }
+  // Navigate to Extracts page to create a new extract pre-seeded with this exhibit
+  const goCreateExtract = (ex) => {
+    navigate(createPageUrl(`Extracts?newExtractFromDepo=${ex.id}`));
   };
 
   useEffect(() => { load(); }, [activeCase]);
