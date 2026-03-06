@@ -610,6 +610,57 @@ export default function JointExhibits() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Change Primary Exhibit Dialog ── */}
+      <Dialog open={!!primaryDialog} onOpenChange={v => !v && setPrimaryDialog(null)}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Primary Attachment</DialogTitle>
+            {primaryDialog && <p className="text-xs text-slate-500 mt-1">Exhibit #{primaryDialog.joint.marked_no} — {primaryDialog.joint.marked_title}</p>}
+          </DialogHeader>
+          {primaryDialog && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-400">Select which exhibit's file will be used as the main attachment for this joint exhibit:</p>
+              <div className="space-y-2">
+                {primaryDialog.depos.map(d => (
+                  <label key={d.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${primaryDialog.primaryId === d.id ? "border-cyan-500/50 bg-cyan-500/5" : "border-[#1e2a45] hover:border-slate-600"}`}>
+                    <input
+                      type="radio"
+                      name="primary_depo"
+                      value={d.id}
+                      checked={primaryDialog.primaryId === d.id}
+                      onChange={() => setPrimaryDialog({ ...primaryDialog, primaryId: d.id })}
+                      className="accent-cyan-500 mt-0.5"
+                    />
+                    <div>
+                      <p className="text-xs text-white font-medium">
+                        <span className="font-mono text-slate-400 mr-1">#{d.depo_exhibit_no}</span>
+                        {d.display_title || d.depo_exhibit_title}
+                      </p>
+                      {d.deponent_name && <p className="text-[10px] text-slate-500">Deponent: {d.deponent_name}</p>}
+                      {d.file_url ? (
+                        <span className="text-[10px] text-green-400">✓ Has file attached</span>
+                      ) : d.external_link ? (
+                        <span className="text-[10px] text-blue-400">✓ Has external link</span>
+                      ) : (
+                        <span className="text-[10px] text-slate-600 italic">No file attached</span>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPrimaryDialog(null)} className="border-slate-600 text-slate-300">Cancel</Button>
+            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={async () => {
+              await base44.entities.JointExhibits.update(primaryDialog.joint.id, { primary_depo_exhibit_id: primaryDialog.primaryId });
+              setPrimaryDialog(null);
+              load();
+            }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Edit Admitted Dialog ── */}
       <Dialog open={!!editAdmit} onOpenChange={v => !v && setEditAdmit(null)}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
