@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, Users, Target, HelpCircle, Play, FileText,
-  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Monitor, AlertTriangle, X, Scale
+  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Monitor, AlertTriangle, X
 } from "lucide-react";
 
 const NAV_SECTIONS = [
