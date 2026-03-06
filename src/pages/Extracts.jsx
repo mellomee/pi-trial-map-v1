@@ -164,23 +164,26 @@ export default function Extracts() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const [pendingDepoId, setPendingDepoId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("newExtractFromDepo") || null;
+  });
+
   // Auto-open new extract dialog if navigated from Depo Exhibits
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const fromDepoId = params.get("newExtractFromDepo");
-    if (fromDepoId && depoExhibits.length > 0) {
-      const depo = depoExhibits.find(d => d.id === fromDepoId);
+    if (pendingDepoId && depoExhibits.length > 0) {
+      const depo = depoExhibits.find(d => d.id === pendingDepoId);
       setEditExtract({
         ...EMPTY_EXTRACT,
-        source_depo_exhibit_id: fromDepoId,
-        source_depo_exhibit_ids: [fromDepoId],
+        source_depo_exhibit_id: pendingDepoId,
+        source_depo_exhibit_ids: [pendingDepoId],
         extract_title_official: depo ? (depo.display_title || depo.depo_exhibit_title || "") : "",
         _useGroup: false,
       });
-      // Clear the param from URL without reloading
+      setPendingDepoId(null);
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [depoExhibits]);
+  }, [pendingDepoId, depoExhibits]);
 
   const load = useCallback(async () => {
     if (!activeCase) return;
