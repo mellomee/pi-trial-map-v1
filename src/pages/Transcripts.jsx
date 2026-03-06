@@ -15,7 +15,6 @@ import { debounce } from "lodash";
 
 const PAGE_SIZE = 100;
 
-// Stable color palette per clip (cycles through 5 subtle greens/reds)
 const HELPS_COLORS = [
   "bg-green-900/20 border-l-2 border-green-600/60",
   "bg-emerald-900/20 border-l-2 border-emerald-600/60",
@@ -38,14 +37,14 @@ const CLIP_TAG_COLORS = {
   Opinion: "bg-pink-900/70 text-pink-200",
 };
 
-// Session storage key prefix
-const SESSION_KEY = (depoId) => `transcript_pos_${depoId}`;
+const SESSION_DEPO_KEY = "transcript_last_depo";
+const SESSION_POS_KEY = (depoId) => `transcript_pos_${depoId}`;
 
 export default function Transcripts() {
   const { activeCase } = useActiveCase();
   const [depositions, setDepositions] = useState([]);
   const [parties, setParties] = useState([]);
-  const [selectedDepoId, setSelectedDepoId] = useState("");
+  const [selectedDepoId, setSelectedDepoId] = useState(() => sessionStorage.getItem(SESSION_DEPO_KEY) || "");
   const [lines, setLines] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -56,11 +55,12 @@ export default function Transcripts() {
   const [clipsViewerOpen, setClipsViewerOpen] = useState(false);
   const [clipForm, setClipForm] = useState({ topic_tag: "", clip_tag: "", direction: "HelpsUs", impeachment_ready: false, notes: "" });
   const [page, setPage] = useState(0);
-  const [jumpToPage, setJumpToPage] = useState("");
-  const [searchResults, setSearchResults] = useState(null); // null = no search active, array = results
-  const [searchResultIdx, setSearchResultIdx] = useState(0);
+  const [pageInputVal, setPageInputVal] = useState("1");
+  const [searchResults, setSearchResults] = useState(null);
+  const [highlightedLineIdx, setHighlightedLineIdx] = useState(null);
   const lastClickedIdx = useRef(null);
   const scrollContainerRef = useRef(null);
+  const rowRefs = useRef({});
 
   useEffect(() => {
     if (!activeCase) return;
@@ -70,13 +70,27 @@ export default function Transcripts() {
     ]).then(([d, p]) => { setDepositions(d); setParties(p); });
   }, [activeCase]);
 
-  // Save scroll position before unmount / depo change
+  // Save position on page change or scroll
   const saveScrollPos = useCallback(() => {
     if (!selectedDepoId || !scrollContainerRef.current) return;
-    const key = SESSION_KEY(selectedDepoId);
-    sessionStorage.setItem(key, JSON.stringify({ page, scrollTop: scrollContainerRef.current.scrollTop }));
+    sessionStorage.setItem(SESSION_POS_KEY(selectedDepoId), JSON.stringify({
+      page,
+      scrollTop: scrollContainerRef.current.scrollTop,
+    }));
   }, [selectedDepoId, page]);
 
+  // Save on page change
+  useEffect(() => {
+    saveScrollPos();
+    setPageInputVal(String(page + 1));
+  }, [page]);
+
+  // Save depo selection
+  useEffect(() => {
+    if (selectedDepoId) sessionStorage.setItem(SESSION_DEPO_KEY, selectedDepoId);
+  }, [selectedDepoId]);
+
+  // Save before navigating away
   useEffect(() => {
     window.addEventListener("beforeunload", saveScrollPos);
     return () => {
@@ -87,9 +101,6 @@ export default function Transcripts() {
 
   useEffect(() => {
     if (!selectedDepoId || !activeCase) { setLines([]); return; }
-
-    // Save previous depo position before switching
-    saveScrollPos();
 
     base44.entities.DepositionTranscripts.filter({ deposition_id: selectedDepoId }).then(async ts => {
       if (ts.length === 0) { setLines([]); return; }
@@ -107,17 +118,21 @@ export default function Transcripts() {
       setSearchTerm("");
       setDebouncedSearch("");
       setSearchResults(null);
+      setHighlightedLineIdx(null);
 
       // Restore saved position
-      const saved = sessionStorage.getItem(SESSION_KEY(selectedDepoId));
+      const saved = sessionStorage.getItem(SESSION_POS_KEY(selectedDepoId));
       if (saved) {
         const { page: savedPage, scrollTop } = JSON.parse(saved);
-        setPage(savedPage || 0);
+        const restoredPage = savedPage || 0;
+        setPage(restoredPage);
+        setPageInputVal(String(restoredPage + 1));
         setTimeout(() => {
           if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollTop || 0;
-        }, 100);
+        }, 150);
       } else {
         setPage(0);
+        setPageInputVal("1");
       }
     });
     base44.entities.DepoClips.filter({ deposition_id: selectedDepoId }).then(setClips);
@@ -126,9 +141,8 @@ export default function Transcripts() {
   const debouncedSetSearch = useMemo(() => debounce(v => setDebouncedSearch(v), 300), []);
   useEffect(() => { debouncedSetSearch(searchTerm); }, [searchTerm, debouncedSetSearch]);
 
-  // Build per-cite clip info: { color class, clip_tag }
   const citeFlagMap = useMemo(() => {
-    const map = new Map(); // cite -> { colorClass, clip_tag, direction }
+    const map = new Map();
     clips.forEach((c, clipIdx) => {
       const start = c.start_cite;
       const end = c.end_cite || start;
@@ -146,25 +160,21 @@ export default function Transcripts() {
     return map;
   }, [clips, lines]);
 
-  // Full-transcript search (searches all lines, not just current page)
   const allSearchResults = useMemo(() => {
     if (!debouncedSearch) return null;
     const q = debouncedSearch.toLowerCase();
     const results = [];
     lines.forEach((l, i) => {
-      if (l.text.toLowerCase().includes(q) || l.cite.toLowerCase().includes(q)) {
-        results.push(i); // global line index
-      }
+      if (l.text.toLowerCase().includes(q) || l.cite.toLowerCase().includes(q)) results.push(i);
     });
     return results;
   }, [lines, debouncedSearch]);
 
   useEffect(() => {
-    setSearchResultIdx(0);
     setSearchResults(allSearchResults);
+    setHighlightedLineIdx(null);
   }, [allSearchResults]);
 
-  // Displayed lines (with flagged filter if active)
   const displayLines = useMemo(() => {
     if (showFlaggedOnly) return lines.filter(l => citeFlagMap.has(l.cite));
     return lines;
@@ -173,19 +183,42 @@ export default function Transcripts() {
   const totalPages = Math.ceil(displayLines.length / PAGE_SIZE);
   const pageLines = displayLines.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-  const jumpToResult = (resultLineIdx) => {
-    const targetPage = Math.floor(resultLineIdx / PAGE_SIZE);
-    setPage(targetPage);
+  const goToPage = (newPage) => {
+    const clamped = Math.max(0, Math.min(newPage, totalPages - 1));
+    setPage(clamped);
+    setPageInputVal(String(clamped + 1));
     setTimeout(() => {
       if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
     }, 50);
   };
 
-  const goToPage = (newPage) => {
-    setPage(newPage);
-    setTimeout(() => {
-      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
-    }, 50);
+  const commitPageInput = () => {
+    const p = parseInt(pageInputVal) - 1;
+    if (!isNaN(p) && p >= 0 && p < totalPages) {
+      goToPage(p);
+    } else {
+      setPageInputVal(String(page + 1));
+    }
+  };
+
+  // Jump to a search result: navigate to its page, then scroll the row into view and highlight it
+  const jumpToResult = (globalLineIdx) => {
+    const targetPage = Math.floor(globalLineIdx / PAGE_SIZE);
+    setHighlightedLineIdx(globalLineIdx);
+    if (targetPage !== page) {
+      setPage(targetPage);
+      setPageInputVal(String(targetPage + 1));
+      // After state update, scroll row into view
+      setTimeout(() => {
+        const el = rowRefs.current[globalLineIdx];
+        if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 150);
+    } else {
+      const el = rowRefs.current[globalLineIdx];
+      if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+    // Clear highlight after 3s
+    setTimeout(() => setHighlightedLineIdx(null), 3000);
   };
 
   const handleRowClick = useCallback((globalIdx, e) => {
@@ -198,12 +231,8 @@ export default function Transcripts() {
       } else if (e.ctrlKey || e.metaKey) {
         next.has(globalIdx) ? next.delete(globalIdx) : next.add(globalIdx);
       } else {
-        if (next.size === 1 && next.has(globalIdx)) {
-          next.clear();
-        } else {
-          next.clear();
-          next.add(globalIdx);
-        }
+        if (next.size === 1 && next.has(globalIdx)) { next.clear(); }
+        else { next.clear(); next.add(globalIdx); }
       }
       lastClickedIdx.current = globalIdx;
       return next;
@@ -238,34 +267,27 @@ export default function Transcripts() {
     return d.volume_label ? `${name} - ${d.volume_label}` : name;
   };
 
-  const Pagination = ({ compact = false }) => (
+  const PaginationBar = ({ compact = false }) => (
     totalPages > 1 ? (
-      <div className={`flex items-center gap-2 ${compact ? "" : "justify-center py-4 border-t border-[#1e2a45]"}`}>
+      <div className={`flex items-center gap-1 ${compact ? "" : "justify-center py-4 border-t border-[#1e2a45]"}`}>
         <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => goToPage(page - 1)} className="text-slate-400 h-7 px-2">
           <ChevronLeft className="w-4 h-4" />
         </Button>
-        <span className="text-xs text-slate-500 whitespace-nowrap">Pg {page + 1}/{totalPages}</span>
+        <span className="text-xs text-slate-500">Page</span>
+        <input
+          type="number"
+          min={1}
+          max={totalPages}
+          value={pageInputVal}
+          onChange={e => setPageInputVal(e.target.value)}
+          onBlur={commitPageInput}
+          onKeyDown={e => { if (e.key === "Enter") { e.target.blur(); } }}
+          className="w-10 text-xs bg-[#1e2a45] border border-[#2a3a5a] text-slate-200 rounded px-1 py-0.5 text-center font-mono"
+        />
+        <span className="text-xs text-slate-500">of {totalPages}</span>
         <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => goToPage(page + 1)} className="text-slate-400 h-7 px-2">
           <ChevronRight className="w-4 h-4" />
         </Button>
-        <div className="flex items-center gap-1 ml-1">
-          <input
-            type="number"
-            min={1}
-            max={totalPages}
-            value={jumpToPage}
-            onChange={e => setJumpToPage(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter") {
-                const p = parseInt(jumpToPage) - 1;
-                if (!isNaN(p) && p >= 0 && p < totalPages) goToPage(p);
-                setJumpToPage("");
-              }
-            }}
-            placeholder="Go"
-            className="w-12 text-xs bg-[#131a2e] border border-[#1e2a45] text-slate-300 rounded px-1 py-0.5 text-center"
-          />
-        </div>
       </div>
     ) : null
   );
@@ -279,24 +301,15 @@ export default function Transcripts() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-white">Transcripts</h1>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-cyan-600 text-cyan-400 hover:bg-cyan-600/20"
-              disabled={selectedRows.size === 0}
-              onClick={() => setClipDialog(true)}
-            >
+            <Button variant="outline" size="sm" className="border-cyan-600 text-cyan-400 hover:bg-cyan-600/20"
+              disabled={selectedRows.size === 0} onClick={() => setClipDialog(true)}>
               <Bookmark className="w-3 h-3 mr-1" /> Clip Selected ({selectedRows.size})
             </Button>
             <Button variant="ghost" size="sm" className="text-slate-400" onClick={() => setSelectedRows(new Set())}>
               <X className="w-3 h-3 mr-1" /> Clear
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-slate-600 text-slate-400 hover:bg-slate-700/30"
-              onClick={() => setClipsViewerOpen(true)}
-            >
+            <Button variant="outline" size="sm" className="border-slate-600 text-slate-400 hover:bg-slate-700/30"
+              onClick={() => setClipsViewerOpen(true)}>
               <Film className="w-3 h-3 mr-1" /> View Clips
             </Button>
           </div>
@@ -314,12 +327,9 @@ export default function Transcripts() {
           </Select>
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-            <Input
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+            <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search entire transcript..."
-              className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200"
-            />
+              className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={showFlaggedOnly} onCheckedChange={setShowFlaggedOnly} />
@@ -330,26 +340,23 @@ export default function Transcripts() {
           </Badge>
         </div>
 
-        {/* Search results */}
+        {/* Search results dropdown */}
         {searchResults !== null && (
           <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg overflow-hidden">
             <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#1e2a45]">
-              <span className="text-xs text-slate-400">{searchResults.length} results across full transcript</span>
-              <button onClick={() => { setSearchTerm(""); setSearchResults(null); }} className="text-slate-500 hover:text-white">
+              <span className="text-xs text-slate-400">{searchResults.length} results in full transcript</span>
+              <button onClick={() => { setSearchTerm(""); setSearchResults(null); setHighlightedLineIdx(null); }} className="text-slate-500 hover:text-white">
                 <X className="w-3 h-3" />
               </button>
             </div>
             {searchResults.length > 0 && (
-              <div className="max-h-36 overflow-y-auto">
+              <div className="max-h-40 overflow-y-auto">
                 {searchResults.map((lineIdx, ri) => {
                   const l = lines[lineIdx];
                   const targetPage = Math.floor(lineIdx / PAGE_SIZE);
                   return (
-                    <div
-                      key={ri}
-                      onClick={() => jumpToResult(lineIdx)}
-                      className="flex items-center gap-2 px-3 py-1 hover:bg-[#1e2a45]/60 cursor-pointer border-b border-[#1e2a45]/40 group"
-                    >
+                    <div key={ri} onClick={() => jumpToResult(lineIdx)}
+                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-cyan-500/10 cursor-pointer border-b border-[#1e2a45]/40 group">
                       <ArrowRight className="w-3 h-3 text-cyan-500 opacity-0 group-hover:opacity-100 flex-shrink-0" />
                       <span className="text-xs font-mono text-slate-500 w-16 flex-shrink-0">{l.cite}</span>
                       <span className="text-xs text-slate-300 truncate flex-1">{l.text}</span>
@@ -363,7 +370,7 @@ export default function Transcripts() {
         )}
 
         {/* Top pagination */}
-        {selectedDepoId && lines.length > 0 && <Pagination compact />}
+        {selectedDepoId && lines.length > 0 && <PaginationBar compact />}
       </div>
 
       {/* Transcript content */}
@@ -382,8 +389,11 @@ export default function Transcripts() {
                 {pageLines.map((line, i) => {
                   const globalIdx = page * PAGE_SIZE + i;
                   const isSelected = selectedRows.has(globalIdx);
+                  const isHighlighted = highlightedLineIdx === globalIdx;
                   const flagInfo = citeFlagMap.get(line.cite);
-                  const rowClass = isSelected
+                  const rowClass = isHighlighted
+                    ? "bg-cyan-400/30 border-l-2 border-cyan-300 animate-pulse"
+                    : isSelected
                     ? "bg-cyan-500/15 border-l-2 border-cyan-400"
                     : flagInfo
                     ? flagInfo.colorClass
@@ -392,6 +402,7 @@ export default function Transcripts() {
                   return (
                     <tr
                       key={globalIdx}
+                      ref={el => { rowRefs.current[globalIdx] = el; }}
                       onClick={e => handleRowClick(globalIdx, e)}
                       className={`cursor-pointer border-b border-[#1e2a45]/40 transition-colors ${rowClass}`}
                     >
@@ -409,8 +420,7 @@ export default function Transcripts() {
                 })}
               </tbody>
             </table>
-
-            <Pagination />
+            <PaginationBar />
           </>
         ) : (
           <div className="flex items-center justify-center h-64 text-slate-500">
@@ -432,9 +442,7 @@ export default function Transcripts() {
       {/* Clip dialog */}
       <Dialog open={clipDialog} onOpenChange={setClipDialog}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
-          <DialogHeader>
-            <DialogTitle>Create Clip</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Create Clip</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="bg-[#0a0f1e] rounded p-3 max-h-32 overflow-y-auto text-xs font-mono text-slate-400">
               {Array.from(selectedRows).sort((a, b) => a - b).map(i => displayLines[i]).filter(Boolean).map((l, i) => (
@@ -443,7 +451,8 @@ export default function Transcripts() {
             </div>
             <div>
               <Label className="text-slate-400 text-xs">Title</Label>
-              <Input value={clipForm.topic_tag} onChange={e => setClipForm({ ...clipForm, topic_tag: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. Light was green" />
+              <Input value={clipForm.topic_tag} onChange={e => setClipForm({ ...clipForm, topic_tag: e.target.value })}
+                className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. Light was green" />
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
@@ -476,7 +485,8 @@ export default function Transcripts() {
             </div>
             <div>
               <Label className="text-slate-400 text-xs">Notes</Label>
-              <Textarea value={clipForm.notes} onChange={e => setClipForm({ ...clipForm, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
+              <Textarea value={clipForm.notes} onChange={e => setClipForm({ ...clipForm, notes: e.target.value })}
+                className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
             </div>
           </div>
           <DialogFooter>
