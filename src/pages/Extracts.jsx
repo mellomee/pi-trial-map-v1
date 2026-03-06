@@ -295,7 +295,7 @@ export default function Extracts() {
   const saveExtract = async () => {
     if (!editExtract || !activeCase) return;
     setSaving(true);
-    const useGroup = editExtract._useGroup;
+    const isGroup = (editExtract.source_depo_exhibit_ids || []).length > 1 || !!editExtract._groupName;
     const payload = {
       case_id: activeCase.id,
       extract_title_official: editExtract.extract_title_official,
@@ -306,10 +306,10 @@ export default function Extracts() {
       extract_page_end: editExtract.extract_page_end ? Number(editExtract.extract_page_end) : null,
       extract_page_count: editExtract.extract_page_count ? Number(editExtract.extract_page_count) : null,
     };
-    if (useGroup) {
+    if (isGroup) {
       payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_ids || [];
       payload.primary_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null;
-      payload.source_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null; // keep legacy in sync
+      payload.source_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null;
     } else {
       payload.source_depo_exhibit_id = editExtract.source_depo_exhibit_id || null;
       payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_id ? [editExtract.source_depo_exhibit_id] : [];
@@ -338,16 +338,14 @@ export default function Extracts() {
   };
 
   const openEditExtract = (ex) => {
-    const groupIds = ex.source_depo_exhibit_ids?.length
-      ? ex.source_depo_exhibit_ids
-      : ex.source_depo_exhibit_id ? [ex.source_depo_exhibit_id] : [];
-    // Detect group name from source exhibits
-    const firstDepo = depoById[ex.primary_depo_exhibit_id || groupIds[0]];
-    const groupName = firstDepo?.group_name || null;
+    const ids = ex.source_depo_exhibit_ids || (ex.source_depo_exhibit_id ? [ex.source_depo_exhibit_id] : []);
+    // Determine group name from primary depo exhibit
+    const primaryId = ex.primary_depo_exhibit_id || ex.source_depo_exhibit_id;
+    const primaryDepo = primaryId ? depoById[primaryId] : null;
     setEditExtract({
       ...ex,
-      source_depo_exhibit_ids: groupIds,
-      _groupName: groupName,
+      source_depo_exhibit_ids: ids,
+      _groupName: primaryDepo?.group_name || null,
     });
   };
 
