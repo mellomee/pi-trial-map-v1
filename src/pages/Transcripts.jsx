@@ -16,18 +16,18 @@ import { debounce } from "lodash";
 const PAGE_SIZE = 100;
 
 const HELPS_COLORS = [
-  "bg-green-900/20 border-l-2 border-green-600/60",
-  "bg-emerald-900/20 border-l-2 border-emerald-600/60",
-  "bg-teal-900/20 border-l-2 border-teal-600/60",
-  "bg-green-900/15 border-l-2 border-green-500/50",
-  "bg-emerald-900/15 border-l-2 border-emerald-500/50",
+  "bg-green-900/20",
+  "bg-emerald-900/20",
+  "bg-teal-900/20",
+  "bg-green-900/15",
+  "bg-emerald-900/15",
 ];
 const HURTS_COLORS = [
-  "bg-red-900/20 border-l-2 border-red-600/60",
-  "bg-rose-900/20 border-l-2 border-rose-600/60",
-  "bg-red-900/15 border-l-2 border-red-500/50",
-  "bg-rose-900/15 border-l-2 border-rose-500/50",
-  "bg-red-800/15 border-l-2 border-red-400/50",
+  "bg-red-900/20",
+  "bg-rose-900/20",
+  "bg-red-900/15",
+  "bg-rose-900/15",
+  "bg-red-800/15",
 ];
 
 const CLIP_TAG_COLORS = {
@@ -303,7 +303,7 @@ export default function Transcripts() {
           value={pageInputVal}
           onChange={e => setPageInputVal(e.target.value)}
           onBlur={commitPageInput}
-          onKeyDown={e => { if (e.key === "Enter") { e.target.blur(); } }}
+          onKeyDown={e => { if (e.key === "Enter") { commitPageInput(); e.target.blur(); } }}
           className="w-10 text-xs bg-[#1e2a45] border border-[#2a3a5a] text-slate-200 rounded px-1 py-0.5 text-center font-mono"
         />
         <span className="text-xs text-slate-500">of {totalPages}</span>
@@ -414,7 +414,7 @@ export default function Transcripts() {
                   const isHighlighted = highlightedLineIdx === globalIdx;
                   const flagInfo = citeFlagMap.get(line.cite);
                   const rowClass = isSelected
-                    ? "bg-cyan-500/15 border-l-2 border-cyan-400"
+                    ? "bg-cyan-500/15"
                     : flagInfo
                     ? flagInfo.colorClass
                     : "hover:bg-white/5";
@@ -457,6 +457,7 @@ export default function Transcripts() {
         defaultDepositionId={selectedDepoId}
         depositions={depositions}
         parties={parties}
+        onClipsChanged={() => base44.entities.DepoClips.filter({ deposition_id: selectedDepoId }).then(setClips)}
       />
 
       {/* Clip dialog */}
