@@ -459,18 +459,16 @@ export default function DepositionExhibits() {
           <Button size="sm" className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700" onClick={() => { setTagForm({ group_name: "", tags: "" }); setTagDialog(true); }}>
             <Tag className="w-3 h-3 mr-1" /> Tag / Group
           </Button>
-          <Button size="sm" className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700" onClick={() => {
+          <Button size="sm" className="h-7 text-xs bg-emerald-700 hover:bg-emerald-600" onClick={() => {
+            // Navigate to Extracts to create an extract — if single selection use that exhibit, else just go to page
             const firstId = [...selectedIds][0];
-            const ex = exhibits.find(e => e.id === firstId);
-            if (selectedIds.size === 1 && ex) {
-              initiateMarkAsJoint(ex);
+            if (firstId) {
+              navigate(createPageUrl(`Extracts?newExtractFromDepo=${firstId}`));
             } else {
-              // bulk path — use legacy mark dialog
-              setMarkForm({ marked_no: "", marked_title: ex?.display_title || ex?.depo_exhibit_title || "", marked_by_side: "Plaintiff", pages: "", primary_depo_exhibit_id: firstId || "", notes: "" });
-              setMarkDialog(true);
+              navigate(createPageUrl("Extracts"));
             }
           }}>
-            Mark as Joint Exhibit
+            <ArrowRight className="w-3 h-3 mr-1" /> Create Extract →
           </Button>
           <button onClick={clearSel} className="ml-auto text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
         </div>
