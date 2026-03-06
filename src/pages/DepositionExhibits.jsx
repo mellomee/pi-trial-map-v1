@@ -98,6 +98,17 @@ export default function DepositionExhibits() {
   useEffect(() => { load(); }, [activeCase]);
 
   const jointIds = useMemo(() => new Set(exhibits.filter(e => e.joint_exhibit_id).map(e => e.joint_exhibit_id)), [exhibits]);
+  const markedCount = useMemo(() => {
+    // Count exhibits that have an extract which is linked to a joint exhibit
+    const jointExtractIds = new Set(joints.map(j => j.exhibit_extract_id).filter(Boolean));
+    return exhibits.filter(ex => {
+      const exts = extracts.filter(e =>
+        e.source_depo_exhibit_id === ex.id ||
+        (e.source_depo_exhibit_ids || []).includes(ex.id)
+      );
+      return exts.some(e => jointExtractIds.has(e.id));
+    }).length;
+  }, [exhibits, extracts, joints]);
 
   const allGroups = useMemo(() => {
     const groups = new Set(exhibits.map(e => e.group_name).filter(Boolean));
