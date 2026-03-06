@@ -377,6 +377,16 @@ export default function DepositionExhibits() {
         </Button>
       </div>
 
+      {/* Workflow hint */}
+      <div className="mb-4 px-4 py-2.5 bg-emerald-500/5 border border-emerald-500/20 rounded-lg flex items-center gap-3 text-xs text-slate-400">
+        <span className="font-semibold text-emerald-400 flex-shrink-0">Workflow:</span>
+        <span>1. <strong className="text-slate-300">Organize</strong> here (group, rename, upload files)</span>
+        <ArrowRight className="w-3 h-3 flex-shrink-0 text-slate-600" />
+        <span>2. Click <strong className="text-slate-300"><Layers className="w-3 h-3 inline mb-0.5" /> Create Extract</strong> to go to Extracts & Joint List</span>
+        <ArrowRight className="w-3 h-3 flex-shrink-0 text-slate-600" />
+        <span>3. Add callouts/highlights, then mark as Joint Exhibit</span>
+      </div>
+
       {/* Toolbar */}
       <div className="flex flex-wrap gap-3 mb-4 items-center">
         <div className="relative min-w-[200px] max-w-xs flex-1">
