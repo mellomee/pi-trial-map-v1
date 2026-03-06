@@ -295,7 +295,7 @@ export default function Extracts() {
   const saveExtract = async () => {
     if (!editExtract || !activeCase) return;
     setSaving(true);
-    const useGroup = editExtract._useGroup;
+    const isGroup = (editExtract.source_depo_exhibit_ids || []).length > 1 || !!editExtract._groupName;
     const payload = {
       case_id: activeCase.id,
       extract_title_official: editExtract.extract_title_official,
@@ -306,10 +306,10 @@ export default function Extracts() {
       extract_page_end: editExtract.extract_page_end ? Number(editExtract.extract_page_end) : null,
       extract_page_count: editExtract.extract_page_count ? Number(editExtract.extract_page_count) : null,
     };
-    if (useGroup) {
+    if (isGroup) {
       payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_ids || [];
       payload.primary_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null;
-      payload.source_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null; // keep legacy in sync
+      payload.source_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null;
     } else {
       payload.source_depo_exhibit_id = editExtract.source_depo_exhibit_id || null;
       payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_id ? [editExtract.source_depo_exhibit_id] : [];
@@ -338,16 +338,14 @@ export default function Extracts() {
   };
 
   const openEditExtract = (ex) => {
-    const groupIds = ex.source_depo_exhibit_ids?.length
-      ? ex.source_depo_exhibit_ids
-      : ex.source_depo_exhibit_id ? [ex.source_depo_exhibit_id] : [];
-    // Detect group name from source exhibits
-    const firstDepo = depoById[ex.primary_depo_exhibit_id || groupIds[0]];
-    const groupName = firstDepo?.group_name || null;
+    const ids = ex.source_depo_exhibit_ids || (ex.source_depo_exhibit_id ? [ex.source_depo_exhibit_id] : []);
+    // Determine group name from primary depo exhibit
+    const primaryId = ex.primary_depo_exhibit_id || ex.source_depo_exhibit_id;
+    const primaryDepo = primaryId ? depoById[primaryId] : null;
     setEditExtract({
       ...ex,
-      source_depo_exhibit_ids: groupIds,
-      _groupName: groupName,
+      source_depo_exhibit_ids: ids,
+      _groupName: primaryDepo?.group_name || null,
     });
   };
 
@@ -501,8 +499,11 @@ export default function Extracts() {
                     {/* Source info */}
                     {groupIds.length > 1 ? (
                       <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                        <Users className="w-3 h-3" /> {groupIds.length} source exhibits
-                        {primaryDepo && <span className="text-slate-600">· primary: {depoLabel(primaryDepo.id)}</span>}
+                        <Users className="w-3 h-3" />
+                        {primaryDepo?.group_name
+                          ? <span className="text-indigo-400 font-medium">Group: {primaryDepo.group_name}</span>
+                          : `${groupIds.length} source exhibits`}
+                        {primaryDepo && <span className="text-slate-600 ml-1">· primary: {depoLabel(primaryDepo.id)}</span>}
                       </span>
                     ) : primaryDepo ? (
                       <span className="text-[10px] text-slate-600">Source: {depoLabel(primaryDepo.id)}</span>
@@ -519,7 +520,7 @@ export default function Extracts() {
                     {fileInfo && (
                       <button onClick={e => { e.stopPropagation(); setViewFile({ url: fileInfo.url, title: ex.extract_title_official }); }}
                         className={`text-[10px] flex items-center gap-0.5 hover:underline ${fileInfo.isUpload ? "text-emerald-400" : "text-cyan-400"}`}>
-                        <ExternalLink className="w-3 h-3" /> {fileInfo.isUpload ? "View Shortened File" : "View File"}
+                        <ExternalLink className="w-3 h-3" /> {fileInfo.isUpload ? "View Extract" : "View Raw File"}
                       </button>
                     )}
                   </div>
@@ -634,16 +635,15 @@ export default function Extracts() {
                   placeholder="Sightlines blocked" />
               </div>
 
-              {/* Source Depo Exhibit(s) */}
+              {/* Source exhibits */}
               <div>
                 <Label className="text-xs text-slate-400 block mb-1.5">Source Depo Exhibit(s)</Label>
                 {editExtract._groupName ? (
-                  // Group mode: show only exhibits from this group, let user pick primary
+                  // Group mode: show only exhibits from this group, let user pick the primary
                   <div>
-                    <p className="text-[10px] text-slate-400 mb-1.5 flex items-center gap-1">
-                      <Users className="w-3 h-3 text-indigo-400" />
-                      Group: <span className="text-indigo-300 font-medium">{editExtract._groupName}</span>
-                      <span className="text-slate-600 ml-1">— star the exhibit whose file should be the primary attachment</span>
+                    <p className="text-[10px] text-slate-500 mb-1.5 flex items-center gap-1">
+                      <Users className="w-3 h-3 text-indigo-400" /> Group: <span className="text-indigo-300 font-medium">{editExtract._groupName}</span>
+                      <span className="ml-1">· <Star className="w-3 h-3 text-amber-400 inline" /> star = primary file attachment</span>
                     </p>
                     <DepoGroupSelector
                       depoExhibits={depoExhibits.filter(d => d.group_name === editExtract._groupName)}
@@ -654,14 +654,14 @@ export default function Extracts() {
                     />
                     {(editExtract.source_depo_exhibit_ids || []).length > 0 && !editExtract.extract_file_url && (
                       <p className="text-[10px] text-slate-500 mt-1.5">
-                        Primary file: <span className="text-cyan-400">{depoLabel(editExtract.primary_depo_exhibit_id || editExtract.source_depo_exhibit_ids[0])}</span>'s attachment
+                        Using file from: <span className="text-cyan-400">{depoLabel(editExtract.primary_depo_exhibit_id || editExtract.source_depo_exhibit_ids[0])}</span>
                       </p>
                     )}
                   </div>
                 ) : (
-                  // Single mode
+                  // Single exhibit mode
                   <Select value={editExtract.source_depo_exhibit_id || "none"}
-                    onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v, source_depo_exhibit_ids: v === "none" ? [] : [v] }))}>
+                    onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v }))}>
                     <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs">
                       <SelectValue placeholder="Select source exhibit…" />
                     </SelectTrigger>
@@ -700,7 +700,7 @@ export default function Extracts() {
 
               <div>
                 <Label className="text-xs text-slate-400 block mb-1">
-                  Upload Shortened Extract File <span className="text-slate-600">(optional — used instead of the full original in Extracts & Joint List views; original always preserved in Depo Exhibits)</span>
+                  Upload Shortened Extract File <span className="text-slate-600">(optional – if provided, used in Extracts & Joint List instead of the original; original always stays in Depo Exhibits)</span>
                 </Label>
                 <div className="flex gap-2 items-center">
                   <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp"
