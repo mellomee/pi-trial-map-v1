@@ -164,6 +164,24 @@ export default function Extracts() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Auto-open new extract dialog if navigated from Depo Exhibits
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromDepoId = params.get("newExtractFromDepo");
+    if (fromDepoId && depoExhibits.length > 0) {
+      const depo = depoExhibits.find(d => d.id === fromDepoId);
+      setEditExtract({
+        ...EMPTY_EXTRACT,
+        source_depo_exhibit_id: fromDepoId,
+        source_depo_exhibit_ids: [fromDepoId],
+        extract_title_official: depo ? (depo.display_title || depo.depo_exhibit_title || "") : "",
+        _useGroup: false,
+      });
+      // Clear the param from URL without reloading
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [depoExhibits]);
+
   const load = useCallback(async () => {
     if (!activeCase) return;
     const cid = activeCase.id;
