@@ -40,6 +40,14 @@ const CLIP_TAG_COLORS = {
 const SESSION_DEPO_KEY = "transcript_last_depo";
 const SESSION_POS_KEY = (depoId) => `transcript_pos_${depoId}`;
 
+// inject jump-hover style once
+if (typeof document !== 'undefined' && !document.getElementById('transcript-jump-style')) {
+  const s = document.createElement('style');
+  s.id = 'transcript-jump-style';
+  s.textContent = '.jump-hover { background-color: rgba(148,163,184,0.15) !important; outline: 1px solid rgba(148,163,184,0.4); }';
+  document.head.appendChild(s);
+}
+
 export default function Transcripts() {
   const { activeCase } = useActiveCase();
   const [depositions, setDepositions] = useState([]);
@@ -120,19 +128,18 @@ export default function Transcripts() {
       setSearchResults(null);
       setHighlightedLineIdx(null);
 
-      // Restore saved position
+      // Restore saved position — use a ref so the scroll restore fires after the rows render
       const saved = sessionStorage.getItem(SESSION_POS_KEY(selectedDepoId));
       if (saved) {
         const { page: savedPage, scrollTop } = JSON.parse(saved);
         const restoredPage = savedPage || 0;
         setPage(restoredPage);
         setPageInputVal(String(restoredPage + 1));
-        setTimeout(() => {
-          if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollTop || 0;
-        }, 150);
+        pendingScrollRef.current = scrollTop || 0;
       } else {
         setPage(0);
         setPageInputVal("1");
+        pendingScrollRef.current = null;
       }
     });
     base44.entities.DepoClips.filter({ deposition_id: selectedDepoId }).then(setClips);
