@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import useActiveCase from "@/components/hooks/useActiveCase";
+import FloatingChat from "@/components/chat/FloatingChat";
 import {
   LayoutDashboard, Users, Target, HelpCircle, Play, FileText,
   BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Monitor, AlertTriangle, X
