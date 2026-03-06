@@ -201,24 +201,25 @@ export default function Transcripts() {
     }
   };
 
-  // Jump to a search result: navigate to its page, then scroll the row into view and highlight it
+  // Jump to a search result: navigate to its page, scroll into view, hover-highlight without selecting
   const jumpToResult = (globalLineIdx) => {
     const targetPage = Math.floor(globalLineIdx / PAGE_SIZE);
     setHighlightedLineIdx(globalLineIdx);
+    const scrollAndFocus = () => {
+      const el = rowRefs.current[globalLineIdx];
+      if (el) {
+        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        el.classList.add("jump-hover");
+        setTimeout(() => { el.classList.remove("jump-hover"); setHighlightedLineIdx(null); }, 2500);
+      }
+    };
     if (targetPage !== page) {
       setPage(targetPage);
       setPageInputVal(String(targetPage + 1));
-      // After state update, scroll row into view
-      setTimeout(() => {
-        const el = rowRefs.current[globalLineIdx];
-        if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
-      }, 150);
+      setTimeout(scrollAndFocus, 150);
     } else {
-      const el = rowRefs.current[globalLineIdx];
-      if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+      scrollAndFocus();
     }
-    // Clear highlight after 3s
-    setTimeout(() => setHighlightedLineIdx(null), 3000);
   };
 
   const handleRowClick = useCallback((globalIdx, e) => {
@@ -258,7 +259,9 @@ export default function Transcripts() {
     setClipDialog(false);
     setClipForm({ topic_tag: "", clip_tag: "", direction: "HelpsUs", impeachment_ready: false, notes: "" });
     setSelectedRows(new Set());
-    base44.entities.DepoClips.filter({ deposition_id: selectedDepoId }).then(setClips);
+    // Reload clips immediately so View Clips shows the new one
+    const updated = await base44.entities.DepoClips.filter({ deposition_id: selectedDepoId });
+    setClips(updated);
   };
 
   const getDepoLabel = (d) => {
@@ -391,9 +394,7 @@ export default function Transcripts() {
                   const isSelected = selectedRows.has(globalIdx);
                   const isHighlighted = highlightedLineIdx === globalIdx;
                   const flagInfo = citeFlagMap.get(line.cite);
-                  const rowClass = isHighlighted
-                    ? "bg-cyan-400/30 border-l-2 border-cyan-300 animate-pulse"
-                    : isSelected
+                  const rowClass = isSelected
                     ? "bg-cyan-500/15 border-l-2 border-cyan-400"
                     : flagInfo
                     ? flagInfo.colorClass
