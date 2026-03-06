@@ -305,10 +305,10 @@ export default function DepositionExhibits() {
         <div className="flex-shrink-0 text-right min-w-[110px]">
           {(() => {
             const exts = extractsForExhibit(ex.id);
-            // Find joint via extract linkage
+            // Only show joint status via extract linkage (not stale joint_exhibit_id)
             const linkedJoint = exts.length > 0
               ? joints.find(j => exts.some(e => e.id === j.exhibit_extract_id))
-              : isMarked ? joint : null;
+              : null;
             return linkedJoint ? (
               <div>
                 <span className="text-[10px] text-cyan-400 font-semibold">Joint #{linkedJoint.marked_no}</span>
