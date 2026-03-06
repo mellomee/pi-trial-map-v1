@@ -196,40 +196,7 @@ export default function DepositionExhibits() {
     load();
   };
 
-  // Legacy saveMark kept for bulk-selection group mark (bypasses extract flow for now, but uses the first available extract)
-  const saveMark = async () => {
-    const selectedExhibits = [...selectedIds].map(id => exhibits.find(e => e.id === id)).filter(Boolean);
-    const primaryId = markForm.primary_depo_exhibit_id || selectedExhibits[0]?.id || "";
-    const primaryEx = selectedExhibits.find(e => e.id === primaryId) || selectedExhibits[0];
-    // Use a linked extract if one exists for the primary exhibit
-    const linkedExtract = extractsForExhibit(primaryId)[0] || null;
-    const joint = await base44.entities.JointExhibits.create({
-      case_id: activeCase.id,
-      exhibit_extract_id: linkedExtract?.id || null,
-      master_exhibit_id: primaryId,
-      primary_depo_exhibit_id: primaryId,
-      source_depo_exhibit_ids: selectedExhibits.map(e => e.id),
-      marked_no: markForm.marked_no,
-      marked_title: markForm.marked_title || primaryEx?.display_title || primaryEx?.depo_exhibit_title || "",
-      marked_by_side: markForm.marked_by_side,
-      pages: markForm.pages,
-      status: "Marked",
-      notes: markForm.notes,
-    });
-    for (const ex of selectedExhibits) {
-      await base44.entities.DepositionExhibits.update(ex.id, { joint_exhibit_id: joint.id });
-    }
-    setMarkDialog(false);
-    clearSel();
-    load();
-  };
 
-  // Remove mark — unlinks this depo exhibit from the joint entry (but keeps the joint entry if others still link to it)
-  const removeMark = async (ex) => {
-    if (!confirm("Remove this exhibit from the Joint List?")) return;
-    await base44.entities.DepositionExhibits.update(ex.id, { joint_exhibit_id: "" });
-    setExhibits(prev => prev.map(e => e.id === ex.id ? { ...e, joint_exhibit_id: "" } : e));
-  };
 
   const del = async (id) => {
     if (!confirm("Delete this exhibit?")) return;
