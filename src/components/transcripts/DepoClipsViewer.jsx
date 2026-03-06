@@ -17,7 +17,7 @@ const CLIP_TAG_COLORS = {
   Opinion: 'bg-pink-900/70 text-pink-200',
 };
 
-export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDepositionId, depositions, parties }) {
+export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDepositionId, depositions, parties, onClipsChanged }) {
   const [selectedDepoId, setSelectedDepoId] = useState(defaultDepositionId || '');
   const [clips, setClips] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -36,7 +36,7 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
     loadClips();
     setSearchTerm('');
     setHighlightedId(null);
-  }, [selectedDepoId, caseId]);
+  }, [selectedDepoId, caseId, isOpen]);
 
   const loadClips = () => {
     const filter = selectedDepoId === '__all__' || !selectedDepoId
@@ -95,6 +95,7 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
     if (!confirm('Delete this clip?')) return;
     await base44.entities.DepoClips.delete(clipId);
     loadClips();
+    if (onClipsChanged) onClipsChanged();
   };
 
   return (
