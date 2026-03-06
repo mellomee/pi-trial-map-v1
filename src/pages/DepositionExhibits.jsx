@@ -444,7 +444,7 @@ export default function DepositionExhibits() {
               onClick={() => setEditGroupDialog({ oldName: grpName, newName: grpName })}
               className="p-1.5 text-slate-500 hover:text-cyan-400 transition-colors"
             >
-              <Settings2 className="w-3.5 h-3.5" />
+              <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
               title="Ungroup all exhibits"
@@ -531,12 +531,17 @@ export default function DepositionExhibits() {
       </div>
 
       {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
+      {selectedIds.size > 0 && (() => {
+        // Check if ANY selected item is already in a group
+        const anyInGroup = [...selectedIds].some(id => exhibits.find(e => e.id === id)?.group_name);
+        return (
         <div className="flex items-center gap-3 mb-3 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-lg flex-wrap">
           <span className="text-xs text-cyan-300 font-medium">{selectedIds.size} selected</span>
+          {!anyInGroup && (
           <Button size="sm" className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700" onClick={() => { setTagForm({ group_name: "", tags: "" }); setTagDialog(true); }}>
             <Tag className="w-3 h-3 mr-1" /> Tag / Group
           </Button>
+          )}
           <Button size="sm" className="h-7 text-xs bg-emerald-700 hover:bg-emerald-600" onClick={() => {
             const firstId = [...selectedIds][0];
             if (firstId) navigate(createPageUrl(`Extracts?newExtractFromDepo=${firstId}`));
@@ -545,7 +550,8 @@ export default function DepositionExhibits() {
           </Button>
           <button onClick={clearSel} className="ml-auto text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
         </div>
-      )}
+        );
+      })()}
 
       {/* Table */}
       <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg overflow-hidden">
@@ -702,7 +708,7 @@ export default function DepositionExhibits() {
       {/* ── Edit Group Dialog ── */}
       <Dialog open={!!editGroupDialog} onOpenChange={v => !v && setEditGroupDialog(null)}>
         <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Settings2 className="w-4 h-4 text-indigo-400" /> Edit Group</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil className="w-4 h-4 text-indigo-400" /> Edit Group</DialogTitle></DialogHeader>
           {editGroupDialog && (
             <div className="space-y-3">
               <div>

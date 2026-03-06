@@ -2,41 +2,59 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
-  LayoutDashboard, Users, Target, HelpCircle, Play, Swords, FileText,
-  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Monitor, AlertTriangle, X
+  LayoutDashboard, Users, Target, HelpCircle, Play, FileText,
+  BookOpen, List, Upload, Download, Settings, ChevronLeft, Menu, Printer, Video, Zap, Monitor, AlertTriangle, X, Scale
 } from "lucide-react";
-import FloatingChat from "@/components/chat/FloatingChat";
-import useActiveCase from "@/components/hooks/useActiveCase";
-
-// Global flag: TrialMode sets this when jury proof is published
-window.__trialModePublished = window.__trialModePublished || false;
 
 const NAV_SECTIONS = [
   {
-    label: "CORE",
+    label: "SETUP",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
       { name: "Parties", icon: Users, page: "Parties" },
-      { name: "Proof Library", icon: BookOpen, page: "ProofLibrary" },
-      { name: "Trial Points", icon: Target, page: "TrialPoints" },
-      { name: "Questions", icon: HelpCircle, page: "Questions" },
-      { name: "Attorney View", icon: Zap, page: "TrialMode" },
-      { name: "Jury View", icon: Monitor, page: "JuryView" },
-      { name: "Transcripts", icon: FileText, page: "Transcripts" },
     ],
   },
   {
-    label: "EXHIBITS",
+    label: "① FIND PROOF",
     items: [
+      { name: "Transcripts", icon: FileText, page: "Transcripts" },
+      { name: "Depo Clips", icon: Play, page: "DepoClips" },
       { name: "Depo Exhibits", icon: BookOpen, page: "DepositionExhibits" },
-      { name: "Extracts & Joint List", icon: FileText, page: "Extracts" },
-      { name: "Print Views", icon: Printer, page: "JointExhibitPrint" },
+      { name: "Extracts & Joint List", icon: List, page: "Extracts" },
+      { name: "Exhibit Print", icon: Printer, page: "JointExhibitPrint" },
+    ],
+  },
+  {
+    label: "② BUCKET PROOF",
+    items: [
+      { name: "Proof Library", icon: BookOpen, page: "ProofLibrary" },
+      { name: "Trial Points", icon: Target, page: "TrialPoints" },
+    ],
+  },
+  {
+    label: "③ QUESTIONS",
+    items: [
+      { name: "Questions", icon: HelpCircle, page: "Questions" },
+    ],
+  },
+  {
+    label: "④ TRIAL MODE",
+    items: [
+      { name: "Attorney View", icon: Zap, page: "TrialMode" },
+      { name: "Jury View", icon: Monitor, page: "JuryView" },
+    ],
+  },
+  {
+    label: "PRINT",
+    items: [
+      { name: "Print Questions", icon: Printer, page: "PrintQuestions" },
+      { name: "Print Proof Buckets", icon: Printer, page: "PrintProofLibrary" },
+      { name: "Print Depo Clips", icon: Printer, page: "PrintDepoClips" },
     ],
   },
   {
     label: "VIDEO",
     items: [
-      { name: "Depo Clips", icon: FileText, page: "DepoClips" },
       { name: "Video Hub", icon: Video, page: "VideoHub" },
       { name: "Video Library", icon: Play, page: "VideoLibrary" },
     ],
