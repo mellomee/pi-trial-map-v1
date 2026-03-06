@@ -9,11 +9,37 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Bookmark, X, ChevronLeft, ChevronRight, Film } from "lucide-react";
+import { Search, Bookmark, X, ChevronLeft, ChevronRight, Film, ArrowRight } from "lucide-react";
 import DepoClipsViewer from "@/components/transcripts/DepoClipsViewer";
 import { debounce } from "lodash";
 
 const PAGE_SIZE = 100;
+
+// Stable color palette per clip (cycles through 5 subtle greens/reds)
+const HELPS_COLORS = [
+  "bg-green-900/20 border-l-2 border-green-600/60",
+  "bg-emerald-900/20 border-l-2 border-emerald-600/60",
+  "bg-teal-900/20 border-l-2 border-teal-600/60",
+  "bg-green-900/15 border-l-2 border-green-500/50",
+  "bg-emerald-900/15 border-l-2 border-emerald-500/50",
+];
+const HURTS_COLORS = [
+  "bg-red-900/20 border-l-2 border-red-600/60",
+  "bg-rose-900/20 border-l-2 border-rose-600/60",
+  "bg-red-900/15 border-l-2 border-red-500/50",
+  "bg-rose-900/15 border-l-2 border-rose-500/50",
+  "bg-red-800/15 border-l-2 border-red-400/50",
+];
+
+const CLIP_TAG_COLORS = {
+  Scene: "bg-purple-900/70 text-purple-200",
+  Scope: "bg-blue-900/70 text-blue-200",
+  Credibility: "bg-orange-900/70 text-orange-200",
+  Opinion: "bg-pink-900/70 text-pink-200",
+};
+
+// Session storage key prefix
+const SESSION_KEY = (depoId) => `transcript_pos_${depoId}`;
 
 export default function Transcripts() {
   const { activeCase } = useActiveCase();
@@ -28,9 +54,13 @@ export default function Transcripts() {
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
   const [clipDialog, setClipDialog] = useState(false);
   const [clipsViewerOpen, setClipsViewerOpen] = useState(false);
-  const [clipForm, setClipForm] = useState({ topic_tag: "", direction: "HelpsUs", impeachment_ready: false, notes: "" });
+  const [clipForm, setClipForm] = useState({ topic_tag: "", clip_tag: "", direction: "HelpsUs", impeachment_ready: false, notes: "" });
   const [page, setPage] = useState(0);
+  const [jumpToPage, setJumpToPage] = useState("");
+  const [searchResults, setSearchResults] = useState(null); // null = no search active, array = results
+  const [searchResultIdx, setSearchResultIdx] = useState(0);
   const lastClickedIdx = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     if (!activeCase) return;
@@ -40,8 +70,27 @@ export default function Transcripts() {
     ]).then(([d, p]) => { setDepositions(d); setParties(p); });
   }, [activeCase]);
 
+  // Save scroll position before unmount / depo change
+  const saveScrollPos = useCallback(() => {
+    if (!selectedDepoId || !scrollContainerRef.current) return;
+    const key = SESSION_KEY(selectedDepoId);
+    sessionStorage.setItem(key, JSON.stringify({ page, scrollTop: scrollContainerRef.current.scrollTop }));
+  }, [selectedDepoId, page]);
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", saveScrollPos);
+    return () => {
+      saveScrollPos();
+      window.removeEventListener("beforeunload", saveScrollPos);
+    };
+  }, [saveScrollPos]);
+
   useEffect(() => {
     if (!selectedDepoId || !activeCase) { setLines([]); return; }
+
+    // Save previous depo position before switching
+    saveScrollPos();
+
     base44.entities.DepositionTranscripts.filter({ deposition_id: selectedDepoId }).then(async ts => {
       if (ts.length === 0) { setLines([]); return; }
       const t = ts[0];
@@ -54,44 +103,90 @@ export default function Transcripts() {
         return idx >= 0 ? { cite: line.substring(0, idx), text: line.substring(idx + 1) } : { cite: "", text: line };
       });
       setLines(parsed);
-      setPage(0);
       setSelectedRows(new Set());
+      setSearchTerm("");
+      setDebouncedSearch("");
+      setSearchResults(null);
+
+      // Restore saved position
+      const saved = sessionStorage.getItem(SESSION_KEY(selectedDepoId));
+      if (saved) {
+        const { page: savedPage, scrollTop } = JSON.parse(saved);
+        setPage(savedPage || 0);
+        setTimeout(() => {
+          if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollTop || 0;
+        }, 100);
+      } else {
+        setPage(0);
+      }
     });
     base44.entities.DepoClips.filter({ deposition_id: selectedDepoId }).then(setClips);
   }, [selectedDepoId, activeCase]);
 
-  const debouncedSetSearch = useMemo(() => debounce(v => setDebouncedSearch(v), 250), []);
+  const debouncedSetSearch = useMemo(() => debounce(v => setDebouncedSearch(v), 300), []);
   useEffect(() => { debouncedSetSearch(searchTerm); }, [searchTerm, debouncedSetSearch]);
 
-  const flaggedCites = useMemo(() => {
-    const s = new Set();
-    clips.forEach(c => {
+  // Build per-cite clip info: { color class, clip_tag }
+  const citeFlagMap = useMemo(() => {
+    const map = new Map(); // cite -> { colorClass, clip_tag, direction }
+    clips.forEach((c, clipIdx) => {
       const start = c.start_cite;
       const end = c.end_cite || start;
+      const palette = c.direction === "HurtsUs" ? HURTS_COLORS : HELPS_COLORS;
+      const colorClass = palette[clipIdx % palette.length];
       let inRange = false;
       lines.forEach(l => {
         if (l.cite === start) inRange = true;
-        if (inRange) s.add(l.cite);
+        if (inRange && !map.has(l.cite)) {
+          map.set(l.cite, { colorClass, clip_tag: c.clip_tag || null, direction: c.direction });
+        }
         if (l.cite === end) inRange = false;
       });
     });
-    return s;
+    return map;
   }, [clips, lines]);
 
-  const filteredLines = useMemo(() => {
-    let result = lines;
-    if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase();
-      result = result.filter(l => l.text.toLowerCase().includes(q) || l.cite.toLowerCase().includes(q));
-    }
-    if (showFlaggedOnly) {
-      result = result.filter(l => flaggedCites.has(l.cite));
-    }
-    return result;
-  }, [lines, debouncedSearch, showFlaggedOnly, flaggedCites]);
+  // Full-transcript search (searches all lines, not just current page)
+  const allSearchResults = useMemo(() => {
+    if (!debouncedSearch) return null;
+    const q = debouncedSearch.toLowerCase();
+    const results = [];
+    lines.forEach((l, i) => {
+      if (l.text.toLowerCase().includes(q) || l.cite.toLowerCase().includes(q)) {
+        results.push(i); // global line index
+      }
+    });
+    return results;
+  }, [lines, debouncedSearch]);
 
-  const totalPages = Math.ceil(filteredLines.length / PAGE_SIZE);
-  const pageLines = filteredLines.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  useEffect(() => {
+    setSearchResultIdx(0);
+    setSearchResults(allSearchResults);
+  }, [allSearchResults]);
+
+  // Displayed lines (with flagged filter if active)
+  const displayLines = useMemo(() => {
+    if (showFlaggedOnly) return lines.filter(l => citeFlagMap.has(l.cite));
+    return lines;
+  }, [lines, showFlaggedOnly, citeFlagMap]);
+
+  const totalPages = Math.ceil(displayLines.length / PAGE_SIZE);
+  const pageLines = displayLines.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  const jumpToResult = (resultLineIdx) => {
+    const targetPage = Math.floor(resultLineIdx / PAGE_SIZE);
+    setPage(targetPage);
+    setTimeout(() => {
+      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+    }, 50);
+  };
+
+  const goToPage = (newPage) => {
+    setPage(newPage);
+    setTimeout(() => {
+      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+    }, 50);
+  };
 
   const handleRowClick = useCallback((globalIdx, e) => {
     setSelectedRows(prev => {
@@ -117,7 +212,7 @@ export default function Transcripts() {
 
   const createClip = async () => {
     const sorted = Array.from(selectedRows).sort((a, b) => a - b);
-    const selectedLines = sorted.map(i => filteredLines[i]);
+    const selectedLines = sorted.map(i => displayLines[i]);
     if (selectedLines.length === 0) return;
     await base44.entities.DepoClips.create({
       case_id: activeCase.id,
@@ -126,12 +221,13 @@ export default function Transcripts() {
       end_cite: selectedLines[selectedLines.length - 1].cite,
       clip_text: selectedLines.map(l => `${l.cite}\t${l.text}`).join("\n"),
       topic_tag: clipForm.topic_tag,
+      clip_tag: clipForm.clip_tag || null,
       direction: clipForm.direction,
       impeachment_ready: clipForm.impeachment_ready,
       notes: clipForm.notes,
     });
     setClipDialog(false);
-    setClipForm({ topic_tag: "", direction: "HelpsUs", impeachment_ready: false, notes: "" });
+    setClipForm({ topic_tag: "", clip_tag: "", direction: "HelpsUs", impeachment_ready: false, notes: "" });
     setSelectedRows(new Set());
     base44.entities.DepoClips.filter({ deposition_id: selectedDepoId }).then(setClips);
   };
@@ -141,6 +237,38 @@ export default function Transcripts() {
     const name = party ? `${party.first_name} ${party.last_name}` : d.sheet_name;
     return d.volume_label ? `${name} - ${d.volume_label}` : name;
   };
+
+  const Pagination = ({ compact = false }) => (
+    totalPages > 1 ? (
+      <div className={`flex items-center gap-2 ${compact ? "" : "justify-center py-4 border-t border-[#1e2a45]"}`}>
+        <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => goToPage(page - 1)} className="text-slate-400 h-7 px-2">
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <span className="text-xs text-slate-500 whitespace-nowrap">Pg {page + 1}/{totalPages}</span>
+        <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => goToPage(page + 1)} className="text-slate-400 h-7 px-2">
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+        <div className="flex items-center gap-1 ml-1">
+          <input
+            type="number"
+            min={1}
+            max={totalPages}
+            value={jumpToPage}
+            onChange={e => setJumpToPage(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                const p = parseInt(jumpToPage) - 1;
+                if (!isNaN(p) && p >= 0 && p < totalPages) goToPage(p);
+                setJumpToPage("");
+              }
+            }}
+            placeholder="Go"
+            className="w-12 text-xs bg-[#131a2e] border border-[#1e2a45] text-slate-300 rounded px-1 py-0.5 text-center"
+          />
+        </div>
+      </div>
+    ) : null
+  );
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
@@ -189,7 +317,7 @@ export default function Transcripts() {
             <Input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Search transcript..."
+              placeholder="Search entire transcript..."
               className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200"
             />
           </div>
@@ -198,13 +326,48 @@ export default function Transcripts() {
             <Label className="text-xs text-slate-400">Flagged only</Label>
           </div>
           <Badge variant="outline" className="text-slate-400 border-slate-600 text-xs">
-            {filteredLines.length} lines · {clips.length} clips
+            {lines.length} lines · {clips.length} clips
           </Badge>
         </div>
+
+        {/* Search results */}
+        {searchResults !== null && (
+          <div className="bg-[#131a2e] border border-[#1e2a45] rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#1e2a45]">
+              <span className="text-xs text-slate-400">{searchResults.length} results across full transcript</span>
+              <button onClick={() => { setSearchTerm(""); setSearchResults(null); }} className="text-slate-500 hover:text-white">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+            {searchResults.length > 0 && (
+              <div className="max-h-36 overflow-y-auto">
+                {searchResults.map((lineIdx, ri) => {
+                  const l = lines[lineIdx];
+                  const targetPage = Math.floor(lineIdx / PAGE_SIZE);
+                  return (
+                    <div
+                      key={ri}
+                      onClick={() => jumpToResult(lineIdx)}
+                      className="flex items-center gap-2 px-3 py-1 hover:bg-[#1e2a45]/60 cursor-pointer border-b border-[#1e2a45]/40 group"
+                    >
+                      <ArrowRight className="w-3 h-3 text-cyan-500 opacity-0 group-hover:opacity-100 flex-shrink-0" />
+                      <span className="text-xs font-mono text-slate-500 w-16 flex-shrink-0">{l.cite}</span>
+                      <span className="text-xs text-slate-300 truncate flex-1">{l.text}</span>
+                      <span className="text-[10px] text-slate-600 flex-shrink-0">pg {targetPage + 1}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Top pagination */}
+        {selectedDepoId && lines.length > 0 && <Pagination compact />}
       </div>
 
       {/* Transcript content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
         {selectedDepoId && pageLines.length > 0 ? (
           <>
             <table className="w-full">
@@ -212,44 +375,42 @@ export default function Transcripts() {
                 <tr className="border-b border-[#1e2a45]">
                   <th className="text-left text-[10px] font-medium text-slate-500 px-4 py-2 w-40">CITE</th>
                   <th className="text-left text-[10px] font-medium text-slate-500 px-4 py-2">TEXT</th>
+                  <th className="text-left text-[10px] font-medium text-slate-500 px-2 py-2 w-24">TAG</th>
                 </tr>
               </thead>
               <tbody>
                 {pageLines.map((line, i) => {
                   const globalIdx = page * PAGE_SIZE + i;
                   const isSelected = selectedRows.has(globalIdx);
-                  const isFlagged = flaggedCites.has(line.cite);
+                  const flagInfo = citeFlagMap.get(line.cite);
+                  const rowClass = isSelected
+                    ? "bg-cyan-500/15 border-l-2 border-cyan-400"
+                    : flagInfo
+                    ? flagInfo.colorClass
+                    : "hover:bg-white/5";
+
                   return (
                     <tr
                       key={globalIdx}
                       onClick={e => handleRowClick(globalIdx, e)}
-                      className={`cursor-pointer border-b border-[#1e2a45]/50 transition-colors ${
-                        isSelected
-                          ? "bg-cyan-500/20"
-                          : isFlagged
-                          ? "bg-yellow-400/25 border-l-2 border-yellow-400"
-                          : "hover:bg-white/5"
-                      }`}
+                      className={`cursor-pointer border-b border-[#1e2a45]/40 transition-colors ${rowClass}`}
                     >
                       <td className="px-4 py-1.5 text-xs font-mono text-slate-500 whitespace-nowrap select-none">{line.cite}</td>
                       <td className="px-4 py-1.5 text-sm text-slate-200 select-none">{line.text}</td>
+                      <td className="px-2 py-1.5 select-none">
+                        {flagInfo?.clip_tag && (
+                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${CLIP_TAG_COLORS[flagInfo.clip_tag] || "bg-slate-700 text-slate-300"}`}>
+                            {flagInfo.clip_tag}
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
 
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 py-4 border-t border-[#1e2a45]">
-                <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)} className="text-slate-400">
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-xs text-slate-500">Page {page + 1} of {totalPages}</span>
-                <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} className="text-slate-400">
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
+            <Pagination />
           </>
         ) : (
           <div className="flex items-center justify-center h-64 text-slate-500">
@@ -276,7 +437,7 @@ export default function Transcripts() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="bg-[#0a0f1e] rounded p-3 max-h-32 overflow-y-auto text-xs font-mono text-slate-400">
-              {Array.from(selectedRows).sort((a, b) => a - b).map(i => filteredLines[i]).filter(Boolean).map((l, i) => (
+              {Array.from(selectedRows).sort((a, b) => a - b).map(i => displayLines[i]).filter(Boolean).map((l, i) => (
                 <div key={i}>{l.cite} — {l.text}</div>
               ))}
             </div>
@@ -284,15 +445,30 @@ export default function Transcripts() {
               <Label className="text-slate-400 text-xs">Title</Label>
               <Input value={clipForm.topic_tag} onChange={e => setClipForm({ ...clipForm, topic_tag: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="e.g. Light was green" />
             </div>
-            <div>
-              <Label className="text-slate-400 text-xs">Direction</Label>
-              <Select value={clipForm.direction} onValueChange={v => setClipForm({ ...clipForm, direction: v })}>
-                <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HelpsUs">Helps Us</SelectItem>
-                  <SelectItem value="HurtsUs">Hurts Us</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label className="text-slate-400 text-xs">Direction</Label>
+                <Select value={clipForm.direction} onValueChange={v => setClipForm({ ...clipForm, direction: v })}>
+                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="HelpsUs">Helps Us</SelectItem>
+                    <SelectItem value="HurtsUs">Hurts Us</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <Label className="text-slate-400 text-xs">Clip Tag</Label>
+                <Select value={clipForm.clip_tag || "__none__"} onValueChange={v => setClipForm({ ...clipForm, clip_tag: v === "__none__" ? "" : v })}>
+                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select tag..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    <SelectItem value="Scene">Scene</SelectItem>
+                    <SelectItem value="Scope">Scope</SelectItem>
+                    <SelectItem value="Credibility">Credibility</SelectItem>
+                    <SelectItem value="Opinion">Opinion</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={clipForm.impeachment_ready} onCheckedChange={v => setClipForm({ ...clipForm, impeachment_ready: v })} />

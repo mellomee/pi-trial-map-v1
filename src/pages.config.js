@@ -65,6 +65,9 @@ import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
 import Present from './pages/Present';
 import PresentationMode from './pages/PresentationMode';
+import PrintDepoClips from './pages/PrintDepoClips';
+import PrintProofLibrary from './pages/PrintProofLibrary';
+import PrintQuestions from './pages/PrintQuestions';
 import ProofLibrary from './pages/ProofLibrary';
 import QuestionDetail from './pages/QuestionDetail';
 import Questions from './pages/Questions';
@@ -78,9 +81,6 @@ import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
-import PrintQuestions from './pages/PrintQuestions';
-import PrintProofLibrary from './pages/PrintProofLibrary';
-import PrintDepoClips from './pages/PrintDepoClips';
 import __Layout from './Layout.jsx';
 
 
@@ -103,6 +103,9 @@ export const PAGES = {
     "Parties": Parties,
     "Present": Present,
     "PresentationMode": PresentationMode,
+    "PrintDepoClips": PrintDepoClips,
+    "PrintProofLibrary": PrintProofLibrary,
+    "PrintQuestions": PrintQuestions,
     "ProofLibrary": ProofLibrary,
     "QuestionDetail": QuestionDetail,
     "Questions": Questions,
@@ -116,9 +119,6 @@ export const PAGES = {
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
-    "PrintQuestions": PrintQuestions,
-    "PrintProofLibrary": PrintProofLibrary,
-    "PrintDepoClips": PrintDepoClips,
 }
 
 export const pagesConfig = {

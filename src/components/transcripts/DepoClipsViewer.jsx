@@ -40,10 +40,18 @@ export default function DepoClipsViewer({ isOpen, onClose, caseId, defaultDeposi
     return d.volume_label ? `${name} - ${d.volume_label}` : name;
   };
 
+  const CLIP_TAG_COLORS = {
+    Scene: 'bg-purple-900/70 text-purple-200',
+    Scope: 'bg-blue-900/70 text-blue-200',
+    Credibility: 'bg-orange-900/70 text-orange-200',
+    Opinion: 'bg-pink-900/70 text-pink-200',
+  };
+
   const startEdit = (clip) => {
     setEditingId(clip.id);
     setEditForm({
       topic_tag: clip.topic_tag || '',
+      clip_tag: clip.clip_tag || '',
       direction: clip.direction || 'HelpsUs',
       impeachment_ready: clip.impeachment_ready || false,
       notes: clip.notes || '',
