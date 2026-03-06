@@ -671,72 +671,7 @@ export default function DepositionExhibits() {
         onRemove={id => setUploadQueue(q => q.filter(u => u.id !== id))}
       />
 
-      {/* ── Mark as Joint Dialog ── */}
-      <Dialog open={markDialog} onOpenChange={setMarkDialog}>
-        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add to Joint List</DialogTitle>
-            <p className="text-xs text-slate-500 mt-1">
-              {selectedIds.size} exhibit(s) will be grouped as one joint exhibit
-            </p>
-          </DialogHeader>
-          <div className="space-y-3">
-            {/* Selected exhibits summary */}
-            {selectedIds.size > 0 && (
-              <div className="bg-[#0a0f1e] rounded-lg p-3 border border-[#1e2a45]">
-                <p className="text-[10px] font-semibold text-slate-500 uppercase mb-2">Source Exhibits</p>
-                <div className="space-y-1">
-                  {[...selectedIds].map(id => {
-                    const ex = exhibits.find(e => e.id === id);
-                    if (!ex) return null;
-                    return (
-                      <div key={id} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="primary_exhibit"
-                          value={id}
-                          checked={markForm.primary_depo_exhibit_id === id}
-                          onChange={() => setMarkForm({ ...markForm, primary_depo_exhibit_id: id })}
-                          className="accent-cyan-500"
-                        />
-                        <span className="text-xs text-slate-300">
-                          <span className="font-mono text-slate-500 mr-1">{ex.depo_exhibit_no}</span>
-                          {ex.display_title || ex.depo_exhibit_title}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] text-slate-600 mt-2">Select the primary exhibit whose file will be used in the joint list.</p>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-slate-400 text-xs">Joint Exhibit Number</Label>
-                <Input placeholder="e.g. 10" value={markForm.marked_no} onChange={e => setMarkForm({ ...markForm, marked_no: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
-              </div>
-              <div><Label className="text-slate-400 text-xs">Marked By</Label>
-                <Select value={markForm.marked_by_side} onValueChange={v => setMarkForm({ ...markForm, marked_by_side: v })}>
-                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-                  <SelectContent>{["Plaintiff","Defense","Unknown"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div><Label className="text-slate-400 text-xs">Pages to Use <span className="text-slate-600">(e.g. "3" or "1-5" or "1,3,7")</span></Label>
-              <Input placeholder="Leave blank for all pages" value={markForm.pages} onChange={e => setMarkForm({ ...markForm, pages: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
-            </div>
-            <div><Label className="text-slate-400 text-xs">Trial Title (optional)</Label>
-              <Input placeholder="Leave blank to use exhibit title" value={markForm.marked_title} onChange={e => setMarkForm({ ...markForm, marked_title: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
-            </div>
-            <div><Label className="text-slate-400 text-xs">Notes</Label>
-              <Textarea value={markForm.notes} onChange={e => setMarkForm({ ...markForm, notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMarkDialog(false)} className="border-slate-600 text-slate-300">Cancel</Button>
-            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={saveMark}>Add to Joint List</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }
