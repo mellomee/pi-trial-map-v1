@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Search, Plus, Edit2, Trash2, Upload, FileText, Link2,
-  ChevronDown, ChevronRight, CheckSquare, List, RefreshCw,
-  Highlighter, StickyNote, ExternalLink, MinusCircle
+  Search, Plus, Edit2, Trash2, Upload, FileText,
+  ChevronDown, ChevronRight, CheckSquare, List,
+  Highlighter, StickyNote, ExternalLink, MinusCircle,
+  Users, Star, Link2, User
 } from "lucide-react";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import CalloutEditor from "@/components/extracts/CalloutEditor";
@@ -25,15 +26,120 @@ const EMPTY_EXTRACT = {
   extract_title_official: "",
   extract_title_internal: "",
   source_depo_exhibit_id: "",
+  source_depo_exhibit_ids: [],
+  primary_depo_exhibit_id: "",
   extract_page_start: "",
   extract_page_end: "",
   extract_page_count: "",
   extract_file_url: "",
   notes: "",
+  _useGroup: false, // UI-only toggle
 };
 
 const EMPTY_JOINT = { marked_no: "", marked_title: "", marked_by_side: "Plaintiff", pages: "", notes: "" };
 const EMPTY_ADMIT = { admitted_no: "", admitted_by_side: "Plaintiff", date_admitted: new Date().toISOString().split("T")[0], notes: "" };
+
+// ── Depo group selector component ──────────────────────────────────────────────
+function DepoGroupSelector({ depoExhibits, selectedIds, primaryId, onChange, onPrimaryChange }) {
+  const toggle = (id) => {
+    const next = selectedIds.includes(id) ? selectedIds.filter(x => x !== id) : [...selectedIds, id];
+    onChange(next);
+    // Auto-set primary if cleared or not in new list
+    if (primaryId && !next.includes(primaryId)) onPrimaryChange(next[0] || "");
+    if (!primaryId && next.length) onPrimaryChange(next[0]);
+  };
+
+  // Group depos by group_name
+  const grouped = useMemo(() => {
+    const g = {};
+    depoExhibits.forEach(d => {
+      const key = d.group_name || "__ungrouped__";
+      if (!g[key]) g[key] = [];
+      g[key].push(d);
+    });
+    return g;
+  }, [depoExhibits]);
+
+  return (
+    <div className="border border-[#1e2a45] rounded-lg max-h-52 overflow-y-auto">
+      {Object.entries(grouped).map(([gName, items]) => (
+        <div key={gName}>
+          {gName !== "__ungrouped__" && (
+            <div className="px-3 py-1 bg-[#0a0f1e] border-b border-[#1e2a45] text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              <Users className="w-3 h-3" /> {gName}
+            </div>
+          )}
+          {items.map(de => {
+            const isSelected = selectedIds.includes(de.id);
+            const isPrimary = primaryId === de.id;
+            const hasFile = !!(de.file_url || de.external_link);
+            return (
+              <div key={de.id}
+                className={`flex items-center gap-2 px-3 py-2 border-b border-[#1e2a45] last:border-0 cursor-pointer hover:bg-[#131a2e] transition-colors ${isSelected ? "bg-[#0f1629]" : ""}`}
+                onClick={() => toggle(de.id)}>
+                <input type="checkbox" checked={isSelected} onChange={() => {}} className="accent-cyan-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-200 truncate">
+                    {de.depo_exhibit_no ? <span className="text-cyan-400 font-mono mr-1">#{de.depo_exhibit_no}</span> : null}
+                    {de.display_title || de.depo_exhibit_title}
+                  </p>
+                  {de.deponent_name && <p className="text-[10px] text-slate-500 truncate">{de.deponent_name}</p>}
+                  {!hasFile && <p className="text-[10px] text-amber-500/60">no file</p>}
+                </div>
+                {isSelected && (
+                  <button
+                    onClick={e => { e.stopPropagation(); onPrimaryChange(de.id); }}
+                    title="Set as primary attachment"
+                    className={`p-1 rounded flex-shrink-0 ${isPrimary ? "text-amber-400" : "text-slate-600 hover:text-amber-300"}`}>
+                    <Star className={`w-3.5 h-3.5 ${isPrimary ? "fill-amber-400" : ""}`} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      {depoExhibits.length === 0 && (
+        <p className="text-xs text-slate-600 p-3 text-center">No depo exhibits found.</p>
+      )}
+    </div>
+  );
+}
+
+// ── Callout summary row (for collapsed extract view) ──────────────────────────
+function CalloutSummary({ extractId, parties }) {
+  const [callouts, setCallouts] = useState([]);
+  useEffect(() => {
+    if (!extractId) return;
+    base44.entities.Callouts.filter({ extract_id: extractId }).then(cs => {
+      setCallouts(cs.sort((a, b) => (a.page_number ?? 0) - (b.page_number ?? 0)));
+    });
+  }, [extractId]);
+
+  if (!callouts.length) return null;
+
+  const witName = (wid) => {
+    if (!wid || !parties) return null;
+    const p = parties.find(x => x.id === wid);
+    return p ? (p.display_name || `${p.first_name || ""} ${p.last_name}`.trim()) : null;
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-1.5">
+      {callouts.map(c => (
+        <span key={c.id} className="inline-flex items-center gap-1 text-[10px] bg-orange-900/20 border border-orange-700/20 text-orange-300/80 px-1.5 py-0.5 rounded">
+          <StickyNote className="w-2.5 h-2.5 flex-shrink-0" />
+          {c.name || `p.${c.page_number}`}
+          {witName(c.witness_id) && (
+            <span className="text-cyan-400/70 flex items-center gap-0.5">
+              <User className="w-2 h-2" />{witName(c.witness_id)}
+            </span>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function Extracts() {
   const { activeCase } = useActiveCase();
@@ -41,42 +147,45 @@ export default function Extracts() {
   const [joints, setJoints] = useState([]);
   const [admitted, setAdmitted] = useState([]);
   const [depoExhibits, setDepoExhibits] = useState([]);
-  const [annotationCounts, setAnnotationCounts] = useState({});
+  const [parties, setParties] = useState([]);
+  const [calloutCounts, setCalloutCounts] = useState({}); // extractId -> count
 
   const [search, setSearch] = useState("");
-  const [filterTab, setFilterTab] = useState("all"); // all | joint | admitted
+  const [filterTab, setFilterTab] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
 
   // Dialogs
   const [editExtract, setEditExtract] = useState(null);
-  const [markJointDialog, setMarkJointDialog] = useState(null); // extract obj
+  const [markJointDialog, setMarkJointDialog] = useState(null);
   const [jointForm, setJointForm] = useState({ ...EMPTY_JOINT });
-  const [admitDialog, setAdmitDialog] = useState(null); // { extract, joint }
+  const [admitDialog, setAdmitDialog] = useState(null);
   const [admitForm, setAdmitForm] = useState({ ...EMPTY_ADMIT });
   const [viewFile, setViewFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!activeCase) return;
     const cid = activeCase.id;
-    const [exs, jo, ad, de, anns] = await Promise.all([
+    const [exs, jo, ad, de, pts, callouts] = await Promise.all([
       base44.entities.ExhibitExtracts.filter({ case_id: cid }),
       base44.entities.JointExhibits.filter({ case_id: cid }),
       base44.entities.AdmittedExhibits.filter({ case_id: cid }),
       base44.entities.DepositionExhibits.filter({ case_id: cid }),
-      base44.entities.ExhibitAnnotations.filter({ case_id: cid }),
+      base44.entities.Parties.filter({ case_id: cid }),
+      base44.entities.Callouts.filter({ case_id: cid }),
     ]);
     setExtracts(exs);
     setJoints(jo);
     setAdmitted(ad);
     setDepoExhibits(de);
+    setParties(pts);
     const counts = {};
-    anns.forEach(a => { counts[a.extract_id] = (counts[a.extract_id] || 0) + 1; });
-    setAnnotationCounts(counts);
-  };
+    callouts.forEach(c => { counts[c.extract_id] = (counts[c.extract_id] || 0) + 1; });
+    setCalloutCounts(counts);
+  }, [activeCase]);
 
-  useEffect(() => { load(); }, [activeCase]);
+  useEffect(() => { load(); }, [load]);
 
   // Lookup maps
   const jointByExtractId = useMemo(() => {
@@ -91,19 +200,51 @@ export default function Extracts() {
     return m;
   }, [admitted]);
 
+  const depoById = useMemo(() => {
+    const m = {};
+    depoExhibits.forEach(d => { m[d.id] = d; });
+    return m;
+  }, [depoExhibits]);
+
+  // Which depo exhibit IDs are already in the joint list (via JointExhibits entity or extract source)
+  const markedDepoIds = useMemo(() => {
+    const ids = new Set();
+    joints.forEach(j => {
+      (j.source_depo_exhibit_ids || []).forEach(id => ids.add(id));
+      if (j.primary_depo_exhibit_id) ids.add(j.primary_depo_exhibit_id);
+    });
+    extracts.forEach(ex => {
+      (ex.source_depo_exhibit_ids || []).forEach(id => ids.add(id));
+      if (ex.source_depo_exhibit_id) ids.add(ex.source_depo_exhibit_id);
+      if (ex.primary_depo_exhibit_id) ids.add(ex.primary_depo_exhibit_id);
+    });
+    return ids;
+  }, [joints, extracts]);
+
   const depoLabel = (id) => {
-    const de = depoExhibits.find(x => x.id === id);
+    const de = depoById[id];
     if (!de) return "—";
-    return `${de.depo_exhibit_no ? `#${de.depo_exhibit_no} ` : ""}${de.depo_exhibit_title || ""}`.trim();
+    return `${de.depo_exhibit_no ? `#${de.depo_exhibit_no} ` : ""}${de.display_title || de.depo_exhibit_title || ""}`.trim();
   };
 
-  // Enriched extracts with joint + admit status
+  // Get effective file URL for an extract (uploaded file first, then primary depo exhibit file)
+  const getFileUrl = (ex) => {
+    if (ex.extract_file_url) return { url: ex.extract_file_url, isUpload: true };
+    const primaryId = ex.primary_depo_exhibit_id || ex.source_depo_exhibit_id;
+    const de = primaryId ? depoById[primaryId] : null;
+    if (de?.file_url) return { url: de.file_url, isUpload: false };
+    if (de?.external_link) return { url: de.external_link, isUpload: false };
+    return null;
+  };
+
+  // Enriched extracts
   const enriched = useMemo(() => extracts.map(ex => {
     const joint = jointByExtractId[ex.id] || null;
     const admRec = joint ? (admittedByJointId[joint.id] || null) : null;
     const status = admRec ? "admitted" : joint ? "joint" : "working";
-    return { ...ex, _joint: joint, _admRec: admRec, _status: status };
-  }), [extracts, jointByExtractId, admittedByJointId]);
+    const fileInfo = getFileUrl(ex);
+    return { ...ex, _joint: joint, _admRec: admRec, _status: status, _fileInfo: fileInfo };
+  }), [extracts, jointByExtractId, admittedByJointId, depoById]);
 
   const filtered = useMemo(() => enriched.filter(ex => {
     if (filterTab === "joint" && ex._status === "working") return false;
@@ -126,17 +267,26 @@ export default function Extracts() {
   const saveExtract = async () => {
     if (!editExtract || !activeCase) return;
     setSaving(true);
+    const useGroup = editExtract._useGroup;
     const payload = {
       case_id: activeCase.id,
       extract_title_official: editExtract.extract_title_official,
       extract_title_internal: editExtract.extract_title_internal,
-      source_depo_exhibit_id: editExtract.source_depo_exhibit_id || null,
+      notes: editExtract.notes,
+      extract_file_url: editExtract.extract_file_url || null,
       extract_page_start: editExtract.extract_page_start ? Number(editExtract.extract_page_start) : null,
       extract_page_end: editExtract.extract_page_end ? Number(editExtract.extract_page_end) : null,
       extract_page_count: editExtract.extract_page_count ? Number(editExtract.extract_page_count) : null,
-      extract_file_url: editExtract.extract_file_url || null,
-      notes: editExtract.notes,
     };
+    if (useGroup) {
+      payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_ids || [];
+      payload.primary_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null;
+      payload.source_depo_exhibit_id = editExtract.primary_depo_exhibit_id || null; // keep legacy in sync
+    } else {
+      payload.source_depo_exhibit_id = editExtract.source_depo_exhibit_id || null;
+      payload.source_depo_exhibit_ids = editExtract.source_depo_exhibit_id ? [editExtract.source_depo_exhibit_id] : [];
+      payload.primary_depo_exhibit_id = null;
+    }
     if (editExtract.id) {
       await base44.entities.ExhibitExtracts.update(editExtract.id, payload);
     } else {
@@ -159,6 +309,15 @@ export default function Extracts() {
     load();
   };
 
+  const openEditExtract = (ex) => {
+    const isGroup = !!(ex.source_depo_exhibit_ids?.length > 1 || ex.primary_depo_exhibit_id);
+    setEditExtract({
+      ...ex,
+      source_depo_exhibit_ids: ex.source_depo_exhibit_ids || (ex.source_depo_exhibit_id ? [ex.source_depo_exhibit_id] : []),
+      _useGroup: isGroup,
+    });
+  };
+
   // ── Mark as Joint ──
   const openMarkJoint = (ex) => {
     setMarkJointDialog(ex);
@@ -168,7 +327,7 @@ export default function Extracts() {
   const saveMarkJoint = async () => {
     if (!markJointDialog || !activeCase) return;
     setSaving(true);
-    const joint = await base44.entities.JointExhibits.create({
+    await base44.entities.JointExhibits.create({
       case_id: activeCase.id,
       exhibit_extract_id: markJointDialog.id,
       marked_no: jointForm.marked_no,
@@ -185,8 +344,7 @@ export default function Extracts() {
 
   const removeFromJoint = async (ex) => {
     const joint = jointByExtractId[ex.id];
-    if (!joint) return;
-    if (!confirm(`Remove "${ex.extract_title_official}" from the Joint List?`)) return;
+    if (!joint || !confirm(`Remove "${ex.extract_title_official}" from the Joint List?`)) return;
     const admRec = admittedByJointId[joint.id];
     if (admRec) await base44.entities.AdmittedExhibits.delete(admRec.id);
     await base44.entities.JointExhibits.delete(joint.id);
@@ -205,13 +363,10 @@ export default function Extracts() {
     if (!admitDialog || !activeCase) return;
     setSaving(true);
     await base44.entities.AdmittedExhibits.create({
-      ...admitForm,
-      case_id: activeCase.id,
-      joint_exhibit_id: admitDialog.joint.id,
+      ...admitForm, case_id: activeCase.id, joint_exhibit_id: admitDialog.joint.id,
     });
     await base44.entities.JointExhibits.update(admitDialog.joint.id, {
-      status: "Admitted",
-      admitted_no: admitForm.admitted_no,
+      status: "Admitted", admitted_no: admitForm.admitted_no,
     });
     setAdmitDialog(null);
     setSaving(false);
@@ -229,7 +384,11 @@ export default function Extracts() {
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
-  const counts = { all: enriched.length, joint: enriched.filter(e => e._status !== "working").length, admitted: enriched.filter(e => e._status === "admitted").length };
+  const counts = {
+    all: enriched.length,
+    joint: enriched.filter(e => e._status !== "working").length,
+    admitted: enriched.filter(e => e._status === "admitted").length
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0f1e] text-slate-200">
@@ -238,7 +397,7 @@ export default function Extracts() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-emerald-400" /> Extracts
+              <FileText className="w-5 h-5 text-emerald-400" /> Extracts & Joint List
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">{filtered.length} shown · {counts.joint} on joint list · {counts.admitted} admitted</p>
           </div>
@@ -247,32 +406,20 @@ export default function Extracts() {
             <Plus className="w-3.5 h-3.5" /> New Extract
           </Button>
         </div>
-
-        {/* Filter tabs + search */}
         <div className="flex items-center gap-3">
           <div className="flex gap-1 bg-[#0a0f1e] rounded-lg p-1 border border-[#1e2a45]">
-            {[
-              { key: "all", label: "All" },
-              { key: "joint", label: "Joint List" },
-              { key: "admitted", label: "Admitted" },
-            ].map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setFilterTab(tab.key)}
+            {[{ key: "all", label: "All" }, { key: "joint", label: "Joint List" }, { key: "admitted", label: "Admitted" }].map(tab => (
+              <button key={tab.key} onClick={() => setFilterTab(tab.key)}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                  filterTab === tab.key
-                    ? "bg-cyan-600/20 text-cyan-400 border border-cyan-600/30"
-                    : "text-slate-500 hover:text-slate-300"
-                }`}
-              >
+                  filterTab === tab.key ? "bg-cyan-600/20 text-cyan-400 border border-cyan-600/30" : "text-slate-500 hover:text-slate-300"
+                }`}>
                 {tab.label} <span className="text-[10px] ml-0.5 opacity-60">{counts[tab.key]}</span>
               </button>
             ))}
           </div>
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-            <Input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search…"
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
               className="pl-8 h-8 bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs" />
           </div>
         </div>
@@ -289,6 +436,10 @@ export default function Extracts() {
           const joint = ex._joint;
           const admRec = ex._admRec;
           const isExpanded = expandedId === ex.id;
+          const fileInfo = ex._fileInfo;
+          const groupIds = ex.source_depo_exhibit_ids || [];
+          const primaryDepo = ex.primary_depo_exhibit_id ? depoById[ex.primary_depo_exhibit_id]
+            : ex.source_depo_exhibit_id ? depoById[ex.source_depo_exhibit_id] : null;
 
           return (
             <div key={ex.id} className={`bg-[#0f1629] border rounded-xl transition-colors ${
@@ -298,8 +449,7 @@ export default function Extracts() {
             }`}>
               {/* Row */}
               <div className="p-4 flex items-start gap-3">
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : ex.id)}
+                <button onClick={() => setExpandedId(isExpanded ? null : ex.id)}
                   className="mt-0.5 text-slate-500 hover:text-slate-200 flex-shrink-0">
                   {isExpanded ? <ChevronDown className="w-4 h-4 text-emerald-400" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
@@ -308,71 +458,65 @@ export default function Extracts() {
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : ex.id)}>
                   <div className="flex items-start gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-slate-100">{ex.extract_title_official}</p>
-                    {/* Status badges */}
-                    {admRec && (
-                      <Badge className="text-[10px] bg-green-500/20 text-green-400 border-green-500/30">
-                        Ex. {admRec.admitted_no || joint?.admitted_no}
-                      </Badge>
-                    )}
-                    {joint && !admRec && (
-                      <Badge className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
-                        Joint #{joint.marked_no}
-                      </Badge>
-                    )}
+                    {admRec && <Badge className="text-[10px] bg-green-500/20 text-green-400 border-green-500/30">Ex. {admRec.admitted_no || joint?.admitted_no}</Badge>}
+                    {joint && !admRec && <Badge className="text-[10px] bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Joint #{joint.marked_no}</Badge>}
                   </div>
                   {ex.extract_title_internal && (
                     <p className="text-xs text-slate-500 italic mt-0.5">"{ex.extract_title_internal}"</p>
                   )}
-                  <div className="flex flex-wrap gap-2 mt-1.5 items-center">
-                    {ex.source_depo_exhibit_id && (
-                      <span className="text-[10px] text-slate-600">Source: {depoLabel(ex.source_depo_exhibit_id)}</span>
-                    )}
+                  <div className="flex flex-wrap gap-2 mt-1 items-center">
+                    {/* Source info */}
+                    {groupIds.length > 1 ? (
+                      <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <Users className="w-3 h-3" /> {groupIds.length} source exhibits
+                        {primaryDepo && <span className="text-slate-600">· primary: {depoLabel(primaryDepo.id)}</span>}
+                      </span>
+                    ) : primaryDepo ? (
+                      <span className="text-[10px] text-slate-600">Source: {depoLabel(primaryDepo.id)}</span>
+                    ) : null}
                     {(ex.extract_page_start || ex.extract_page_end) && (
                       <span className="text-[10px] text-slate-500">pp. {ex.extract_page_start}–{ex.extract_page_end}</span>
                     )}
-                    {annotationCounts[ex.id] > 0 && (
-                      <span className="flex items-center gap-0.5 text-[10px] text-yellow-500/70">
-                        <StickyNote className="w-3 h-3" />{annotationCounts[ex.id]}
+                    {/* Callout count */}
+                    {(calloutCounts[ex.id] || 0) > 0 && (
+                      <span className="flex items-center gap-0.5 text-[10px] text-orange-400/70">
+                        <StickyNote className="w-3 h-3" />{calloutCounts[ex.id]} callout{calloutCounts[ex.id] > 1 ? "s" : ""}
                       </span>
                     )}
-                    {ex.extract_file_url && (
-                      <button onClick={e => { e.stopPropagation(); setViewFile({ url: ex.extract_file_url, title: ex.extract_title_official }); }}
-                        className="text-[10px] text-emerald-400 hover:underline flex items-center gap-0.5">
-                        <ExternalLink className="w-3 h-3" /> View
+                    {fileInfo && (
+                      <button onClick={e => { e.stopPropagation(); setViewFile({ url: fileInfo.url, title: ex.extract_title_official }); }}
+                        className={`text-[10px] flex items-center gap-0.5 hover:underline ${fileInfo.isUpload ? "text-emerald-400" : "text-cyan-400"}`}>
+                        <ExternalLink className="w-3 h-3" /> {fileInfo.isUpload ? "View Extract" : "View Raw File"}
                       </button>
                     )}
                   </div>
+                  {/* Callout pills (collapsed view) */}
+                  {!isExpanded && <CalloutSummary extractId={ex.id} parties={parties} />}
                 </div>
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                  {/* Admit / Joint List / Add to Joint actions */}
                   {admRec ? (
                     <div className="text-right mr-1">
                       <span className="text-[10px] text-green-400 font-semibold block">Ex. {admRec.admitted_no}</span>
                       <span className="text-[9px] text-slate-600">{fmtDate(admRec.date_admitted)}</span>
                     </div>
                   ) : joint ? (
-                    <button
-                      onClick={() => openAdmit(ex)}
+                    <button onClick={() => openAdmit(ex)}
                       className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors">
                       <CheckSquare className="w-3 h-3" /> Admit
                     </button>
                   ) : (
-                    <button
-                      onClick={() => openMarkJoint(ex)}
+                    <button onClick={() => openMarkJoint(ex)}
                       className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-colors">
                       <List className="w-3 h-3" /> Add to Joint List
                     </button>
                   )}
-
-                  <Link
-                    to={createPageUrl(`AnnotatePage?extractId=${ex.id}`)}
-                    className="p-1.5 text-slate-500 hover:text-orange-400"
-                    title="Annotate">
+                  <Link to={createPageUrl(`AnnotatePage?extractId=${ex.id}`)}
+                    className="p-1.5 text-slate-500 hover:text-orange-400" title="Annotate">
                     <Highlighter className="w-3.5 h-3.5" />
                   </Link>
-                  <button onClick={() => setEditExtract({ ...ex })} className="p-1.5 text-slate-500 hover:text-slate-200">
+                  <button onClick={() => openEditExtract(ex)} className="p-1.5 text-slate-500 hover:text-slate-200">
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button onClick={() => removeExtract(ex)} className="p-1.5 text-slate-500 hover:text-red-400">
@@ -381,10 +525,10 @@ export default function Extracts() {
                 </div>
               </div>
 
-              {/* Expanded: callouts + joint/admit detail */}
+              {/* Expanded */}
               {isExpanded && (
                 <div className="px-4 pb-4 border-t border-[#1e2a45]">
-                  {/* Joint / Admit info strip */}
+                  {/* Joint/Admit info strip */}
                   {joint && (
                     <div className={`mt-3 mb-3 rounded-lg p-3 text-xs flex flex-wrap gap-4 items-start ${
                       admRec ? "bg-green-500/5 border border-green-500/20" : "bg-cyan-500/5 border border-cyan-500/20"
@@ -402,18 +546,25 @@ export default function Extracts() {
                           <p className="text-slate-400">{fmtDate(admRec.date_admitted)} · {admRec.admitted_by_side}</p>
                         </div>
                       )}
-                      <div className="ml-auto flex gap-2 self-start mt-0.5">
-                        {admRec && (
-                          <button onClick={() => removeAdmit(ex)} className="text-[10px] text-slate-500 hover:text-red-400">
-                            Remove Admission
-                          </button>
-                        )}
+                      <div className="ml-auto flex gap-3 self-start">
+                        {admRec && <button onClick={() => removeAdmit(ex)} className="text-[10px] text-slate-500 hover:text-red-400">Remove Admission</button>}
                         <button onClick={() => removeFromJoint(ex)} className="flex items-center gap-0.5 text-[10px] text-slate-500 hover:text-orange-400">
                           <MinusCircle className="w-3 h-3" /> Remove from Joint List
                         </button>
                       </div>
                     </div>
                   )}
+
+                  {/* Source exhibits group accordion */}
+                  {groupIds.length > 1 && (
+                    <SourceGroupAccordion
+                      ids={groupIds}
+                      primaryId={ex.primary_depo_exhibit_id}
+                      depoById={depoById}
+                      onViewFile={(url, title) => setViewFile({ url, title })}
+                    />
+                  )}
+
                   <CalloutEditor extract={ex} />
                 </div>
               )}
@@ -426,7 +577,7 @@ export default function Extracts() {
 
       {/* ── New/Edit Extract Dialog ── */}
       <Dialog open={!!editExtract} onOpenChange={() => setEditExtract(null)}>
-        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-lg">
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-emerald-400 flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -444,44 +595,89 @@ export default function Extracts() {
               </div>
               <div>
                 <Label className="text-xs text-slate-400 block mb-1">Internal Name</Label>
-                <Input value={editExtract.extract_title_internal}
+                <Input value={editExtract.extract_title_internal || ""}
                   onChange={e => setEditExtract(p => ({ ...p, extract_title_internal: e.target.value }))}
                   className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
                   placeholder="Sightlines blocked" />
               </div>
+
+              {/* Source: single or group toggle */}
               <div>
-                <Label className="text-xs text-slate-400 block mb-1">Source Raw Exhibit</Label>
-                <Select value={editExtract.source_depo_exhibit_id || "none"}
-                  onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v }))}>
-                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs">
-                    <SelectValue placeholder="Select source exhibit…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— None —</SelectItem>
-                    {depoExhibits.map(de => (
-                      <SelectItem key={de.id} value={de.id}>
-                        {de.depo_exhibit_no ? `#${de.depo_exhibit_no} ` : ""}{de.depo_exhibit_title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label className="text-xs text-slate-400">Source Depo Exhibit(s)</Label>
+                  <div className="flex gap-1 bg-[#0a0f1e] rounded p-0.5 border border-[#1e2a45]">
+                    <button onClick={() => setEditExtract(p => ({ ...p, _useGroup: false }))}
+                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${!editExtract._useGroup ? "bg-cyan-600/30 text-cyan-300" : "text-slate-500"}`}>
+                      Single
+                    </button>
+                    <button onClick={() => setEditExtract(p => ({ ...p, _useGroup: true }))}
+                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${editExtract._useGroup ? "bg-cyan-600/30 text-cyan-300" : "text-slate-500"}`}>
+                      Group
+                    </button>
+                  </div>
+                </div>
+
+                {!editExtract._useGroup ? (
+                  <Select value={editExtract.source_depo_exhibit_id || "none"}
+                    onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v }))}>
+                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs">
+                      <SelectValue placeholder="Select source exhibit…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— None —</SelectItem>
+                      {depoExhibits.map(de => (
+                        <SelectItem key={de.id} value={de.id}>
+                          {de.depo_exhibit_no ? `#${de.depo_exhibit_no} ` : ""}{de.display_title || de.depo_exhibit_title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div>
+                    <p className="text-[10px] text-slate-500 mb-1.5 flex items-center gap-1">
+                      <Star className="w-3 h-3 text-amber-400" /> Check exhibits in the group · star = primary attachment
+                    </p>
+                    <DepoGroupSelector
+                      depoExhibits={depoExhibits}
+                      selectedIds={editExtract.source_depo_exhibit_ids || []}
+                      primaryId={editExtract.primary_depo_exhibit_id || ""}
+                      onChange={ids => setEditExtract(p => ({ ...p, source_depo_exhibit_ids: ids }))}
+                      onPrimaryChange={id => setEditExtract(p => ({ ...p, primary_depo_exhibit_id: id }))}
+                    />
+                    {(editExtract.source_depo_exhibit_ids || []).length > 0 && !editExtract.extract_file_url && (
+                      <p className="text-[10px] text-slate-500 mt-1.5">
+                        Primary file: <span className="text-cyan-400">{depoLabel(editExtract.primary_depo_exhibit_id || editExtract.source_depo_exhibit_ids[0])}</span>'s attachment
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
+
               <div className="flex gap-2">
                 <div className="flex-1">
                   <Label className="text-xs text-slate-400 block mb-1">Page Start</Label>
-                  <Input type="number" value={editExtract.extract_page_start}
+                  <Input type="number" value={editExtract.extract_page_start || ""}
                     onChange={e => setEditExtract(p => ({ ...p, extract_page_start: e.target.value }))}
                     className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="1" />
                 </div>
                 <div className="flex-1">
                   <Label className="text-xs text-slate-400 block mb-1">Page End</Label>
-                  <Input type="number" value={editExtract.extract_page_end}
+                  <Input type="number" value={editExtract.extract_page_end || ""}
                     onChange={e => setEditExtract(p => ({ ...p, extract_page_end: e.target.value }))}
                     className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="20" />
                 </div>
+                <div className="flex-1">
+                  <Label className="text-xs text-slate-400 block mb-1">Page Count</Label>
+                  <Input type="number" value={editExtract.extract_page_count || ""}
+                    onChange={e => setEditExtract(p => ({ ...p, extract_page_count: e.target.value }))}
+                    className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="—" />
+                </div>
               </div>
+
               <div>
-                <Label className="text-xs text-slate-400 block mb-1">Extract File (PDF/image)</Label>
+                <Label className="text-xs text-slate-400 block mb-1">
+                  Upload Extract File <span className="text-slate-600">(overrides raw depo file)</span>
+                </Label>
                 <div className="flex gap-2 items-center">
                   <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp"
                     onChange={e => handleUpload(e.target.files?.[0])}
@@ -493,15 +689,14 @@ export default function Extracts() {
                   </label>
                   {editExtract.extract_file_url && (
                     <a href={editExtract.extract_file_url} target="_blank" rel="noreferrer"
-                      className="text-xs text-emerald-400 hover:underline truncate max-w-[160px]">
-                      View uploaded file
-                    </a>
+                      className="text-xs text-emerald-400 hover:underline truncate max-w-[160px]">View uploaded file</a>
                   )}
                 </div>
               </div>
+
               <div>
                 <Label className="text-xs text-slate-400 block mb-1">Notes</Label>
-                <Textarea value={editExtract.notes}
+                <Textarea value={editExtract.notes || ""}
                   onChange={e => setEditExtract(p => ({ ...p, notes: e.target.value }))}
                   className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} />
               </div>
@@ -532,8 +727,7 @@ export default function Extracts() {
                 <Label className="text-xs text-slate-400 block mb-1">Marked # *</Label>
                 <Input value={jointForm.marked_no}
                   onChange={e => setJointForm(p => ({ ...p, marked_no: e.target.value }))}
-                  placeholder="e.g. 47"
-                  className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" autoFocus />
+                  placeholder="e.g. 47" className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" autoFocus />
               </div>
               <div>
                 <Label className="text-xs text-slate-400 block mb-1">Marked By</Label>
@@ -553,14 +747,12 @@ export default function Extracts() {
               <Label className="text-xs text-slate-400 block mb-1">Pages <span className="text-slate-600">(optional, e.g. "1-5")</span></Label>
               <Input value={jointForm.pages}
                 onChange={e => setJointForm(p => ({ ...p, pages: e.target.value }))}
-                placeholder="All pages"
-                className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+                placeholder="All pages" className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMarkJointDialog(null)} className="border-[#1e2a45]">Cancel</Button>
-            <Button onClick={saveMarkJoint} disabled={saving || !jointForm.marked_no}
-              className="bg-cyan-600 hover:bg-cyan-700">
+            <Button onClick={saveMarkJoint} disabled={saving || !jointForm.marked_no} className="bg-cyan-600 hover:bg-cyan-700">
               {saving ? "Saving…" : "Add to Joint List"}
             </Button>
           </DialogFooter>
@@ -586,8 +778,7 @@ export default function Extracts() {
                 <Label className="text-xs text-slate-400 block mb-1">Admitted # *</Label>
                 <Input value={admitForm.admitted_no}
                   onChange={e => setAdmitForm(p => ({ ...p, admitted_no: e.target.value }))}
-                  placeholder="e.g. 200"
-                  className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" autoFocus />
+                  placeholder="e.g. 200" className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" autoFocus />
               </div>
               <div>
                 <Label className="text-xs text-slate-400 block mb-1">Date Admitted</Label>
@@ -612,13 +803,60 @@ export default function Extracts() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAdmitDialog(null)} className="border-[#1e2a45]">Cancel</Button>
-            <Button onClick={saveAdmit} disabled={saving || !admitForm.admitted_no}
-              className="bg-green-600 hover:bg-green-700">
+            <Button onClick={saveAdmit} disabled={saving || !admitForm.admitted_no} className="bg-green-600 hover:bg-green-700">
               {saving ? "Saving…" : "Admit Exhibit"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ── Source Group Accordion (expanded view) ────────────────────────────────────
+function SourceGroupAccordion({ ids, primaryId, depoById, onViewFile }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mb-3 bg-[#080d1a] border border-[#1e2a45] rounded-lg overflow-hidden">
+      <button onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-[#0f1629] transition-colors">
+        {open ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronRight className="w-3.5 h-3.5" />}
+        <Users className="w-3.5 h-3.5 text-slate-500" />
+        <span className="font-medium">{ids.length} source exhibits in group</span>
+        <span className="text-slate-600 text-[10px]">· click to {open ? "collapse" : "expand"}</span>
+      </button>
+      {open && (
+        <div className="border-t border-[#1e2a45]">
+          {ids.map(id => {
+            const de = depoById[id];
+            if (!de) return null;
+            const isPrimary = id === primaryId;
+            const fileUrl = de.file_url || de.external_link;
+            return (
+              <div key={id} className={`flex items-center gap-2 px-3 py-2 border-b border-[#1e2a45] last:border-0 ${isPrimary ? "bg-amber-500/5" : ""}`}>
+                {isPrimary
+                  ? <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                  : <Link2 className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                }
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-200 truncate">
+                    {de.depo_exhibit_no && <span className="text-cyan-400 font-mono mr-1">#{de.depo_exhibit_no}</span>}
+                    {de.display_title || de.depo_exhibit_title}
+                    {isPrimary && <span className="ml-1.5 text-[10px] text-amber-400/80">PRIMARY</span>}
+                  </p>
+                  {de.deponent_name && <p className="text-[10px] text-slate-500">{de.deponent_name}</p>}
+                </div>
+                {fileUrl && (
+                  <button onClick={() => onViewFile(fileUrl, de.display_title || de.depo_exhibit_title)}
+                    className="text-[10px] text-cyan-400 hover:underline flex items-center gap-0.5 flex-shrink-0">
+                    <ExternalLink className="w-3 h-3" /> View
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
