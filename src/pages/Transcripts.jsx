@@ -191,6 +191,17 @@ export default function Transcripts() {
   const totalPages = Math.ceil(displayLines.length / PAGE_SIZE);
   const pageLines = displayLines.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
+  // After page renders, apply any pending scroll restore
+  useEffect(() => {
+    if (pendingScrollRef.current !== null && scrollContainerRef.current) {
+      const target = pendingScrollRef.current;
+      pendingScrollRef.current = null;
+      setTimeout(() => {
+        if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = target;
+      }, 80);
+    }
+  }, [pageLines]);
+
   const goToPage = (newPage) => {
     const clamped = Math.max(0, Math.min(newPage, totalPages - 1));
     setPage(clamped);
