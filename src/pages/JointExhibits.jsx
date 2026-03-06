@@ -443,6 +443,21 @@ export default function JointExhibits() {
                         )}
                         {j.status !== "Withdrawn" && <span className="text-slate-700">·</span>}
                         <button className="text-[10px] text-slate-400 hover:text-red-400" onClick={() => removeJoint(j)}>Remove from list</button>
+                        {(() => {
+                          const allDepos = deposByJointId[j.id] || [];
+                          if (allDepos.length <= 1) return null;
+                          return (
+                            <>
+                              <span className="text-slate-700">·</span>
+                              <button
+                                className="text-[10px] text-slate-400 hover:text-cyan-400"
+                                onClick={() => setPrimaryDialog({ joint: j, depos: allDepos, primaryId: j.primary_depo_exhibit_id || allDepos[0]?.id })}
+                              >
+                                Change Primary
+                              </button>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 
