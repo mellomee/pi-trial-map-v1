@@ -626,33 +626,55 @@ export default function Extracts() {
               <FileText className="w-4 h-4" />
               {editExtract?.id ? "Edit Extract" : "New Extract"}
             </DialogTitle>
+            {!editExtract?.id && (
+              <p className="text-xs text-slate-500 mt-1">
+                An extract is a named slice of a depo exhibit — you can add multiple extracts from the same exhibit for different page ranges.
+              </p>
+            )}
           </DialogHeader>
           {editExtract && (
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Source exhibit info banner (when pre-filled from Depo Exhibits) */}
+              {editExtract._originDepoId && depoById[editExtract._originDepoId] && (
+                <div className="px-3 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-slate-400">
+                  <span className="text-indigo-400 font-medium">Source exhibit: </span>
+                  {depoLabel(editExtract._originDepoId)}
+                  {editExtract._groupName && (
+                    <span className="ml-2 text-indigo-400/70">· Group: {editExtract._groupName}</span>
+                  )}
+                </div>
+              )}
+
               <div>
-                <Label className="text-xs text-slate-400 block mb-1">Official Title (judge-facing)*</Label>
+                <Label className="text-xs text-slate-400 block mb-1">Extract Name (official, judge-facing) *</Label>
                 <Input value={editExtract.extract_title_official}
                   onChange={e => setEditExtract(p => ({ ...p, extract_title_official: e.target.value }))}
                   className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
-                  placeholder="Traffic Control Signal Log – Intersection A" />
+                  placeholder="e.g. Traffic Collision Report – Pages 30–50" />
               </div>
               <div>
-                <Label className="text-xs text-slate-400 block mb-1">Internal Name</Label>
+                <Label className="text-xs text-slate-400 block mb-1">Internal Name <span className="text-slate-600">(your shorthand)</span></Label>
                 <Input value={editExtract.extract_title_internal || ""}
                   onChange={e => setEditExtract(p => ({ ...p, extract_title_internal: e.target.value }))}
                   className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
-                  placeholder="Sightlines blocked" />
+                  placeholder="e.g. Sightlines blocked" />
               </div>
 
               {/* Source exhibits */}
               <div>
-                <Label className="text-xs text-slate-400 block mb-1.5">Source Depo Exhibit(s)</Label>
+                <Label className="text-xs text-slate-400 block mb-1.5">
+                  Source Depo Exhibit(s)
+                  {editExtract._groupName && (
+                    <span className="ml-2 text-[10px] text-indigo-400">
+                      · click <Star className="w-3 h-3 inline text-amber-400 fill-amber-400" /> to set primary file
+                    </span>
+                  )}
+                </Label>
                 {editExtract._groupName ? (
-                  // Group mode: show only exhibits from this group, let user pick the primary
                   <div>
-                    <p className="text-[10px] text-slate-500 mb-1.5 flex items-center gap-1">
-                      <Users className="w-3 h-3 text-indigo-400" /> Group: <span className="text-indigo-300 font-medium">{editExtract._groupName}</span>
-                      <span className="ml-1">· <Star className="w-3 h-3 text-amber-400 inline" /> star = primary file attachment</span>
+                    <p className="text-[10px] text-indigo-400/80 mb-1.5 flex items-center gap-1">
+                      <Users className="w-3 h-3" /> Group: <span className="font-medium">{editExtract._groupName}</span>
+                      <span className="text-slate-600 ml-1">— all members pre-selected. Uncheck to exclude.</span>
                     </p>
                     <DepoGroupSelector
                       depoExhibits={depoExhibits.filter(d => d.group_name === editExtract._groupName)}
@@ -661,16 +683,10 @@ export default function Extracts() {
                       onChange={ids => setEditExtract(p => ({ ...p, source_depo_exhibit_ids: ids }))}
                       onPrimaryChange={id => setEditExtract(p => ({ ...p, primary_depo_exhibit_id: id }))}
                     />
-                    {(editExtract.source_depo_exhibit_ids || []).length > 0 && !editExtract.extract_file_url && (
-                      <p className="text-[10px] text-slate-500 mt-1.5">
-                        Using file from: <span className="text-cyan-400">{depoLabel(editExtract.primary_depo_exhibit_id || editExtract.source_depo_exhibit_ids[0])}</span>
-                      </p>
-                    )}
                   </div>
                 ) : (
-                  // Single exhibit mode
                   <Select value={editExtract.source_depo_exhibit_id || "none"}
-                    onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v }))}>
+                    onValueChange={v => setEditExtract(p => ({ ...p, source_depo_exhibit_id: v === "none" ? "" : v, source_depo_exhibit_ids: v === "none" ? [] : [v] }))}>
                     <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200 text-xs">
                       <SelectValue placeholder="Select source exhibit…" />
                     </SelectTrigger>
@@ -679,6 +695,7 @@ export default function Extracts() {
                       {depoExhibits.map(de => (
                         <SelectItem key={de.id} value={de.id}>
                           {de.depo_exhibit_no ? `#${de.depo_exhibit_no} ` : ""}{de.display_title || de.depo_exhibit_title}
+                          {de.group_name ? ` [${de.group_name}]` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -686,44 +703,64 @@ export default function Extracts() {
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Label className="text-xs text-slate-400 block mb-1">Page Start</Label>
-                  <Input type="number" value={editExtract.extract_page_start || ""}
-                    onChange={e => setEditExtract(p => ({ ...p, extract_page_start: e.target.value }))}
-                    className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="1" />
+              {/* Page range */}
+              <div>
+                <Label className="text-xs text-slate-400 block mb-1.5">Page Range in Source File</Label>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input type="number" value={editExtract.extract_page_start || ""}
+                      onChange={e => setEditExtract(p => ({ ...p, extract_page_start: e.target.value }))}
+                      className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="Start page" />
+                  </div>
+                  <div className="flex-1">
+                    <Input type="number" value={editExtract.extract_page_end || ""}
+                      onChange={e => setEditExtract(p => ({ ...p, extract_page_end: e.target.value }))}
+                      className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="End page" />
+                  </div>
+                  <div className="flex-1">
+                    <Input type="number" value={editExtract.extract_page_count || ""}
+                      onChange={e => setEditExtract(p => ({ ...p, extract_page_count: e.target.value }))}
+                      className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="Total pages" />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <Label className="text-xs text-slate-400 block mb-1">Page End</Label>
-                  <Input type="number" value={editExtract.extract_page_end || ""}
-                    onChange={e => setEditExtract(p => ({ ...p, extract_page_end: e.target.value }))}
-                    className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="20" />
-                </div>
-                <div className="flex-1">
-                  <Label className="text-xs text-slate-400 block mb-1">Page Count</Label>
-                  <Input type="number" value={editExtract.extract_page_count || ""}
-                    onChange={e => setEditExtract(p => ({ ...p, extract_page_count: e.target.value }))}
-                    className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" placeholder="—" />
-                </div>
+                <p className="text-[10px] text-slate-600 mt-1">
+                  Optional — records which pages of the original file this extract covers. Leave blank if using the full exhibit.
+                </p>
               </div>
 
-              <div>
-                <Label className="text-xs text-slate-400 block mb-1">
-                  Upload Shortened Extract File <span className="text-slate-600">(optional – if provided, used in Extracts & Joint List instead of the original; original always stays in Depo Exhibits)</span>
-                </Label>
-                <div className="flex gap-2 items-center">
+              {/* File attachment — optional shortened version */}
+              <div className="bg-[#0a0f1e] border border-[#1e2a45] rounded-lg p-3">
+                <Label className="text-xs text-slate-300 block mb-1 font-medium">Shortened File Upload <span className="text-slate-600 font-normal">(optional)</span></Label>
+                <p className="text-[10px] text-slate-500 mb-2">
+                  If you upload a file here, it will be used as this extract's attachment instead of the original depo exhibit file.
+                  The original file in Depo Exhibits is never touched.
+                </p>
+                {editExtract.extract_file_url ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] text-emerald-400 bg-emerald-900/20 border border-emerald-700/20 px-2 py-1 rounded">
+                      ✓ Shortened file uploaded
+                    </span>
+                    <a href={editExtract.extract_file_url} target="_blank" rel="noreferrer"
+                      className="text-xs text-emerald-400 hover:underline">View</a>
+                    <button onClick={() => setEditExtract(p => ({ ...p, extract_file_url: "" }))}
+                      className="text-xs text-slate-500 hover:text-red-400">Remove</button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-[10px] text-slate-600 mb-2">
+                      No shortened file — will use the original exhibit file from Depo Exhibits.
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-2 items-center mt-2">
                   <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp"
                     onChange={e => handleUpload(e.target.files?.[0])}
                     className="hidden" id="extract-file-input" />
                   <label htmlFor="extract-file-input"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#1e2a45] hover:bg-[#263450] text-slate-300 text-xs cursor-pointer border border-[#2e3a55]">
                     <Upload className="w-3.5 h-3.5" />
-                    {uploading ? "Uploading…" : "Upload File"}
+                    {uploading ? "Uploading…" : editExtract.extract_file_url ? "Replace File" : "Upload Shortened File"}
                   </label>
-                  {editExtract.extract_file_url && (
-                    <a href={editExtract.extract_file_url} target="_blank" rel="noreferrer"
-                      className="text-xs text-emerald-400 hover:underline truncate max-w-[160px]">View uploaded file</a>
-                  )}
                 </div>
               </div>
 
@@ -739,7 +776,7 @@ export default function Extracts() {
             <Button variant="outline" onClick={() => setEditExtract(null)} className="border-[#1e2a45]">Cancel</Button>
             <Button onClick={saveExtract} disabled={saving || !editExtract?.extract_title_official}
               className="bg-emerald-600 hover:bg-emerald-700">
-              {saving ? "Saving…" : "Save"}
+              {saving ? "Saving…" : "Save Extract"}
             </Button>
           </DialogFooter>
         </DialogContent>
