@@ -320,18 +320,25 @@ export default function DepositionExhibits() {
 
         {/* Joint status + extract count */}
         <div className="flex-shrink-0 text-right min-w-[110px]">
-          {isMarked && joint ? (
-            <div>
-              <span className="text-[10px] text-cyan-400 font-semibold">Exhibit {joint.marked_no}</span>
-              <span className="text-[10px] text-slate-300 block">{joint.status}</span>
-            </div>
-          ) : (
-            <span className="text-[10px] text-slate-400 italic">Unmarked</span>
-          )}
+          {(() => {
+            const exts = extractsForExhibit(ex.id);
+            // Find joint via extract linkage
+            const linkedJoint = exts.length > 0
+              ? joints.find(j => exts.some(e => e.id === j.exhibit_extract_id))
+              : isMarked ? joint : null;
+            return linkedJoint ? (
+              <div>
+                <span className="text-[10px] text-cyan-400 font-semibold">Joint #{linkedJoint.marked_no}</span>
+                <span className="text-[10px] text-slate-300 block">{linkedJoint.status}</span>
+              </div>
+            ) : (
+              <span className="text-[10px] text-slate-400 italic">Not in joint list</span>
+            );
+          })()}
           {(() => {
             const exts = extractsForExhibit(ex.id);
             return exts.length > 0 ? (
-              <span className="text-[10px] text-emerald-500">{exts.length} extract{exts.length > 1 ? "s" : ""}</span>
+              <span className="text-[10px] text-emerald-500 block">{exts.length} extract{exts.length > 1 ? "s" : ""}</span>
             ) : null;
           })()}
         </div>
