@@ -366,8 +366,10 @@ export default function DepositionExhibits() {
           <h1 className="text-2xl font-bold text-white">Deposition Exhibits</h1>
           <div className="flex gap-3 mt-1 text-xs text-slate-300">
             <span>{exhibits.length} total</span>
-<span className="text-slate-400">·</span>
-            <span className="text-cyan-400">{markedCount} marked</span>
+            <span className="text-slate-400">·</span>
+            <span className="text-emerald-400">{extracts.length} extracts</span>
+            <span className="text-slate-400">·</span>
+            <span className="text-cyan-400">{markedCount} on joint list</span>
           </div>
         </div>
         <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={() => setAddDialog(true)}>
