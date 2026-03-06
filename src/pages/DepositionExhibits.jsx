@@ -544,24 +544,14 @@ export default function DepositionExhibits() {
                     )}
                     {!allMarked && (
                       <button
-                        className="text-[10px] px-2 py-1 rounded border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 transition-colors flex items-center gap-1"
-                        title="Mark entire group as Joint Exhibit"
+                        className="text-[10px] px-2 py-1 rounded border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors flex items-center gap-1"
+                        title="Go to Extracts page to create extracts for this group"
                         onClick={() => {
-                          const ids = new Set(unmarkedInGroup.map(e => e.id));
-                          setSelectedIds(ids);
                           const first = unmarkedInGroup[0];
-                          setMarkForm({
-                            marked_no: "",
-                            marked_title: grp === "__ungrouped__" ? (first?.display_title || first?.depo_exhibit_title || "") : grp,
-                            marked_by_side: "Plaintiff",
-                            pages: "",
-                            primary_depo_exhibit_id: first?.id || "",
-                            notes: grp !== "__ungrouped__" ? `Group: ${grp}` : "",
-                          });
-                          setMarkDialog(true);
+                          if (first) navigate(createPageUrl(`Extracts?newExtractFromDepo=${first.id}`));
                         }}
                       >
-                        <Tag className="w-3 h-3" /> Mark group
+                        <ArrowRight className="w-3 h-3" /> Create Extract →
                       </button>
                     )}
                   </div>
