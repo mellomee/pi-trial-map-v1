@@ -152,17 +152,32 @@ export default function Transcripts() {
   const citeFlagMap = useMemo(() => {
     const map = new Map();
     clips.forEach((c, clipIdx) => {
-      const start = c.start_cite;
-      const end = c.end_cite || start;
       const palette = c.direction === "HurtsUs" ? HURTS_COLORS : HELPS_COLORS;
       const colorClass = palette[clipIdx % palette.length];
-      let inRange = false;
-      lines.forEach(l => {
-        if (l.cite === start) inRange = true;
-        if (inRange && !map.has(l.cite)) {
-          map.set(l.cite, { colorClass, clip_tag: c.clip_tag || null, direction: c.direction });
+      // Build cite set from clip_text lines (supports non-contiguous clips)
+      const clipCites = new Set();
+      if (c.clip_text) {
+        c.clip_text.split("\n").forEach(row => {
+          const tabIdx = row.indexOf("\t");
+          const cite = tabIdx >= 0 ? row.substring(0, tabIdx) : row.split(" ")[0];
+          if (cite) clipCites.add(cite);
+        });
+      }
+      // Fallback: contiguous range if no clip_text
+      if (clipCites.size === 0) {
+        const start = c.start_cite;
+        const end = c.end_cite || start;
+        let inRange = false;
+        lines.forEach(l => {
+          if (l.cite === start) inRange = true;
+          if (inRange) clipCites.add(l.cite);
+          if (l.cite === end) inRange = false;
+        });
+      }
+      clipCites.forEach(cite => {
+        if (!map.has(cite)) {
+          map.set(cite, { colorClass, clip_tag: c.clip_tag || null, direction: c.direction });
         }
-        if (l.cite === end) inRange = false;
       });
     });
     return map;
