@@ -173,12 +173,19 @@ export default function Extracts() {
   useEffect(() => {
     if (pendingDepoId && depoExhibits.length > 0) {
       const depo = depoExhibits.find(d => d.id === pendingDepoId);
+      const groupName = depo?.group_name || null;
+      // If the depo exhibit is part of a group, pre-select all exhibits in that group
+      const groupExhibits = groupName
+        ? depoExhibits.filter(d => d.group_name === groupName)
+        : [depo].filter(Boolean);
+      const groupIds = groupExhibits.map(d => d.id);
       setEditExtract({
         ...EMPTY_EXTRACT,
         source_depo_exhibit_id: pendingDepoId,
-        source_depo_exhibit_ids: [pendingDepoId],
-        extract_title_official: depo ? (depo.display_title || depo.depo_exhibit_title || "") : "",
-        _useGroup: false,
+        source_depo_exhibit_ids: groupIds,
+        primary_depo_exhibit_id: pendingDepoId,
+        extract_title_official: groupName || (depo ? (depo.display_title || depo.depo_exhibit_title || "") : ""),
+        _groupName: groupName,
       });
       setPendingDepoId(null);
       window.history.replaceState({}, "", window.location.pathname);
