@@ -514,6 +514,16 @@ export default function DepositionExhibits() {
                   </button>
                   {/* Group-level actions */}
                   <div className="flex items-center gap-2 pr-3">
+                    {groupExtract && (
+                      <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                        ✓ Extract: {groupExtract.extract_title_official || "—"}
+                        {groupExtract.primary_depo_exhibit_id && (
+                          <span className="text-slate-500 font-normal ml-1">
+                            · primary: {(depoById[groupExtract.primary_depo_exhibit_id]?.display_title || depoById[groupExtract.primary_depo_exhibit_id]?.depo_exhibit_title || "")}
+                          </span>
+                        )}
+                      </span>
+                    )}
                     <button
                       className="text-[10px] px-2 py-1 rounded border border-slate-500 text-slate-300 hover:text-white hover:border-slate-400 transition-colors"
                       title="Select all in this group"
@@ -542,18 +552,20 @@ export default function DepositionExhibits() {
                         <X className="w-3 h-3" /> Ungroup
                       </button>
                     )}
-                    {!allMarked && (
-                      <button
-                        className="text-[10px] px-2 py-1 rounded border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors flex items-center gap-1"
-                        title="Go to Extracts page to create extracts for this group"
-                        onClick={() => {
-                          const first = unmarkedInGroup[0];
-                          if (first) navigate(createPageUrl(`Extracts?newExtractFromDepo=${first.id}`));
-                        }}
-                      >
-                        <ArrowRight className="w-3 h-3" /> Create Extract →
-                      </button>
-                    )}
+                    <button
+                      className={`text-[10px] px-2 py-1 rounded border transition-colors flex items-center gap-1 ${
+                        groupExtract
+                          ? "border-slate-500/40 text-slate-400 hover:bg-slate-500/10"
+                          : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                      }`}
+                      title={groupExtract ? "Edit extract for this group" : "Go to Extracts page to create extract for this group"}
+                      onClick={() => {
+                        const first = items[0];
+                        if (first) navigate(createPageUrl(`Extracts?newExtractFromDepo=${first.id}`));
+                      }}
+                    >
+                      <ArrowRight className="w-3 h-3" /> {groupExtract ? "Edit Extract →" : "Create Extract →"}
+                    </button>
                   </div>
                 </div>
                 {isOpen && items.map(ex => <ExhibitRow key={ex.id} ex={ex} />)}
