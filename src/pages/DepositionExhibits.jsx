@@ -529,7 +529,6 @@ export default function DepositionExhibits() {
                       className="text-[10px] px-2 py-1 rounded border border-slate-500 text-slate-300 hover:text-white hover:border-slate-400 transition-colors"
                       title="Select all in this group"
                       onClick={() => {
-                        const groupIds = new Set(items.map(e => e.id));
                         setSelectedIds(prev => {
                           const n = new Set(prev);
                           items.forEach(e => n.add(e.id));
@@ -539,6 +538,21 @@ export default function DepositionExhibits() {
                     >
                       Select all
                     </button>
+                    {grp !== "__ungrouped__" && (
+                      <button
+                        className="text-[10px] px-2 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1"
+                        title="Ungroup — removes group assignment from all exhibits in this group"
+                        onClick={async () => {
+                          if (!confirm(`Ungroup all ${items.length} exhibits in "${grp}"?`)) return;
+                          for (const ex of items) {
+                            await base44.entities.DepositionExhibits.update(ex.id, { group_name: "" });
+                          }
+                          load();
+                        }}
+                      >
+                        <X className="w-3 h-3" /> Ungroup
+                      </button>
+                    )}
                     {!allMarked && (
                       <button
                         className="text-[10px] px-2 py-1 rounded border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 transition-colors flex items-center gap-1"
