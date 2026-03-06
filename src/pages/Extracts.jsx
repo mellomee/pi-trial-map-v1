@@ -33,7 +33,7 @@ const EMPTY_EXTRACT = {
   extract_page_count: "",
   extract_file_url: "",
   notes: "",
-  _useGroup: false, // UI-only toggle
+  _groupName: null, // UI-only: if set, this came from a group
 };
 
 const EMPTY_JOINT = { marked_no: "", marked_title: "", marked_by_side: "Plaintiff", pages: "", notes: "" };
