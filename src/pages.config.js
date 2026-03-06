@@ -78,6 +78,9 @@ import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
+import PrintQuestions from './pages/PrintQuestions';
+import PrintProofLibrary from './pages/PrintProofLibrary';
+import PrintDepoClips from './pages/PrintDepoClips';
 import __Layout from './Layout.jsx';
 
 
@@ -113,6 +116,9 @@ export const PAGES = {
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
+    "PrintQuestions": PrintQuestions,
+    "PrintProofLibrary": PrintProofLibrary,
+    "PrintDepoClips": PrintDepoClips,
 }
 
 export const pagesConfig = {

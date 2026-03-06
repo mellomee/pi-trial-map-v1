@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Search, Plus, Pencil, Trash2, Tag, X, ChevronRight, ChevronDown,
   History, Paperclip, ExternalLink, Upload, ChevronsUpDown, ChevronUp,
-  FileX, Link2, Layers, ArrowRight, Users, Settings2, UserMinus
+  FileX, Link2, Layers, ArrowRight, Users, UserMinus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
