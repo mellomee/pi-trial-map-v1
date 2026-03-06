@@ -489,6 +489,8 @@ export default function DepositionExhibits() {
               );
               return exts.some(e => jointExtractIds.has(e.id));
             };
+            // Check if this group already has an extract
+            const groupHasExtract = items.some(ex => extractsForExhibit(ex.id).length > 0);
             const unmarkedInGroup = items.filter(ex => !hasExtractOnJointList(ex));
             const allMarked = unmarkedInGroup.length === 0;
             return (
@@ -505,7 +507,8 @@ export default function DepositionExhibits() {
                     {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     {grp === "__ungrouped__" ? "Ungrouped" : grp}
                     <span className="text-slate-400 font-normal ml-1">({items.length})</span>
-                    {allMarked && <span className="text-[10px] text-cyan-500 font-normal ml-1">✓ all marked</span>}
+                    {groupHasExtract && <span className="text-[10px] text-emerald-500 font-normal ml-1">✓ extract created</span>}
+                    {allMarked && <span className="text-[10px] text-cyan-500 font-normal ml-1">· on joint list</span>}
                   </button>
                   {/* Group-level actions */}
                   <div className="flex items-center gap-2 pr-3">
@@ -537,18 +540,20 @@ export default function DepositionExhibits() {
                         <X className="w-3 h-3" /> Ungroup
                       </button>
                     )}
-                    {!allMarked && (
-                      <button
-                        className="text-[10px] px-2 py-1 rounded border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors flex items-center gap-1"
-                        title="Go to Extracts page to create extracts for this group"
-                        onClick={() => {
-                          const first = unmarkedInGroup[0];
-                          if (first) navigate(createPageUrl(`Extracts?newExtractFromDepo=${first.id}`));
-                        }}
-                      >
-                        <ArrowRight className="w-3 h-3" /> Create Extract →
-                      </button>
-                    )}
+                    <button
+                      className={`text-[10px] px-2 py-1 rounded border transition-colors flex items-center gap-1 ${
+                        groupHasExtract
+                          ? "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                          : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                      }`}
+                      title={groupHasExtract ? "View/edit extract for this group" : "Go to Extracts page to create extract for this group"}
+                      onClick={() => {
+                        const firstItem = items[0];
+                        if (firstItem) navigate(createPageUrl(`Extracts?newExtractFromDepo=${firstItem.id}`));
+                      }}
+                    >
+                      <ArrowRight className="w-3 h-3" /> {groupHasExtract ? "View Extract →" : "Create Extract →"}
+                    </button>
                   </div>
                 </div>
                 {isOpen && items.map(ex => <ExhibitRow key={ex.id} ex={ex} />)}
