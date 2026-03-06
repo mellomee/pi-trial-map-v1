@@ -26,15 +26,11 @@ const SIDES = ["Plaintiff", "Defense", "Independent", "Unknown"];
 
 export default function DepositionExhibits() {
   const { activeCase } = useActiveCase();
+  const navigate = useNavigate();
   const [exhibits, setExhibits] = useState([]);
   const [parties, setParties] = useState([]);
   const [joints, setJoints] = useState([]);
   const [extracts, setExtracts] = useState([]); // all extracts for this case
-
-  // Extract / Mark flow
-  const [extractModalTarget, setExtractModalTarget] = useState(null); // depo exhibit to create extract for
-  const [markJointTarget, setMarkJointTarget] = useState(null); // { exhibit, extract }
-  const [selectExtractTarget, setSelectExtractTarget] = useState(null); // { exhibit, extracts[] }
 
   // UI
   const [search, setSearch] = useState("");
