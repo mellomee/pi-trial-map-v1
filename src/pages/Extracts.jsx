@@ -174,7 +174,7 @@ export default function Extracts() {
     if (pendingDepoId && depoExhibits.length > 0) {
       const depo = depoExhibits.find(d => d.id === pendingDepoId);
       const groupName = depo?.group_name || null;
-      // If the depo exhibit is part of a group, pre-select all exhibits in that group
+      // Pre-select: if in a group, include all group members; primary = the clicked exhibit
       const groupExhibits = groupName
         ? depoExhibits.filter(d => d.group_name === groupName)
         : [depo].filter(Boolean);
@@ -184,8 +184,10 @@ export default function Extracts() {
         source_depo_exhibit_id: pendingDepoId,
         source_depo_exhibit_ids: groupIds,
         primary_depo_exhibit_id: pendingDepoId,
-        extract_title_official: groupName || (depo ? (depo.display_title || depo.depo_exhibit_title || "") : ""),
+        // Default title: the exhibit's display title (not the group name — user may want a specific page range title)
+        extract_title_official: depo ? (depo.display_title || depo.depo_exhibit_title || "") : "",
         _groupName: groupName,
+        _originDepoId: pendingDepoId,
       });
       setPendingDepoId(null);
       window.history.replaceState({}, "", window.location.pathname);
