@@ -358,8 +358,6 @@ export default function DepositionExhibits() {
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case selected.</div>;
 
-  const markedCount = exhibits.filter(e => e.joint_exhibit_id).length;
-
   return (
     <div className="p-6">
       {/* Header */}
