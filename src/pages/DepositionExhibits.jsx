@@ -115,6 +115,12 @@ export default function DepositionExhibits() {
     return [...groups];
   }, [exhibits]);
 
+  const depoById = useMemo(() => {
+    const m = {};
+    exhibits.forEach(e => { m[e.id] = e; });
+    return m;
+  }, [exhibits]);
+
   const sorted = useMemo(() => {
     if (!sortCol) return exhibits;
     return [...exhibits].sort((a, b) => {
