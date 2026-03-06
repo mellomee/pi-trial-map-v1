@@ -69,6 +69,7 @@ export default function Transcripts() {
   const lastClickedIdx = useRef(null);
   const scrollContainerRef = useRef(null);
   const rowRefs = useRef({});
+  const pendingScrollRef = useRef(null);
 
   useEffect(() => {
     if (!activeCase) return;
