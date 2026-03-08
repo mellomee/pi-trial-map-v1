@@ -78,17 +78,17 @@ function CalloutPicker({ callouts, selectedCallout, setSelectedCallout, proofCal
               No callout
             </button>
           )}
-        {callouts.length > 1 && (
-          <div className="flex items-center gap-1">
-            <button onClick={() => setSelectedCallout(callouts[Math.max(0, idx - 1)])}
-              disabled={idx <= 0}
-              className="text-xs px-2 py-1 text-gray-500 hover:text-gray-800 disabled:opacity-30">‹</button>
-            <span className="text-xs text-gray-500">{idx + 1}/{callouts.length}</span>
-            <button onClick={() => setSelectedCallout(callouts[Math.min(callouts.length - 1, idx + 1)])}
-              disabled={idx >= callouts.length - 1}
-              className="text-xs px-2 py-1 text-gray-500 hover:text-gray-800 disabled:opacity-30">›</button>
-          </div>
-        )}
+          {callouts.length > 1 && (
+            <div className="flex items-center gap-1">
+              <button onClick={() => setSelectedCallout(callouts[Math.max(0, idx - 1)])}
+                disabled={idx <= 0}
+                className="text-xs px-2 py-1 text-gray-500 hover:text-gray-800 disabled:opacity-30">‹</button>
+              <span className="text-xs text-gray-500">{idx + 1}/{callouts.length}</span>
+              <button onClick={() => setSelectedCallout(callouts[Math.min(callouts.length - 1, idx + 1)])}
+                disabled={idx >= callouts.length - 1}
+                className="text-xs px-2 py-1 text-gray-500 hover:text-gray-800 disabled:opacity-30">›</button>
+            </div>
+          )}
         </div>
       </div>
 
