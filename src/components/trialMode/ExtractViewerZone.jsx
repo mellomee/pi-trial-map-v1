@@ -226,18 +226,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
             <Square className="w-3 h-3" /> Unpublish
           </Button>
         ) : (
-          <Button size="sm" onClick={() => {
-            // Determine which callout to spotlight on jury: active spotlight, or fallback to linked callout
-            const activeCallout = spotlightCallout
-              || allCallouts.find(c => c.id === selectedProof?.callout_id)
-              || allCallouts[0]
-              || null;
-            onPublish({
-              ...selectedProof,
-              _jury_callout_id: activeCallout?.id || null,
-              _jury_extract_file_url: extractFileUrl || null,
-            });
-          }} className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1 touch-manipulation">
+          <Button size="sm" onClick={handlePublish} className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1 touch-manipulation">
             <Monitor className="w-3 h-3" /> Publish
           </Button>
         )}
