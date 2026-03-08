@@ -4,11 +4,18 @@ import { Button } from "@/components/ui/button";
 import { X, Trash2 } from "lucide-react";
 
 const COLOR_OPTS = ["yellow", "red", "green", "blue"];
+const COLOR_RGB = {
+  yellow: "255,220,0",
+  red:    "239,68,68",
+  green:  "34,197,94",
+  blue:   "59,130,246",
+};
+const colorCss = (color, opacity) => `rgba(${COLOR_RGB[color] || COLOR_RGB.yellow},${opacity ?? 0.4})`;
 const COLOR_CSS = {
-  yellow: "rgba(255,220,0,0.40)",
-  red:    "rgba(239,68,68,0.40)",
-  green:  "rgba(34,197,94,0.40)",
-  blue:   "rgba(59,130,246,0.40)",
+  yellow: colorCss("yellow", 0.4),
+  red:    colorCss("red", 0.4),
+  green:  colorCss("green", 0.4),
+  blue:   colorCss("blue", 0.4),
 };
 
 export default function HighlightEditorModal({ callout, highlights, onHighlightsChange, onClose }) {
