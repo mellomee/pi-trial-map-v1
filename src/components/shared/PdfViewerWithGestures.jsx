@@ -1,10 +1,10 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import PdfViewer from '@/components/shared/PdfViewer';
 
 /**
- * PDF viewer that passes zoom and page state directly to PdfViewer.
- * Gestures are handled by the browser and tablet natively; zoom affects canvas rendering.
- * No external transform wrapper — zoom is applied at the canvas rendering level.
+ * Synchronized PDF viewer for attorney/jury presentation.
+ * All gesture handling (pinch, wheel) happens inside PdfViewer at the canvas level.
+ * Zoom and page state flow through shared presentation state via callbacks.
  */
 export default function PdfViewerWithGestures({
   fileUrl,
