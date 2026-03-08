@@ -34,6 +34,7 @@ export default function JuryView() {
   const { activeCase } = useActiveCase();
   const [sessionState, setSessionState] = useState(null);
   const [proofItem, setProofItem] = useState(null);
+  const [extract, setExtract] = useState(null);
   const [callout, setCallout] = useState(null);
   const [highlights, setHighlights] = useState([]);
   const [depoClip, setDepoClip] = useState(null);
