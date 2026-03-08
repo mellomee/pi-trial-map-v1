@@ -70,7 +70,7 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
 }
 
 // ---------- Callout sidebar item ----------
-function CalloutItem({ callout, witnessName, isActive, onClick }) {
+function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
   return (
     <button
       onClick={onClick}
