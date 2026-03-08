@@ -67,6 +67,7 @@ export default function JuryView() {
     const pid = sessionState?.current_proof_item_id;
     if (!pid || !sessionState?.jury_can_see_proof) {
       setProofItem(null);
+      setExtract(null);
       setCallout(null);
       setHighlights([]);
       setDepoClip(null);
