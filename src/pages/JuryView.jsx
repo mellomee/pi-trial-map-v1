@@ -40,6 +40,7 @@ export default function JuryView() {
   const [depoClip, setDepoClip] = useState(null);
   const [depo, setDepo] = useState(null);
   const [jx, setJx] = useState(null);
+  const [depoExhibit, setDepoExhibit] = useState(null);
 
   // Subscribe to TrialSessionStates for instant updates
   useEffect(() => {
