@@ -182,7 +182,7 @@ export default function JuryView() {
 
       {/* Extract — base layer always shown */}
       {proofItem.type === 'extract' && extract && (
-        <div className="w-full h-full relative overflow-hidden">
+        <div className="w-full h-full relative overflow-hidden bg-black">
           {/* Exhibit label */}
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-20 pointer-events-none">
@@ -191,14 +191,19 @@ export default function JuryView() {
           )}
 
           {/* Layer 0: Full-screen extract base */}
-          {extract.extract_file_url && (
-            <div className="absolute inset-0 flex items-center justify-center z-0">
+          {extract.extract_file_url ? (
+            <div className="absolute inset-0 flex items-center justify-center z-0 bg-black">
               <img
                 src={extract.extract_file_url}
                 alt="Extract"
-                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain', userSelect: 'none' }}
+                className="max-w-full max-h-full object-contain"
+                style={{ userSelect: 'none' }}
                 draggable={false}
               />
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center z-0 bg-black">
+              <p className="text-slate-400">Extract file not available</p>
             </div>
           )}
 
