@@ -280,6 +280,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           {extractFileUrl ? (
             isPdf ? (
               <PdfViewer
+                ref={pdfViewerRef}
                 fileUrl={extractFileUrl}
                 onZoomChange={handleZoomChange}
                 onPageChange={handlePageChange}
