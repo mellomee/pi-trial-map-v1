@@ -199,16 +199,13 @@ export default function JuryView() {
             externalPage={currentPage}
             readOnly={true}
             showControls={false}
-            dimmed={false}
+            dimmed={callout?.snapshot_image_url ? true : false}
           />
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
           {callout?.snapshot_image_url && (
-  <div
-    className="absolute inset-0 z-20 pointer-events-none"
-    style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
-  />
-)}
+            <div className="absolute inset-0 z-5" style={{ background: 'rgba(183, 185, 195, 0.01)' }} />
+              )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
               {callout?.snapshot_image_url && (
@@ -248,11 +245,8 @@ export default function JuryView() {
 
               {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
               {callout?.snapshot_image_url && (
-  <div
-    className="absolute inset-0 z-20 pointer-events-none"
-    style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
-  />
-)}
+                <div className="absolute inset-0 z-5" style={{ background: 'rgba(204, 205, 210, 0.01)' }} />
+              )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
               {callout?.snapshot_image_url && (
