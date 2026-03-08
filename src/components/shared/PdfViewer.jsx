@@ -51,17 +51,31 @@ const PdfViewer = React.forwardRef(function PdfViewer({
   useEffect(() => {
     if (!pdf || !currentPage || !canvasRef.current) return;
 
+    let renderTask = null;
+
     pdf.getPage(currentPage).then((page) => {
       const baseViewport = page.getViewport({ scale: 1 });
       const viewport = page.getViewport({ scale: zoom });
       
       const canvas = canvasRef.current;
+      if (!canvas) return;
+      
       const context = canvas.getContext('2d');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       
-      page.render({ canvasContext: context, viewport }).promise;
+      renderTask = page.render({ canvasContext: context, viewport });
+      return renderTask.promise;
+    }).catch((err) => {
+      console.error('PDF render error:', err);
     });
+
+    // Cleanup: cancel any pending render operations
+    return () => {
+      if (renderTask) {
+        renderTask.cancel?.();
+      }
+    };
   }, [pdf, currentPage, zoom]);
 
   const handlePrevPage = () => {
