@@ -5,46 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Image, ChevronLeft, ChevronRight, CheckCircle2, Eye, EyeOff, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-function CalloutImageWithHighlights({ callout, highlights }) {
-  const colorMap = { yellow: 'rgba(253,224,71,', red: 'rgba(239,68,68,', green: 'rgba(34,197,94,', blue: 'rgba(59,130,246,' };
-  const [dims, setDims] = useState(null);
 
-  if (!callout.snapshot_image_url) {
-    return (
-      <div className="w-full h-48 flex items-center justify-center bg-[#0a0f1e] rounded border border-[#1e2a45] text-gray-500">
-        <div className="text-center">
-          <Image className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          <p className="text-xs">No snapshot captured yet</p>
-        </div>
-      </div>);
-
-  }
-
-  return (
-    <div className="relative w-full">
-      <img
-        src={callout.snapshot_image_url}
-        alt={callout.name}
-        className="w-full rounded border border-[#1e2a45] max-h-96 object-contain bg-black"
-        onLoad={(e) => setDims({ w: e.target.offsetWidth, h: e.target.offsetHeight })} />
-
-      {dims && highlights.map((hl, hi) =>
-      (hl.rects_norm || []).map((r, ri) => {
-        const base = colorMap[hl.color] || colorMap.yellow;
-        return (
-          <div key={`${hi}-${ri}`} style={{
-            position: 'absolute',
-            left: `${r.x * 100}%`, top: `${r.y * 100}%`,
-            width: `${r.w * 100}%`, height: `${r.h * 100}%`,
-            backgroundColor: `${base}${hl.opacity ?? 0.35})`,
-            pointerEvents: 'none'
-          }} />);
-
-      })
-      )}
-    </div>);
-
-}
 
 function InlineFileViewer({ url, label, onClose }) {
   const [page, setPage] = useState(1);
