@@ -432,7 +432,13 @@ export default function TrialMode() {
             <ProofZone
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
-              onSelectProof={(proof) => setSelectedProof(proof)}
+              onSelectProof={async (proof) => {
+                // Auto-unpublish if switching to a different proof
+                if (publishedProof && publishedProof.id !== proof.id) {
+                  await handleClearJury();
+                }
+                setSelectedProof(proof);
+              }}
               childQuestionActive={!!selectedChildQuestionId}
               onProofAdmitted={() => {
                 // Re-resolve proof list so admitted status updates
