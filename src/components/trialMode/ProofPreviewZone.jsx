@@ -64,7 +64,7 @@ function DepoClipPreview({ proof }) {
 }
 
 // ---------- Main ProofPreviewZone ----------
-export default function ProofPreviewZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
+export default function ProofPreviewZone({ selectedProof, isPublishing, onPublish, onUnpublish, trialSessionId }) {
   // For extract type, delegate entirely to ExtractViewerZone (which has its own full-height layout)
   if (selectedProof?.type === 'extract') {
     return (
@@ -73,6 +73,7 @@ export default function ProofPreviewZone({ selectedProof, isPublishing, onPublis
         isPublishing={isPublishing}
         onPublish={onPublish}
         onUnpublish={onUnpublish}
+        trialSessionId={trialSessionId}
       />
     );
   }
