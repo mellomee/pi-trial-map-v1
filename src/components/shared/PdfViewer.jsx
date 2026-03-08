@@ -14,7 +14,8 @@ export default function PdfViewer({
   onPageChange = null,
   readOnly = false,
   showControls = true,
-  dimmed = false
+  dimmed = false,
+  dimOpacity = 0.45
 }) {
   const canvasRef = useRef(null);
   const [pdf, setPdf] = useState(null);
