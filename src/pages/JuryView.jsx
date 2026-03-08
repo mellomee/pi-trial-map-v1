@@ -83,59 +83,65 @@ export default function JuryView() {
       setJx(null);
       return;
     }
-    base44.entities.ProofItems.filter({ id: pid }).then(async (items) => {
-      const item = items[0];
-      if (!item) return;
-      setProofItem(item);
+    
+    (async () => {
+      try {
+        const items = await base44.entities.ProofItems.filter({ id: pid });
+        const item = items[0];
+        if (!item) return;
+        setProofItem(item);
 
-      if (item.type === 'depoClip' && item.source_id) {
-        const clips = await base44.entities.DepoClips.filter({ id: item.source_id });
-        const clip = clips[0] || null;
-        setDepoClip(clip);
-        if (clip?.deposition_id) {
-          const depos = await base44.entities.Depositions.filter({ id: clip.deposition_id });
-          setDepo(depos[0] || null);
-        }
-        setCallout(null);
-        setHighlights([]);
-        setJx(null);
-        setExtract(null);
-      } else if (item.type === 'extract' && item.source_id) {
-        const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
-        const extract = extracts[0];
-        if (!extract) return;
-        
-        // Always store the extract (base layer)
-        setExtract(extract);
-        setDepoClip(null);
-        setDepo(null);
-        
-        // Load joint exhibit for label
-        const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
-        setJx(jxs[0] || null);
-        
-        // Check if spotlight callout is visible
-        const spotlightCalloutId = sessionState?.current_callout_id;
-        const spotlight_enabled = sessionState?.spotlight_enabled;
-        
-        if (spotlight_enabled && spotlightCalloutId) {
-          const cs = await base44.entities.Callouts.filter({ id: spotlightCalloutId });
-          const targetCallout = cs[0] || null;
-          setCallout(targetCallout);
-          // Load highlights for that callout
-          if (targetCallout) {
-            const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
-            setHighlights(hs);
-          } else {
-            setHighlights([]);
+        if (item.type === 'depoClip' && item.source_id) {
+          const clips = await base44.entities.DepoClips.filter({ id: item.source_id });
+          const clip = clips[0] || null;
+          setDepoClip(clip);
+          if (clip?.deposition_id) {
+            const depos = await base44.entities.Depositions.filter({ id: clip.deposition_id });
+            setDepo(depos[0] || null);
           }
-        } else {
-          // No spotlight — just show extract, no callout overlay
           setCallout(null);
           setHighlights([]);
+          setJx(null);
+          setExtract(null);
+        } else if (item.type === 'extract' && item.source_id) {
+          const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
+          const extract = extracts[0];
+          if (!extract) return;
+          
+          // Always store and display the extract (base layer)
+          setExtract(extract);
+          setDepoClip(null);
+          setDepo(null);
+          
+          // Load joint exhibit for label
+          const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
+          setJx(jxs[0] || null);
+          
+          // Check if spotlight callout is visible
+          const spotlightCalloutId = sessionState?.current_callout_id;
+          const spotlight_enabled = sessionState?.spotlight_enabled;
+          
+          if (spotlight_enabled && spotlightCalloutId) {
+            const cs = await base44.entities.Callouts.filter({ id: spotlightCalloutId });
+            const targetCallout = cs[0] || null;
+            setCallout(targetCallout);
+            // Load highlights for that callout
+            if (targetCallout) {
+              const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
+              setHighlights(hs);
+            } else {
+              setHighlights([]);
+            }
+          } else {
+            // No spotlight — just show extract, no callout overlay
+            setCallout(null);
+            setHighlights([]);
+          }
         }
+      } catch (error) {
+        console.error('Error loading proof:', error);
       }
-    });
+    })();
   }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof, sessionState?.current_callout_id, sessionState?.spotlight_enabled]);
 
   // Waiting / blank screen
