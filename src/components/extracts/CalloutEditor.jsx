@@ -342,6 +342,64 @@ export default function CalloutEditor({ extract }) {
             <button onClick={() => setScale(s => Math.max(0.5, s - 0.25))} className="p-1 text-slate-400 hover:text-white"><ZoomOut className="w-3.5 h-3.5" /></button>
             <span className="text-[10px] text-slate-500 w-9 text-center">{Math.round(scale * 100)}%</span>
             <button onClick={() => setScale(s => Math.min(4, s + 0.25))} className="p-1 text-slate-400 hover:text-white"><ZoomIn className="w-3.5 h-3.5" /></button>
+
+            {/* Search bar — only for PDFs */}
+            {pdfDoc && (
+              <>
+                <div className="w-px h-4 bg-[#1e2a45]" />
+                <div className="relative" ref={searchRef}>
+                  <div className="flex items-center gap-1 bg-[#0a0f1e] border border-[#2a3a5a] rounded px-2 py-0.5">
+                    <Search className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                    <input
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") runSearch(searchTerm); if (e.key === "Escape") { setSearchTerm(""); setSearchResults([]); setShowSearchResults(false); } }}
+                      onFocus={() => { if (searchResults.length > 0 || searchStatus) setShowSearchResults(true); }}
+                      placeholder="Search document…"
+                      className="bg-transparent text-[11px] text-slate-200 placeholder-slate-600 outline-none w-36"
+                    />
+                    {searchTerm && (
+                      <button onClick={() => { setSearchTerm(""); setSearchResults([]); setSearchStatus(""); setShowSearchResults(false); }} className="text-slate-600 hover:text-slate-300">
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                    <button onClick={() => runSearch(searchTerm)} className="text-cyan-500 hover:text-cyan-300 text-[10px] font-semibold ml-1 flex-shrink-0">
+                      Go
+                    </button>
+                  </div>
+
+                  {/* Results dropdown */}
+                  {showSearchResults && (searchStatus === "searching" || searchResults.length > 0 || searchStatus === "done" || searchStatus === "scanned") && (
+                    <div className="absolute top-full left-0 mt-1 w-80 bg-[#0f1629] border border-[#2a3a5a] rounded-lg shadow-2xl z-50 overflow-hidden">
+                      {searchStatus === "searching" && (
+                        <div className="px-3 py-2 text-[11px] text-slate-400 animate-pulse">Searching all {pdfDoc?.numPages} pages…</div>
+                      )}
+                      {searchStatus === "scanned" && (
+                        <div className="px-3 py-2 text-[11px] text-amber-400">This appears to be a scanned PDF — text search is not available for image-based PDFs.</div>
+                      )}
+                      {searchStatus === "done" && searchResults.length === 0 && (
+                        <div className="px-3 py-2 text-[11px] text-slate-500">No results found.</div>
+                      )}
+                      {searchResults.length > 0 && (
+                        <div className="max-h-56 overflow-y-auto">
+                          <div className="px-3 py-1.5 border-b border-[#1e2a45] text-[10px] text-slate-500">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</div>
+                          {searchResults.map((r, i) => (
+                            <button key={i} onClick={() => { setPageNum(r.page); setShowSearchResults(false); }}
+                              className="w-full text-left px-3 py-2 hover:bg-cyan-500/10 border-b border-[#1e2a45]/50 transition-colors group">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="text-[10px] font-bold text-cyan-400 flex-shrink-0">Page {r.page}</span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-2">{r.snippet}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
             <div className="w-px h-4 bg-[#1e2a45]" />
             <button
               onClick={() => setMode(mode === "capture" ? "view" : "capture")}
