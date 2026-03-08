@@ -184,10 +184,9 @@ export default function TrialMode() {
         return;
       }
     }
+    await publishProofToJury(trialSession.id, proofItem.id);
     setPublishedProof(proofItem);
     window.__trialModePublished = true;
-    // Publish to jury after UI state is updated
-    await publishProofToJury(trialSession.id, proofItem.id);
   };
 
   const handleClearJury = async () => {
