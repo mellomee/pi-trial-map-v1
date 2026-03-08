@@ -195,6 +195,8 @@ export async function clearJuryDisplay(trialSessionId) {
       return await base44.entities.TrialSessionStates.update(existing[0].id, {
         current_proof_item_id: null,
         jury_can_see_proof: false,
+        active_callout_id: null,
+        extract_file_url: null,
       });
     }
   } catch (error) {
