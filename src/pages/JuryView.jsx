@@ -58,7 +58,7 @@ export default function JuryView() {
       else setSessionState(null);
     };
     poll();
-    pollRef.current = setInterval(poll, 2000);
+    pollRef.current = setInterval(poll, 500);
     return () => clearInterval(pollRef.current);
   }, [activeCase?.id]);
 
