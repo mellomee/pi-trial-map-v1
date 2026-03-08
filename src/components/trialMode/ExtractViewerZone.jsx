@@ -48,12 +48,9 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoo
       )}
       <div className="absolute inset-0" style={{ background: 'rgba(5,8,22,0.2)', zIndex: 2 }} />
 
-      {/* Controls */}
-      <div className="absolute top-3 right-3 flex items-center gap-2 z-40">
-        <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-white p-2 rounded-lg touch-manipulation"><ZoomOut className="w-4 h-4" /></button>
-        <button onClick={() => setZoom(pdfZoom)} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-slate-300 px-3 py-2 rounded-lg text-xs font-mono touch-manipulation">{Math.round(zoom * 100)}%</button>
-        <button onClick={() => setZoom(z => Math.min(z + 0.25, 4))} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-white p-2 rounded-lg touch-manipulation"><ZoomIn className="w-4 h-4" /></button>
-        <button onClick={onClose} className="bg-red-900/80 hover:bg-red-700 border border-red-600/40 text-red-300 p-2 rounded-lg touch-manipulation ml-1"><X className="w-4 h-4" /></button>
+      {/* Controls - positioned near callout top-right */}
+      <div className="absolute flex items-center gap-2 z-40" style={{ top: '12px', right: '12px' }}>
+        <button onClick={onClose} className="bg-red-900/80 hover:bg-red-700 border border-red-600/40 text-red-300 p-2 rounded-lg touch-manipulation"><X className="w-4 h-4" /></button>
       </div>
 
       {/* Callout — centered, bright, width-constrained */}
