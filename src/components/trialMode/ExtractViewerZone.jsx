@@ -197,18 +197,8 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   return (
     <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] relative overflow-hidden">
 
-      {/* Spotlight overlay */}
-      {spotlightCallout && (
-        <SpotlightOverlay
-          extractFileUrl={extractFileUrl}
-          callout={spotlightCallout}
-          highlights={spotlightHighlights}
-          onClose={() => setSpotlightCallout(null)}
-        />
-      )}
-
-      {/* Toolbar */}
-      <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-[#1e2a45] bg-[#0f1629] flex-shrink-0 flex-wrap">
+      {/* Toolbar — always above spotlight */}
+      <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-[#1e2a45] bg-[#0f1629] flex-shrink-0 flex-wrap relative z-50">
         {exhibitLabel && (
           <span className="text-xs font-semibold text-green-300 bg-green-900/30 border border-green-700/30 px-2 py-0.5 rounded mr-1">
             {exhibitLabel}
