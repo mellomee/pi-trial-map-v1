@@ -131,6 +131,10 @@ export default function CalloutEditor({ extract }) {
   // Panel collapse
   const [panelOpen, setPanelOpen] = useState(true);
 
+  // Inline callout name editing
+  const [editingCalloutId, setEditingCalloutId] = useState(null);
+  const [editingCalloutName, setEditingCalloutName] = useState("");
+
   // Search
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]); // [{page, snippet}]
