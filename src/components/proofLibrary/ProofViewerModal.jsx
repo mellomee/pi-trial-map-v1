@@ -319,7 +319,18 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           <div className="space-y-4">
                 <Badge className="bg-purple-500/20 text-purple-300">Exhibit Extract</Badge>
 
-                
+                {/* Extract file + callout sidebar */}
+                <ExtractFileWithCallouts
+                  extract={extract}
+                  callouts={callouts}
+                  caseParties={caseParties}
+                  proofItem={proofItem}
+                  spotlightCallout={selectedCallout}
+                  highlights={highlights}
+                  onSpotlightCallout={setSelectedCallout}
+                  onSetAsProofCallout={handleSetAsProofCallout}
+                  isCurrentProofCallout={isCurrentProofCallout}
+                />
 
 
 
