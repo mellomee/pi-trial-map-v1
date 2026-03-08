@@ -108,6 +108,13 @@ export default function CalloutEditor({ extract }) {
   // Panel collapse
   const [panelOpen, setPanelOpen] = useState(true);
 
+  // Search
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]); // [{page, snippet}]
+  const [searchStatus, setSearchStatus] = useState(""); // "searching" | "done" | "scanned" | ""
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef(null);
+
   // Load PDF
   useEffect(() => {
     if (!fileUrl?.toLowerCase().includes(".pdf")) return;
