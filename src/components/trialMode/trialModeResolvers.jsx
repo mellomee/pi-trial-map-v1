@@ -44,11 +44,15 @@ export async function resolveQuestionLinks(questionId, caseId) {
       ? await Promise.all(allProofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))).then(r => r.flat())
       : [];
 
-    // Enrich depoClip proof items with their title (topic_tag)
+    // Enrich proof items: depoClip gets clip_title, extract gets callout_name
     proofItems = await Promise.all(proofItems.map(async (pi) => {
       if (pi.type === 'depoClip' && pi.source_id) {
         const clips = await base44.entities.DepoClips.filter({ id: pi.source_id });
         if (clips[0]?.topic_tag) return { ...pi, clip_title: clips[0].topic_tag };
+      }
+      if (pi.type === 'extract' && pi.callout_id) {
+        const callouts = await base44.entities.Callouts.filter({ id: pi.callout_id });
+        if (callouts[0]?.name) return { ...pi, callout_name: callouts[0].name };
       }
       return pi;
     }));
