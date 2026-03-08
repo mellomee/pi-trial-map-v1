@@ -28,10 +28,42 @@ function HighlightOverlay({ highlights }) {
 }
 
 // ---------- Spotlight overlay ----------
-function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
-  const [zoom, setZoom] = useState(1);
+function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoom = 1, maxWidth = '95%' }) {
+  const containerRef = useRef(null);
+  const [zoom, setZoom] = useState(pdfZoom);
+  const lastDistRef = useRef(0);
+
+  // Sync with PDF zoom
+  useEffect(() => {
+    setZoom(pdfZoom);
+  }, [pdfZoom]);
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dist = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      if (lastDistRef.current > 0) {
+        const delta = dist - lastDistRef.current;
+        const newZoom = Math.min(4, Math.max(0.5, zoom + delta * 0.01));
+        setZoom(newZoom);
+      }
+      lastDistRef.current = dist;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    lastDistRef.current = 0;
+  };
+
   return (
-    <div className="absolute inset-0 z-20 overflow-hidden" style={{ background: 'rgba(0,0,0,0.0)' }}>
+    <div className="absolute inset-0 z-20 overflow-hidden" style={{ background: 'rgba(0,0,0,0.0)' }} ref={containerRef}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}>
       {/* Background: dimmed extract file */}
       {extractFileUrl && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
@@ -44,14 +76,14 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
       {/* Controls */}
       <div className="absolute top-3 right-3 flex items-center gap-2 z-40">
         <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-white p-2 rounded-lg touch-manipulation"><ZoomOut className="w-4 h-4" /></button>
-        <button onClick={() => setZoom(1)} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-slate-300 px-3 py-2 rounded-lg text-xs font-mono touch-manipulation">{Math.round(zoom * 100)}%</button>
+        <button onClick={() => setZoom(pdfZoom)} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-slate-300 px-3 py-2 rounded-lg text-xs font-mono touch-manipulation">{Math.round(zoom * 100)}%</button>
         <button onClick={() => setZoom(z => Math.min(z + 0.25, 4))} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-white p-2 rounded-lg touch-manipulation"><ZoomIn className="w-4 h-4" /></button>
         <button onClick={onClose} className="bg-red-900/80 hover:bg-red-700 border border-red-600/40 text-red-300 p-2 rounded-lg touch-manipulation ml-1"><X className="w-4 h-4" /></button>
       </div>
 
-      {/* Callout — centered, bright */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 3 }}>
-        <div className="overflow-auto" style={{ maxWidth: '95%', maxHeight: '90%' }}>
+      {/* Callout — centered, bright, width-constrained */}
+      <div className="absolute inset-0 flex items-center justify-center pr-28" style={{ zIndex: 3 }}>
+        <div className="overflow-auto" style={{ maxWidth, maxHeight: '90%' }}>
           <div className="relative inline-block shadow-2xl rounded-lg border border-white/10"
             style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.15s' }}>
             <img src={callout.snapshot_image_url} alt={callout.name || 'Callout'}
