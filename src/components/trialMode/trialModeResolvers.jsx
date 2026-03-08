@@ -19,9 +19,12 @@ export async function resolveQuestionLinks(questionId, caseId) {
       .filter(l => l.link_type === 'ProofItem')
       .map(l => l.link_id);
 
-    // Path C: EvidenceGroup-based links (for resolving evidenceGroups and trialPoints only)
+    // Path C: EvidenceGroup-based links — also check question's primary_evidence_group_id
     const questionEvidenceGroupLinks = await base44.entities.QuestionEvidenceGroups.filter({ question_id: questionId });
-    const egIds = questionEvidenceGroupLinks.map(link => link.evidence_group_id);
+    const questionRecord = await base44.entities.Questions.filter({ id: questionId }).then(r => r[0]);
+    const primaryEgId = questionRecord?.primary_evidence_group_id;
+    const rawEgIds = questionEvidenceGroupLinks.map(link => link.evidence_group_id);
+    const egIds = primaryEgId && !rawEgIds.includes(primaryEgId) ? [...rawEgIds, primaryEgId] : rawEgIds;
 
     const [evidenceGroups, egProofItemLinks] = egIds.length
       ? await Promise.all([
