@@ -296,11 +296,61 @@ export default function CalloutEditor({ extract }) {
 
   const isImageFile = fileUrl && !fileUrl.toLowerCase().includes(".pdf");
 
+  // Compute highlight rects for a search term on a given page
+  const computeRectsForPage = useCallback(async (pageNum, term) => {
+    if (!pdfDoc || !term.trim()) return [];
+    const page = await pdfDoc.getPage(pageNum);
+    const vp = page.getViewport({ scale });
+    const tc = await page.getTextContent();
+    const q = term.toLowerCase();
+    const rects = [];
+    for (const item of tc.items) {
+      if (!item.str.toLowerCase().includes(q)) continue;
+      // item.transform = [scaleX, skewY, skewX, scaleY, tx, ty] in PDF units (bottom-left origin)
+      const [scX, , , scY, tx, ty] = item.transform;
+      const itemH = Math.abs(scY);
+      // Convert PDF coords (bottom-left) to viewport coords (top-left)
+      const pt = vp.convertToViewportPoint(tx, ty);
+      const ptEnd = vp.convertToViewportPoint(tx + item.width * (scX > 0 ? 1 : -1), ty);
+      const x = Math.min(pt[0], ptEnd[0]);
+      const y = pt[1] - Math.abs(itemH * (vp.scale));
+      const w = Math.abs(ptEnd[0] - pt[0]);
+      const h = Math.abs(itemH * vp.scale);
+      rects.push({ x, y, w, h });
+    }
+    return rects;
+  }, [pdfDoc, scale]);
+
+  // Navigate to a specific search result index
+  const navigateToResult = useCallback(async (idx, results, term) => {
+    if (!results || results.length === 0) return;
+    const r = results[idx];
+    setActiveResultIdx(idx);
+    setPageNum(r.page);
+    setShowSearchResults(false);
+    const rects = await computeRectsForPage(r.page, term);
+    setSearchRects(rects);
+  }, [computeRectsForPage]);
+
+  // Clear search rects when page changes away from active result
+  useEffect(() => {
+    if (activeResultIdx === null) return;
+    const activeResult = searchResults[activeResultIdx];
+    if (!activeResult || activeResult.page !== pageNum) {
+      setSearchRects([]);
+    } else {
+      // Recompute rects when scale changes
+      computeRectsForPage(pageNum, searchTerm).then(setSearchRects);
+    }
+  }, [pageNum, scale, activeResultIdx]);
+
   // Search across all PDF pages
   const runSearch = async (term) => {
-    if (!pdfDoc || !term.trim()) { setSearchResults([]); setSearchStatus(""); return; }
+    if (!pdfDoc || !term.trim()) { setSearchResults([]); setSearchStatus(""); setSearchRects([]); setActiveResultIdx(null); return; }
     setSearchStatus("searching");
     setShowSearchResults(true);
+    setActiveResultIdx(null);
+    setSearchRects([]);
     const q = term.toLowerCase();
     const results = [];
     let totalTextFound = 0;
@@ -310,7 +360,6 @@ export default function CalloutEditor({ extract }) {
       const pageText = tc.items.map(i => i.str).join(" ");
       totalTextFound += pageText.trim().length;
       if (pageText.toLowerCase().includes(q)) {
-        // Grab a short snippet around the match
         const idx = pageText.toLowerCase().indexOf(q);
         const start = Math.max(0, idx - 40);
         const end = Math.min(pageText.length, idx + term.length + 60);
@@ -324,6 +373,10 @@ export default function CalloutEditor({ extract }) {
       setSearchStatus("done");
     }
     setSearchResults(results);
+    // Auto-jump to first result
+    if (results.length > 0) {
+      navigateToResult(0, results, term);
+    }
   };
 
   // Close search dropdown on outside click
