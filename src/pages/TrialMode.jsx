@@ -15,6 +15,7 @@ import {
   publishProofToJury,
   clearJuryDisplay,
 } from "@/components/trialMode/trialModeResolvers";
+import { setSpotlightChangeCallback } from "@/components/trialMode/ExtractViewerZone";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ChevronRight, AlertTriangle, X } from "lucide-react";
 
