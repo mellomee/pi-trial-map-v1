@@ -112,23 +112,24 @@ const PdfViewer = React.forwardRef(function PdfViewer({
     }
   }));
 
-  // Handle wheel zoom (Ctrl+wheel or trackpad pinch)
+  // Handle wheel zoom (trackpad pinch or Ctrl+wheel)
   const handleWheel = (e) => {
-    const now = Date.now();
-    if (now - lastWheelTime.current < 50) return; // debounce
-    lastWheelTime.current = now;
-
-    if (!e.ctrlKey && !e.metaKey && Math.abs(e.deltaY) > 0) {
-      // Pinch-like wheel event (trackpad)
+    // Trackpad pinch or Ctrl+wheel for zoom
+    if ((e.ctrlKey || e.metaKey || Math.abs(e.deltaY) < 5) && Math.abs(e.deltaY) > 0) {
       e.preventDefault();
-      const delta = -e.deltaY * 0.005; // invert scroll for natural zoom
+      const now = Date.now();
+      if (now - lastWheelTime.current < 30) return; // debounce
+      lastWheelTime.current = now;
+
+      // Invert for natural zoom direction
+      const delta = -e.deltaY * 0.005;
       const newZoom = Math.min(4, Math.max(0.5, zoom + delta));
       setZoom(newZoom);
       onZoomChange?.(newZoom);
     }
   };
 
-  // Handle touch pinch zoom
+  // Handle two-finger touch pinch zoom
   const handleTouchMove = (e) => {
     if (e.touches.length === 2) {
       e.preventDefault();
