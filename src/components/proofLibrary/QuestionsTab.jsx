@@ -197,9 +197,11 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
                     <div className="space-y-2">
                       <p className="text-xs text-gray-400 font-semibold">LINKED PROOF</p>
                       {links.map((link) => {
-                        const proof = proofItems.find(p => 
-                          (link.link_type === 'DepoClip' && p.source_id === link.link_id && p.type === 'depoClip') ||
-                          (link.link_type === 'JointExhibit' && p.source_id === link.link_id && p.type === 'jointExhibit')
+                        const proof = proofItems.find(p =>
+                          link.link_type === 'ProofItem'
+                            ? p.id === link.link_id
+                            : (link.link_type === 'DepoClip' && p.source_id === link.link_id && p.type === 'depoClip') ||
+                              (link.link_type === 'JointExhibit' && p.source_id === link.link_id && p.type === 'jointExhibit')
                         );
                         return (
                           <div key={link.id} className="flex items-start justify-between gap-2 bg-[#131a2e] p-2 rounded text-xs">
