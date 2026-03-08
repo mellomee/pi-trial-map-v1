@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Scissors, Highlighter,
   Plus, Trash2, CheckSquare, Square, ChevronRight as PanelClose, ChevronsLeft, ChevronsRight,
-  Printer, User
+  Printer, User, Search, X
 } from "lucide-react";
 import HighlightEditorModal from "./HighlightEditorModal";
 
