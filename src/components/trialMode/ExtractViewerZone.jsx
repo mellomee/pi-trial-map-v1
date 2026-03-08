@@ -191,6 +191,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
+  extractFileUrlRef.current = extractFileUrl; // keep ref in sync for async callbacks
   const spotlightHighlights = spotlightCallout ? (highlightsByCallout[spotlightCallout.id] || []) : [];
 
   // Pinch zoom
