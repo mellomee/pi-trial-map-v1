@@ -115,47 +115,32 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const [highlightsByCallout, setHighlightsByCallout] = useState({});
   const [witnessByCallout, setWitnessByCallout] = useState({});
   const [jx, setJx] = useState(null);
-  const [zoom, setZoom] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [spotlightCallout, setSpotlightCallout] = useState(null); // callout being spotlighted
-
-  const [calloutVisible, setCalloutVisible] = useState(true); // hide/show callout on jury
+  const [spotlightCallout, setSpotlightCallout] = useState(null);
+  const [calloutVisible, setCalloutVisible] = useState(true);
 
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
-  const pdfViewerRef = useRef(null);
   const sidebarRef = useRef(null);
 
+  // Use shared presentation state (attorney is the writer, jury is the reader)
+  const { state: presentationState, setPage, setZoom } = usePresentationState(trialSessionId, true);
+  const zoom = presentationState?.proof_zoom_level || 1;
+  const currentPage = presentationState?.proof_current_page || 1;
+
   // When spotlight changes while publishing, notify TrialMode via module-level callback
-  // If callout is hidden, always send null to jury
   useEffect(() => {
     if (isPublishing && _spotlightChangeCallback) {
       _spotlightChangeCallback(!calloutVisible ? null : (spotlightCallout?.id || null));
     }
   }, [spotlightCallout?.id, isPublishing, calloutVisible]);
 
-  // Sync zoom and page to TrialSessionStates when attorney zooms/pages
   const handleZoomChange = useCallback((newZoom) => {
     setZoom(newZoom);
-    if (isPublishing && trialSessionId) {
-      base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
-        if (states[0]) {
-          base44.entities.TrialSessionStates.update(states[0].id, { proof_zoom_level: newZoom });
-        }
-      });
-    }
-  }, [isPublishing, trialSessionId]);
+  }, [setZoom]);
 
   const handlePageChange = useCallback((newPage) => {
-    setCurrentPage(newPage);
-    if (isPublishing && trialSessionId) {
-      base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
-        if (states[0]) {
-          base44.entities.TrialSessionStates.update(states[0].id, { proof_current_page: newPage });
-        }
-      });
-    }
-  }, [isPublishing, trialSessionId]);
+    setPage(newPage);
+  }, [setPage]);
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
