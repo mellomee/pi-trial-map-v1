@@ -207,6 +207,7 @@ export default function JuryView() {
                 readOnly={true}
                 showControls={false}
                 dimmed={callout?.snapshot_image_url ? true : false}
+                dimOpacity={0.15}
               />
 
               {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
