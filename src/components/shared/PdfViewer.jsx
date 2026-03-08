@@ -192,8 +192,12 @@ const PdfViewer = React.forwardRef(function PdfViewer({
         className="flex-1 overflow-auto flex items-start justify-center p-4"
         style={{
           opacity: dimmed ? 0.15 : 1,
-          filter: dimmed ? 'blur(0.5px)' : 'none'
+          filter: dimmed ? 'blur(0.5px)' : 'none',
+          touchAction: 'pinch-zoom'
         }}
+        onWheel={handleWheel}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <canvas
           ref={canvasRef}
