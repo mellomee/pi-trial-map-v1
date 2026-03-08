@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 
-function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
+function HighlightOverlay({ highlights }) {
   if (!highlights?.length) return null;
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -40,26 +40,34 @@ export default function JuryView() {
   const [depoClip, setDepoClip] = useState(null);
   const [depo, setDepo] = useState(null);
   const [jx, setJx] = useState(null);
-  const pollRef = useRef(null);
 
-  // Poll for session state
+  // Subscribe to TrialSessionStates for instant updates
   useEffect(() => {
     if (!activeCase?.id) return;
-    const poll = async () => {
-      const sessions = await base44.entities.TrialSessions.filter({
-        case_id: activeCase.id,
-        status: { $in: ['Setup', 'Active'] },
-      });
+    
+    // First load active session
+    base44.entities.TrialSessions.filter({
+      case_id: activeCase.id,
+      status: { $in: ['Setup', 'Active'] },
+    }).then(async (sessions) => {
       if (!sessions.length) return;
+      const sessionId = sessions[0].id;
+      
+      // Subscribe to state changes for this session
+      const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
+        if (event.data?.trial_session_id === sessionId) {
+          setSessionState(event.data);
+        }
+      });
+      
+      // Load initial state
       const states = await base44.entities.TrialSessionStates.filter({
-        trial_session_id: sessions[0].id,
+        trial_session_id: sessionId,
       });
       if (states.length) setSessionState(states[0]);
-      else setSessionState(null);
-    };
-    poll();
-    pollRef.current = setInterval(poll, 2000);
-    return () => clearInterval(pollRef.current);
+      
+      return unsub;
+    });
   }, [activeCase?.id]);
 
   // Load proof item when session state changes
