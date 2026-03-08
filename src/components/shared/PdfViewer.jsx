@@ -112,6 +112,50 @@ const PdfViewer = React.forwardRef(function PdfViewer({
     }
   }));
 
+  // Handle wheel zoom (Ctrl+wheel or trackpad pinch)
+  const handleWheel = (e) => {
+    const now = Date.now();
+    if (now - lastWheelTime.current < 50) return; // debounce
+    lastWheelTime.current = now;
+
+    if (!e.ctrlKey && !e.metaKey && Math.abs(e.deltaY) > 0) {
+      // Pinch-like wheel event (trackpad)
+      e.preventDefault();
+      const delta = -e.deltaY * 0.005; // invert scroll for natural zoom
+      const newZoom = Math.min(4, Math.max(0.5, zoom + delta));
+      setZoom(newZoom);
+      onZoomChange?.(newZoom);
+    }
+  };
+
+  // Handle touch pinch zoom
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dist = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      
+      if (!containerRef.current._lastDist) {
+        containerRef.current._lastDist = dist;
+        return;
+      }
+      
+      const delta = dist - containerRef.current._lastDist;
+      const newZoom = Math.min(4, Math.max(0.5, zoom + delta * 0.01));
+      setZoom(newZoom);
+      onZoomChange?.(newZoom);
+      containerRef.current._lastDist = dist;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (containerRef.current) containerRef.current._lastDist = null;
+  };
+
   if (loading) {
     return <div className="w-full h-full flex items-center justify-center bg-black text-slate-400">Loading PDF...</div>;
   }
