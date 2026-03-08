@@ -195,6 +195,11 @@ export default function TrialMode() {
     window.__trialModePublished = false;
   };
 
+  const handleSpotlightChange = async (calloutId) => {
+    if (!trialSession || !publishedProof) return;
+    await publishProofToJury(trialSession.id, publishedProof.id, calloutId);
+  };
+
   // Resizing logic
   const startDragHB = useCallback((e) => {
     e.preventDefault();
