@@ -21,7 +21,9 @@ const COLOR_CSS = {
 };
 
 // ── PDF page renderer ─────────────────────────────────────────────────────────
-function PdfPageRenderer({ pdfDoc, pageNum, scale, canvasRef }) {
+function PdfPageRenderer({ pdfDoc, pageNum, scale, canvasRef, searchRects }) {
+  const overlayRef = useRef(null);
+
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return;
     let cancelled = false;
@@ -35,7 +37,28 @@ function PdfPageRenderer({ pdfDoc, pageNum, scale, canvasRef }) {
     });
     return () => { cancelled = true; };
   }, [pdfDoc, pageNum, scale]);
-  return <canvas ref={canvasRef} style={{ display: "block" }} />;
+
+  // Draw search highlight rects on the overlay canvas
+  useEffect(() => {
+    if (!overlayRef.current || !canvasRef.current) return;
+    const overlay = overlayRef.current;
+    overlay.width = canvasRef.current.width;
+    overlay.height = canvasRef.current.height;
+    const ctx = overlay.getContext("2d");
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    if (!searchRects || searchRects.length === 0) return;
+    ctx.fillStyle = "rgba(255, 220, 0, 0.45)";
+    searchRects.forEach(r => {
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+    });
+  }, [searchRects, canvasRef.current?.width, canvasRef.current?.height]);
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <canvas ref={canvasRef} style={{ display: "block" }} />
+      <canvas ref={overlayRef} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }} />
+    </div>
+  );
 }
 
 // ── Print helper: renders snapshot + highlights onto a canvas, then prints ────
