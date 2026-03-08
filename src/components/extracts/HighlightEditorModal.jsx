@@ -170,8 +170,8 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
               )}
               {highlights.map((hl, i) => (
                 <div key={hl.id} className="flex items-center gap-1.5 bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1.5">
-                  <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: COLOR_CSS[hl.color] || COLOR_CSS.yellow }} />
-                  <span className="text-[10px] text-slate-400 flex-1">{hl.color} · {hl.rects_norm?.length || 0} rect</span>
+                  <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: colorCss(hl.color, hl.opacity ?? 0.4) }} />
+                  <span className="text-[10px] text-slate-400 flex-1">{hl.color} · {Math.round((hl.opacity ?? 0.4) * 100)}%</span>
                   <button onClick={() => deleteHl(hl.id)} className="p-0.5 text-slate-600 hover:text-red-400">
                     <Trash2 className="w-3 h-3" />
                   </button>
