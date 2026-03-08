@@ -73,7 +73,6 @@ import Questions from './pages/Questions';
 import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
-import TrialMode from './pages/TrialMode';
 import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
 import TrialRunner from './pages/TrialRunner';
@@ -81,6 +80,7 @@ import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
 import JuryView from './pages/JuryView';
+import TrialMode from './pages/TrialMode';
 import __Layout from './Layout.jsx';
 
 
@@ -111,7 +111,6 @@ export const PAGES = {
     "Runner": Runner,
     "SettingsPage": SettingsPage,
     "Transcripts": Transcripts,
-    "TrialMode": TrialMode,
     "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
     "TrialRunner": TrialRunner,
@@ -119,6 +118,7 @@ export const PAGES = {
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
     "JuryView": JuryView,
+    "TrialMode": TrialMode,
 }
 
 export const pagesConfig = {
