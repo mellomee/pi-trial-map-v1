@@ -528,7 +528,7 @@ export default function CalloutEditor({ extract }) {
                 onMouseMove={onCanvasMouseMove}
                 onMouseUp={onCanvasMouseUp}
                 onMouseLeave={() => { if (dragging) { setDragging(false); setDragStart(null); setDragCurrent(null); } }}>
-                <PdfPageRenderer pdfDoc={pdfDoc} pageNum={pageNum} scale={scale} canvasRef={canvasRef} />
+                <PdfPageRenderer pdfDoc={pdfDoc} pageNum={pageNum} scale={scale} canvasRef={canvasRef} searchRects={searchRects} />
                 {dragging && (() => { const s = draftStyle(); return s ? (
                   <div style={{
                     position: "absolute", left: s.left, top: s.top, width: s.width, height: s.height,
