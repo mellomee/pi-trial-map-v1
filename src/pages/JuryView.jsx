@@ -158,30 +158,55 @@ export default function JuryView() {
         </div>
       )}
 
-      {proofItem.type === 'extract' && callout?.snapshot_image_url && (
-        <div className="w-full h-full flex flex-col" style={{ padding: exhibitLabel ? '0' : '0' }}>
-          {/* Exhibit label — absolute top-right overlay */}
+      {proofItem.type === 'extract' && (
+        <div className="w-full h-full relative overflow-hidden">
+          {/* Exhibit label */}
           {exhibitLabel && (
-            <div className="absolute top-3 right-4 z-10">
+            <div className="absolute top-3 right-4 z-20">
               <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
             </div>
           )}
-          {/* Fill entire screen with image */}
-          <div className="w-full h-full flex items-center justify-center overflow-hidden">
-            <div className="relative" style={{ maxWidth: '100vw', maxHeight: '100vh' }}>
-              <img
-                src={callout.snapshot_image_url}
-                alt="Evidence"
-                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain' }}
-              />
-              <HighlightOverlay highlights={highlights} />
-            </div>
-          </div>
-        </div>
-      )}
 
-      {proofItem.type === 'extract' && !callout?.snapshot_image_url && (
-        <div className="text-slate-500 text-xl">Loading evidence...</div>
+          {/* Full extract background — always visible */}
+          {sessionState?.extract_file_url && (
+            <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${callout?.snapshot_image_url ? 'opacity-20' : 'opacity-100'}`}
+              style={{ zIndex: 1 }}>
+              <img
+                src={sessionState.extract_file_url}
+                alt="Extract"
+                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain',
+                  filter: callout?.snapshot_image_url ? 'blur(2px)' : 'none',
+                  userSelect: 'none' }}
+                draggable={false}
+              />
+            </div>
+          )}
+
+          {/* Dark overlay when callout is spotlighted */}
+          {callout?.snapshot_image_url && sessionState?.extract_file_url && (
+            <div className="absolute inset-0" style={{ background: 'rgba(5,8,22,0.7)', zIndex: 2 }} />
+          )}
+
+          {/* Spotlighted callout — centered, bright */}
+          {callout?.snapshot_image_url && (
+            <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 3 }}>
+              <div className="relative inline-block shadow-2xl rounded-lg border border-white/10"
+                style={{ maxWidth: '95vw', maxHeight: '92vh' }}>
+                <img
+                  src={callout.snapshot_image_url}
+                  alt="Evidence Callout"
+                  style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                />
+                <HighlightOverlay highlights={highlights} />
+              </div>
+            </div>
+          )}
+
+          {/* No extract file and no callout — waiting */}
+          {!sessionState?.extract_file_url && !callout?.snapshot_image_url && (
+            <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-lg">Loading evidence...</div>
+          )}
+        </div>
       )}
     </div>
   );
