@@ -168,7 +168,7 @@ export default function JuryView() {
               <img
                 src={extract.extract_file_url}
                 alt="Extract"
-                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain', opacity: 0.18, filter: 'blur(1px)', userSelect: 'none' }}
+                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain', opacity: 0.3, filter: 'blur(2px)', userSelect: 'none' }}
                 draggable={false}
               />
             </div>
