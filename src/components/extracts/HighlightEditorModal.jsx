@@ -21,6 +21,7 @@ const COLOR_CSS = {
 export default function HighlightEditorModal({ callout, highlights, onHighlightsChange, onClose }) {
   const imgRef = useRef(null);
   const [color, setColor] = useState("yellow");
+  const [opacity, setOpacity] = useState(0.4);
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCurrent, setDragCurrent] = useState(null);
