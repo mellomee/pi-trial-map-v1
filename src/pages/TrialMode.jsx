@@ -196,10 +196,16 @@ export default function TrialMode() {
     window.__trialModePublished = false;
   };
 
-  const handleSpotlightChange = async (calloutId) => {
+  const handleSpotlightChange = useCallback(async (calloutId) => {
     if (!trialSession || !publishedProof) return;
     await publishProofToJury(trialSession.id, publishedProof.id, calloutId);
-  };
+  }, [trialSession, publishedProof]);
+
+  // Register spotlight callback with ExtractViewerZone
+  useEffect(() => {
+    setSpotlightChangeCallback(handleSpotlightChange);
+    return () => setSpotlightChangeCallback(null);
+  }, [handleSpotlightChange]);
 
   // Resizing logic
   const startDragHB = useCallback((e) => {
