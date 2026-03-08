@@ -48,6 +48,7 @@ export default function ProofLibrary() {
   const [newGroupData, setNewGroupData] = useState({ title: '', description: '', priority: 'Med', tags: '' });
   const [editing, setEditing] = useState(null);
   const [proofInUseModalProof, setProofInUseModalProof] = useState(null); // proof being deleted (if in use)
+  const [bucketsOpen, setBucketsOpen] = useState(true);
 
   useEffect(() => {
     if (activeCase?.id) {
