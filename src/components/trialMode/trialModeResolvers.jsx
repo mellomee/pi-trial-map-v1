@@ -47,27 +47,37 @@ export async function resolveQuestionLinks(questionId, caseId) {
       ? await Promise.all(allProofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))).then(r => r.flat())
       : [];
 
-    // Enrich proof items: depoClip gets clip_title, extract gets callout_name
-    proofItems = await Promise.all(proofItems.map(async (pi) => {
-      if (pi.type === 'depoClip' && pi.source_id) {
-        const clips = await base44.entities.DepoClips.filter({ id: pi.source_id });
-        if (clips[0]?.topic_tag) return { ...pi, clip_title: clips[0].topic_tag };
+    // Batch enrich proof items to avoid rate limiting
+    const depoClipIds = proofItems.filter(pi => pi.type === 'depoClip' && pi.source_id).map(pi => pi.source_id);
+    const extractIds = proofItems.filter(pi => pi.type === 'extract' && pi.source_id).map(pi => pi.source_id);
+    const calloutIds = proofItems.filter(pi => pi.callout_id).map(pi => pi.callout_id);
+
+    const [depoClips, extracts, callouts] = await Promise.all([
+      depoClipIds.length ? base44.entities.DepoClips.filter({ id: { $in: depoClipIds } }) : Promise.resolve([]),
+      extractIds.length ? base44.entities.ExhibitExtracts.filter({ id: { $in: extractIds } }) : Promise.resolve([]),
+      calloutIds.length ? base44.entities.Callouts.filter({ id: { $in: calloutIds } }) : Promise.resolve([]),
+    ]);
+
+    const depoClipMap = Object.fromEntries(depoClips.map(c => [c.id, c]));
+    const extractMap = Object.fromEntries(extracts.map(e => [e.id, e]));
+    const calloutMap = Object.fromEntries(callouts.map(c => [c.id, c]));
+
+    proofItems = proofItems.map(pi => {
+      if (pi.type === 'depoClip' && pi.source_id && depoClipMap[pi.source_id]?.topic_tag) {
+        return { ...pi, clip_title: depoClipMap[pi.source_id].topic_tag };
       }
       if (pi.type === 'extract' && pi.source_id) {
         const enriched = { ...pi };
-        if (pi.callout_id) {
-          const callouts = await base44.entities.Callouts.filter({ id: pi.callout_id });
-          if (callouts[0]?.name) enriched.callout_name = callouts[0].name;
+        if (pi.callout_id && calloutMap[pi.callout_id]?.name) {
+          enriched.callout_name = calloutMap[pi.callout_id].name;
         }
-        if (!enriched.label) {
-          // Fallback label from extract title
-          const extracts = await base44.entities.ExhibitExtracts.filter({ id: pi.source_id });
-          if (extracts[0]) enriched.label = extracts[0].extract_title_internal || extracts[0].extract_title_official || 'Extract';
+        if (!enriched.label && extractMap[pi.source_id]) {
+          enriched.label = extractMap[pi.source_id].extract_title_internal || extractMap[pi.source_id].extract_title_official || 'Extract';
         }
         return enriched;
       }
       return pi;
-    }));
+    });
 
     // TrialPoints linked to those groups
     const egTrialPointLinks = egIds.length
