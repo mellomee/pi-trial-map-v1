@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, ExternalLink, Pencil } from 'lucide-react';
+import { Plus, Search, ExternalLink, Pencil, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import EvidenceGroupCard from '@/components/proofLibrary/EvidenceGroupCard';
 import ProofItemCard from '@/components/proofLibrary/ProofItemCard';
