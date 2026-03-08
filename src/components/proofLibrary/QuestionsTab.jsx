@@ -240,7 +240,10 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
                                 : 'bg-[#0a0f1e] text-gray-300 hover:bg-cyan-900 hover:text-cyan-300'
                             }`}
                           >
-                            {proof.label}
+                            <span>{proof.label}</span>
+                            {proof.type === 'extract' && proof.callout_id && calloutNames?.[proof.callout_id] && (
+                              <span className="block text-[10px] text-cyan-500 mt-0.5">↳ {calloutNames[proof.callout_id]}</span>
+                            )}
                           </button>
                         );
                       })}
