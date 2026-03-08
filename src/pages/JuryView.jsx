@@ -162,8 +162,8 @@ export default function JuryView() {
             </div>
           )}
 
-          {/* Background: full extract file, dimmed */}
-          {extract?.extract_file_url && (
+          {/* Background (only shown when callout is active — dimmed blur) */}
+          {callout?.snapshot_image_url && extract?.extract_file_url && (
             <div className="absolute inset-0 flex items-center justify-center z-0">
               <img
                 src={extract.extract_file_url}
