@@ -446,6 +446,25 @@ export default function CalloutEditor({ extract }) {
                     </button>
                   </div>
 
+                  {/* Prev / Next when results exist */}
+                  {searchResults.length > 0 && activeResultIdx !== null && (
+                    <div className="flex items-center gap-1 mt-0 ml-1">
+                      <button
+                        onClick={() => navigateToResult(Math.max(0, activeResultIdx - 1), searchResults, searchTerm)}
+                        disabled={activeResultIdx === 0}
+                        className="p-0.5 text-slate-400 hover:text-white disabled:opacity-30">
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-[10px] text-slate-400 min-w-[48px] text-center">{activeResultIdx + 1} / {searchResults.length}</span>
+                      <button
+                        onClick={() => navigateToResult(Math.min(searchResults.length - 1, activeResultIdx + 1), searchResults, searchTerm)}
+                        disabled={activeResultIdx === searchResults.length - 1}
+                        className="p-0.5 text-slate-400 hover:text-white disabled:opacity-30">
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
                   {/* Results dropdown */}
                   {showSearchResults && (searchStatus === "searching" || searchResults.length > 0 || searchStatus === "done" || searchStatus === "scanned") && (
                     <div className="absolute top-full left-0 mt-1 w-80 bg-[#0f1629] border border-[#2a3a5a] rounded-lg shadow-2xl z-50 overflow-hidden">
@@ -462,10 +481,11 @@ export default function CalloutEditor({ extract }) {
                         <div className="max-h-56 overflow-y-auto">
                           <div className="px-3 py-1.5 border-b border-[#1e2a45] text-[10px] text-slate-500">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</div>
                           {searchResults.map((r, i) => (
-                            <button key={i} onClick={() => { setPageNum(r.page); setShowSearchResults(false); }}
-                              className="w-full text-left px-3 py-2 hover:bg-cyan-500/10 border-b border-[#1e2a45]/50 transition-colors group">
+                            <button key={i} onClick={() => navigateToResult(i, searchResults, searchTerm)}
+                              className={`w-full text-left px-3 py-2 hover:bg-cyan-500/10 border-b border-[#1e2a45]/50 transition-colors ${activeResultIdx === i ? "bg-cyan-500/15" : ""}`}>
                               <div className="flex items-center gap-2 mb-0.5">
                                 <span className="text-[10px] font-bold text-cyan-400 flex-shrink-0">Page {r.page}</span>
+                                {activeResultIdx === i && <span className="text-[9px] text-cyan-600">← current</span>}
                               </div>
                               <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-2">{r.snippet}</p>
                             </button>
