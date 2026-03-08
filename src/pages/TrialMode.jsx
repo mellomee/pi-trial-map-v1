@@ -134,9 +134,6 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
-    if (publishedProof && questionId !== selectedQuestionId) {
-      await handleClearJury();
-    }
     setSelectedQuestionId(questionId);
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
