@@ -114,6 +114,16 @@ export default function JuryView() {
           setDepoClip(null);
           setDepo(null);
           
+          // If extract doesn't have a file URL, try to load from primary depo exhibit
+          let depoEx = null;
+          if (!extract.extract_file_url && extract.primary_depo_exhibit_id) {
+            const depoExhibits = await base44.entities.DepositionExhibits.filter({ id: extract.primary_depo_exhibit_id });
+            depoEx = depoExhibits[0] || null;
+            setDepoExhibit(depoEx);
+          } else {
+            setDepoExhibit(null);
+          }
+          
           // Load joint exhibit for label
           const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
           setJx(jxs[0] || null);
