@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, Link } from 'lucide-react';
+import useActiveCase from '@/components/hooks/useActiveCase';
 
 // ---------- Highlight overlay ----------
 function HighlightOverlay({ highlights }) {
