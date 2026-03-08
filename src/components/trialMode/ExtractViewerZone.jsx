@@ -31,39 +31,14 @@ function HighlightOverlay({ highlights }) {
 function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoom = 1, maxWidth = '95%' }) {
   const containerRef = useRef(null);
   const [zoom, setZoom] = useState(pdfZoom);
-  const lastDistRef = useRef(0);
 
   // Sync with PDF zoom
   useEffect(() => {
     setZoom(pdfZoom);
   }, [pdfZoom]);
 
-  const handleTouchMove = (e) => {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const dist = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      );
-      if (lastDistRef.current > 0) {
-        const delta = dist - lastDistRef.current;
-        const newZoom = Math.min(4, Math.max(0.5, zoom + delta * 0.01));
-        setZoom(newZoom);
-      }
-      lastDistRef.current = dist;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    lastDistRef.current = 0;
-  };
-
   return (
-    <div className="absolute inset-0 z-20 overflow-hidden" style={{ background: 'rgba(0,0,0,0.0)' }} ref={containerRef}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}>
+    <div className="absolute inset-0 z-20 overflow-hidden" style={{ background: 'rgba(0,0,0,0.0)' }} ref={containerRef}>
       {/* Background: dimmed extract file */}
       {extractFileUrl && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
