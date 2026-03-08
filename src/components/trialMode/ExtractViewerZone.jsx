@@ -366,7 +366,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
 
         {/* Callout sidebar */}
         {allCallouts.length > 0 && (
-          <div className="w-28 flex-shrink-0 bg-[#0f1629] border-l border-[#1e2a45] overflow-y-auto">
+          <div className="w-28 flex-shrink-0 bg-[#0f1629] border-l border-[#1e2a45] overflow-y-auto" ref={sidebarRef}>
             <div className="p-1.5 space-y-1.5">
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
@@ -379,6 +379,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                   isActive={spotlightCallout?.id === c.id}
                   isLinked={selectedProof?.callout_id === c.id}
                   onClick={() => {
+                    // Toggle: click same callout to close, click different to open
                     setSpotlightCallout(prev => prev?.id === c.id ? null : c);
                     // Auto-navigate to callout's page if PDF
                     if (isPdf && c.page_number && pdfViewerRef.current?.setPage) {
