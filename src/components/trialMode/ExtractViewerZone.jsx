@@ -226,7 +226,17 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       </div>
 
       {/* Body: extract file + callout sidebar */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+
+        {/* Spotlight overlay — scoped to body only, toolbar always above */}
+        {spotlightCallout && (
+          <SpotlightOverlay
+            extractFileUrl={extractFileUrl}
+            callout={spotlightCallout}
+            highlights={spotlightHighlights}
+            onClose={() => setSpotlightCallout(null)}
+          />
+        )}
 
         {/* Main extract file viewer */}
         <div className="flex-1 overflow-auto bg-[#080c18] relative"
