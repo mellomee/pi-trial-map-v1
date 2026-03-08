@@ -118,6 +118,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
 
+  // When spotlight changes while publishing, notify parent to update jury
+  useEffect(() => {
+    if (isPublishing && onSpotlightChange) {
+      onSpotlightChange(spotlightCallout?.id || null);
+    }
+  }, [spotlightCallout?.id, isPublishing]);
+
   useEffect(() => {
     if (!selectedProof?.source_id) {
       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
