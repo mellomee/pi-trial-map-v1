@@ -113,13 +113,16 @@ export default function JuryView() {
         const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
         const extract = extracts[0];
         if (!extract) return;
-        // Prefer current_callout_id from session state (live spotlight), fallback to proof item's callout_id
+        setExtract(extract); // Always show extract as base layer
+
+        // Check if callout should be visible based on session state
         const spotlightCalloutId = sessionState?.current_callout_id || item.callout_id;
+        const calloutVisible = sessionState?.callout_visible !== false; // Default true
+
         let cs = await base44.entities.Callouts.filter({ extract_id: extract.id });
-        let targetCallout = spotlightCalloutId ? cs.find(c => c.id === spotlightCalloutId) : cs[0];
+        let targetCallout = (spotlightCalloutId && calloutVisible) ? cs.find(c => c.id === spotlightCalloutId) : null;
         setCallout(targetCallout || null);
-        // Store extract file url for background
-        setExtract(extract);
+
         // Load highlights for that callout
         if (targetCallout) {
           const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
@@ -127,6 +130,7 @@ export default function JuryView() {
         } else {
           setHighlights([]);
         }
+
         // Load joint exhibit
         const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
         setJx(jxs[0] || null);
