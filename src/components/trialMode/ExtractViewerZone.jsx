@@ -117,13 +117,28 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
 
-  // When spotlight changes while publishing, notify TrialMode via module-level callback
-  // If callout is hidden, always send null to jury
+  // When spotlight or visibility changes, update TrialSessionStates in real-time
   useEffect(() => {
-    if (isPublishing && _spotlightChangeCallback) {
-      _spotlightChangeCallback(!calloutVisible ? null : (spotlightCallout?.id || null));
-    }
-  }, [spotlightCallout?.id, isPublishing, calloutVisible]);
+    if (!isPublishing) return;
+    
+    const updateState = async () => {
+      try {
+        const sessions = await base44.entities.TrialSessions.filter({ status: { $in: ['Setup', 'Active'] } });
+        if (!sessions.length) return;
+        const states = await base44.entities.TrialSessionStates.filter({ trial_session_id: sessions[0].id });
+        if (!states.length) return;
+        
+        // Update callout_visible field in real-time
+        await base44.entities.TrialSessionStates.update(states[0].id, {
+          callout_visible: calloutVisible,
+        });
+      } catch (e) {
+        console.error('Failed to update callout visibility:', e);
+      }
+    };
+    
+    updateState();
+  }, [isPublishing, calloutVisible]);
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
