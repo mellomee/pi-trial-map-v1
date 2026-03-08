@@ -101,12 +101,14 @@ const PdfViewer = React.forwardRef(function PdfViewer({
   const handleZoomIn = () => {
     const newZoom = Math.min(4, zoom + 0.2);
     setZoom(newZoom);
+    isGestureActive.current = false; // Reset gesture flag
     onZoomChange?.(newZoom);
   };
 
   const handleZoomOut = () => {
     const newZoom = Math.max(0.5, zoom - 0.2);
     setZoom(newZoom);
+    isGestureActive.current = false; // Reset gesture flag
     onZoomChange?.(newZoom);
   };
 
