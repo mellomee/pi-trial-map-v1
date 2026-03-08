@@ -155,7 +155,7 @@ export default function PdfViewer({
       <div
         className="flex-1 overflow-auto flex items-start justify-center p-4"
         style={{
-          opacity: dimmed ? 0.45 : 1,
+          opacity: dimmed ? dimOpacity : 1,
           filter: dimmed ? 'blur(0.5px)' : 'none'
         }}
       >
