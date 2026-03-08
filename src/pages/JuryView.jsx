@@ -34,6 +34,7 @@ function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
 
 export default function JuryView() {
   const { activeCase } = useActiveCase();
+  const [trialSessionId, setTrialSessionId] = useState(null);
   const [sessionState, setSessionState] = useState(null);
   const [proofItem, setProofItem] = useState(null);
   const [extract, setExtract] = useState(null);
@@ -42,37 +43,33 @@ export default function JuryView() {
   const [depoClip, setDepoClip] = useState(null);
   const [depo, setDepo] = useState(null);
   const [jx, setJx] = useState(null);
-  const [zoom, setZoom] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
 
-  // Subscribe to trial session state changes (real-time, not polling)
+  // Find current trial session
   useEffect(() => {
     if (!activeCase?.id) return;
-
-    // Initial load: get current trial session
-    let trialSessionId = null;
     base44.entities.TrialSessions.filter({
       case_id: activeCase.id,
       status: { $in: ['Setup', 'Active'] },
     }).then((sessions) => {
-      if (sessions.length) {
-        trialSessionId = sessions[0].id;
-        // Subscribe to this session's state changes
-        const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
-          if (event.data?.trial_session_id === trialSessionId) {
-            setSessionState(event.data);
-          }
-        });
-        return unsub;
-      }
+      if (sessions.length) setTrialSessionId(sessions[0].id);
     });
   }, [activeCase?.id]);
 
-  // Update zoom and page from session state
+  // Use shared presentation state (jury is the reader only)
+  const { state: presentationState } = usePresentationState(trialSessionId, false);
+  const zoom = presentationState?.proof_zoom_level || 1;
+  const currentPage = presentationState?.proof_current_page || 1;
+
+  // Subscribe to full session state changes (for proof, callout, etc)
   useEffect(() => {
-    if (sessionState?.proof_zoom_level) setZoom(sessionState.proof_zoom_level);
-    if (sessionState?.proof_current_page) setCurrentPage(sessionState.proof_current_page);
-  }, [sessionState?.proof_zoom_level, sessionState?.proof_current_page]);
+    if (!trialSessionId) return;
+    const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
+      if (event.data?.trial_session_id === trialSessionId) {
+        setSessionState(event.data);
+      }
+    });
+    return unsub;
+  }, [trialSessionId]);
 
   // Load proof item when session state changes
   useEffect(() => {
