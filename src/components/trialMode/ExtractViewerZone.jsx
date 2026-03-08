@@ -228,6 +228,17 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           <ZoomIn className="w-3.5 h-3.5 text-slate-300" />
         </button>
         <div className="flex-1" />
+        {isPublishing && spotlightCallout && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCalloutVisible(v => !v)}
+            className={`h-7 text-xs px-2 gap-1 touch-manipulation border-slate-600 ${calloutVisible ? 'text-amber-300 bg-amber-900/20' : 'text-slate-400'}`}
+            title={calloutVisible ? 'Hide callout from jury' : 'Show callout to jury'}
+          >
+            {calloutVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+          </Button>
+        )}
         {isPublishing ? (
           <Button size="sm" onClick={onUnpublish} className="h-7 text-xs bg-red-700 hover:bg-red-600 px-2 gap-1 touch-manipulation">
             <Square className="w-3 h-3" /> Unpublish
