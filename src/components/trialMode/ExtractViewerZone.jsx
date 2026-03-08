@@ -142,10 +142,12 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     }
   }, [activeCase?.id]);
 
-  // Live-sync spotlight changes to jury while publishing
+  // Live-sync: push extract URL + spotlight to jury whenever publishing and spotlight changes
   useEffect(() => {
     if (!isPublishing) return;
-    syncSpotlightToJury(spotlightCallout);
+    // Small delay to let the parent's publishProofToJury settle first on initial publish
+    const t = setTimeout(() => syncSpotlightToJury(spotlightCallout), 300);
+    return () => clearTimeout(t);
   }, [spotlightCallout?.id, isPublishing]); // eslint-disable-line
 
   useEffect(() => {
