@@ -243,8 +243,9 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
 
         const sorted = cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
         setCallouts(sorted);
+        // Only pre-select a callout if the proof item explicitly has one linked
         const linked = proofItem.callout_id ? sorted.find((c) => c.id === proofItem.callout_id) : null;
-        setSelectedCallout(linked || (sorted.length > 0 ? sorted[0] : null));
+        setSelectedCallout(linked || null);
       }
     } catch (err) {
       console.error('Error loading proof details:', err);

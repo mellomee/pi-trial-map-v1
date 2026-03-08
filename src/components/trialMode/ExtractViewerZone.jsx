@@ -168,8 +168,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           }
         }
       }
-      // If no specific callout, show all
-      if (!focused.length) focused = allCs;
+      // If no specific callout_id on proof, show no callouts (extract only, no callout selected)
+      // Only show callouts when the proof explicitly has one linked
+      if (!selectedProof.callout_id && !focused.length) focused = [];
       setLinkedCallouts(focused);
 
       // Jump to the target callout

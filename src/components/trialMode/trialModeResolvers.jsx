@@ -13,11 +13,16 @@ export async function resolveQuestionLinks(questionId, caseId) {
     // Path A: Direct QuestionProofItems links (used by child questions and direct-linked proofs)
     const directProofLinks = await base44.entities.QuestionProofItems.filter({ question_id: questionId });
 
-    // Path B: EvidenceGroup-based links
+    // Path B: QuestionLinks of type 'ProofItem' — these are the question-specific proof links
+    const questionLinks = await base44.entities.QuestionLinks.filter({ question_id: questionId });
+    const questionLinkedProofIds = questionLinks
+      .filter(l => l.link_type === 'ProofItem')
+      .map(l => l.link_id);
+
+    // Path C: EvidenceGroup-based links (for resolving evidenceGroups and trialPoints only)
     const questionEvidenceGroupLinks = await base44.entities.QuestionEvidenceGroups.filter({ question_id: questionId });
     const egIds = questionEvidenceGroupLinks.map(link => link.evidence_group_id);
 
-    // Fetch evidence groups in parallel with EG proof items
     const [evidenceGroups, egProofItemLinks] = egIds.length
       ? await Promise.all([
           Promise.all(egIds.map(egId => base44.entities.EvidenceGroups.filter({ id: egId }))).then(r => r.flat()),
@@ -25,10 +30,15 @@ export async function resolveQuestionLinks(questionId, caseId) {
         ])
       : [[], []];
 
-    // Merge proof item IDs from both paths, deduplicating
-    const egProofItemIds = egProofItemLinks.map(l => l.proof_item_id);
+    // Proof items shown in ProofZone = only directly question-linked ones (QuestionLinks + QuestionProofItems)
+    // Fall back to all EG proof items only if no direct links exist at all
     const directProofItemIds = directProofLinks.map(l => l.proof_item_id);
-    const allProofItemIds = [...new Set([...egProofItemIds, ...directProofItemIds])];
+    const hasDirectLinks = questionLinkedProofIds.length > 0 || directProofItemIds.length > 0;
+    const egProofItemIds = egProofItemLinks.map(l => l.proof_item_id);
+
+    const allProofItemIds = hasDirectLinks
+      ? [...new Set([...questionLinkedProofIds, ...directProofItemIds])]
+      : [...new Set(egProofItemIds)];
 
     let proofItems = allProofItemIds.length
       ? await Promise.all(allProofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))).then(r => r.flat())
