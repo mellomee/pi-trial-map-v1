@@ -106,7 +106,11 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
 }
 
 // ---------- Main component ----------
-export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish, onSpotlightChange }) {
+// Module-level spotlight callback so TrialMode can subscribe without prop-drilling through frozen ProofPreviewZone
+let _spotlightChangeCallback = null;
+export function setSpotlightChangeCallback(fn) { _spotlightChangeCallback = fn; }
+
+export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
   const [extract, setExtract] = useState(null);
   const [allCallouts, setAllCallouts] = useState([]);
   const [highlightsByCallout, setHighlightsByCallout] = useState({});
