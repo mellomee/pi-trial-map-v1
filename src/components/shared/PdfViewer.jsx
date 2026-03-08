@@ -22,6 +22,7 @@ const PdfViewer = React.forwardRef(function PdfViewer({
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+  const lastWheelTime = useRef(0);
 
   // Sync external zoom/page (jury view reading from attorney changes)
   useEffect(() => {
