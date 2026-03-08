@@ -23,11 +23,18 @@ const PdfViewer = React.forwardRef(function PdfViewer({
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const lastWheelTime = useRef(0);
+  
+  // Local gesture tracking: prevent remote echo during active pinch
+  const isGestureActive = useRef(false);
+  const throttleZoomTimer = useRef(null);
 
   // Sync external zoom/page (jury view reading from attorney changes)
+  // But don't override local zoom if attorney is actively pinching
   useEffect(() => {
-    if (externalZoom !== null && externalZoom !== zoom) setZoom(externalZoom);
-  }, [externalZoom]);
+    if (externalZoom !== null && externalZoom !== zoom && !isGestureActive.current) {
+      setZoom(externalZoom);
+    }
+  }, [externalZoom, zoom]);
 
   useEffect(() => {
     if (externalPage !== null && externalPage !== currentPage) setCurrentPage(externalPage);
