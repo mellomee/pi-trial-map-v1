@@ -58,7 +58,7 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
       callout_id: callout.id,
       kind: "highlight",
       color,
-      opacity: 0.4,
+      opacity,
       rects_norm: [{ x, y, w, h }],
     });
     onHighlightsChange(prev => [...prev, hl]);
