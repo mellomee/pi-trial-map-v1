@@ -161,7 +161,7 @@ export async function getOrCreateTrialSession(caseId, sessionTitle = null) {
 }
 
 /**
- * Update TrialSessionState with currently published item
+ * Update TrialSessionState with currently published item and callout spotlight
  */
 export async function publishProofToJury(trialSessionId, proofItemId, calloutId = null) {
   try {
@@ -172,6 +172,7 @@ export async function publishProofToJury(trialSessionId, proofItemId, calloutId 
     const update = {
       current_proof_item_id: proofItemId,
       current_callout_id: calloutId || null,
+      spotlight_enabled: calloutId ? true : false, // enable spotlight only if callout exists
       jury_display_enabled: true,
       jury_can_see_proof: true,
     };
