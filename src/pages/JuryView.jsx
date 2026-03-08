@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
+import PdfViewer from "@/components/shared/PdfViewer";
 
 function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
   if (!highlights?.length) return null;
@@ -40,6 +41,8 @@ export default function JuryView() {
   const [depoClip, setDepoClip] = useState(null);
   const [depo, setDepo] = useState(null);
   const [jx, setJx] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Subscribe to trial session state changes (real-time, not polling)
   useEffect(() => {
@@ -63,6 +66,12 @@ export default function JuryView() {
       }
     });
   }, [activeCase?.id]);
+
+  // Update zoom and page from session state
+  useEffect(() => {
+    if (sessionState?.proof_zoom_level) setZoom(sessionState.proof_zoom_level);
+    if (sessionState?.proof_current_page) setCurrentPage(sessionState.proof_current_page);
+  }, [sessionState?.proof_zoom_level, sessionState?.proof_current_page]);
 
   // Load proof item when session state changes
   useEffect(() => {
@@ -143,6 +152,7 @@ export default function JuryView() {
 
   // Build exhibit label: only "Exhibit X" using admitted number
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
+  const isPdf = extract?.extract_file_url?.match(/\.pdf(\?|$)/i);
 
   return (
     <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
@@ -180,49 +190,92 @@ export default function JuryView() {
             </div>
           )}
 
-          {/* Layer 0: Base extract (always shown, dimmed only if callout is spotlighted) */}
-          <div className="absolute inset-0 flex items-center justify-center z-0">
-            <img
-              src={extract.extract_file_url}
-              alt="Extract"
-              style={{
-                display: 'block',
-                maxWidth: '100vw',
-                maxHeight: '100vh',
-                objectFit: 'contain',
-                opacity: callout?.snapshot_image_url ? 0.18 : 1,
-                filter: callout?.snapshot_image_url ? 'blur(1px)' : 'none',
-                userSelect: 'none'
-              }}
-              draggable={false}
-            />
-          </div>
+          {isPdf ? (
+            <>
+              {/* PDF with optional spotlight overlay */}
+              <PdfViewer
+                fileUrl={extract.extract_file_url}
+                externalZoom={zoom}
+                externalPage={currentPage}
+                readOnly={true}
+                showControls={false}
+                dimmed={callout?.snapshot_image_url ? true : false}
+              />
 
-          {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-          {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.72)' }} />
-          )}
+              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+              {callout?.snapshot_image_url && (
+                <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.72)' }} />
+              )}
 
-          {/* Layer 2: Spotlighted callout (if active) */}
-          {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+              {/* Layer 2: Spotlighted callout (if active) */}
+              {callout?.snapshot_image_url && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                    <img
+                      src={callout.snapshot_image_url}
+                      alt="Callout"
+                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                      draggable={false}
+                    />
+                    <HighlightOverlay highlights={highlights} />
+                  </div>
+                </div>
+              )}
+
+              {/* Callout name label (if spotlighted) */}
+              {callout?.name && (
+                <div className="absolute bottom-4 left-0 right-0 text-center z-20">
+                  <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Image with optional spotlight overlay */}
+              <div className="absolute inset-0 flex items-center justify-center z-0">
                 <img
-                  src={callout.snapshot_image_url}
-                  alt="Callout"
-                  style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                  src={extract.extract_file_url}
+                  alt="Extract"
+                  style={{
+                    display: 'block',
+                    maxWidth: '100vw',
+                    maxHeight: '100vh',
+                    objectFit: 'contain',
+                    opacity: callout?.snapshot_image_url ? 0.18 : 1,
+                    filter: callout?.snapshot_image_url ? 'blur(1px)' : 'none',
+                    userSelect: 'none'
+                  }}
                   draggable={false}
                 />
-                <HighlightOverlay highlights={highlights} />
               </div>
-            </div>
-          )}
 
-          {/* Callout name label (if spotlighted) */}
-          {callout?.name && (
-            <div className="absolute bottom-4 left-0 right-0 text-center z-20">
-              <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
-            </div>
+              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+              {callout?.snapshot_image_url && (
+                <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.72)' }} />
+              )}
+
+              {/* Layer 2: Spotlighted callout (if active) */}
+              {callout?.snapshot_image_url && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                    <img
+                      src={callout.snapshot_image_url}
+                      alt="Callout"
+                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                      draggable={false}
+                    />
+                    <HighlightOverlay highlights={highlights} />
+                  </div>
+                </div>
+              )}
+
+              {/* Callout name label (if spotlighted) */}
+              {callout?.name && (
+                <div className="absolute bottom-4 left-0 right-0 text-center z-20">
+                  <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
