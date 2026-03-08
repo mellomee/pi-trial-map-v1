@@ -290,36 +290,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
          <div className="flex-1 overflow-hidden bg-[#080c18] relative" ref={imgContainerRef} style={{ touchAction: 'none' }}>
           {extractFileUrl ? (
             isPdf ? (
-              <div 
-                style={{ touchAction: 'none', height: '100%', width: '100%' }}
-                onTouchMove={(e) => {
-                  if (e.touches.length === 2) {
-                    e.preventDefault();
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const dist = Math.hypot(
-                      touch2.clientX - touch1.clientX,
-                      touch2.clientY - touch1.clientY
-                    );
-                    if (lastDist.current > 0) {
-                      const delta = dist - lastDist.current;
-                      const newZoom = Math.min(5, Math.max(0.25, zoom + delta * 0.01));
-                      handleZoomChange(newZoom);
-                    }
-                    lastDist.current = dist;
-                  }
-                }}
-                onTouchEnd={() => { lastDist.current = null; }}
-              >
-                <PdfViewer
-                  ref={pdfViewerRef}
-                  fileUrl={extractFileUrl}
-                  onZoomChange={handleZoomChange}
-                  onPageChange={handlePageChange}
-                  showControls={true}
-                  dimmed={false}
-                />
-              </div>
+              <PdfViewerWithGestures
+                fileUrl={extractFileUrl}
+                onZoomChange={handleZoomChange}
+                onPageChange={handlePageChange}
+                showControls={true}
+                dimmed={false}
+              />
             ) : (
               <div className="min-h-full flex items-start justify-center p-3 overflow-auto touch-manipulation"
                 style={{ touchAction: 'none' }}
