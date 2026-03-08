@@ -235,7 +235,7 @@ export default function JuryView() {
                     maxWidth: '100vw',
                     maxHeight: '100vh',
                     objectFit: 'contain',
-                    opacity: callout?.snapshot_image_url ? 0.85 : 1,
+                    opacity: callout?.snapshot_image_url ? 0.95 : 1,
                     filter: callout?.snapshot_image_url ? 'blur(1px)' : 'none',
                     userSelect: 'none'
                   }}
