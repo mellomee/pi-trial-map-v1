@@ -82,6 +82,7 @@ export default function JuryView() {
       setDepoClip(null);
       setDepo(null);
       setJx(null);
+      setDepoExhibit(null);
       return;
     }
     
