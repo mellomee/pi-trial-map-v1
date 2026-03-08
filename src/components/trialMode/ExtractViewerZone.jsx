@@ -39,7 +39,7 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
             style={{ opacity: 0.15, filter: 'blur(1px)', userSelect: 'none' }} draggable={false} />
         </div>
       )}
-      <div className="absolute inset-0" style={{ background: 'rgba(5,8,22,0.75)', zIndex: 2 }} />
+      <div className="absolute inset-0" style={{ background: 'rgba(5,8,22,0.2)', zIndex: 2 }} />
 
       {/* Controls */}
       <div className="absolute top-3 right-3 flex items-center gap-2 z-40">
@@ -118,6 +118,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
 
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
+  const pdfViewerRef = useRef(null);
 
   // When spotlight changes while publishing, notify TrialMode via module-level callback
   // If callout is hidden, always send null to jury
@@ -319,7 +320,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                   witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
                   isActive={spotlightCallout?.id === c.id}
                   isLinked={selectedProof?.callout_id === c.id}
-                  onClick={() => setSpotlightCallout(prev => prev?.id === c.id ? null : c)}
+                  onClick={() => {
+                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                    // Auto-navigate to callout's page if PDF
+                    if (isPdf && c.page_number && pdfViewerRef.current?.setPage) {
+                      pdfViewerRef.current.setPage(c.page_number);
+                    }
+                  }}
                 />
               ))}
             </div>
