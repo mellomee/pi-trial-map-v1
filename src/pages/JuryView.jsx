@@ -93,26 +93,35 @@ export default function JuryView() {
         const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
         const extract = extracts[0];
         if (!extract) return;
-        // Load callout
-        const calloutId = item.callout_id;
-        let cs = await base44.entities.Callouts.filter({ extract_id: extract.id });
-        let targetCallout = calloutId ? cs.find(c => c.id === calloutId) : cs[0];
-        setCallout(targetCallout || null);
-        // Load highlights for that callout
-        if (targetCallout) {
-          const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
-          setHighlights(hs);
-        } else {
-          setHighlights([]);
-        }
         // Load joint exhibit
         const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
         setJx(jxs[0] || null);
         setDepoClip(null);
         setDepo(null);
+        // Callout loading is handled separately via spotlight_callout_id from session state
       }
     });
   }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof]);
+
+  // Load spotlight callout whenever session state changes spotlight_callout_id
+  useEffect(() => {
+    const spotlightId = sessionState?.spotlight_callout_id;
+    if (!spotlightId || !sessionState?.jury_can_see_proof) {
+      setCallout(null);
+      setHighlights([]);
+      return;
+    }
+    base44.entities.Callouts.filter({ id: spotlightId }).then(async cs => {
+      const c = cs[0] || null;
+      setCallout(c);
+      if (c) {
+        const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
+        setHighlights(hs);
+      } else {
+        setHighlights([]);
+      }
+    });
+  }, [sessionState?.spotlight_callout_id, sessionState?.jury_can_see_proof]);
 
   // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
