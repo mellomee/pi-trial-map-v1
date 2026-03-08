@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import PdfViewer from '@/components/shared/PdfViewer';
 import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
 
 // ---------- Highlight overlay ----------
@@ -103,13 +104,14 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
 let _spotlightChangeCallback = null;
 export function setSpotlightChangeCallback(fn) { _spotlightChangeCallback = fn; }
 
-export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
+export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish, trialSessionId }) {
   const [extract, setExtract] = useState(null);
   const [allCallouts, setAllCallouts] = useState([]);
   const [highlightsByCallout, setHighlightsByCallout] = useState({});
   const [witnessByCallout, setWitnessByCallout] = useState({});
   const [jx, setJx] = useState(null);
   const [zoom, setZoom] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [spotlightCallout, setSpotlightCallout] = useState(null); // callout being spotlighted
 
   const [calloutVisible, setCalloutVisible] = useState(true); // hide/show callout on jury
@@ -124,6 +126,29 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       _spotlightChangeCallback(!calloutVisible ? null : (spotlightCallout?.id || null));
     }
   }, [spotlightCallout?.id, isPublishing, calloutVisible]);
+
+  // Sync zoom and page to TrialSessionStates when attorney zooms/pages
+  const handleZoomChange = (newZoom) => {
+    setZoom(newZoom);
+    if (isPublishing && trialSessionId) {
+      base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
+        if (states[0]) {
+          base44.entities.TrialSessionStates.update(states[0].id, { proof_zoom_level: newZoom });
+        }
+      });
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    if (isPublishing && trialSessionId) {
+      base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
+        if (states[0]) {
+          base44.entities.TrialSessionStates.update(states[0].id, { proof_current_page: newPage });
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
@@ -169,26 +194,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
   const spotlightHighlights = spotlightCallout ? (highlightsByCallout[spotlightCallout.id] || []) : [];
-
-  // Pinch zoom
-  const onTouchStart = useCallback((e) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      lastDist.current = Math.sqrt(dx * dx + dy * dy);
-    }
-  }, []);
-  const onTouchMove = useCallback((e) => {
-    if (e.touches.length === 2 && lastDist.current) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      setZoom(z => Math.min(Math.max(z * (dist / lastDist.current), 0.25), 5));
-      lastDist.current = dist;
-      e.preventDefault();
-    }
-  }, []);
-  const onTouchEnd = useCallback(() => { lastDist.current = null; }, []);
+  const isPdf = extractFileUrl?.match(/\.pdf(\?|$)/i);
 
   if (!selectedProof) {
     return (
@@ -206,8 +212,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     );
   }
 
-  const isImage = extractFileUrl?.match(/\.(jpe?g|png|gif|webp)(\?|$)/i);
-
   return (
     <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] relative overflow-hidden">
 
@@ -218,15 +222,22 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
             {exhibitLabel}
           </span>
         )}
-        <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.25))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
-          <ZoomOut className="w-3.5 h-3.5 text-slate-300" />
-        </button>
-        <button onClick={() => setZoom(1)} className="text-[10px] text-slate-300 font-mono px-1.5 py-0.5 rounded hover:bg-white/10 min-w-[36px] text-center touch-manipulation">
-          {Math.round(zoom * 100)}%
-        </button>
-        <button onClick={() => setZoom(z => Math.min(z + 0.25, 5))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
-          <ZoomIn className="w-3.5 h-3.5 text-slate-300" />
-        </button>
+        {isPdf ? (
+          // PDF viewer has its own controls
+          null
+        ) : (
+          <>
+            <button onClick={() => handleZoomChange(Math.max(zoom - 0.25, 0.25))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
+              <ZoomOut className="w-3.5 h-3.5 text-slate-300" />
+            </button>
+            <button onClick={() => handleZoomChange(1)} className="text-[10px] text-slate-300 font-mono px-1.5 py-0.5 rounded hover:bg-white/10 min-w-[36px] text-center touch-manipulation">
+              {Math.round(zoom * 100)}%
+            </button>
+            <button onClick={() => handleZoomChange(Math.min(zoom + 0.25, 5))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
+              <ZoomIn className="w-3.5 h-3.5 text-slate-300" />
+            </button>
+          </>
+        )}
         <div className="flex-1" />
         {isPublishing && spotlightCallout && (
           <Button
@@ -264,21 +275,25 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         )}
 
         {/* Main extract file viewer */}
-        <div className="flex-1 overflow-auto bg-[#080c18] relative"
-          ref={imgContainerRef} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+        <div className="flex-1 overflow-hidden bg-[#080c18] relative">
           {extractFileUrl ? (
-            <div className="min-h-full flex items-start justify-center p-3">
-              <div className="relative inline-block w-full"
-                style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.1s' }}>
-                {isImage ? (
+            isPdf ? (
+              <PdfViewer
+                fileUrl={extractFileUrl}
+                onZoomChange={handleZoomChange}
+                onPageChange={handlePageChange}
+                showControls={true}
+                dimmed={false}
+              />
+            ) : (
+              <div className="min-h-full flex items-start justify-center p-3 overflow-auto">
+                <div className="relative inline-block w-full"
+                  style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.1s' }}>
                   <img src={extractFileUrl} alt={extract.extract_title_internal || extract.extract_title_official}
                     className="block max-w-full shadow-xl rounded mx-auto" draggable={false} />
-                ) : (
-                  <iframe src={extractFileUrl} title={extract.extract_title_internal || extract.extract_title_official}
-                    className="w-full rounded shadow-xl" style={{ minHeight: '80vh', border: 'none' }} />
-                )}
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <div className="flex items-center justify-center h-full text-slate-500">
               <div className="text-center space-y-2">
