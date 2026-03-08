@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,81 +14,50 @@ export default function PdfViewer({
   onPageChange = null,
   readOnly = false,
   showControls = true,
-  dimmed = false,
-  dimOpacity = 0.45
+  dimmed = false
 }) {
-  const canvasRef = useRef(null);
   const [pdf, setPdf] = useState(null);
   const [zoom, setZoom] = useState(externalZoom ?? 1);
   const [currentPage, setCurrentPage] = useState(externalPage ?? 1);
   const [totalPages, setTotalPages] = useState(0);
+  const [canvas, setCanvas] = useState(null);
   const [loading, setLoading] = useState(true);
-  const renderTaskRef = useRef(null);
 
-  // Sync external zoom (jury view)
+  // Use external zoom/page if provided (for jury view)
   useEffect(() => {
-    if (externalZoom !== null && externalZoom !== zoom) {
-      setZoom(externalZoom);
-    }
+    if (externalZoom !== null) setZoom(externalZoom);
   }, [externalZoom]);
 
-  // Sync external page (jury view)
   useEffect(() => {
-    if (externalPage !== null && externalPage !== currentPage) {
-      setCurrentPage(externalPage);
-    }
+    if (externalPage !== null) setCurrentPage(externalPage);
   }, [externalPage]);
 
   // Load PDF
   useEffect(() => {
     if (!fileUrl) return;
     setLoading(true);
-    pdfjsLib.getDocument(fileUrl).promise.then((pdfDoc) => {
-      setPdf(pdfDoc);
-      setTotalPages(pdfDoc.numPages);
+    pdfjsLib.getDocument(fileUrl).promise.then((pdf) => {
+      setPdf(pdf);
+      setTotalPages(pdf.numPages);
       setCurrentPage(1);
       setZoom(1);
-      setLoading(false);
-    }).catch(err => {
-      console.error('PDF load error:', err);
       setLoading(false);
     });
   }, [fileUrl]);
 
-  // Render page to canvas
+  // Render page
   useEffect(() => {
-    if (!pdf || !currentPage || !canvasRef.current) return;
-
-    const renderPage = async () => {
-      try {
-        // Cancel previous render task
-        if (renderTaskRef.current) {
-          renderTaskRef.current.cancel();
-        }
-
-        const page = await pdf.getPage(currentPage);
-        const viewport = page.getViewport({ scale: zoom });
-        const canvas = canvasRef.current;
-
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        const context = canvas.getContext('2d');
-        const renderTask = page.render({
-          canvasContext: context,
-          viewport: viewport
-        });
-
-        renderTaskRef.current = renderTask;
-        await renderTask.promise;
-      } catch (err) {
-        if (err.name !== 'RenderingCancelledError') {
-          console.error('Render error:', err);
-        }
-      }
-    };
-
-    renderPage();
+    if (!pdf || !currentPage) return;
+    pdf.getPage(currentPage).then((page) => {
+      const viewport = page.getViewport({ scale: zoom });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      page.render({ canvasContext: context, viewport }).promise.then(() => {
+        setCanvas(canvas.toDataURL());
+      });
+    });
   }, [pdf, currentPage, zoom]);
 
   const handlePrevPage = () => {
@@ -119,15 +88,11 @@ export default function PdfViewer({
     return <div className="w-full h-full flex items-center justify-center bg-black text-slate-400">Loading PDF...</div>;
   }
 
-  if (!pdf) {
-    return <div className="w-full h-full flex items-center justify-center bg-black text-slate-400">Failed to load PDF</div>;
-  }
-
   return (
     <div className="w-full h-full flex flex-col bg-black relative">
       {/* Controls */}
       {showControls && !readOnly && (
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-700 gap-4 z-40">
+        <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-700 gap-4">
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
               <ChevronLeft className="w-4 h-4" />
@@ -151,23 +116,26 @@ export default function PdfViewer({
         </div>
       )}
 
-      {/* Canvas container */}
+      {/* Canvas */}
       <div
         className="flex-1 overflow-auto flex items-start justify-center p-4"
         style={{
-          opacity: dimmed ? dimOpacity : 1,
-          filter: dimmed ? 'blur(0.5px)' : 'none'
+          opacity: dimmed ? 0.18 : 1,
+          filter: dimmed ? 'blur(1px)' : 'none'
         }}
       >
-        <canvas
-          ref={canvasRef}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-            userSelect: 'none',
-            display: 'block'
-          }}
-        />
+        {canvas && (
+          <img
+            src={canvas}
+            alt={`Page ${currentPage}`}
+            style={{
+              maxWidth: '100%',
+              height: 'auto',
+              userSelect: 'none'
+            }}
+            draggable={false}
+          />
+        )}
       </div>
     </div>
   );

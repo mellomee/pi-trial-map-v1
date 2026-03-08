@@ -127,13 +127,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     }
   }, [spotlightCallout?.id, isPublishing, calloutVisible]);
 
-  // Sync zoom and page to TrialSessionStates when attorney zooms/pages — immediate publish
+  // Sync zoom and page to TrialSessionStates when attorney zooms/pages
   const handleZoomChange = (newZoom) => {
     setZoom(newZoom);
     if (isPublishing && trialSessionId) {
-      base44.asServiceRole.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
+      base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
         if (states[0]) {
-          base44.asServiceRole.entities.TrialSessionStates.update(states[0].id, { proof_zoom_level: newZoom });
+          base44.entities.TrialSessionStates.update(states[0].id, { proof_zoom_level: newZoom });
         }
       });
     }
@@ -142,9 +142,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     if (isPublishing && trialSessionId) {
-      base44.asServiceRole.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
+      base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
         if (states[0]) {
-          base44.asServiceRole.entities.TrialSessionStates.update(states[0].id, { proof_current_page: newPage });
+          base44.entities.TrialSessionStates.update(states[0].id, { proof_current_page: newPage });
         }
       });
     }

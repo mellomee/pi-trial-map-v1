@@ -44,34 +44,27 @@ export default function JuryView() {
   const [zoom, setZoom] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Subscribe to trial session state changes (real-time)
+  // Subscribe to trial session state changes (real-time, not polling)
   useEffect(() => {
     if (!activeCase?.id) return;
 
-    let unsubscribe = null;
-
     // Initial load: get current trial session
+    let trialSessionId = null;
     base44.entities.TrialSessions.filter({
       case_id: activeCase.id,
       status: { $in: ['Setup', 'Active'] },
     }).then((sessions) => {
       if (sessions.length) {
-        const trialSessionId = sessions[0].id;
-        // Subscribe to this session's state changes in real-time
-        unsubscribe = base44.entities.TrialSessionStates.subscribe((event) => {
+        trialSessionId = sessions[0].id;
+        // Subscribe to this session's state changes
+        const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
           if (event.data?.trial_session_id === trialSessionId) {
             setSessionState(event.data);
-            // Update zoom and page immediately
-            if (event.data?.proof_zoom_level) setZoom(event.data.proof_zoom_level);
-            if (event.data?.proof_current_page) setCurrentPage(event.data.proof_current_page);
           }
         });
+        return unsub;
       }
     });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
   }, [activeCase?.id]);
 
   // Update zoom and page from session state
@@ -207,7 +200,6 @@ export default function JuryView() {
                 readOnly={true}
                 showControls={false}
                 dimmed={callout?.snapshot_image_url ? true : false}
-                dimOpacity={0.15}
               />
 
               {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
@@ -249,8 +241,8 @@ export default function JuryView() {
                     maxWidth: '100vw',
                     maxHeight: '100vh',
                     objectFit: 'contain',
-                    opacity: callout?.snapshot_image_url ? 0.15 : 1,
-                    filter: callout?.snapshot_image_url ? 'blur(0.5px)' : 'none',
+                    opacity: callout?.snapshot_image_url ? 0.18 : 1,
+                    filter: callout?.snapshot_image_url ? 'blur(1px)' : 'none',
                     userSelect: 'none'
                   }}
                   draggable={false}
