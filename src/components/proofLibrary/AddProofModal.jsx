@@ -419,43 +419,20 @@ export default function AddProofModal({ isOpen, onClose, caseId, onProofAdded, e
     try {
       const label = selectedExtract.extract_title_internal || selectedExtract.extract_title_official;
 
-      // Check if THIS evidence group already has a ProofItem for this extract (to avoid duplicates within same group)
-      const groupLinks = await base44.entities.EvidenceGroupProofItems.filter({ evidence_group_id: evidenceGroupId });
-      const groupProofIds = groupLinks.map(l => l.proof_item_id);
-
-      let alreadyInThisGroup = null;
-      if (groupProofIds.length > 0) {
-        // Only look among ProofItems that belong to THIS group
-        for (const pid of groupProofIds) {
-          const items = await base44.entities.ProofItems.filter({ id: pid, type: 'extract', source_id: selectedExtract.id });
-          if (items.length > 0) { alreadyInThisGroup = items[0]; break; }
-        }
-      }
-
-      let proofItem;
-      if (alreadyInThisGroup) {
-        // Already in this group — just update callout if selected
-        if (selectedCallout) {
-          proofItem = await base44.entities.ProofItems.update(alreadyInThisGroup.id, { callout_id: selectedCallout.id });
-        } else {
-          proofItem = alreadyInThisGroup;
-        }
-      } else {
-        // Always create a brand-new ProofItem for this evidence group so callout_id is independent
-        proofItem = await base44.entities.ProofItems.create({
-          case_id: caseId,
-          type: 'extract',
-          source_id: selectedExtract.id,
-          label,
-          notes: selectedExtract.notes || '',
-          callout_id: selectedCallout?.id || undefined,
-        });
-        await base44.entities.EvidenceGroupProofItems.create({
-          evidence_group_id: evidenceGroupId,
-          proof_item_id: proofItem.id,
-          order_index: 0,
-        });
-      }
+      // Always create a brand-new ProofItem so each callout is a separate proof entry
+      const proofItem = await base44.entities.ProofItems.create({
+        case_id: caseId,
+        type: 'extract',
+        source_id: selectedExtract.id,
+        label,
+        notes: selectedExtract.notes || '',
+        callout_id: selectedCallout?.id || undefined,
+      });
+      await base44.entities.EvidenceGroupProofItems.create({
+        evidence_group_id: evidenceGroupId,
+        proof_item_id: proofItem.id,
+        order_index: 0,
+      });
 
       setLoading(false);
       onProofAdded(proofItem);
