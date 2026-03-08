@@ -443,9 +443,14 @@ export default function ProofLibrary() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel: Evidence Groups */}
-        <div className="w-72 border-r border-gray-700 flex flex-col bg-[#0f1629] overflow-hidden">
-          <div className="p-4 border-b border-gray-700 space-y-3">
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Buckets</p>
+        <div className={`${bucketsOpen ? 'w-72' : 'w-10'} border-r border-gray-700 flex flex-col bg-[#0f1629] overflow-hidden transition-all duration-200 flex-shrink-0`}>
+          <div className={`p-4 border-b border-gray-700 flex items-center justify-between gap-2 ${bucketsOpen ? '' : 'px-2'}`}>
+            {bucketsOpen && <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Buckets</p>}
+            <button onClick={() => setBucketsOpen(v => !v)} className="text-slate-500 hover:text-slate-200 flex-shrink-0" title={bucketsOpen ? 'Collapse' : 'Expand'}>
+              {bucketsOpen ? <Pencil className="w-3.5 h-3.5 rotate-45 opacity-50" /> : <Plus className="w-4 h-4" />}
+            </button>
+          </div>
+          {bucketsOpen && <div className="px-4 pb-3 pt-2 border-b border-gray-700">
             <Button
               onClick={() => setShowNewGroupModal(true)}
               className="w-full bg-cyan-600 hover:bg-cyan-700"
@@ -454,7 +459,7 @@ export default function ProofLibrary() {
               <Plus className="w-4 h-4 mr-2" />
               New Bucket
             </Button>
-          </div>
+          </div>}
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
             {evidenceGroups.map((group) => (
               <EvidenceGroupCard

@@ -44,13 +44,10 @@ export default function LinkQuestionProofModal({
       }
 
       const proofIds = groupLinks.map((l) => l.proof_item_id);
-      const allProofs = [];
 
-      // 2. Fetch all ProofItems (batch to avoid rate limits)
-      for (const pid of proofIds) {
-        const items = await base44.entities.ProofItems.filter({ id: pid });
-        if (items.length > 0) allProofs.push(items[0]);
-      }
+      // 2. Fetch all ProofItems in parallel
+      const proofResults = await Promise.all(proofIds.map(pid => base44.entities.ProofItems.filter({ id: pid })));
+      const allProofs = proofResults.flatMap(r => r.length > 0 ? [r[0]] : []);
 
       // 3. Load case parties for witness name resolution
       const parts = await base44.entities.Parties.filter({ case_id: caseId });
@@ -62,22 +59,27 @@ export default function LinkQuestionProofModal({
 
       setProofItems(allProofs);
 
-      // 4. Filter to proofs with callouts matching question's witness
+      // 4. Filter proofs and load callout names
+      const extractProofs = allProofs.filter(p => p.type === 'extract' && p.callout_id);
+      const calloutResults = await Promise.all(extractProofs.map(p => base44.entities.Callouts.filter({ id: p.callout_id })));
+      const calloutMap = {};
+      extractProofs.forEach((p, i) => {
+        if (calloutResults[i].length > 0) calloutMap[p.callout_id] = calloutResults[i][0];
+      });
+
       const filtered = [];
       for (const proof of allProofs) {
         if (proof.type === 'depoClip') {
-          // For depo clips, always include (they're witness-aware via deposition)
-          filtered.push(proof);
-        } else if (proof.type === 'extract' && proof.callout_id) {
-          // For extracts, check if callout's witness matches question's witness
-          const callouts = await base44.entities.Callouts.filter({
-            id: proof.callout_id,
-          });
-          if (
-            callouts.length > 0 &&
-            callouts[0].witness_id === question.party_id
-          ) {
-            filtered.push(proof);
+          filtered.push({ ...proof, _calloutName: null });
+        } else if (proof.type === 'extract') {
+          if (!proof.callout_id) {
+            // No callout — include as-is
+            filtered.push({ ...proof, _calloutName: null });
+          } else {
+            const callout = calloutMap[proof.callout_id];
+            if (callout && callout.witness_id === question.party_id) {
+              filtered.push({ ...proof, _calloutName: callout.name || null });
+            }
           }
         }
       }
@@ -196,6 +198,9 @@ export default function LinkQuestionProofModal({
                        <p className="text-sm font-medium text-gray-100 truncate">
                          {proof.label}
                        </p>
+                       {proof._calloutName && (
+                         <p className="text-xs text-cyan-400 mt-0.5">↳ {proof._calloutName}</p>
+                       )}
                        <Badge className="mt-1 text-[10px] bg-cyan-500/20 text-cyan-300 border-cyan-400/30">
                          {proof.type === 'depoClip'
                            ? 'Deposition Clip'
