@@ -207,9 +207,12 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
                           <div key={link.id} className="flex items-start justify-between gap-2 bg-[#131a2e] p-2 rounded text-xs">
                             <button
                               onClick={() => proof && (setSelectedProofItem(proof), setShowProofModal(true))}
-                              className="flex-1 text-left text-gray-300 hover:text-cyan-400 truncate"
+                              className="flex-1 text-left text-gray-300 hover:text-cyan-400 min-w-0"
                             >
-                              {proof?.label}
+                              <span className="block truncate">{proof?.label}</span>
+                              {proof?.type === 'extract' && proof?.callout_id && calloutNames?.[proof.callout_id] && (
+                                <span className="block text-[10px] text-cyan-500 mt-0.5">↳ {calloutNames[proof.callout_id]}</span>
+                              )}
                             </button>
                             <button
                               onClick={() => handleUnlinkProof(q.id, link.id)}
