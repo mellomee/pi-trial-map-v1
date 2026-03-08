@@ -371,13 +371,36 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          {!selectedProof?.callout_id ? (
+          {!selectedProof?.callout_id && extract?.extract_file_url ? (
+            <div className="min-h-full flex items-start justify-center p-3">
+              <div
+                className="relative inline-block w-full"
+                style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.1s' }}
+              >
+                {extract.extract_file_url.match(/\.(jpe?g|png|gif|webp)$/i) ? (
+                  <img
+                    src={extract.extract_file_url}
+                    alt={extract.extract_title_internal || extract.extract_title_official}
+                    className="block max-w-full shadow-xl rounded mx-auto"
+                    draggable={false}
+                  />
+                ) : (
+                  <iframe
+                    src={extract.extract_file_url}
+                    title={extract.extract_title_internal || extract.extract_title_official}
+                    className="w-full rounded shadow-xl"
+                    style={{ minHeight: '80vh', border: 'none' }}
+                  />
+                )}
+              </div>
+            </div>
+          ) : !selectedProof?.callout_id ? (
             <div className="flex items-center justify-center h-full text-slate-500">
               <div className="text-center space-y-3 px-8">
                 <ImageIcon className="w-10 h-10 mx-auto opacity-20" />
                 <div>
                   <p className="text-sm font-medium text-slate-400">{extract?.extract_title_internal || extract?.extract_title_official}</p>
-                  <p className="text-xs mt-1 text-slate-600">No callout linked to this proof</p>
+                  <p className="text-xs mt-1 text-slate-600">No file available for this extract</p>
                 </div>
               </div>
             </div>
