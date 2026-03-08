@@ -202,10 +202,10 @@ export default function JuryView() {
           )}
 
           {/* Layer 0: Full-screen extract base */}
-          {extract.extract_file_url ? (
+          {(extract.extract_file_url || depoExhibit?.file_url) ? (
             <div className="absolute inset-0 flex items-center justify-center z-0 bg-black">
               <img
-                src={extract.extract_file_url}
+                src={extract.extract_file_url || depoExhibit?.file_url}
                 alt="Extract"
                 className="max-w-full max-h-full object-contain"
                 style={{ userSelect: 'none' }}
