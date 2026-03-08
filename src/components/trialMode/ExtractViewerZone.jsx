@@ -108,6 +108,7 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
 
 // ---------- Main component ----------
 export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
+  const { activeCase } = useActiveCase();
   const [extract, setExtract] = useState(null);
   const [allCallouts, setAllCallouts] = useState([]);
   const [highlightsByCallout, setHighlightsByCallout] = useState({});
