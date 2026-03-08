@@ -150,11 +150,8 @@ export async function getOrCreateTrialSession(caseId, sessionTitle = null) {
 
 /**
  * Update TrialSessionState with currently published item
- * @param {string} trialSessionId
- * @param {string} proofItemId
- * @param {object} extra - { active_callout_id, extract_file_url }
  */
-export async function publishProofToJury(trialSessionId, proofItemId, extra = {}) {
+export async function publishProofToJury(trialSessionId, proofItemId) {
   try {
     const existing = await base44.entities.TrialSessionStates.filter({
       trial_session_id: trialSessionId,
@@ -164,8 +161,6 @@ export async function publishProofToJury(trialSessionId, proofItemId, extra = {}
       current_proof_item_id: proofItemId,
       jury_display_enabled: true,
       jury_can_see_proof: true,
-      active_callout_id: extra.active_callout_id || null,
-      extract_file_url: extra.extract_file_url || null,
     };
 
     if (existing.length > 0) {
@@ -195,8 +190,6 @@ export async function clearJuryDisplay(trialSessionId) {
       return await base44.entities.TrialSessionStates.update(existing[0].id, {
         current_proof_item_id: null,
         jury_can_see_proof: false,
-        active_callout_id: null,
-        extract_file_url: null,
       });
     }
   } catch (error) {
