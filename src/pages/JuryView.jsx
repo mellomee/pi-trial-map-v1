@@ -174,32 +174,41 @@ export default function JuryView() {
             </div>
           )}
 
-          {/* Dark overlay */}
-          <div className="absolute inset-0 z-1" style={{ background: 'rgba(5,8,22,0.72)' }} />
-
-          {/* Foreground: spotlighted callout */}
+          {/* If callout is active: dim overlay + spotlight callout. If no callout: show extract full screen. */}
           {callout?.snapshot_image_url ? (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                <img
-                  src={callout.snapshot_image_url}
-                  alt="Evidence"
-                  style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                  draggable={false}
-                />
-                <HighlightOverlay highlights={highlights} />
+            <>
+              {/* Dark overlay over background */}
+              <div className="absolute inset-0 z-1" style={{ background: 'rgba(5,8,22,0.72)' }} />
+              {/* Spotlighted callout */}
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                  <img
+                    src={callout.snapshot_image_url}
+                    alt="Evidence"
+                    style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                    draggable={false}
+                  />
+                  <HighlightOverlay highlights={highlights} />
+                </div>
               </div>
+              {/* Callout name label */}
+              {callout.name && (
+                <div className="absolute bottom-4 left-0 right-0 text-center z-20">
+                  <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
+                </div>
+              )}
+            </>
+          ) : extract?.extract_file_url ? (
+            /* No callout selected — show extract full screen, bright */
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <img
+                src={extract.extract_file_url}
+                alt="Extract"
+                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain' }}
+                draggable={false}
+              />
             </div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center z-10 text-slate-500 text-xl">Loading evidence...</div>
-          )}
-
-          {/* Callout name label */}
-          {callout?.name && (
-            <div className="absolute bottom-4 left-0 right-0 text-center z-20">
-              <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
-            </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>
