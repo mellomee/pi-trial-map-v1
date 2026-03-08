@@ -199,7 +199,7 @@ export default function JuryView() {
             externalPage={currentPage}
             readOnly={true}
             showControls={false}
-            dimmed={callout?.snapshot_image_url ? true : false}
+            dimmed={callout?.snapshot_image_url ? false : false}
           />
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
