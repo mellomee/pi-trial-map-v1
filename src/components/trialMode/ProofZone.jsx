@@ -44,13 +44,11 @@ function useProofAdmitStatus(proofItems) {
   return statusMap;
 }
 
-function ProofCard({ proof, isSelected, onClick, admitStatus, onAdmit, calloutNames }) {
+function ProofCard({ proof, isSelected, onClick, admitStatus, onAdmit }) {
   const displayLabel = proof.type === 'depoClip'
     ? (proof.clip_title || proof.topic_tag || proof.label)
     : proof.label;
-  const calloutName = proof.type === 'extract' && proof.callout_id && calloutNames?.[proof.callout_id]
-    ? calloutNames[proof.callout_id]
-    : null;
+  const calloutName = proof.type === 'extract' ? (proof.callout_name || null) : null;
 
   const admitted = admitStatus?.admitted;
   const isExtract = proof.type === 'extract';
