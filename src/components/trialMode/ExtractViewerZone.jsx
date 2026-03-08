@@ -75,32 +75,25 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
     <button
       onClick={onClick}
       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isActive ? 'border-amber-400 bg-amber-500/10' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
+        isActive ? 'border-amber-400 bg-amber-500/10' : isLinked ? 'border-red-500/70 bg-[#0f1629] hover:bg-[#131a2e]' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
       }`}
     >
       {callout.snapshot_image_url ? (
-        <div className="relative w-full aspect-video rounded overflow-hidden bg-black">
+        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
         </div>
       ) : (
-        <div className="w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center">
+        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <ImageIcon className="w-4 h-4 text-slate-600" />
         </div>
       )}
       {callout.name && <p className="text-[10px] text-slate-300 truncate font-medium leading-tight">{callout.name}</p>}
       {witnessName && <p className="text-[10px] text-cyan-400 truncate leading-tight">{witnessName}</p>}
-      <div className="flex items-center gap-1 flex-wrap">
-        {isActive && (
-          <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
-            <Eye className="w-2.5 h-2.5" /> Spotlighted
-          </span>
-        )}
-        {isLinked && !isActive && (
-          <span className="flex items-center gap-0.5 text-[9px] text-cyan-400">
-            <Link className="w-2.5 h-2.5" /> Proof
-          </span>
-        )}
-      </div>
+      {isActive && (
+        <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
+          <Eye className="w-2.5 h-2.5" /> Spotlighted
+        </span>
+      )}
     </button>
   );
 }
