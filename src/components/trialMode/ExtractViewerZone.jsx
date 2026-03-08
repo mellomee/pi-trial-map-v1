@@ -309,6 +309,8 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
             callout={spotlightCallout}
             highlights={spotlightHighlights}
             onClose={() => setSpotlightCallout(null)}
+            pdfZoom={zoom}
+            maxWidth={spotlightMaxWidth}
           />
         )}
 
