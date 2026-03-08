@@ -363,7 +363,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           </div>
         )}
 
-        {/* Current callout image */}
+        {/* Current callout image — or no-callout state */}
         <div
           className="flex-1 overflow-auto bg-[#080c18] relative"
           ref={imgContainerRef}
@@ -371,7 +371,17 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          {currentCallout?.snapshot_image_url ? (
+          {!selectedProof?.callout_id ? (
+            <div className="flex items-center justify-center h-full text-slate-500">
+              <div className="text-center space-y-3 px-8">
+                <ImageIcon className="w-10 h-10 mx-auto opacity-20" />
+                <div>
+                  <p className="text-sm font-medium text-slate-400">{extract?.extract_title_internal || extract?.extract_title_official}</p>
+                  <p className="text-xs mt-1 text-slate-600">No callout linked to this proof</p>
+                </div>
+              </div>
+            </div>
+          ) : currentCallout?.snapshot_image_url ? (
             <div className="min-h-full flex items-start justify-center p-3">
               <div
                 className="relative inline-block"
