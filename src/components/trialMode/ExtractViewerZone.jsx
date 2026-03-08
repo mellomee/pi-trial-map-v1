@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import PdfViewer from '@/components/shared/PdfViewer';
+import PdfViewerWithGestures from '@/components/shared/PdfViewerWithGestures';
 import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
 
 // ---------- Highlight overlay ----------
