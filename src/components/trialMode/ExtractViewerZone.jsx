@@ -287,7 +287,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         )}
 
         {/* Main extract file viewer */}
-        <div className="flex-1 overflow-hidden bg-[#080c18] relative" ref={imgContainerRef}>
+         <div className="flex-1 overflow-hidden bg-[#080c18] relative" ref={imgContainerRef} style={{ touchAction: 'none' }}>
           {extractFileUrl ? (
             isPdf ? (
               <PdfViewer
