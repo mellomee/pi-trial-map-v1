@@ -90,13 +90,24 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
             <span className="text-sm font-semibold text-white">Add Highlights</span>
             <span className="text-xs text-slate-500">{callout.name || `p.${callout.page_number}`} · drag rectangles on the snapshot</span>
           </div>
-          {/* Color picker */}
+          {/* Color picker + opacity */}
           <div className="flex items-center gap-2">
             {COLOR_OPTS.map(col => (
               <button key={col} onClick={() => setColor(col)}
-                style={{ background: COLOR_CSS[col].replace("0.40", "0.75") }}
+                style={{ background: colorCss(col, 0.75) }}
                 className={`w-6 h-6 rounded-full border-2 transition-all ${color === col ? "border-white scale-110" : "border-transparent opacity-70 hover:opacity-100"}`} />
             ))}
+            <div className="w-px h-5 bg-[#1e2a45] mx-1" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-slate-400 whitespace-nowrap">Opacity</span>
+              <input
+                type="range" min="0.05" max="0.95" step="0.05"
+                value={opacity}
+                onChange={e => setOpacity(parseFloat(e.target.value))}
+                className="w-20 accent-yellow-400 cursor-pointer"
+              />
+              <span className="text-[10px] text-slate-400 w-7">{Math.round(opacity * 100)}%</span>
+            </div>
             <div className="w-px h-5 bg-[#1e2a45] mx-1" />
             {saving && <span className="text-[10px] text-slate-500">Saving…</span>}
             <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-white/10">
