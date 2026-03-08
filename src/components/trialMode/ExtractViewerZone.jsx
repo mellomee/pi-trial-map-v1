@@ -117,11 +117,12 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
 
-  // When spotlight changes while publishing, notify TrialMode via module-level callback
-  // If callout is hidden, always send null to jury
+  // When spotlight or visibility changes while publishing, update the jury session state directly
   useEffect(() => {
     if (isPublishing && _spotlightChangeCallback) {
-      _spotlightChangeCallback(!calloutVisible ? null : (spotlightCallout?.id || null));
+      // Send the actual callout ID if visible, null if hidden
+      const effectiveCalloutId = calloutVisible ? (spotlightCallout?.id || null) : null;
+      _spotlightChangeCallback(effectiveCalloutId);
     }
   }, [spotlightCallout?.id, isPublishing, calloutVisible]);
 
