@@ -283,6 +283,12 @@ export default function CalloutEditor({ extract }) {
     if (selectedCalloutId === id) { setSelectedCalloutId(null); setHighlights([]); }
   };
 
+  const saveCalloutName = async (id, name) => {
+    const updated = await base44.entities.Callouts.update(id, { name: name.trim() || `p.${callouts.find(c=>c.id===id)?.page_number} callout` });
+    setCallouts(prev => prev.map(c => c.id === updated.id ? updated : c));
+    setEditingCalloutId(null);
+  };
+
   const toggleJurySafe = async (callout) => {
     const updated = await base44.entities.Callouts.update(callout.id, { jury_safe: !callout.jury_safe });
     setCallouts(prev => prev.map(c => c.id === updated.id ? updated : c));
