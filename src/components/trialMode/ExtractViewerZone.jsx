@@ -106,7 +106,7 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
 }
 
 // ---------- Main component ----------
-export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
+export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish, onSpotlightChange }) {
   const [extract, setExtract] = useState(null);
   const [allCallouts, setAllCallouts] = useState([]);
   const [highlightsByCallout, setHighlightsByCallout] = useState({});
