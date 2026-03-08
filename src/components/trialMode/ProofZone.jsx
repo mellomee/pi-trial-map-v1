@@ -70,6 +70,9 @@ function ProofCard({ proof, isSelected, onClick, admitStatus, onAdmit, calloutNa
           <p className={`text-xs font-medium line-clamp-2 leading-snug ${isSelected ? 'text-cyan-200' : 'text-slate-200'}`}>
             {displayLabel}
           </p>
+          {calloutName && (
+            <p className="text-[10px] text-cyan-400 mt-0.5 line-clamp-1">↳ {calloutName}</p>
+          )}
           {proof.meta && (
             <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{proof.meta}</p>
           )}
