@@ -123,8 +123,8 @@ export default function PdfViewer({
         ref={containerRef}
         className="flex-1 overflow-auto flex items-start justify-center p-4"
         style={{
-          opacity: dimmed ? 0.15 : 1,
-          filter: dimmed ? 'blur(0.5px)' : 'none'
+          opacity: dimmed ? 0.95 : 1,
+          filter: dimmed ? 'blur(0.2px)' : 'none'
         }}
       >
         <canvas
