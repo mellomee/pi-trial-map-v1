@@ -89,11 +89,18 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
       )}
       {callout.name && <p className="text-[10px] text-slate-300 truncate font-medium leading-tight">{callout.name}</p>}
       {witnessName && <p className="text-[10px] text-cyan-400 truncate leading-tight">{witnessName}</p>}
-      {isActive && (
-        <div className="flex items-center gap-1 text-[9px] text-amber-400 font-medium">
-          <Eye className="w-2.5 h-2.5" /> Spotlighted
-        </div>
-      )}
+      <div className="flex items-center gap-1 flex-wrap">
+        {isActive && (
+          <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
+            <Eye className="w-2.5 h-2.5" /> Spotlighted
+          </span>
+        )}
+        {isLinked && !isActive && (
+          <span className="flex items-center gap-0.5 text-[9px] text-cyan-400">
+            <Link className="w-2.5 h-2.5" /> Proof
+          </span>
+        )}
+      </div>
     </button>
   );
 }
