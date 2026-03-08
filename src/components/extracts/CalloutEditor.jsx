@@ -271,6 +271,45 @@ export default function CalloutEditor({ extract }) {
 
   const isImageFile = fileUrl && !fileUrl.toLowerCase().includes(".pdf");
 
+  // Search across all PDF pages
+  const runSearch = async (term) => {
+    if (!pdfDoc || !term.trim()) { setSearchResults([]); setSearchStatus(""); return; }
+    setSearchStatus("searching");
+    setShowSearchResults(true);
+    const q = term.toLowerCase();
+    const results = [];
+    let totalTextFound = 0;
+    for (let p = 1; p <= pdfDoc.numPages; p++) {
+      const page = await pdfDoc.getPage(p);
+      const tc = await page.getTextContent();
+      const pageText = tc.items.map(i => i.str).join(" ");
+      totalTextFound += pageText.trim().length;
+      if (pageText.toLowerCase().includes(q)) {
+        // Grab a short snippet around the match
+        const idx = pageText.toLowerCase().indexOf(q);
+        const start = Math.max(0, idx - 40);
+        const end = Math.min(pageText.length, idx + term.length + 60);
+        const snippet = (start > 0 ? "…" : "") + pageText.slice(start, end) + (end < pageText.length ? "…" : "");
+        results.push({ page: p, snippet });
+      }
+    }
+    if (totalTextFound === 0) {
+      setSearchStatus("scanned");
+    } else {
+      setSearchStatus("done");
+    }
+    setSearchResults(results);
+  };
+
+  // Close search dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowSearchResults(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
     <>
       {/* Highlight editor modal */}
