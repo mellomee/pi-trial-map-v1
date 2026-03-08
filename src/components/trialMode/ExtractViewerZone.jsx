@@ -51,11 +51,11 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
 
       {/* Callout — centered, bright */}
       <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 3 }}>
-        <div className="overflow-auto" style={{ maxWidth: '95vw', maxHeight: '90vh' }}>
+        <div className="overflow-auto" style={{ maxWidth: '95%', maxHeight: '90%' }}>
           <div className="relative inline-block shadow-2xl rounded-lg border border-white/10"
             style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.15s' }}>
             <img src={callout.snapshot_image_url} alt={callout.name || 'Callout'}
-              className="block" style={{ maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain' }} draggable={false} />
+              className="block" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} draggable={false} />
             <HighlightOverlay highlights={highlights} />
           </div>
         </div>
