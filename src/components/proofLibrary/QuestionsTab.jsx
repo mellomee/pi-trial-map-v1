@@ -26,23 +26,24 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
 
   const loadQuestions = async () => {
     try {
-      // Load questions by witnesses in this group
       const witIds = witnesses.map(w => w.id);
       if (witIds.length === 0) {
         setQuestions([]);
         return;
       }
-      
+
       const allQ = await base44.entities.Questions.filter({ case_id: caseId });
       const filtered = allQ.filter(q => witIds.includes(q.party_id));
       setQuestions(filtered);
 
-      // Load linked proof for each question
+      // Load all links in parallel
+      const linkResults = await Promise.all(
+        filtered.map(q => base44.entities.QuestionLinks.filter({ question_id: q.id }))
+      );
       const proofMap = {};
-      for (const q of filtered) {
-        const links = await base44.entities.QuestionLinks.filter({ question_id: q.id });
-        proofMap[q.id] = links.filter(l => l.link_type === 'DepoClip' || l.link_type === 'JointExhibit');
-      }
+      filtered.forEach((q, i) => {
+        proofMap[q.id] = linkResults[i].filter(l => l.link_type === 'DepoClip' || l.link_type === 'JointExhibit' || l.link_type === 'ProofItem');
+      });
       setLinkedProof(proofMap);
     } catch (error) {
       console.error('Error loading questions:', error);
