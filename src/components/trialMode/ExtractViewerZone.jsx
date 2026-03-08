@@ -315,7 +315,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         )}
 
         {/* Main extract file viewer */}
-        <div className="flex-1 overflow-hidden bg-[#080c18] relative">
+        <div className="flex-1 overflow-hidden bg-[#080c18] relative" ref={imgContainerRef}>
           {extractFileUrl ? (
             isPdf ? (
               <PdfViewer
@@ -327,7 +327,25 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                 dimmed={false}
               />
             ) : (
-              <div className="min-h-full flex items-start justify-center p-3 overflow-auto">
+              <div className="min-h-full flex items-start justify-center p-3 overflow-auto touch-manipulation"
+                onTouchMove={(e) => {
+                  if (e.touches.length === 2) {
+                    e.preventDefault();
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const dist = Math.hypot(
+                      touch2.clientX - touch1.clientX,
+                      touch2.clientY - touch1.clientY
+                    );
+                    if (lastDist.current > 0) {
+                      const delta = dist - lastDist.current;
+                      handleZoomChange(Math.min(5, Math.max(0.25, zoom + delta * 0.01)));
+                    }
+                    lastDist.current = dist;
+                  }
+                }}
+                onTouchEnd={() => { lastDist.current = null; }}
+              >
                 <div className="relative inline-block w-full"
                   style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.1s' }}>
                   <img src={extractFileUrl} alt={extract.extract_title_internal || extract.extract_title_official}
