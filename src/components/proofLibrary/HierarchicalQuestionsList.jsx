@@ -143,7 +143,13 @@ export default function HierarchicalQuestionsList({
         setEditingQuestion(null);
         setParentQuestionForChild(null);
       } else {
-        const newQ = await base44.entities.Questions.create(editingQuestion);
+        // Assign order_index so new questions appear at the end
+        const isParent = !editingQuestion.parent_id;
+        const siblings = isParent
+          ? questions.filter(q => !q.parent_id)
+          : questions.filter(q => q.parent_id === editingQuestion.parent_id);
+        const orderIndex = siblings.length;
+        const newQ = await base44.entities.Questions.create({ ...editingQuestion, order_index: orderIndex });
         onQuestionCreated && onQuestionCreated(newQ);
         setShowModal(false);
         setEditingQuestion(null);
