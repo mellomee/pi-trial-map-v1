@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Trash2, Pencil, Check, X, Image } from 'lucide-react';
 import { getProofTypeIcon } from './proofItemResolver';
 import { base44 } from '@/api/base44Client';
-import ChangeCalloutModal from './ChangeCalloutModal';
+import ChangeCalloutModal from '@/components/proofLibrary/ChangeCalloutModal';
 
 export default function ProofItemCard({ proofItem, onRemove, onUpdated, witnesses = [], trialPoints = [] }) {
   const [editing, setEditing] = useState(false);
