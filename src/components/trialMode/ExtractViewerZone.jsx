@@ -312,7 +312,8 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                     );
                     if (lastDist.current > 0) {
                       const delta = dist - lastDist.current;
-                      handleZoomChange(Math.min(5, Math.max(0.25, zoom + delta * 0.01)));
+                      const newZoom = Math.min(5, Math.max(0.25, zoom + delta * 0.01));
+                      handleZoomChange(newZoom);
                     }
                     lastDist.current = dist;
                   }
