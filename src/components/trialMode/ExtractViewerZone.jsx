@@ -151,6 +151,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
   const pdfViewerRef = useRef(null);
+  const sidebarRef = useRef(null);
 
   // When spotlight changes while publishing, notify TrialMode via module-level callback
   // If callout is hidden, always send null to jury
