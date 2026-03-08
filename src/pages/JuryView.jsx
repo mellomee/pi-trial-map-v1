@@ -40,26 +40,28 @@ export default function JuryView() {
   const [depoClip, setDepoClip] = useState(null);
   const [depo, setDepo] = useState(null);
   const [jx, setJx] = useState(null);
-  const pollRef = useRef(null);
 
-  // Poll for session state
+  // Subscribe to trial session state changes (real-time, not polling)
   useEffect(() => {
     if (!activeCase?.id) return;
-    const poll = async () => {
-      const sessions = await base44.entities.TrialSessions.filter({
-        case_id: activeCase.id,
-        status: { $in: ['Setup', 'Active'] },
-      });
-      if (!sessions.length) return;
-      const states = await base44.entities.TrialSessionStates.filter({
-        trial_session_id: sessions[0].id,
-      });
-      if (states.length) setSessionState(states[0]);
-      else setSessionState(null);
-    };
-    poll();
-    pollRef.current = setInterval(poll, 2000);
-    return () => clearInterval(pollRef.current);
+
+    // Initial load: get current trial session
+    let trialSessionId = null;
+    base44.entities.TrialSessions.filter({
+      case_id: activeCase.id,
+      status: { $in: ['Setup', 'Active'] },
+    }).then((sessions) => {
+      if (sessions.length) {
+        trialSessionId = sessions[0].id;
+        // Subscribe to this session's state changes
+        const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
+          if (event.data?.trial_session_id === trialSessionId) {
+            setSessionState(event.data);
+          }
+        });
+        return unsub;
+      }
+    });
   }, [activeCase?.id]);
 
   // Load proof item when session state changes
