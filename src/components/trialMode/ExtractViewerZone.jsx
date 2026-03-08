@@ -76,7 +76,7 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
     <button
       onClick={onClick}
       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isActive ? 'border-amber-400 bg-amber-500/10' : isLinked ? 'border-cyan-500/50 bg-cyan-500/15' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
+        isActive ? 'border-amber-400 bg-amber-500/10' : isLinked ? 'border-red-500/70 bg-[#0f1629] hover:bg-[#131a2e]' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
       }`}
     >
       {callout.snapshot_image_url ? (
