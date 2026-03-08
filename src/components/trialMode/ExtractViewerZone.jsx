@@ -185,6 +185,38 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   }, []);
   const onTouchEnd = useCallback(() => { lastDist.current = null; }, []);
 
+  // Publish: call parent's onPublish, then write callout+extract info directly to session state
+  const handlePublish = async () => {
+    // Call the parent (TrialMode) to do the main publish + admission check
+    await onPublish(selectedProof);
+
+    // Now enrich the session state with the active callout + extract file URL
+    if (!activeCase?.id) return;
+    const activeCallout = spotlightCallout
+      || allCallouts.find(c => c.id === selectedProof?.callout_id)
+      || allCallouts[0]
+      || null;
+
+    try {
+      const sessions = await base44.entities.TrialSessions.filter({
+        case_id: activeCase.id,
+        status: { $in: ['Setup', 'Active'] },
+      });
+      if (!sessions.length) return;
+      const states = await base44.entities.TrialSessionStates.filter({
+        trial_session_id: sessions[0].id,
+      });
+      if (states.length) {
+        await base44.entities.TrialSessionStates.update(states[0].id, {
+          active_callout_id: activeCallout?.id || null,
+          extract_file_url: extractFileUrl || null,
+        });
+      }
+    } catch (e) {
+      console.error('Error enriching session state:', e);
+    }
+  };
+
   if (!selectedProof) {
     return (
       <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] items-center justify-center text-slate-600">
