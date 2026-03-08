@@ -107,7 +107,7 @@ function ProofCard({ proof, isSelected, onClick, admitStatus, onAdmit, calloutNa
   );
 }
 
-export default function ProofZone({ proofItems, selectedProofId, onSelectProof, childQuestionActive, onProofAdmitted }) {
+export default function ProofZone({ proofItems, selectedProofId, onSelectProof, childQuestionActive, onProofAdmitted, calloutNames }) {
   const admitStatusMap = useProofAdmitStatus(proofItems);
   const [admitTarget, setAdmitTarget] = useState(null); // { proof, admitStatus }
 
