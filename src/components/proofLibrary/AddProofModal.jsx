@@ -71,6 +71,13 @@ function CalloutPicker({ callouts, selectedCallout, setSelectedCallout, proofCal
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Callouts ({callouts.length})</span>
+        <div className="flex items-center gap-2">
+          {selectedCallout && (
+            <button onClick={() => setSelectedCallout(null)}
+              className="text-xs text-gray-400 hover:text-red-500 underline">
+              No callout
+            </button>
+          )}
         {callouts.length > 1 && (
           <div className="flex items-center gap-1">
             <button onClick={() => setSelectedCallout(callouts[Math.max(0, idx - 1)])}
