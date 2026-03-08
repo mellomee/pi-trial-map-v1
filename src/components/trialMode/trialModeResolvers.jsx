@@ -151,7 +151,7 @@ export async function getOrCreateTrialSession(caseId, sessionTitle = null) {
 /**
  * Update TrialSessionState with currently published item
  */
-export async function publishProofToJury(trialSessionId, proofItemId) {
+export async function publishProofToJury(trialSessionId, proofItemId, calloutId = null) {
   try {
     const existing = await base44.entities.TrialSessionStates.filter({
       trial_session_id: trialSessionId,
@@ -159,6 +159,7 @@ export async function publishProofToJury(trialSessionId, proofItemId) {
 
     const update = {
       current_proof_item_id: proofItemId,
+      current_callout_id: calloutId || null,
       jury_display_enabled: true,
       jury_can_see_proof: true,
     };
