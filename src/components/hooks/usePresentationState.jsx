@@ -34,13 +34,13 @@ export function usePresentationState(trialSessionId, isAttorney = false) {
     };
   }, [trialSessionId]);
 
-  // Attorney only: update page
+  // Attorney only: update page (immediate, reliable)
   const setPage = useCallback((newPage) => {
     if (!isAttorney || !state) return;
     base44.entities.TrialSessionStates.update(state.id, { proof_current_page: newPage }).catch(console.error);
   }, [state, isAttorney]);
 
-  // Attorney only: update zoom
+  // Attorney only: update zoom (throttled by caller for gesture smoothness)
   const setZoom = useCallback((newZoom) => {
     if (!isAttorney || !state) return;
     base44.entities.TrialSessionStates.update(state.id, { proof_zoom_level: newZoom }).catch(console.error);
