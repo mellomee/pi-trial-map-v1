@@ -194,7 +194,7 @@ const PdfViewer = React.forwardRef(function PdfViewer({
         style={{
           opacity: dimmed ? 0.15 : 1,
           filter: dimmed ? 'blur(0.5px)' : 'none',
-          touchAction: 'pinch-zoom'
+          touchAction: 'none'
         }}
         onWheel={handleWheel}
         onTouchMove={handleTouchMove}
