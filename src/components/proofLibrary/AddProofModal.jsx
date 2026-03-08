@@ -202,7 +202,7 @@ function ExtractDetailPanel({ extract, caseId, selectedCallout, setSelectedCallo
 
       const sorted = cos.sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
       setCallouts(sorted);
-      setSelectedCallout(sorted[0] || null);
+      setSelectedCallout(null); // no callout pre-selected
       setMeta({ sourceDepoExhibit, deponent, primarySrc, jointExhibit: jx, admittedRecord });
 
       // Load all case parties for witness name resolution
