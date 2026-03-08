@@ -226,7 +226,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
             <Square className="w-3 h-3" /> Unpublish
           </Button>
         ) : (
-          <Button size="sm" onClick={() => onPublish(selectedProof)} className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1 touch-manipulation">
+          <Button size="sm" onClick={() => onPublish(selectedProof, { extractFileUrl, spotlightCalloutId: spotlightCallout?.id || null })} className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1 touch-manipulation">
             <Monitor className="w-3 h-3" /> Publish
           </Button>
         )}
