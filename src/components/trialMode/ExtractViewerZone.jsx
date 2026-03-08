@@ -146,11 +146,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Auto-spotlight the linked callout if proof has one
-      if (selectedProof.callout_id) {
-        const linked = sorted.find(c => c.id === selectedProof.callout_id);
-        if (linked) setSpotlightCallout(linked);
-      }
+      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
