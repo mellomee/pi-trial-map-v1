@@ -104,7 +104,7 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
 let _spotlightChangeCallback = null;
 export function setSpotlightChangeCallback(fn) { _spotlightChangeCallback = fn; }
 
-export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
+export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish, trialSessionId }) {
   const [extract, setExtract] = useState(null);
   const [allCallouts, setAllCallouts] = useState([]);
   const [highlightsByCallout, setHighlightsByCallout] = useState({});
@@ -113,24 +113,8 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const [zoom, setZoom] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [spotlightCallout, setSpotlightCallout] = useState(null); // callout being spotlighted
-  const [trialSessionId, setTrialSessionId] = useState(null);
 
   const [calloutVisible, setCalloutVisible] = useState(true); // hide/show callout on jury
-
-  // Fetch trial session ID from URL or storage (needed for zoom/page sync)
-  useEffect(() => {
-    const getSessionId = async () => {
-      const caseId = sessionStorage.getItem('activeCaseId');
-      if (caseId) {
-        const sessions = await base44.entities.TrialSessions.filter({
-          case_id: caseId,
-          status: { $in: ['Setup', 'Active'] },
-        });
-        if (sessions[0]) setTrialSessionId(sessions[0].id);
-      }
-    };
-    getSessionId();
-  }, []);
 
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
@@ -169,11 +153,11 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   useEffect(() => {
     if (!selectedProof?.source_id) {
       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-      setWitnessByCallout({}); setJx(null); setZoom(1); setCurrentPage(1); setSpotlightCallout(null);
+      setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
       return;
     }
     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-    setWitnessByCallout({}); setJx(null); setZoom(1); setCurrentPage(1); setSpotlightCallout(null);
+    setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
 
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
       const ext = r[0];
