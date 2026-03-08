@@ -88,8 +88,8 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
           <ImageIcon className="w-4 h-4 text-slate-600" />
         </div>
       )}
-      {callout.name && <p className="text-[10px] text-slate-300 truncate font-medium leading-tight">{callout.name}</p>}
-      {witnessName && <p className="text-[10px] text-cyan-400 truncate leading-tight">{witnessName}</p>}
+      {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
+      {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
       {isActive && (
         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
           <Eye className="w-2.5 h-2.5" /> Spotlighted
