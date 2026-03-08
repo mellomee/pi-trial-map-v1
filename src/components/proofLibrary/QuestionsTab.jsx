@@ -228,7 +228,7 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
                     <p className="text-xs text-gray-400 font-semibold">ADD PROOF</p>
                     <div className="space-y-1 max-h-32 overflow-y-auto">
                       {proofItems.map((proof) => {
-                        const isLinked = links.some(l => l.link_id === proof.source_id);
+                        const isLinked = links.some(l => l.link_id === proof.id);
                         return (
                           <button
                             key={proof.id}
