@@ -324,8 +324,8 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
 
       {/* Main view */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Callout thumbnail sidebar (all callouts for context, but linked ones highlighted) */}
-        {allCalloutsByPage.length > 1 && (
+      {/* Callout thumbnail sidebar — only when proof has a callout_id */}
+      {selectedProof?.callout_id && allCalloutsByPage.length > 1 && (
           <div className="w-20 flex-shrink-0 bg-[#0f1629] border-r border-[#1e2a45] overflow-y-auto">
             <div className="p-1 space-y-1">
               {allCalloutsByPage.map((c, idx) => {
