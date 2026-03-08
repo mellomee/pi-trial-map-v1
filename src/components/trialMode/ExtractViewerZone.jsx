@@ -328,6 +328,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               />
             ) : (
               <div className="min-h-full flex items-start justify-center p-3 overflow-auto touch-manipulation"
+                style={{ touchAction: 'none' }}
                 onTouchMove={(e) => {
                   if (e.touches.length === 2) {
                     e.preventDefault();
