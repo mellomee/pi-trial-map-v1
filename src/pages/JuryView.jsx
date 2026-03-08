@@ -222,12 +222,6 @@ export default function JuryView() {
                 </div>
               )}
 
-              {/* Callout name label (if spotlighted) */}
-              {callout?.name && (
-                <div className="absolute bottom-4 left-0 right-0 text-center z-20">
-                  <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
-                </div>
-              )}
             </>
           ) : (
             <>
