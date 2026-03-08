@@ -135,7 +135,7 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
                       position: "absolute",
                       left: `${r.x * 100}%`, top: `${r.y * 100}%`,
                       width: `${r.w * 100}%`, height: `${r.h * 100}%`,
-                      background: COLOR_CSS[hl.color] || COLOR_CSS.yellow,
+                      background: colorCss(hl.color, hl.opacity ?? 0.4),
                       pointerEvents: "none",
                     }} />
                   ))
@@ -146,8 +146,8 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
                     position: "absolute",
                     left: `${draftRect.x * 100}%`, top: `${draftRect.y * 100}%`,
                     width: `${draftRect.w * 100}%`, height: `${draftRect.h * 100}%`,
-                    background: COLOR_CSS[color],
-                    border: `2px dashed ${COLOR_CSS[color].replace("0.40", "0.9")}`,
+                    background: colorCss(color, opacity),
+                    border: `2px dashed ${colorCss(color, 0.9)}`,
                     pointerEvents: "none",
                   }} />
                 )}
