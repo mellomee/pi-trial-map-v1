@@ -285,6 +285,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                   callout={c}
                   witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
                   isActive={spotlightCallout?.id === c.id}
+                  isLinked={selectedProof?.callout_id === c.id}
                   onClick={() => setSpotlightCallout(prev => prev?.id === c.id ? null : c)}
                 />
               ))}
