@@ -128,7 +128,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   }, [spotlightCallout?.id, isPublishing, calloutVisible]);
 
   // Sync zoom and page to TrialSessionStates when attorney zooms/pages
-  const handleZoomChange = (newZoom) => {
+  const handleZoomChange = useCallback((newZoom) => {
     setZoom(newZoom);
     if (isPublishing && trialSessionId) {
       base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
@@ -137,9 +137,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         }
       });
     }
-  };
+  }, [isPublishing, trialSessionId]);
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = useCallback((newPage) => {
     setCurrentPage(newPage);
     if (isPublishing && trialSessionId) {
       base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId }).then(states => {
@@ -148,7 +148,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         }
       });
     }
-  };
+  }, [isPublishing, trialSessionId]);
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
