@@ -11,12 +11,6 @@ const COLOR_RGB = {
   blue:   "59,130,246",
 };
 const colorCss = (color, opacity) => `rgba(${COLOR_RGB[color] || COLOR_RGB.yellow},${opacity ?? 0.4})`;
-const COLOR_CSS = {
-  yellow: colorCss("yellow", 0.4),
-  red:    colorCss("red", 0.4),
-  green:  colorCss("green", 0.4),
-  blue:   colorCss("blue", 0.4),
-};
 
 export default function HighlightEditorModal({ callout, highlights, onHighlightsChange, onClose }) {
   const imgRef = useRef(null);
@@ -26,6 +20,10 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
   const [dragStart, setDragStart] = useState(null);
   const [dragCurrent, setDragCurrent] = useState(null);
   const [saving, setSaving] = useState(false);
+  // Selected highlight for editing
+  const [selectedHlId, setSelectedHlId] = useState(null);
+  const [editColor, setEditColor] = useState("yellow");
+  const [editOpacity, setEditOpacity] = useState(0.4);
 
   const toNorm = (clientX, clientY) => {
     const rect = imgRef.current.getBoundingClientRect();
@@ -36,6 +34,7 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
   };
 
   const onMouseDown = e => {
+    // Don't start drag if clicking on a highlight rect
     e.preventDefault();
     const p = toNorm(e.clientX, e.clientY);
     setDragStart(p); setDragCurrent(p); setDragging(true);
@@ -68,6 +67,21 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
   const deleteHl = async (id) => {
     await base44.entities.Highlights.delete(id);
     onHighlightsChange(prev => prev.filter(h => h.id !== id));
+    if (selectedHlId === id) setSelectedHlId(null);
+  };
+
+  const selectHighlight = (hl) => {
+    setSelectedHlId(hl.id);
+    setEditColor(hl.color || "yellow");
+    setEditOpacity(hl.opacity ?? 0.4);
+  };
+
+  const saveEditedHighlight = async () => {
+    const updated = await base44.entities.Highlights.update(selectedHlId, {
+      color: editColor,
+      opacity: editOpacity,
+    });
+    onHighlightsChange(prev => prev.map(h => h.id === selectedHlId ? updated : h));
   };
 
   const draftRect = dragging && dragStart && dragCurrent ? {
@@ -76,6 +90,8 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
     w: Math.abs(dragCurrent.x - dragStart.x),
     h: Math.abs(dragCurrent.y - dragStart.y),
   } : null;
+
+  const selectedHl = highlights.find(h => h.id === selectedHlId);
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.85)" }}
@@ -131,13 +147,17 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
                 {/* Existing highlights */}
                 {highlights.map((hl) =>
                   (hl.rects_norm || []).map((r, ri) => (
-                    <div key={`${hl.id}-${ri}`} style={{
-                      position: "absolute",
-                      left: `${r.x * 100}%`, top: `${r.y * 100}%`,
-                      width: `${r.w * 100}%`, height: `${r.h * 100}%`,
-                      background: colorCss(hl.color, hl.opacity ?? 0.4),
-                      pointerEvents: "none",
-                    }} />
+                    <div key={`${hl.id}-${ri}`}
+                      onClick={(e) => { e.stopPropagation(); selectHighlight(hl); }}
+                      style={{
+                        position: "absolute",
+                        left: `${r.x * 100}%`, top: `${r.y * 100}%`,
+                        width: `${r.w * 100}%`, height: `${r.h * 100}%`,
+                        background: colorCss(hl.color, hl.opacity ?? 0.4),
+                        cursor: "pointer",
+                        outline: selectedHlId === hl.id ? "2px solid white" : "none",
+                        zIndex: 2,
+                      }} />
                   ))
                 )}
                 {/* Draft rect */}
@@ -149,6 +169,7 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
                     background: colorCss(color, opacity),
                     border: `2px dashed ${colorCss(color, 0.9)}`,
                     pointerEvents: "none",
+                    zIndex: 3,
                   }} />
                 )}
               </div>
@@ -169,21 +190,49 @@ export default function HighlightEditorModal({ callout, highlights, onHighlights
                 <p className="text-[10px] text-slate-600 italic text-center py-4">Drag on the image to add highlights.</p>
               )}
               {highlights.map((hl, i) => (
-                <div key={hl.id} className="flex items-center gap-1.5 bg-[#0f1629] border border-[#1e2a45] rounded px-2 py-1.5">
+                <button key={hl.id}
+                  onClick={() => selectHighlight(hl)}
+                  className={`w-full flex items-center gap-1.5 rounded px-2 py-1.5 border transition-colors ${selectedHlId === hl.id ? 'bg-cyan-500/20 border-cyan-500/50' : 'bg-[#0f1629] border-[#1e2a45] hover:border-cyan-500/30'}`}>
                   <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: colorCss(hl.color, hl.opacity ?? 0.4) }} />
-                  <span className="text-[10px] text-slate-400 flex-1">{hl.color} · {Math.round((hl.opacity ?? 0.4) * 100)}%</span>
-                  <button onClick={() => deleteHl(hl.id)} className="p-0.5 text-slate-600 hover:text-red-400">
+                  <span className="text-[10px] text-slate-400 flex-1 text-left">{hl.color} · {Math.round((hl.opacity ?? 0.4) * 100)}%</span>
+                  <div onClick={(e) => { e.stopPropagation(); deleteHl(hl.id); }} className="p-0.5 text-slate-600 hover:text-red-400">
                     <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
+                  </div>
+                </button>
               ))}
             </div>
+
+            {/* Edit panel for selected highlight */}
+            {selectedHl && (
+              <div className="border-t border-[#1e2a45] p-3 space-y-2 flex-shrink-0">
+                <p className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-widest">Edit Selected</p>
+                <div className="flex gap-1 flex-wrap">
+                  {COLOR_OPTS.map(col => (
+                    <button key={col} onClick={() => setEditColor(col)}
+                      style={{ background: colorCss(col, 0.75) }}
+                      className={`w-5 h-5 rounded-full border-2 transition-all ${editColor === col ? "border-white scale-110" : "border-transparent opacity-70 hover:opacity-100"}`} />
+                  ))}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400">Opacity</span>
+                  <input type="range" min="0.05" max="0.95" step="0.05"
+                    value={editOpacity}
+                    onChange={e => setEditOpacity(parseFloat(e.target.value))}
+                    className="flex-1 accent-cyan-400 cursor-pointer" />
+                  <span className="text-[10px] text-slate-400 w-7">{Math.round(editOpacity * 100)}%</span>
+                </div>
+                <Button onClick={saveEditedHighlight}
+                  className="w-full h-6 text-[10px] bg-cyan-700 hover:bg-cyan-600 text-white">
+                  Apply
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[#1e2a45] flex-shrink-0 bg-[#0a0f1e]">
-          <span className="text-[10px] text-slate-600 flex-1">Click and drag on the snapshot to draw highlight rectangles.</span>
+          <span className="text-[10px] text-slate-600 flex-1">Drag to draw · Click a highlight to edit its color/opacity.</span>
           <Button onClick={onClose} className="bg-yellow-600/20 text-yellow-300 border border-yellow-600/40 hover:bg-yellow-600/30 text-xs h-8">
             Done
           </Button>

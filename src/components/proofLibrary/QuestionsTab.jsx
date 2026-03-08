@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, ChevronDown, Trash2 } from 'lucide-react';
 import ProofViewerModal from './ProofViewerModal';
 
-export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, caseId }) {
+export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, caseId, calloutNames }) {
   const [questions, setQuestions] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newQuestion, setNewQuestion] = useState({ question_text: '', party_id: '', exam_type: 'Direct' });
