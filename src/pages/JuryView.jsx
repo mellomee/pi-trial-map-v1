@@ -236,7 +236,7 @@ export default function JuryView() {
                     maxHeight: '100vh',
                     objectFit: 'contain',
                     opacity: callout?.snapshot_image_url ? 0.65 : 1,
-                    filter: callout?.snapshot_image_url ? 'blur(0.5px)' : 'none',
+                    filter: callout?.snapshot_image_url ? 'blur(0px)' : 'none',
                     userSelect: 'none'
                   }}
                   draggable={false}
