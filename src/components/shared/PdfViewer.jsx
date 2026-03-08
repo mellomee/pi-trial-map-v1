@@ -124,6 +124,8 @@ const PdfViewer = React.forwardRef(function PdfViewer({
     // Trackpad pinch or Ctrl+wheel for zoom
     if ((e.ctrlKey || e.metaKey || Math.abs(e.deltaY) < 5) && Math.abs(e.deltaY) > 0) {
       e.preventDefault();
+      isGestureActive.current = true;
+      
       const now = Date.now();
       if (now - lastWheelTime.current < 30) return; // debounce
       lastWheelTime.current = now;
@@ -132,7 +134,13 @@ const PdfViewer = React.forwardRef(function PdfViewer({
       const delta = -e.deltaY * 0.005;
       const newZoom = Math.min(4, Math.max(0.5, zoom + delta));
       setZoom(newZoom);
-      onZoomChange?.(newZoom);
+      
+      // Throttle shared state writes during active gesture
+      if (throttleZoomTimer.current) clearTimeout(throttleZoomTimer.current);
+      throttleZoomTimer.current = setTimeout(() => {
+        onZoomChange?.(newZoom);
+        throttleZoomTimer.current = null;
+      }, 100);
     }
   };
 
@@ -140,6 +148,8 @@ const PdfViewer = React.forwardRef(function PdfViewer({
   const handleTouchMove = (e) => {
     if (e.touches.length === 2) {
       e.preventDefault();
+      isGestureActive.current = true;
+      
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       const dist = Math.hypot(
@@ -155,13 +165,27 @@ const PdfViewer = React.forwardRef(function PdfViewer({
       const delta = dist - containerRef.current._lastDist;
       const newZoom = Math.min(4, Math.max(0.5, zoom + delta * 0.01));
       setZoom(newZoom);
-      onZoomChange?.(newZoom);
+      
+      // Throttle shared state writes during active gesture
+      if (throttleZoomTimer.current) clearTimeout(throttleZoomTimer.current);
+      throttleZoomTimer.current = setTimeout(() => {
+        onZoomChange?.(newZoom);
+        throttleZoomTimer.current = null;
+      }, 100);
+      
       containerRef.current._lastDist = dist;
     }
   };
 
   const handleTouchEnd = () => {
+    // Commit final zoom to shared state
     if (containerRef.current) containerRef.current._lastDist = null;
+    isGestureActive.current = false;
+    if (throttleZoomTimer.current) {
+      clearTimeout(throttleZoomTimer.current);
+      throttleZoomTimer.current = null;
+    }
+    onZoomChange?.(zoom);
   };
 
   if (loading) {
