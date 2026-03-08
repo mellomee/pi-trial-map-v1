@@ -199,7 +199,7 @@ export default function JuryView() {
             externalPage={currentPage}
             readOnly={true}
             showControls={false}
-            dimmed={callout?.snapshot_image_url ? true : false}
+            dimmed={false}
           />
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
@@ -235,7 +235,7 @@ export default function JuryView() {
                     maxWidth: '100vw',
                     maxHeight: '100vh',
                     objectFit: 'contain',
-                    opacity: callout?.snapshot_image_url ? 0.95 : 1,
+                    opacity: callout?.snapshot_image_url ? 0.25 : 1,
                     filter: callout?.snapshot_image_url ? 'blur(1px)' : 'none',
                     userSelect: 'none'
                   }}
