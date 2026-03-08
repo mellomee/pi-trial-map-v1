@@ -342,9 +342,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                   onClick={() => {
                     // Toggle: click same callout to close, click different to open
                     setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                    // Auto-navigate to callout's page if PDF
-                    if (isPdf && c.page_number && pdfViewerRef.current?.setPage) {
-                      pdfViewerRef.current.setPage(c.page_number);
+                    // Auto-navigate to callout's page via shared state
+                    if (isPdf && c.page_number) {
+                      setPage(c.page_number);
                     }
                   }}
                 />
