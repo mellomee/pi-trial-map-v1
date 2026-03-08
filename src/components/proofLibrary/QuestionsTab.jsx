@@ -88,8 +88,8 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
       await base44.entities.QuestionLinks.create({
         case_id: caseId,
         question_id: questionId,
-        link_type: proofItem.type === 'depoClip' ? 'DepoClip' : 'JointExhibit',
-        link_id: proofItem.source_id,
+        link_type: 'ProofItem',
+        link_id: proofItem.id,
       });
       await loadQuestions();
     } catch (error) {
