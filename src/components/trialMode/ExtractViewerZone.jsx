@@ -30,7 +30,7 @@ function HighlightOverlay({ highlights }) {
 function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
   const [zoom, setZoom] = useState(1);
   return (
-    <div className="absolute inset-0 z-30 overflow-hidden" style={{ background: 'rgba(0,0,0,0.0)' }}>
+    <div className="absolute inset-0 z-20 overflow-hidden" style={{ background: 'rgba(0,0,0,0.0)' }}>
       {/* Background: dimmed extract file */}
       {extractFileUrl && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
