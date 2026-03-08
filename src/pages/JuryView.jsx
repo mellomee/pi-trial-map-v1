@@ -143,11 +143,12 @@ export default function JuryView() {
     return <div className="fixed inset-0 bg-black" />;
   }
 
-  // Build exhibit label: only "Exhibit X" using admitted number
+  // Build exhibit label
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
 
   return (
-    <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+      {/* Depo Clip */}
       {proofItem.type === 'depoClip' && depoClip && (
         <div className="w-full h-full flex flex-col justify-center px-10 py-10">
           <div className="mb-6 flex flex-wrap gap-4 items-baseline">
@@ -173,62 +174,66 @@ export default function JuryView() {
         </div>
       )}
 
-      {proofItem.type === 'extract' && (
+      {/* Extract — base layer always shown */}
+      {proofItem.type === 'extract' && extract && (
         <div className="w-full h-full relative overflow-hidden">
           {/* Exhibit label */}
           {exhibitLabel && (
-            <div className="absolute top-3 right-4 z-20">
+            <div className="absolute top-3 right-4 z-20 pointer-events-none">
               <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
             </div>
           )}
 
-          {/* Background (only shown when callout is active — dimmed blur) */}
-          {callout?.snapshot_image_url && extract?.extract_file_url && (
+          {/* Layer 0: Full-screen extract base */}
+          {extract.extract_file_url && (
             <div className="absolute inset-0 flex items-center justify-center z-0">
               <img
                 src={extract.extract_file_url}
                 alt="Extract"
-                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain', opacity: 0.18, filter: 'blur(1px)', userSelect: 'none' }}
+                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain', userSelect: 'none' }}
                 draggable={false}
               />
             </div>
           )}
 
-          {/* If callout is active: dim overlay + spotlight callout. If no callout: show extract full screen. */}
-          {callout?.snapshot_image_url ? (
-            <>
-              {/* Dark overlay over background */}
-              <div className="absolute inset-0 z-1" style={{ background: 'rgba(5,8,22,0.72)' }} />
-              {/* Spotlighted callout */}
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                  <img
-                    src={callout.snapshot_image_url}
-                    alt="Evidence"
-                    style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                    draggable={false}
-                  />
-                  <HighlightOverlay highlights={highlights} />
-                </div>
-              </div>
-              {/* Callout name label */}
-              {callout.name && (
-                <div className="absolute bottom-4 left-0 right-0 text-center z-20">
-                  <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
-                </div>
-              )}
-            </>
-          ) : extract?.extract_file_url ? (
-            /* No callout selected — show extract full screen, bright */
-            <div className="absolute inset-0 flex items-center justify-center z-10">
+          {/* Layer 1: Dark overlay (only if spotlight active) */}
+          {callout?.snapshot_image_url && (
+            <div className="absolute inset-0 z-1" style={{ background: 'rgba(5,8,22,0.72)' }} />
+          )}
+
+          {/* Layer 2: Dimmed extract background (only if spotlight active) */}
+          {callout?.snapshot_image_url && extract.extract_file_url && (
+            <div className="absolute inset-0 flex items-center justify-center z-2">
               <img
                 src={extract.extract_file_url}
                 alt="Extract"
-                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain' }}
+                style={{ display: 'block', maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain', opacity: 0.15, filter: 'blur(1px)', userSelect: 'none' }}
                 draggable={false}
               />
             </div>
-          ) : null}
+          )}
+
+          {/* Layer 3: Spotlighted callout (only if active) */}
+          {callout?.snapshot_image_url && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+              <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                <img
+                  src={callout.snapshot_image_url}
+                  alt="Evidence"
+                  style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain', userSelect: 'none' }}
+                  draggable={false}
+                />
+                <HighlightOverlay highlights={highlights} />
+              </div>
+            </div>
+          )}
+
+          {/* Callout name label */}
+          {callout?.name && (
+            <div className="absolute bottom-4 left-0 right-0 text-center z-20 pointer-events-none">
+              <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
+            </div>
+          )}
         </div>
       )}
     </div>
