@@ -204,7 +204,7 @@ export default function JuryView() {
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
           {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.01)' }} />
+            <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.03)' }} />
               )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
@@ -217,18 +217,19 @@ export default function JuryView() {
                       style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
                       draggable={false}
                     />
-                    </div>
-                    </div>
-                    )}
+                    <HighlightOverlay highlights={highlights} />
+                  </div>
+                </div>
+              )}
 
-                    {/* Callout name label (if spotlighted) */}
-                    {callout?.name && (
-                    <div className="absolute bottom-4 left-0 right-0 text-center z-20">
-                    <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
-                    </div>
-                    )}
-                    </>
-                    ) : (
+              {/* Callout name label (if spotlighted) */}
+              {callout?.name && (
+                <div className="absolute bottom-4 left-0 right-0 text-center z-20">
+                  <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
+                </div>
+              )}
+            </>
+          ) : (
             <>
               {/* Image with optional spotlight overlay */}
               <div className="absolute inset-0 flex items-center justify-center z-0">
@@ -250,7 +251,7 @@ export default function JuryView() {
 
               {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
               {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.01)' }} />
+                <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.03)' }} />
               )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
@@ -263,19 +264,20 @@ export default function JuryView() {
                       style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
                       draggable={false}
                     />
-                    </div>
-                    </div>
-                    )}
+                    <HighlightOverlay highlights={highlights} />
+                  </div>
+                </div>
+              )}
 
-                    {/* Callout name label (if spotlighted) */}
-                    {callout?.name && (
-                    <div className="absolute bottom-4 left-0 right-0 text-center z-20">
-                    <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
-                    </div>
-                    )}
-                    </>
-                    )}
-                    </div>
+              {/* Callout name label (if spotlighted) */}
+              {callout?.name && (
+                <div className="absolute bottom-4 left-0 right-0 text-center z-20">
+                  <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   );
