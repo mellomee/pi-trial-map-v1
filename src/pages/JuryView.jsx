@@ -191,20 +191,20 @@ export default function JuryView() {
           )}
 
           {isPdf ? (
-            <>
-              {/* PDF with optional spotlight overlay */}
-              <PdfViewer
-                fileUrl={extract.extract_file_url}
-                externalZoom={zoom}
-                externalPage={currentPage}
-                readOnly={true}
-                showControls={false}
-                dimmed={callout?.snapshot_image_url ? true : false}
-              />
+          <>
+          {/* PDF with optional spotlight overlay */}
+          <PdfViewer
+            fileUrl={extract.extract_file_url}
+            externalZoom={zoom}
+            externalPage={currentPage}
+            readOnly={true}
+            showControls={false}
+            dimmed={callout?.snapshot_image_url ? true : false}
+          />
 
-              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.1)' }} />
+          {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+          {callout?.snapshot_image_url && (
+            <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.08)' }} />
               )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
@@ -251,7 +251,7 @@ export default function JuryView() {
 
               {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
               {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.1)' }} />
+                <div className="absolute inset-0 z-5" style={{ background: 'rgba(5,8,22,0.08)' }} />
               )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
