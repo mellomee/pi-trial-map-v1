@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Image, CheckCircle2, Eye, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { FileText, Image, CheckCircle2, Eye, EyeOff, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 
