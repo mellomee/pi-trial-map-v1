@@ -53,9 +53,18 @@ export async function resolveQuestionLinks(questionId, caseId) {
         const clips = await base44.entities.DepoClips.filter({ id: pi.source_id });
         if (clips[0]?.topic_tag) return { ...pi, clip_title: clips[0].topic_tag };
       }
-      if (pi.type === 'extract' && pi.callout_id) {
-        const callouts = await base44.entities.Callouts.filter({ id: pi.callout_id });
-        if (callouts[0]?.name) return { ...pi, callout_name: callouts[0].name };
+      if (pi.type === 'extract' && pi.source_id) {
+        const enriched = { ...pi };
+        if (pi.callout_id) {
+          const callouts = await base44.entities.Callouts.filter({ id: pi.callout_id });
+          if (callouts[0]?.name) enriched.callout_name = callouts[0].name;
+        }
+        if (!enriched.label) {
+          // Fallback label from extract title
+          const extracts = await base44.entities.ExhibitExtracts.filter({ id: pi.source_id });
+          if (extracts[0]) enriched.label = extracts[0].extract_title_internal || extracts[0].extract_title_official || 'Extract';
+        }
+        return enriched;
       }
       return pi;
     }));
