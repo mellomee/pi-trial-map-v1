@@ -401,6 +401,7 @@ export default function TrialMode() {
               isPublishing={!!(publishedProof && selectedProof && publishedProof.id === selectedProof.id)}
               onPublish={handlePublishProof}
               onUnpublish={handleClearJury}
+              trialSessionId={trialSession?.id}
             />
           </div>
 
