@@ -120,8 +120,10 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
 
-  // Sync spotlight state to jury view in real-time
-  const syncSpotlightToJury = useCallback(async (callout, fileUrl) => {
+  const extractFileUrlRef = useRef(null);
+
+  // Sync spotlight + extract URL to jury session state in real-time
+  const syncSpotlightToJury = useCallback(async (callout) => {
     if (!activeCase?.id) return;
     try {
       const sessions = await base44.entities.TrialSessions.filter({
@@ -132,7 +134,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       const states = await base44.entities.TrialSessionStates.filter({ trial_session_id: sessions[0].id });
       if (!states.length) return;
       await base44.entities.TrialSessionStates.update(states[0].id, {
-        extract_file_url: fileUrl || null,
+        extract_file_url: extractFileUrlRef.current || null,
         spotlight_callout_id: callout?.id || null,
       });
     } catch (e) {
@@ -143,7 +145,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   // Live-sync spotlight changes to jury while publishing
   useEffect(() => {
     if (!isPublishing) return;
-    syncSpotlightToJury(spotlightCallout, extractFileUrl);
+    syncSpotlightToJury(spotlightCallout);
   }, [spotlightCallout?.id, isPublishing]); // eslint-disable-line
 
   useEffect(() => {
