@@ -67,7 +67,8 @@ export default function JuryView() {
   // Load proof item when session state changes
   useEffect(() => {
     const pid = sessionState?.current_proof_item_id;
-    if (!pid || !sessionState?.jury_can_see_proof) {
+    // Clear display if proof is NOT approved for jury view
+    if (!sessionState?.jury_can_see_proof || !pid) {
       setProofItem(null);
       setExtract(null);
       setCallout(null);
@@ -77,6 +78,8 @@ export default function JuryView() {
       setJx(null);
       return;
     }
+
+    // Proof IS approved — load it
     base44.entities.ProofItems.filter({ id: pid }).then(async (items) => {
       const item = items[0];
       if (!item) return;
@@ -90,28 +93,41 @@ export default function JuryView() {
           const depos = await base44.entities.Depositions.filter({ id: clip.deposition_id });
           setDepo(depos[0] || null);
         }
+        setExtract(null);
         setCallout(null);
         setHighlights([]);
         setJx(null);
       } else if (item.type === 'extract' && item.source_id) {
+        // Load extract file
         const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
         const extract = extracts[0];
-        if (!extract) return;
-        // Prefer current_callout_id from session state (live spotlight), fallback to proof item's callout_id
-        const spotlightCalloutId = sessionState?.current_callout_id || item.callout_id;
-        let cs = await base44.entities.Callouts.filter({ extract_id: extract.id });
-        let targetCallout = spotlightCalloutId ? cs.find(c => c.id === spotlightCalloutId) : cs[0];
-        setCallout(targetCallout || null);
-        // Store extract file url for background
+        if (!extract || !extract.extract_file_url) {
+          setExtract(null);
+          setCallout(null);
+          return;
+        }
         setExtract(extract);
-        // Load highlights for that callout
-        if (targetCallout) {
-          const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
-          setHighlights(hs);
+
+        // Load callouts and highlights ONLY if a specific callout is spotlighted
+        const spotlightCalloutId = sessionState?.current_callout_id;
+        if (spotlightCalloutId) {
+          const callouts = await base44.entities.Callouts.filter({ id: spotlightCalloutId });
+          const targetCallout = callouts[0] || null;
+          setCallout(targetCallout);
+          // Load highlights for this callout
+          if (targetCallout) {
+            const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
+            setHighlights(hs);
+          } else {
+            setHighlights([]);
+          }
         } else {
+          // No spotlight — show full extract, no callout
+          setCallout(null);
           setHighlights([]);
         }
-        // Load joint exhibit
+
+        // Load joint exhibit for label
         const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
         setJx(jxs[0] || null);
         setDepoClip(null);
