@@ -42,24 +42,42 @@ export default function JuryView() {
   const [jx, setJx] = useState(null);
   const pollRef = useRef(null);
 
-  // Poll for session state
+  // Subscribe to real-time session state changes
   useEffect(() => {
     if (!activeCase?.id) return;
-    const poll = async () => {
+    
+    let sessionId = null;
+    const initSession = async () => {
       const sessions = await base44.entities.TrialSessions.filter({
         case_id: activeCase.id,
         status: { $in: ['Setup', 'Active'] },
       });
-      if (!sessions.length) return;
+      if (!sessions.length) {
+        setSessionState(null);
+        return;
+      }
+      sessionId = sessions[0].id;
+      
+      // Get initial state
       const states = await base44.entities.TrialSessionStates.filter({
-        trial_session_id: sessions[0].id,
+        trial_session_id: sessionId,
       });
       if (states.length) setSessionState(states[0]);
-      else setSessionState(null);
+      
+      // Subscribe for real-time updates
+      const unsubscribe = base44.entities.TrialSessionStates.subscribe((event) => {
+        if (event.data?.trial_session_id === sessionId) {
+          if (event.type === 'delete') setSessionState(null);
+          else setSessionState(event.data);
+        }
+      });
+      
+      return unsubscribe;
     };
-    poll();
-    pollRef.current = setInterval(poll, 2000);
-    return () => clearInterval(pollRef.current);
+    
+    let unsubscribe;
+    initSession().then(unsub => { unsubscribe = unsub; });
+    return () => unsubscribe?.();
   }, [activeCase?.id]);
 
   // Load proof item when session state changes
