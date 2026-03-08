@@ -93,11 +93,13 @@ export default function JuryView() {
         const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
         const extract = extracts[0];
         if (!extract) return;
-        // Load callout
-        const calloutId = item.callout_id;
+        // Prefer current_callout_id from session state (live spotlight), fallback to proof item's callout_id
+        const spotlightCalloutId = sessionState?.current_callout_id || item.callout_id;
         let cs = await base44.entities.Callouts.filter({ extract_id: extract.id });
-        let targetCallout = calloutId ? cs.find(c => c.id === calloutId) : cs[0];
+        let targetCallout = spotlightCalloutId ? cs.find(c => c.id === spotlightCalloutId) : cs[0];
         setCallout(targetCallout || null);
+        // Store extract file url for background
+        setExtract(extract);
         // Load highlights for that callout
         if (targetCallout) {
           const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
