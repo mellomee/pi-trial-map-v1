@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-export default function PdfViewer({
+const PdfViewer = React.forwardRef(function PdfViewer({
   fileUrl,
   externalZoom = null,
   externalPage = null,
@@ -14,7 +14,7 @@ export default function PdfViewer({
   readOnly = false,
   showControls = true,
   dimmed = false
-}) {
+}, ref) {
   const [pdf, setPdf] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,6 +88,15 @@ export default function PdfViewer({
     onZoomChange?.(newZoom);
   };
 
+  // Imperative API for setting page programmatically
+  React.useImperativeHandle(ref, () => ({
+    setPage: (pageNum) => {
+      const newPage = Math.max(1, Math.min(pageNum, totalPages));
+      setCurrentPage(newPage);
+      onPageChange?.(newPage);
+    }
+  }));
+
   if (loading) {
     return <div className="w-full h-full flex items-center justify-center bg-black text-slate-400">Loading PDF...</div>;
   }
@@ -138,4 +147,6 @@ export default function PdfViewer({
       </div>
     </div>
   );
-}
+});
+
+export default PdfViewer;
