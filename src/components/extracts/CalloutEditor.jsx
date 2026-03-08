@@ -623,18 +623,38 @@ export default function CalloutEditor({ extract }) {
                   return (
                     <div key={c.id} className={`border-b border-[#1e2a45] ${isSelected ? "bg-orange-500/10" : ""}`}>
                       <div className="flex items-center gap-1 px-2 py-2">
-                        <button onClick={() => { setSelectedCalloutId(c.id); setPageNum(c.page_number ?? 1); }}
-                          className="flex-1 text-left min-w-0">
-                          <p className={`text-[11px] font-medium truncate ${isSelected ? "text-orange-300" : "text-slate-300"}`}>
-                            {c.name || `p.${c.page_number} callout`}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          {editingCalloutId === c.id ? (
+                            <input
+                              autoFocus
+                              value={editingCalloutName}
+                              onChange={e => setEditingCalloutName(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") saveCalloutName(c.id, editingCalloutName);
+                                if (e.key === "Escape") setEditingCalloutId(null);
+                              }}
+                              onBlur={() => saveCalloutName(c.id, editingCalloutName)}
+                              className="w-full text-[11px] bg-[#0a0f1e] border border-cyan-500/50 rounded px-1 py-0.5 text-orange-300 outline-none"
+                            />
+                          ) : (
+                            <button
+                              onClick={() => { setSelectedCalloutId(c.id); setPageNum(c.page_number ?? 1); }}
+                              onDoubleClick={(e) => { e.stopPropagation(); setEditingCalloutId(c.id); setEditingCalloutName(c.name || ""); }}
+                              className="w-full text-left"
+                              title="Double-click to rename"
+                            >
+                              <p className={`text-[11px] font-medium truncate ${isSelected ? "text-orange-300" : "text-slate-300"}`}>
+                                {c.name || `p.${c.page_number} callout`}
+                              </p>
+                            </button>
+                          )}
                           <p className="text-[9px] text-slate-600">p.{c.page_number}{!c.snapshot_image_url ? " · ⚠ no snapshot" : ""}</p>
                           {witnessName && (
                             <p className="text-[9px] text-cyan-500 flex items-center gap-0.5 mt-0.5">
                               <User className="w-2.5 h-2.5" />{witnessName}
                             </p>
                           )}
-                        </button>
+                        </div>
                         <button onClick={() => toggleJurySafe(c)} title={c.jury_safe ? "Jury-safe ON" : "Off"}
                           className={`p-1 rounded ${c.jury_safe ? "text-green-400" : "text-slate-600 hover:text-slate-400"}`}>
                           {c.jury_safe ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
