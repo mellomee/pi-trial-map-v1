@@ -136,6 +136,8 @@ export default function CalloutEditor({ extract }) {
   const [searchResults, setSearchResults] = useState([]); // [{page, snippet}]
   const [searchStatus, setSearchStatus] = useState(""); // "searching" | "done" | "scanned" | ""
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [activeResultIdx, setActiveResultIdx] = useState(null); // which result is "active"
+  const [searchRects, setSearchRects] = useState([]); // highlight rects for current page
   const searchRef = useRef(null);
 
   // Load PDF
