@@ -122,10 +122,10 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
 
-  // When spotlight changes while publishing, notify parent to update jury
+  // When spotlight changes while publishing, notify TrialMode via module-level callback
   useEffect(() => {
-    if (isPublishing && onSpotlightChange) {
-      onSpotlightChange(spotlightCallout?.id || null);
+    if (isPublishing && _spotlightChangeCallback) {
+      _spotlightChangeCallback(spotlightCallout?.id || null);
     }
   }, [spotlightCallout?.id, isPublishing]);
 
