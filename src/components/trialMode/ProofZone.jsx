@@ -148,6 +148,7 @@ export default function ProofZone({ proofItems, selectedProofId, onSelectProof, 
                 admitStatus={admitStatusMap[proof.id]}
                 onClick={() => onSelectProof(proof)}
                 onAdmit={handleAdmit}
+                calloutNames={calloutNames}
               />
             ))}
           </div>
