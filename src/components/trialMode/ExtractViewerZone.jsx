@@ -153,11 +153,11 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   useEffect(() => {
     if (!selectedProof?.source_id) {
       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-      setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
+      setWitnessByCallout({}); setJx(null); setZoom(1); setCurrentPage(1); setSpotlightCallout(null);
       return;
     }
     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-    setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
+    setWitnessByCallout({}); setJx(null); setZoom(1); setCurrentPage(1); setSpotlightCallout(null);
 
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
       const ext = r[0];

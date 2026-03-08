@@ -47,7 +47,7 @@ export default function PdfViewer({
 
   // Render page
   useEffect(() => {
-    if (!pdf || !currentPage) return;
+    if (!pdf || currentPage <= 0) return;
     pdf.getPage(currentPage).then((page) => {
       const viewport = page.getViewport({ scale: zoom });
       const canvas = document.createElement('canvas');
@@ -57,7 +57,7 @@ export default function PdfViewer({
       page.render({ canvasContext: context, viewport }).promise.then(() => {
         setCanvas(canvas.toDataURL());
       });
-    });
+    }).catch(err => console.warn('Error rendering page:', err));
   }, [pdf, currentPage, zoom]);
 
   const handlePrevPage = () => {
@@ -88,8 +88,12 @@ export default function PdfViewer({
     return <div className="w-full h-full flex items-center justify-center bg-black text-slate-400">Loading PDF...</div>;
   }
 
+  if (!pdf || totalPages === 0) {
+    return <div className="w-full h-full flex items-center justify-center bg-black text-slate-400">Unable to load PDF</div>;
+  }
+
   return (
-    <div className="w-full h-full flex flex-col bg-black relative">
+    <div className="w-full h-full flex flex-col bg-black relative" style={{ opacity: dimmed ? 0.18 : 1, filter: dimmed ? 'blur(1px)' : 'none' }}>
       {/* Controls */}
       {showControls && !readOnly && (
         <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-700 gap-4">
@@ -117,13 +121,7 @@ export default function PdfViewer({
       )}
 
       {/* Canvas */}
-      <div
-        className="flex-1 overflow-auto flex items-start justify-center p-4"
-        style={{
-          opacity: dimmed ? 0.18 : 1,
-          filter: dimmed ? 'blur(1px)' : 'none'
-        }}
-      >
+      <div className="flex-1 overflow-auto flex items-start justify-center p-4">
         {canvas && (
           <img
             src={canvas}
