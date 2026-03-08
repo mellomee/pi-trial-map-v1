@@ -39,7 +39,7 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
             style={{ opacity: 0.15, filter: 'blur(1px)', userSelect: 'none' }} draggable={false} />
         </div>
       )}
-      <div className="absolute inset-0" style={{ background: 'rgba(5,8,22,0.2)', zIndex: 2 }} />
+      <div className="absolute inset-0" style={{ background: 'rgba(5,8,22,0.1)', zIndex: 2 }} />
 
       {/* Controls */}
       <div className="absolute top-3 right-3 flex items-center gap-2 z-40">
