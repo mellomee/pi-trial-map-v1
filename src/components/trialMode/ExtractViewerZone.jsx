@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, Link } from 'lucide-react';
-import useActiveCase from '@/components/hooks/useActiveCase';
 
 // ---------- Highlight overlay ----------
 function HighlightOverlay({ highlights }) {
@@ -108,7 +107,6 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
 
 // ---------- Main component ----------
 export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish }) {
-  const { activeCase } = useActiveCase();
   const [extract, setExtract] = useState(null);
   const [allCallouts, setAllCallouts] = useState([]);
   const [highlightsByCallout, setHighlightsByCallout] = useState({});
@@ -119,36 +117,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
 
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
-
-  const extractFileUrlRef = useRef(null);
-
-  // Sync spotlight + extract URL to jury session state in real-time
-  const syncSpotlightToJury = useCallback(async (callout) => {
-    if (!activeCase?.id) return;
-    try {
-      const sessions = await base44.entities.TrialSessions.filter({
-        case_id: activeCase.id,
-        status: { $in: ['Setup', 'Active'] },
-      });
-      if (!sessions.length) return;
-      const states = await base44.entities.TrialSessionStates.filter({ trial_session_id: sessions[0].id });
-      if (!states.length) return;
-      await base44.entities.TrialSessionStates.update(states[0].id, {
-        extract_file_url: extractFileUrlRef.current || null,
-        spotlight_callout_id: callout?.id || null,
-      });
-    } catch (e) {
-      // non-critical
-    }
-  }, [activeCase?.id]);
-
-  // Live-sync: push extract URL + spotlight to jury whenever publishing and spotlight changes
-  useEffect(() => {
-    if (!isPublishing) return;
-    // Small delay to let the parent's publishProofToJury settle first on initial publish
-    const t = setTimeout(() => syncSpotlightToJury(spotlightCallout), 300);
-    return () => clearTimeout(t);
-  }, [spotlightCallout?.id, isPublishing]); // eslint-disable-line
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
@@ -193,7 +161,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
-  extractFileUrlRef.current = extractFileUrl; // keep ref in sync for async callbacks
   const spotlightHighlights = spotlightCallout ? (highlightsByCallout[spotlightCallout.id] || []) : [];
 
   // Pinch zoom
@@ -259,7 +226,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
             <Square className="w-3 h-3" /> Unpublish
           </Button>
         ) : (
-          <Button size="sm" onClick={() => onPublish(selectedProof, { extractFileUrl, spotlightCalloutId: spotlightCallout?.id || null })} className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1 touch-manipulation">
+          <Button size="sm" onClick={() => onPublish(selectedProof)} className="h-7 text-xs bg-cyan-600 hover:bg-cyan-700 px-2 gap-1 touch-manipulation">
             <Monitor className="w-3 h-3" /> Publish
           </Button>
         )}
