@@ -425,7 +425,7 @@ export default function CalloutEditor({ extract }) {
             {pdfDoc && (
               <>
                 <div className="w-px h-4 bg-[#1e2a45]" />
-                <div className="relative" ref={searchRef}>
+                <div className="relative flex items-center gap-1" ref={searchRef}>
                   <div className="flex items-center gap-1 bg-[#0a0f1e] border border-[#2a3a5a] rounded px-2 py-0.5">
                     <Search className="w-3 h-3 text-slate-500 flex-shrink-0" />
                     <input
