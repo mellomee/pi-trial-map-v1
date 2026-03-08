@@ -292,7 +292,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
             isPdf ? (
               <PdfViewerWithGestures
                 fileUrl={extractFileUrl}
-                externalZoom={zoom}
                 onZoomChange={handleZoomChange}
                 onPageChange={handlePageChange}
                 showControls={true}
