@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye } from 'lucide-react';
+import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, Link } from 'lucide-react';
 
 // ---------- Highlight overlay ----------
 function HighlightOverlay({ highlights }) {
