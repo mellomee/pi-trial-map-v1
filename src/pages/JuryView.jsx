@@ -42,42 +42,24 @@ export default function JuryView() {
   const [jx, setJx] = useState(null);
   const pollRef = useRef(null);
 
-  // Subscribe to real-time session state changes
+  // Poll for session state
   useEffect(() => {
     if (!activeCase?.id) return;
-    
-    let sessionId = null;
-    const initSession = async () => {
+    const poll = async () => {
       const sessions = await base44.entities.TrialSessions.filter({
         case_id: activeCase.id,
         status: { $in: ['Setup', 'Active'] },
       });
-      if (!sessions.length) {
-        setSessionState(null);
-        return;
-      }
-      sessionId = sessions[0].id;
-      
-      // Get initial state
+      if (!sessions.length) return;
       const states = await base44.entities.TrialSessionStates.filter({
-        trial_session_id: sessionId,
+        trial_session_id: sessions[0].id,
       });
       if (states.length) setSessionState(states[0]);
-      
-      // Subscribe for real-time updates
-      const unsubscribe = base44.entities.TrialSessionStates.subscribe((event) => {
-        if (event.data?.trial_session_id === sessionId) {
-          if (event.type === 'delete') setSessionState(null);
-          else setSessionState(event.data);
-        }
-      });
-      
-      return unsubscribe;
+      else setSessionState(null);
     };
-    
-    let unsubscribe;
-    initSession().then(unsub => { unsubscribe = unsub; });
-    return () => unsubscribe?.();
+    poll();
+    pollRef.current = setInterval(poll, 2000);
+    return () => clearInterval(pollRef.current);
   }, [activeCase?.id]);
 
   // Load proof item when session state changes
@@ -113,16 +95,13 @@ export default function JuryView() {
         const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
         const extract = extracts[0];
         if (!extract) return;
-        setExtract(extract); // Always show extract as base layer
-
-        // Check if callout should be visible based on session state
+        // Prefer current_callout_id from session state (live spotlight), fallback to proof item's callout_id
         const spotlightCalloutId = sessionState?.current_callout_id || item.callout_id;
-        const calloutVisible = sessionState?.callout_visible !== false; // Default true
-
         let cs = await base44.entities.Callouts.filter({ extract_id: extract.id });
-        let targetCallout = (spotlightCalloutId && calloutVisible) ? cs.find(c => c.id === spotlightCalloutId) : null;
+        let targetCallout = spotlightCalloutId ? cs.find(c => c.id === spotlightCalloutId) : cs[0];
         setCallout(targetCallout || null);
-
+        // Store extract file url for background
+        setExtract(extract);
         // Load highlights for that callout
         if (targetCallout) {
           const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
@@ -130,7 +109,6 @@ export default function JuryView() {
         } else {
           setHighlights([]);
         }
-
         // Load joint exhibit
         const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
         setJx(jxs[0] || null);
@@ -138,7 +116,7 @@ export default function JuryView() {
         setDepo(null);
       }
     });
-  }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof, sessionState?.current_callout_id, sessionState?.callout_visible]);
+  }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof, sessionState?.current_callout_id]);
 
   // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
