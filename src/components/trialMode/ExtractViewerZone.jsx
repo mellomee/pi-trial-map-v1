@@ -299,7 +299,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         {/* Spotlight button */}
         <button
           onClick={() => setSpotlightOpen(true)}
-          disabled={!currentCallout?.snapshot_image_url}
+          disabled={!selectedProof?.callout_id || !currentCallout?.snapshot_image_url}
           className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-amber-600/40 text-amber-400 hover:bg-amber-500/10 disabled:opacity-30 touch-manipulation transition-colors"
         >
           <Eye className="w-3 h-3" />
