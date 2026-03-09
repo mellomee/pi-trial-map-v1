@@ -81,20 +81,29 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
     <button
       onClick={onClick}
       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-500/40 bg-cyan-900/30 hover:bg-cyan-900/40' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
+        isLinked && !isActive ? 'border-cyan-400 border-2 bg-cyan-900/40' : isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e] opacity-50'
       }`}
     >
       {callout.snapshot_image_url ? (
-        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
+        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black`}>
           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
         </div>
       ) : (
-        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
+        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center`}>
           <ImageIcon className="w-4 h-4 text-slate-600" />
         </div>
       )}
-      {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
-      {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
+      <div className="flex items-start justify-between gap-1">
+        <div className="flex-1 min-w-0">
+          {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
+          {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
+        </div>
+        {callout.page_number && (
+          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${isActive ? 'bg-amber-600 text-amber-100' : isLinked ? 'bg-cyan-600 text-cyan-100' : 'bg-slate-700 text-slate-200'}`}>
+            Pg. {callout.page_number}
+          </span>
+        )}
+      </div>
       {isActive && (
         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
           <Eye className="w-2.5 h-2.5" /> Spotlighted
