@@ -87,6 +87,7 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
       {callout.snapshot_image_url ? (
         <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
+          {callout.page_number && <span className="absolute bottom-0.5 right-0.5 text-[9px] bg-black/70 text-slate-200 px-1 py-0.5 rounded">{callout.page_number}</span>}
         </div>
       ) : (
         <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
@@ -181,11 +182,22 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
+      // If a specific callout is selected, jump to its page and highlight it; otherwise go to page 1
+      if (selectedProof?.callout_id) {
+        const linkedCallout = sorted.find(c => c.id === selectedProof.callout_id);
+        if (linkedCallout) {
+          setSpotlightCallout(linkedCallout);
+          if (isPdf && linkedCallout.page_number) {
+            setPage(linkedCallout.page_number);
+          }
+        }
+      } else {
+        setPage(1);
+      }
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
-  }, [selectedProof?.source_id, selectedProof?.callout_id]);
+  }, [selectedProof?.source_id, selectedProof?.callout_id, setPage, isPdf]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
