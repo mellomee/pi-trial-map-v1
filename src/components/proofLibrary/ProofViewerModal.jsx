@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Image, Eye, EyeOff, X, ZoomIn, ZoomOut, CheckCircle2 } from 'lucide-react';
+import { FileText, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import SharedProofViewer from '@/components/shared/SharedProofViewer';
+import SharedProofViewerBody from '@/components/shared/SharedProofViewerBody';
 
 
 
@@ -419,17 +419,17 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
                 <Badge className="bg-purple-500/20 text-purple-300">Exhibit Extract</Badge>
 
                 {/* Extract file + callout sidebar */}
-                <div style={{ height: '480px' }} className="flex overflow-hidden rounded-lg border border-[#1e2a45]">
-                  <SharedProofViewer
-                    extract={extract}
-                    callouts={callouts}
-                    caseParties={caseParties}
-                    proofItem={proofItem}
-                    onSpotlightChange={setSelectedCallout}
-                    onSetAsProofCallout={handleSetAsProofCallout}
-                    readOnly={false}
-                  />
-                </div>
+                <ExtractFileWithCallouts
+                  extract={extract}
+                  callouts={callouts}
+                  caseParties={caseParties}
+                  proofItem={proofItem}
+                  spotlightCallout={selectedCallout}
+                  highlights={highlights}
+                  onSpotlightCallout={setSelectedCallout}
+                  onSetAsProofCallout={handleSetAsProofCallout}
+                  isCurrentProofCallout={isCurrentProofCallout}
+                />
 
 
 
