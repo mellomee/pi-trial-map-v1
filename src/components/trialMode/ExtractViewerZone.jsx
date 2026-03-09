@@ -341,23 +341,26 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
               </p>
-              {allCallouts.map(c => (
-                <CalloutItem
-                  key={c.id}
-                  callout={c}
-                  witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
-                  isActive={spotlightCallout?.id === c.id}
-                  isLinked={selectedProof?.callout_id === c.id}
-                  onClick={() => {
-                    // Toggle: click same callout to close, click different to open
-                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                    // Auto-navigate to callout's page via shared state
-                    if (isPdf && c.page_number) {
-                      setPage(c.page_number);
-                    }
-                  }}
-                />
-              ))}
+              {allCallouts.map(c => {
+                const isLinked = selectedProof?.callout_id === c.id;
+                const isDisabled = !!selectedProof?.callout_id && !isLinked;
+                return (
+                  <div key={c.id} style={{ opacity: isDisabled ? 0.3 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}>
+                    <CalloutItem
+                      callout={c}
+                      witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
+                      isActive={spotlightCallout?.id === c.id}
+                      isLinked={isLinked}
+                      onClick={() => {
+                        setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                        if (isPdf && c.page_number) {
+                          setPage(c.page_number);
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
