@@ -137,29 +137,42 @@ export default function JuryView() {
         </div>
       )}
 
-      {/* Extract view — SharedProofViewer in readOnly, centered presentation frame */}
+      {/* Extract view — use SharedProofViewer in readOnly mode, mirroring attorney */}
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="flex flex-col flex-1 overflow-hidden relative items-center justify-center">
+        <div className="flex flex-col flex-1 overflow-hidden relative">
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-30">
               <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
             </div>
           )}
-          {/* Centered frame matching ~attorney preview aspect ratio (roughly 4:3 portrait) */}
-          <div className="flex flex-col overflow-hidden" style={{ width: '72vw', height: '90vh', maxWidth: '1100px' }}>
-            <SharedProofViewer
-              extract={extract}
-              callouts={callouts}
-              caseParties={{}}
-              proofItem={proofItem}
-              externalPage={externalPage}
-              externalScale={externalScale}
-              externalPositionX={externalPositionX}
-              externalPositionY={externalPositionY}
-              externalCalloutId={sessionState?.current_callout_id ?? null}
-              readOnly={true}
-            />
-          </div>
+          {/* Spotlight driven by session state callout */}
+          {spotlightCallout?.snapshot_image_url && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.72)' }}>
+              <img
+                src={spotlightCallout.snapshot_image_url}
+                alt={spotlightCallout.name || 'Callout'}
+                className="block shadow-2xl rounded-lg border border-white/10"
+                style={{ maxWidth: '92%', maxHeight: '88vh', objectFit: 'contain' }}
+                draggable={false}
+              />
+              {spotlightCallout.name && (
+                <div className="absolute bottom-4 left-0 right-0 text-center z-30">
+                  <span className="text-slate-300 text-lg bg-black/70 px-4 py-1.5 rounded-full">{spotlightCallout.name}</span>
+                </div>
+              )}
+            </div>
+          )}
+          <SharedProofViewer
+            extract={extract}
+            callouts={[]}
+            caseParties={{}}
+            proofItem={proofItem}
+            externalPage={externalPage}
+            externalScale={externalScale}
+            externalPositionX={externalPositionX}
+            externalPositionY={externalPositionY}
+            readOnly={true}
+          />
         </div>
       )}
     </div>
