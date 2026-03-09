@@ -76,33 +76,24 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoo
 }
 
 // ---------- Callout sidebar item ----------
-function CalloutItem({ callout, witnessName, isActive, isLinked, isDisabled, onClick }) {
+function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
   return (
     <button
       onClick={onClick}
-      disabled={isDisabled}
       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isDisabled
-          ? 'border-slate-700 bg-[#0a0f1e] opacity-40 cursor-not-allowed'
-          : isActive
-          ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300'
-          : isLinked
-          ? 'border-cyan-400 bg-cyan-900/40 hover:bg-cyan-900/50 ring-2 ring-cyan-400'
-          : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
+        isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-500/40 bg-cyan-900/30 hover:bg-cyan-900/40' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
       }`}
-      style={isDisabled ? { pointerEvents: 'none' } : {}}
     >
       {callout.snapshot_image_url ? (
-        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black`}>
+        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
         </div>
       ) : (
-        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center`}>
+        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <ImageIcon className="w-4 h-4 text-slate-600" />
         </div>
       )}
       {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
-      {callout.page_number && <p className={`text-[9px] truncate leading-tight ${isActive ? 'text-amber-300' : 'text-slate-400'}`}>Pg. {callout.page_number}</p>}
       {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
       {isActive && (
         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
@@ -164,18 +155,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
     setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
 
-    // Initialize page based on linked callout
-    if (selectedProof?.callout_id) {
-      base44.entities.Callouts.filter({ id: selectedProof.callout_id }).then(cs => {
-        if (cs[0]?.page_number) setPage(cs[0].page_number);
-      });
-    } else {
-      // No linked callout — start at page 1
-      setPage(1);
-    }
-    // Reset scroll state for new proof
-    setScroll(0, 0);
-
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
       const ext = r[0];
       if (!ext) return;
@@ -202,9 +181,11 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
+      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
+
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
-  }, [selectedProof?.source_id, selectedProof?.callout_id, setPage, setScroll]);
+  }, [selectedProof?.source_id, selectedProof?.callout_id]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
@@ -356,29 +337,23 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
               </p>
-              {allCallouts.map(c => {
-                const isLinked = selectedProof?.callout_id === c.id;
-                const isDisabled = selectedProof?.callout_id && selectedProof.callout_id !== c.id;
-                return (
-                  <CalloutItem
-                    key={c.id}
-                    callout={c}
-                    witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
-                    isActive={spotlightCallout?.id === c.id}
-                    isLinked={isLinked}
-                    isDisabled={isDisabled}
-                    onClick={() => {
-                      if (isDisabled) return;
-                      // Toggle: click same callout to close, click different to open
-                      setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                      // Auto-navigate to callout's page via shared state
-                      if (isPdf && c.page_number) {
-                        setPage(c.page_number);
-                      }
-                    }}
-                  />
-                );
-              })}
+              {allCallouts.map(c => (
+                <CalloutItem
+                  key={c.id}
+                  callout={c}
+                  witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
+                  isActive={spotlightCallout?.id === c.id}
+                  isLinked={selectedProof?.callout_id === c.id}
+                  onClick={() => {
+                    // Toggle: click same callout to close, click different to open
+                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                    // Auto-navigate to callout's page via shared state
+                    if (isPdf && c.page_number) {
+                      setPage(c.page_number);
+                    }
+                  }}
+                />
+              ))}
             </div>
           </div>
         )}

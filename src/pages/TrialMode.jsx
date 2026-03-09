@@ -52,10 +52,6 @@ export default function TrialMode() {
   const [publishedProof, setPublishedProof] = useState(null);
   const [selectedProof, setSelectedProof] = useState(null);
 
-  // Request token for stale-async guard
-  const requestTokenRef = useRef(0);
-  const currentRequestTokenRef = useRef(0);
-
   // Resizable layout state
   const [layout, setLayout] = useState({
     topBPct: savedLayout.topBPct ?? savedLayout.topPct ?? 50,
@@ -116,18 +112,12 @@ export default function TrialMode() {
       setQuestions(qs);
       if (savedQuestionId) {
         setSelectedQuestionId(savedQuestionId);
-        // Stale-async guard: abort early if newer request came in
-        const token = ++requestTokenRef.current;
-        currentRequestTokenRef.current = token;
-        if (currentRequestTokenRef.current !== token) return;
         const links = await resolveQuestionLinks(savedQuestionId, activeCase.id);
-        if (currentRequestTokenRef.current === token) {
-          setResolvedLinks(links);
-          // Restore selectedProof
-          if (savedProofId && links.proofItems) {
-            const restoredProof = links.proofItems.find(p => p.id === savedProofId);
-            if (restoredProof) setSelectedProof(restoredProof);
-          }
+        setResolvedLinks(links);
+        // Restore selectedProof
+        if (savedProofId && links.proofItems) {
+          const restoredProof = links.proofItems.find(p => p.id === savedProofId);
+          if (restoredProof) setSelectedProof(restoredProof);
         }
       }
     }
@@ -157,17 +147,8 @@ export default function TrialMode() {
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
     setSelectedProof(null);
-
-    // Stale-async guard: increment token, abort if newer request already fired
-    const token = ++requestTokenRef.current;
-    currentRequestTokenRef.current = token;
-    // Abort early if a newer request came in while we were preparing
-    if (currentRequestTokenRef.current !== token) return;
     const links = await resolveQuestionLinks(questionId, activeCase.id);
-    // Only update if this token is still current
-    if (currentRequestTokenRef.current === token) {
-      setResolvedLinks(links);
-    }
+    setResolvedLinks(links);
   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
@@ -186,15 +167,8 @@ export default function TrialMode() {
       }
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
-
-      // Stale-async guard: abort early if newer request came in
-      const token = ++requestTokenRef.current;
-      currentRequestTokenRef.current = token;
-      if (currentRequestTokenRef.current !== token) return;
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
-      if (currentRequestTokenRef.current === token) {
-        setChildResolvedLinks(links);
-      }
+      setChildResolvedLinks(links);
     }
   };
 
@@ -459,8 +433,10 @@ export default function TrialMode() {
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
               onSelectProof={async (proof) => {
-                // Only auto-unpublish if switching to a DIFFERENT proof AND NOT same question context
-                // If publish is active and we're clicking another proof in the same question, keep it published
+                // Auto-unpublish if switching to a different proof
+                if (publishedProof && publishedProof.id !== proof.id) {
+                  await handleClearJury();
+                }
                 setSelectedProof(proof);
               }}
               childQuestionActive={!!selectedChildQuestionId}
