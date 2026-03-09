@@ -46,11 +46,14 @@ export default function TrialMode() {
   const [panelVisible, setPanelVisible] = useState(savedState.panelVisible !== false);
 
   const [resolvedLinks, setResolvedLinks] = useState({ evidenceGroups: [], proofItems: [], trialPoints: [] });
-  const [childResolvedLinks, setChildResolvedLinks] = useState(null); // non-null when a child is selected
+   const [childResolvedLinks, setChildResolvedLinks] = useState(null); // non-null when a child is selected
 
-  const [trialSession, setTrialSession] = useState(null);
-  const [publishedProof, setPublishedProof] = useState(null);
-  const [selectedProof, setSelectedProof] = useState(null);
+   const [trialSession, setTrialSession] = useState(null);
+   const [publishedProof, setPublishedProof] = useState(null);
+   const [selectedProof, setSelectedProof] = useState(null);
+
+   // Request token to prevent stale async proof results
+   const requestTokenRef = useRef(0);
 
   // Resizable layout state
   const [layout, setLayout] = useState({
@@ -112,12 +115,17 @@ export default function TrialMode() {
       setQuestions(qs);
       if (savedQuestionId) {
         setSelectedQuestionId(savedQuestionId);
+
+        // Guard against stale async results during restore
+        const token = ++requestTokenRef.current;
         const links = await resolveQuestionLinks(savedQuestionId, activeCase.id);
-        setResolvedLinks(links);
-        // Restore selectedProof
-        if (savedProofId && links.proofItems) {
-          const restoredProof = links.proofItems.find(p => p.id === savedProofId);
-          if (restoredProof) setSelectedProof(restoredProof);
+        if (token === requestTokenRef.current) {
+          setResolvedLinks(links);
+          // Restore selectedProof
+          if (savedProofId && links.proofItems) {
+            const restoredProof = links.proofItems.find(p => p.id === savedProofId);
+            if (restoredProof) setSelectedProof(restoredProof);
+          }
         }
       }
     }
@@ -139,38 +147,48 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
-    // Auto-unpublish if question changes and published proof is different
-    if (publishedProof) {
-      await handleClearJury();
-    }
-    setSelectedQuestionId(questionId);
-    setSelectedChildQuestionId(null);
-    setChildResolvedLinks(null);
-    setSelectedProof(null);
-    const links = await resolveQuestionLinks(questionId, activeCase.id);
-    setResolvedLinks(links);
-  };
+     // Auto-unpublish when changing questions
+     if (publishedProof) {
+       await handleClearJury();
+     }
+     setSelectedQuestionId(questionId);
+     setSelectedChildQuestionId(null);
+     setChildResolvedLinks(null);
+     setSelectedProof(null);
+
+     // Guard against stale async results
+     const token = ++requestTokenRef.current;
+     const links = await resolveQuestionLinks(questionId, activeCase.id);
+     if (token === requestTokenRef.current) {
+       setResolvedLinks(links);
+     }
+   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
-    if (selectedChildQuestionId === childQuestion.id) {
-      // Deselect — revert to parent's proof; auto-unpublish if needed
-      if (publishedProof) {
-        await handleClearJury();
-      }
-      setSelectedChildQuestionId(null);
-      setChildResolvedLinks(null);
-      setSelectedProof(null);
-    } else {
-      // Auto-unpublish if child context changes
-      if (publishedProof) {
-        await handleClearJury();
-      }
-      setSelectedChildQuestionId(childQuestion.id);
-      setSelectedProof(null);
-      const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
-      setChildResolvedLinks(links);
-    }
-  };
+     if (selectedChildQuestionId === childQuestion.id) {
+       // Deselect — revert to parent's proof; auto-unpublish if needed
+       if (publishedProof) {
+         await handleClearJury();
+       }
+       setSelectedChildQuestionId(null);
+       setChildResolvedLinks(null);
+       setSelectedProof(null);
+     } else {
+       // Auto-unpublish if child context changes
+       if (publishedProof) {
+         await handleClearJury();
+       }
+       setSelectedChildQuestionId(childQuestion.id);
+       setSelectedProof(null);
+
+       // Guard against stale async results
+       const token = ++requestTokenRef.current;
+       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
+       if (token === requestTokenRef.current) {
+         setChildResolvedLinks(links);
+       }
+     }
+   };
 
   // The proof items currently shown in Zone E
   const activeProofItems = childResolvedLinks ? childResolvedLinks.proofItems : resolvedLinks.proofItems;
@@ -433,7 +451,8 @@ export default function TrialMode() {
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
               onSelectProof={async (proof) => {
-                // Auto-unpublish if switching to a different proof
+                // Keep publish active when switching between proofs of the same question
+                // Only unpublish if switching to a different proof AND something is published
                 if (publishedProof && publishedProof.id !== proof.id) {
                   await handleClearJury();
                 }

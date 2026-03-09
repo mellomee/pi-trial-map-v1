@@ -76,33 +76,39 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoo
 }
 
 // ---------- Callout sidebar item ----------
-function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-500/40 bg-cyan-900/30 hover:bg-cyan-900/40' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
-      }`}
-    >
-      {callout.snapshot_image_url ? (
-        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
-          <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
-        </div>
-      ) : (
-        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
-          <ImageIcon className="w-4 h-4 text-slate-600" />
-        </div>
-      )}
-      {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
-      {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
-      {isActive && (
-        <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
-          <Eye className="w-2.5 h-2.5" /> Spotlighted
-        </span>
-      )}
-    </button>
-  );
-}
+ function CalloutItem({ callout, witnessName, isActive, isLinked, isDisabled, onClick }) {
+   return (
+     <button
+       onClick={!isDisabled ? onClick : undefined}
+       disabled={isDisabled}
+       style={isDisabled ? { pointerEvents: 'none' } : {}}
+       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
+         isDisabled ? 'border-[#1e2a45] bg-[#0a0f1e] opacity-40 cursor-not-allowed' :
+         isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : 
+         isLinked ? 'border-cyan-300 bg-cyan-900/40 border-2 border-cyan-300' : 
+         'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
+       }`}
+     >
+       {callout.snapshot_image_url ? (
+         <div className={`relative w-full aspect-video rounded overflow-hidden bg-black`}>
+           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
+         </div>
+       ) : (
+         <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center`}>
+           <ImageIcon className="w-4 h-4 text-slate-600" />
+         </div>
+       )}
+       {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
+       <p className={`text-[9px] font-mono text-slate-400`}>Pg. {callout.page_number || '?'}</p>
+       {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
+       {isActive && (
+         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
+           <Eye className="w-2.5 h-2.5" /> Spotlighted
+         </span>
+       )}
+     </button>
+   );
+ }
 
 // ---------- Main component ----------
 // Module-level spotlight callback so TrialMode can subscribe without prop-drilling through frozen ProofPreviewZone
@@ -147,45 +153,57 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   }, [setScroll]);
 
   useEffect(() => {
-    if (!selectedProof?.source_id) {
-      setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-      setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
-      return;
-    }
-    setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-    setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
+     if (!selectedProof?.source_id) {
+       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
+       setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
+       setPage(1); setScroll(0, 0);
+       return;
+     }
+     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
+     setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
 
-    base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
-      const ext = r[0];
-      if (!ext) return;
-      setExtract(ext);
+     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
+       const ext = r[0];
+       if (!ext) return;
+       setExtract(ext);
 
-      const allCs = await base44.entities.Callouts.filter({ extract_id: ext.id });
-      const sorted = [...allCs].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
-      setAllCallouts(sorted);
+       const allCs = await base44.entities.Callouts.filter({ extract_id: ext.id });
+       const sorted = [...allCs].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
+       setAllCallouts(sorted);
 
-      // Load highlights for all callouts
-      const hMap = {};
-      await Promise.all(sorted.map(async c => {
-        const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
-        hMap[c.id] = hs;
-      }));
-      setHighlightsByCallout(hMap);
+       // Load highlights for all callouts
+       const hMap = {};
+       await Promise.all(sorted.map(async c => {
+         const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
+         hMap[c.id] = hs;
+       }));
+       setHighlightsByCallout(hMap);
 
-      // Load witness names
-      const wMap = {};
-      const witnessIds = [...new Set(sorted.map(c => c.witness_id).filter(Boolean))];
-      await Promise.all(witnessIds.map(async wid => {
-        const pts = await base44.entities.Parties.filter({ id: wid });
-        if (pts[0]) wMap[wid] = pts[0].display_name || `${pts[0].first_name || ''} ${pts[0].last_name}`.trim();
-      }));
-      setWitnessByCallout(wMap);
+       // Load witness names
+       const wMap = {};
+       const witnessIds = [...new Set(sorted.map(c => c.witness_id).filter(Boolean))];
+       await Promise.all(witnessIds.map(async wid => {
+         const pts = await base44.entities.Parties.filter({ id: wid });
+         if (pts[0]) wMap[wid] = pts[0].display_name || `${pts[0].first_name || ''} ${pts[0].last_name}`.trim();
+       }));
+       setWitnessByCallout(wMap);
 
-      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
+       // Initialize page: if linked callout exists, jump to its page; otherwise page 1
+       if (selectedProof.callout_id) {
+         const linkedCallout = sorted.find(c => c.id === selectedProof.callout_id);
+         if (linkedCallout && linkedCallout.page_number) {
+           setPage(linkedCallout.page_number);
+         } else {
+           setPage(1);
+         }
+       } else {
+         setPage(1);
+       }
+       setScroll(0, 0);
 
-      base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
-    });
-  }, [selectedProof?.source_id, selectedProof?.callout_id]);
+       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
+     });
+   }, [selectedProof?.source_id, selectedProof?.callout_id, setPage, setScroll]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
@@ -337,23 +355,28 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
               </p>
-              {allCallouts.map(c => (
-                <CalloutItem
-                  key={c.id}
-                  callout={c}
-                  witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
-                  isActive={spotlightCallout?.id === c.id}
-                  isLinked={selectedProof?.callout_id === c.id}
-                  onClick={() => {
-                    // Toggle: click same callout to close, click different to open
-                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                    // Auto-navigate to callout's page via shared state
-                    if (isPdf && c.page_number) {
-                      setPage(c.page_number);
-                    }
-                  }}
-                />
-              ))}
+              {allCallouts.map(c => {
+                 const isLinked = selectedProof?.callout_id === c.id;
+                 const isDisabled = selectedProof?.callout_id && !isLinked;
+                 return (
+                   <CalloutItem
+                     key={c.id}
+                     callout={c}
+                     witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
+                     isActive={spotlightCallout?.id === c.id}
+                     isLinked={isLinked}
+                     isDisabled={isDisabled}
+                     onClick={() => {
+                       // Toggle: click same callout to close, click different to open
+                       setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                       // Auto-navigate to callout's page via shared state
+                       if (isPdf && c.page_number) {
+                         setPage(c.page_number);
+                       }
+                     }}
+                   />
+                 );
+               })}
             </div>
           </div>
         )}
