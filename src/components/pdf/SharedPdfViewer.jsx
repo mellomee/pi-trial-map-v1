@@ -30,13 +30,22 @@ export default function SharedPdfViewer({
   const containerRef = useRef(null);
   const [numPages, setNumPages] = useState(null);
   const [isImage, setIsImage] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const touchRef = useRef(null);
   const gestureActiveRef = useRef(false);
+  const committedZoomRef = useRef(zoom);
+  const cssScaleRef = useRef(1);
+  const pinchAnchorRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const lowerUrl = fileUrl?.toLowerCase() || '';
     setIsImage(lowerUrl.match(/\.(png|jpg|jpeg|gif|webp)(\?|$)/i) !== null);
+    setLoadError(false);
   }, [fileUrl]);
+
+  useEffect(() => {
+    committedZoomRef.current = zoom;
+  }, [zoom]);
 
   const handlePrevPage = () => {
     if (page > 1) onPageChange?.(page - 1);
@@ -77,14 +86,21 @@ export default function SharedPdfViewer({
     } else if (e.touches.length >= 2) {
       const [t1, t2] = e.touches;
       const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const rect = containerRef.current.getBoundingClientRect();
+      const cx = (t1.clientX + t2.clientX) / 2 - rect.left;
+      const cy = (t1.clientY + t2.clientY) / 2 - rect.top;
+      pinchAnchorRef.current = { x: cx, y: cy };
       touchRef.current = {
         type: 'pinch',
         d0: dist,
-        z0: zoom,
+        z0: committedZoomRef.current,
+        px0: panX,
+        py0: panY,
       };
       gestureActiveRef.current = true;
+      cssScaleRef.current = 1;
     }
-  }, [zoom, panX, panY, readOnly]);
+  }, [panX, panY, readOnly]);
 
   const handleTouchMove = useCallback((e) => {
     if (readOnly || !touchRef.current) return;
@@ -98,14 +114,21 @@ export default function SharedPdfViewer({
       e.preventDefault();
       const [t1, t2] = e.touches;
       const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      const ratio = dist / t.d0;
-      const newZoom = clamp(t.z0 * ratio, MIN_ZOOM, MAX_ZOOM);
+      const ratio = clamp(dist / t.d0, MIN_ZOOM / t.z0, MAX_ZOOM / t.z0);
+      const newZoom = t.z0 * ratio;
+      const anchorX = pinchAnchorRef.current.x;
+      const anchorY = pinchAnchorRef.current.y;
+      const newPanX = anchorX * (1 - ratio) + t.px0;
+      const newPanY = anchorY * (1 - ratio) + t.py0;
+      cssScaleRef.current = ratio;
       onZoomChange?.(newZoom);
+      onPanChange?.(newPanX, newPanY);
     }
   }, [readOnly, onPanChange, onZoomChange]);
 
   const handleTouchEnd = useCallback(() => {
     gestureActiveRef.current = false;
+    cssScaleRef.current = 1;
     touchRef.current = null;
   }, []);
 
@@ -113,6 +136,15 @@ export default function SharedPdfViewer({
     return (
       <div className="w-full h-full flex items-center justify-center bg-black text-slate-500 text-xs">
         No file available
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-black text-red-400 text-xs flex-col gap-2">
+        <div>Failed to load PDF</div>
+        <div className="text-[10px] text-slate-500">Please try a different file</div>
       </div>
     );
   }
@@ -160,8 +192,8 @@ export default function SharedPdfViewer({
       >
         <div
           style={{
-            transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
-            transformOrigin: 'top center',
+            transform: `translate(${panX}px, ${panY}px) scale(${gestureActiveRef.current ? cssScaleRef.current : 1})`,
+            transformOrigin: 'top left',
             transition: gestureActiveRef.current ? 'none' : 'transform 0.1s ease-out',
           }}
         >
@@ -175,13 +207,19 @@ export default function SharedPdfViewer({
           ) : (
             <Document
               file={fileUrl}
-              onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+              onLoadSuccess={({ numPages: n }) => {
+                setNumPages(n);
+                setLoadError(false);
+              }}
+              onLoadError={(err) => {
+                console.error('PDF load error:', err);
+                setLoadError(true);
+              }}
               loading={<div className="text-slate-400 text-xs p-8">Loading PDF…</div>}
-              error={<div className="text-red-400 text-xs p-4">Failed to load PDF</div>}
             >
               <Page
                 pageNumber={page}
-                scale={1}
+                scale={zoom}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
               />
