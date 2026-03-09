@@ -449,10 +449,8 @@ export default function TrialMode() {
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
               onSelectProof={async (proof) => {
-                // Auto-unpublish if switching to a different proof
-                if (publishedProof && publishedProof.id !== proof.id) {
-                  await handleClearJury();
-                }
+                // Keep publish active while switching proofs within same selected question
+                // Only auto-unpublish if user navigates away from that question (handled in handleSelectQuestion/handleSelectChildQuestion)
                 setSelectedProof(proof);
               }}
               childQuestionActive={!!selectedChildQuestionId}
