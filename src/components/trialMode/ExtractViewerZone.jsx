@@ -1,90 +1,90 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePresentationState } from '@/components/hooks/usePresentationState';
-import SharedProofViewer from '@/components/shared/SharedProofViewer';
+import SharedProofViewerBody from '@/components/shared/SharedProofViewerBody';
 import { Monitor, Square, Eye, EyeOff } from 'lucide-react';
 
-// Module-level spotlight callback so TrialMode can sync callout to jury
+// Module-level spotlight callback so TrialMode can subscribe without prop-drilling
 let _spotlightChangeCallback = null;
 export function setSpotlightChangeCallback(fn) { _spotlightChangeCallback = fn; }
 
-export default function ExtractViewerZone({ selectedProof, isPublishing, onPublish, onUnpublish, trialSessionId }) {
+export default function ExtractViewerZone({
+  selectedProof,
+  isPublishing,
+  onPublish,
+  onUnpublish,
+  trialSessionId,
+}) {
   const [extract, setExtract] = useState(null);
   const [callouts, setCallouts] = useState([]);
-  const [caseParties, setCaseParties] = useState({});
-  const [jx, setJx] = useState(null);
+  const [witnessNames, setWitnessNames] = useState({});
+  const [highlights, setHighlights] = useState([]);
+  const [selectedCallout, setSelectedCallout] = useState(null);
   const [calloutVisible, setCalloutVisible] = useState(true);
-  const [activeSpotlight, setActiveSpotlight] = useState(null);
+  const [jx, setJx] = useState(null);
 
-  const viewerRef = useRef(null);
-  const syncTimerRef = useRef(null);
+  // Shared presentation state — attorney writes, jury reads
+  const { state: _ps, setPage: _syncPage } = usePresentationState(trialSessionId, true);
 
-  const { state: _ps, setPage: syncPage, setZoom: syncZoom, setScroll: syncScroll } =
-    usePresentationState(trialSessionId, true);
-
-  // Spotlight → TrialMode jury callback
+  // Notify TrialMode when spotlight changes (so it can push callout_id to jury)
   useEffect(() => {
     if (isPublishing && _spotlightChangeCallback) {
-      _spotlightChangeCallback(!calloutVisible ? null : (activeSpotlight?.id || null));
+      _spotlightChangeCallback(!calloutVisible ? null : (selectedCallout?.id || null));
     }
-  }, [activeSpotlight?.id, isPublishing, calloutVisible]);
+  }, [selectedCallout?.id, isPublishing, calloutVisible]);
 
   // Load extract + callouts when proof changes
   useEffect(() => {
     if (!selectedProof?.source_id) {
-      setExtract(null); setCallouts([]); setCaseParties({}); setJx(null);
-      setActiveSpotlight(null);
+      setExtract(null); setCallouts([]); setWitnessNames({});
+      setHighlights([]); setSelectedCallout(null); setJx(null);
       return;
     }
-    setExtract(null); setCallouts([]); setCaseParties({}); setJx(null);
-    setActiveSpotlight(null);
+    setExtract(null); setCallouts([]); setWitnessNames({});
+    setHighlights([]); setSelectedCallout(null); setJx(null);
 
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async (r) => {
       const e = r[0];
       if (!e) return;
       setExtract(e);
 
-      const [cos, jxList] = await Promise.all([
+      const [allCallouts, jxList] = await Promise.all([
         base44.entities.Callouts.filter({ extract_id: e.id }),
         base44.entities.JointExhibits.filter({ exhibit_extract_id: e.id }),
       ]);
-      const sorted = [...cos].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
+
+      const sorted = [...allCallouts].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
       setCallouts(sorted);
       setJx(jxList[0] || null);
 
-      // Load witness names for callout sidebar
-      if (e.case_id) {
-        base44.entities.Parties.filter({ case_id: e.case_id }).then((ps) => {
-          const map = {};
-          ps.forEach((p) => { map[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name}`.trim(); });
-          setCaseParties(map);
-        });
-      }
+      // Load witness names
+      const wids = [...new Set(sorted.map((c) => c.witness_id).filter(Boolean))];
+      const wMap = {};
+      await Promise.all(wids.map(async (wid) => {
+        const pts = await base44.entities.Parties.filter({ id: wid });
+        if (pts[0]) wMap[wid] = pts[0].display_name || `${pts[0].first_name || ''} ${pts[0].last_name}`.trim();
+      }));
+      setWitnessNames(wMap);
     });
   }, [selectedProof?.source_id]);
 
-  // Page change → sync to jury
-  const handlePageChange = useCallback((page) => {
-    syncPage(page);
-  }, [syncPage]);
+  // Load highlights when callout changes
+  useEffect(() => {
+    if (!selectedCallout?.id) { setHighlights([]); return; }
+    base44.entities.Highlights.filter({ callout_id: selectedCallout.id })
+      .then(setHighlights)
+      .catch(() => setHighlights([]));
+  }, [selectedCallout?.id]);
 
-  // Transform change (zoom+pan) → sync to jury (throttled)
-  const handleTransformChange = useCallback((state) => {
-    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-    syncTimerRef.current = setTimeout(() => {
-      syncZoom(state.scale);
-      // Use positionX/Y as scroll proxies so jury can mirror
-      syncScroll(-state.positionX, -state.positionY);
-    }, 90);
-  }, [syncZoom, syncScroll]);
+  const handleSelectCallout = useCallback((callout) => {
+    setSelectedCallout(callout);
+    // Jump to page when clicking callout
+    if (callout?.page_number) _syncPage(callout.page_number);
+  }, [_syncPage]);
 
-  // Spotlight change → propagate to jury via TrialMode
-  const handleSpotlightChange = useCallback((callout) => {
-    setActiveSpotlight(callout);
-  }, []);
-
+  // ── Empty states ──────────────────────────────────────────────────────────
   if (!selectedProof) {
     return (
       <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] items-center justify-center text-slate-600">
@@ -96,7 +96,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   if (!extract) {
     return (
       <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45] items-center justify-center text-slate-500">
-        <p className="text-xs">Loading…</p>
+        <p className="text-xs">Loading...</p>
       </div>
     );
   }
@@ -120,13 +120,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           <Badge className="bg-red-700 text-red-100 text-[10px] px-1.5 py-0 animate-pulse">LIVE</Badge>
         )}
         <div className="flex-1" />
-        {isPublishing && activeSpotlight && (
+        {isPublishing && selectedCallout && (
           <button
             onClick={() => setCalloutVisible((v) => !v)}
-            className={`p-1.5 rounded touch-manipulation ${calloutVisible ? 'text-amber-300 bg-amber-900/20' : 'text-slate-500'}`}
+            className={`p-1.5 rounded touch-manipulation ${calloutVisible ? 'text-amber-300 bg-amber-900/20' : 'text-slate-500 hover:text-slate-300'}`}
             title={calloutVisible ? 'Hide callout from jury' : 'Show callout to jury'}
           >
-            {calloutVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            {calloutVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
           </button>
         )}
         {isPublishing ? (
@@ -140,18 +140,19 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         )}
       </div>
 
-      {/* Shared viewer body */}
-      <SharedProofViewer
-        ref={viewerRef}
-        extract={extract}
-        callouts={callouts}
-        caseParties={caseParties}
-        proofItem={selectedProof}
-        onPageChange={handlePageChange}
-        onTransformChange={handleTransformChange}
-        onSpotlightChange={handleSpotlightChange}
-        readOnly={false}
-      />
+      {/* Shared viewer body — flex-1, same as the modal */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <SharedProofViewerBody
+          extract={extract}
+          callouts={callouts}
+          witnessNames={witnessNames}
+          selectedCallout={selectedCallout}
+          onSelectCallout={handleSelectCallout}
+          proofItemCalloutId={selectedProof?.callout_id}
+          highlights={highlights}
+          onSetAsProof={null}
+        />
+      </div>
     </div>
   );
 }
