@@ -9,7 +9,7 @@
  *   - ExtractViewerZone (trial preview, attorney → jury sync)
  *   - JuryView (readOnly, mirrors attorney via external props)
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useImperativeHandle } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
