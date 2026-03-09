@@ -116,12 +116,16 @@ export default function TrialMode() {
       setQuestions(qs);
       if (savedQuestionId) {
         setSelectedQuestionId(savedQuestionId);
+        const token = {};
+        latestQuestionRequestToken.current = token;
         const links = await resolveQuestionLinks(savedQuestionId, activeCase.id);
-        setResolvedLinks(links);
-        // Restore selectedProof
-        if (savedProofId && links.proofItems) {
-          const restoredProof = links.proofItems.find(p => p.id === savedProofId);
-          if (restoredProof) setSelectedProof(restoredProof);
+        if (latestQuestionRequestToken.current === token) {
+          setResolvedLinks(links);
+          // Restore selectedProof
+          if (savedProofId && links.proofItems) {
+            const restoredProof = links.proofItems.find(p => p.id === savedProofId);
+            if (restoredProof) setSelectedProof(restoredProof);
+          }
         }
       }
     }
