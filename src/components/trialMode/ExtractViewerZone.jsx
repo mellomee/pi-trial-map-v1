@@ -79,7 +79,11 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const [spotlightCallout, setSpotlightCallout] = useState(null);
   const [calloutVisible, setCalloutVisible] = useState(true);
 
-  const { state: presentationState, setPage, setZoom, setPan } = usePresentationState(trialSessionId, true);
+  const { state: presentationState, setPage, setViewport } = usePresentationState(trialSessionId, true);
+
+  const handleViewportChange = useCallback((viewport) => {
+    setViewport(viewport);
+  }, [setViewport]);
 
   // Sync spotlight to jury
   useEffect(() => {
@@ -215,8 +219,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                 panX={presentationState?.proof_pan_x || 0}
                 panY={presentationState?.proof_pan_y || 0}
                 onPageChange={setPage}
-                onZoomChange={setZoom}
-                onPanChange={setPan}
+                onViewportChange={handleViewportChange}
                 readOnly={false}
                 showControls={true}
                 showToolbar={true}
