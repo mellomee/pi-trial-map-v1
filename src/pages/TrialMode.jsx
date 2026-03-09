@@ -432,12 +432,12 @@ export default function TrialMode() {
           {/* Zone C */}
           <div className="overflow-hidden" style={{ height: `${layout.topCPct}%` }}>
             <ProofPreviewZone
-              selectedProof={selectedProof}
-              isPublishing={!!(publishedProof && selectedProof && publishedProof.id === selectedProof.id)}
-              onPublish={handlePublishProof}
-              onUnpublish={handleClearJury}
-              trialSessionId={trialSession?.id}
-            />
+               selectedProof={selectedProof}
+               isPublishing={!!publishedProof}
+               onPublish={handlePublishProof}
+               onUnpublish={handleClearJury}
+               trialSessionId={trialSession?.id}
+             />
           </div>
 
           {/* Horizontal divider for C/E */}
