@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { FileText } from 'lucide-react';
+import { FileText, Image, CheckCircle2, Eye, EyeOff, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import SharedProofViewerBody from '@/components/shared/SharedProofViewerBody';
 
 
 
@@ -72,7 +71,142 @@ function ViewFileButton({ url, label, viewingFile, setViewingFile }) {
 
 }
 
-// (Highlight/Spotlight/Callout sidebar logic moved to SharedProofViewerBody)
+// ---------- Highlight overlay ----------
+function HighlightOverlay({ highlights }) {
+  if (!highlights?.length) return null;
+  const colorMap = { yellow: 'rgba(253,224,71,0.5)', red: 'rgba(239,68,68,0.45)', green: 'rgba(34,197,94,0.45)', blue: 'rgba(59,130,246,0.45)' };
+  return (
+    <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
+      {highlights.map((h, hi) => (h.rects_norm || []).map((rect, ri) => (
+        <div key={`${hi}-${ri}`} style={{
+          position: 'absolute', left: `${rect.x * 100}%`, top: `${rect.y * 100}%`,
+          width: `${rect.w * 100}%`, height: `${rect.h * 100}%`,
+          backgroundColor: colorMap[h.color] || colorMap.yellow,
+        }} />
+      )))}
+    </div>
+  );
+}
+
+// ---------- Spotlight overlay ----------
+function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose }) {
+  const [zoom, setZoom] = useState(1);
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden" style={{ background: 'rgba(0,0,0,0.0)' }}>
+      {extractFileUrl && (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
+          <img src={extractFileUrl} alt="Extract" className="block max-w-full max-h-full object-contain"
+            style={{ opacity: 0.15, filter: 'blur(1px)', userSelect: 'none' }} draggable={false} />
+        </div>
+      )}
+      <div className="absolute inset-0" style={{ background: 'rgba(5,8,22,0.82)', zIndex: 2 }} />
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-40">
+        <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-white p-2 rounded-lg"><ZoomOut className="w-4 h-4" /></button>
+        <button onClick={() => setZoom(1)} className="bg-[#0f1629]/90 border border-[#1e2a45] text-slate-300 px-3 py-2 rounded-lg text-xs font-mono">{Math.round(zoom * 100)}%</button>
+        <button onClick={() => setZoom(z => Math.min(z + 0.25, 4))} className="bg-[#0f1629]/90 hover:bg-[#1e2a45] border border-[#1e2a45] text-white p-2 rounded-lg"><ZoomIn className="w-4 h-4" /></button>
+        <button onClick={onClose} className="bg-red-900/80 hover:bg-red-700 border border-red-600/40 text-red-300 p-2 rounded-lg ml-1"><X className="w-4 h-4" /></button>
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 3 }}>
+        <div className="overflow-auto" style={{ maxWidth: '95vw', maxHeight: '90vh' }}>
+          <div className="relative inline-block shadow-2xl rounded-lg border border-white/10"
+            style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.15s' }}>
+            <img src={callout.snapshot_image_url} alt={callout.name || 'Callout'} className="block"
+              style={{ maxWidth: '88vw', maxHeight: '82vh', objectFit: 'contain' }} draggable={false} />
+            <HighlightOverlay highlights={highlights} />
+          </div>
+        </div>
+      </div>
+      {callout.name && (
+        <div className="absolute bottom-6 left-0 right-0 text-center z-40">
+          <span className="text-slate-300 text-sm bg-black/70 px-4 py-1.5 rounded-full font-medium">{callout.name}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Extract file + callout sidebar widget ----------
+function ExtractFileWithCallouts({ extract, callouts, caseParties, proofItem, spotlightCallout, highlights, onSpotlightCallout, onSetAsProofCallout, isCurrentProofCallout }) {
+  const extractFileUrl = extract?.extract_file_url || null;
+  const isImage = extractFileUrl?.match(/\.(jpe?g|png|gif|webp)(\?|$)/i);
+
+  return (
+    <div className="rounded-lg border border-[#1e2a45] overflow-hidden bg-[#0a0f1e]">
+      {spotlightCallout?.snapshot_image_url && (
+        <SpotlightOverlay
+          extractFileUrl={extractFileUrl}
+          callout={spotlightCallout}
+          highlights={highlights}
+          onClose={() => onSpotlightCallout(null)}
+        />
+      )}
+      <div className="flex" style={{ minHeight: '320px', maxHeight: '500px' }}>
+        {/* Extract file */}
+        <div className="flex-1 overflow-auto bg-[#080c18]">
+          {extractFileUrl ? (
+            isImage ? (
+              <img src={extractFileUrl} alt={extract.extract_title_internal || extract.extract_title_official}
+                className="block max-w-full" draggable={false} />
+            ) : (
+              <iframe src={extractFileUrl} title={extract.extract_title_internal || extract.extract_title_official}
+                className="w-full" style={{ minHeight: '460px', border: 'none' }} />
+            )
+          ) : (
+            <div className="flex items-center justify-center h-full min-h-[200px] text-slate-500">
+              <div className="text-center space-y-2">
+                <Image className="w-8 h-8 mx-auto opacity-20" />
+                <p className="text-xs">No file uploaded</p>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Callout sidebar */}
+        {callouts.length > 0 && (
+          <div className="w-32 flex-shrink-0 bg-[#0f1629] border-l border-[#1e2a45] overflow-y-auto">
+            <div className="p-1.5 space-y-1.5">
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
+                Callouts ({callouts.length})
+              </p>
+              {callouts.map(c => {
+                const witName = c.witness_id ? caseParties[c.witness_id] : null;
+                const isActive = spotlightCallout?.id === c.id;
+                const isLinkedProof = proofItem?.callout_id === c.id;
+                return (
+                  <button key={c.id} onClick={() => onSpotlightCallout(isActive ? null : c)}
+                    className={`w-full text-left rounded-lg border p-1.5 transition-all space-y-1 ${
+                      isActive ? 'border-amber-400 bg-amber-500/10' : 'border-[#1e2a45] hover:border-slate-500 hover:bg-[#131a2e]'
+                    }`}>
+                    {c.snapshot_image_url ? (
+                      <div className="relative w-full aspect-video rounded overflow-hidden bg-black">
+                        <img src={c.snapshot_image_url} alt={c.name} className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center">
+                        <Image className="w-3 h-3 text-slate-600" />
+                      </div>
+                    )}
+                    {c.name && <p className="text-[9px] text-slate-300 truncate leading-tight">{c.name}</p>}
+                    {witName && <p className="text-[9px] text-cyan-400 truncate leading-tight">{witName}</p>}
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {isActive && <span className="text-[8px] text-amber-400 font-medium flex items-center gap-0.5"><Eye className="w-2 h-2" /> Active</span>}
+                      {isLinkedProof && <CheckCircle2 className="w-2.5 h-2.5 text-cyan-400 ml-auto" />}
+                    </div>
+                    {isActive && !isCurrentProofCallout && (
+                      <button onClick={(e) => { e.stopPropagation(); onSetAsProofCallout(); }}
+                        className="w-full text-[8px] bg-cyan-700/50 hover:bg-cyan-600/60 text-cyan-300 rounded py-0.5 mt-0.5 transition-colors">
+                        Set as Proof
+                      </button>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function ProofViewerModal({ proofItem, isOpen, onClose, onCalloutSelected }) {
   const [loading, setLoading] = useState(false);
@@ -283,19 +417,18 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           <div className="space-y-4">
                 <Badge className="bg-purple-500/20 text-purple-300">Exhibit Extract</Badge>
 
-                {/* Extract file + callout sidebar — shared component */}
-                <div className="rounded-lg border border-[#1e2a45] overflow-hidden bg-[#0a0f1e]" style={{ minHeight: '320px', maxHeight: '500px' }}>
-                  <SharedProofViewerBody
-                    extract={extract}
-                    callouts={callouts}
-                    witnessNames={caseParties}
-                    selectedCallout={selectedCallout}
-                    onSelectCallout={setSelectedCallout}
-                    proofItemCalloutId={proofItem?.callout_id}
-                    highlights={highlights}
-                    onSetAsProof={!isCurrentProofCallout ? handleSetAsProofCallout : null}
-                  />
-                </div>
+                {/* Extract file + callout sidebar */}
+                <ExtractFileWithCallouts
+                  extract={extract}
+                  callouts={callouts}
+                  caseParties={caseParties}
+                  proofItem={proofItem}
+                  spotlightCallout={selectedCallout}
+                  highlights={highlights}
+                  onSpotlightCallout={setSelectedCallout}
+                  onSetAsProofCallout={handleSetAsProofCallout}
+                  isCurrentProofCallout={isCurrentProofCallout}
+                />
 
 
 

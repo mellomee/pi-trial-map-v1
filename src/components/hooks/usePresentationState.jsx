@@ -55,15 +55,5 @@ export function usePresentationState(trialSessionId, isAttorney = false) {
     }).catch(console.error);
   }, [state, isAttorney]);
 
-  // Attorney only: update zoom + scroll in one write (prevents jury race condition)
-  const setTransform = useCallback((scale, scrollLeft, scrollTop) => {
-    if (!isAttorney || !state) return;
-    base44.entities.TrialSessionStates.update(state.id, {
-      proof_zoom_level: scale,
-      proof_scroll_left: scrollLeft,
-      proof_scroll_top: scrollTop,
-    }).catch(console.error);
-  }, [state, isAttorney]);
-
-  return { state, setPage, setZoom, setScroll, setTransform };
+  return { state, setPage, setZoom, setScroll };
 }
