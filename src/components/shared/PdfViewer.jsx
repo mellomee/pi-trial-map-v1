@@ -291,12 +291,10 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       containerRef.current.scrollTop = newScrollTop;
     });
 
-    scheduleZoomSync();
-    scheduleScrollSync();
-
+    notifyViewport();
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
     gestureTimerRef.current = setTimeout(commitGestureEnd, GESTURE_COMMIT_DELAY);
-  }, [commitGestureEnd, readOnly, scheduleZoomSync, scheduleScrollSync]);
+  }, [commitGestureEnd, notifyViewport, readOnly]);
 
   // ── Native scroll (trackpad pan, mouse wheel) — sync to jury ─────────────
   const handleNativeScroll = useCallback((e) => {
@@ -305,8 +303,8 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       left: e.currentTarget.scrollLeft,
       top: e.currentTarget.scrollTop,
     };
-    scheduleScrollSync();
-  }, [readOnly, scheduleScrollSync]);
+    notifyViewport();
+  }, [readOnly, notifyViewport]);
 
   // ── Touch: 1-finger pan + 2-finger pinch/pan ─────────────────────────────
   const handleTouchStart = useCallback((e) => {
