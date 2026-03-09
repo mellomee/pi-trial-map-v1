@@ -76,30 +76,25 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoo
 }
 
 // ---------- Callout sidebar item ----------
-function CalloutItem({ callout, witnessName, isActive, isLinked, onClick, pageNumber }) {
-  const isDisabled = isLinked && !isActive;
-  
+function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
   return (
     <button
       onClick={onClick}
-      disabled={isDisabled}
       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-400/70 bg-cyan-900/40 border-2 cursor-default' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
-      } ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
-      style={isDisabled ? { pointerEvents: 'none' } : {}}
+        isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-500/40 bg-cyan-900/30 hover:bg-cyan-900/40' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
+      }`}
     >
       {callout.snapshot_image_url ? (
-        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-2 ring-amber-400' : ''}`}>
+        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
         </div>
       ) : (
-        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-2 ring-amber-400' : ''}`}>
+        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <ImageIcon className="w-4 h-4 text-slate-600" />
         </div>
       )}
       {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
       {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
-      {pageNumber && <p className={`text-[10px] text-slate-400 font-mono`}>Pg. {pageNumber}</p>}
       {isActive && (
         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
           <Eye className="w-2.5 h-2.5" /> Spotlighted
@@ -155,14 +150,10 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     if (!selectedProof?.source_id) {
       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
       setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
-      setPage(1); // Reset to page 1
       return;
     }
     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
     setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
-
-    const linkedCalloutId = selectedProof?.callout_id;
-    let linkedCalloutPageNumber = null;
 
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
       const ext = r[0];
@@ -190,21 +181,11 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // If proof has a linked callout, jump to its page
-      if (linkedCalloutId) {
-        const linkedCallout = sorted.find(c => c.id === linkedCalloutId);
-        if (linkedCallout && linkedCallout.page_number) {
-          linkedCalloutPageNumber = linkedCallout.page_number;
-          setPage(linkedCallout.page_number);
-        }
-      } else {
-        // No linked callout: explicitly set to page 1
-        setPage(1);
-      }
+      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
-  }, [selectedProof?.source_id, selectedProof?.callout_id, setPage]);
+  }, [selectedProof?.source_id, selectedProof?.callout_id]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
@@ -356,30 +337,23 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
               </p>
-              {allCallouts.map(c => {
-               const isLinked = selectedProof?.callout_id === c.id;
-               const isActive = spotlightCallout?.id === c.id;
-               return (
-                 <CalloutItem
-                   key={c.id}
-                   callout={c}
-                   witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
-                   isActive={isActive}
-                   isLinked={isLinked}
-                   pageNumber={c.page_number}
-                   onClick={() => {
-                     // Disable clicks on linked callouts (don't allow toggling or manual clicks)
-                     if (isLinked) return;
-                     // Toggle: click same callout to close, click different to open
-                     setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                     // Auto-navigate to callout's page via shared state
-                     if (isPdf && c.page_number) {
-                       setPage(c.page_number);
-                     }
-                   }}
-                 />
-               );
-              })}
+              {allCallouts.map(c => (
+                <CalloutItem
+                  key={c.id}
+                  callout={c}
+                  witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
+                  isActive={spotlightCallout?.id === c.id}
+                  isLinked={selectedProof?.callout_id === c.id}
+                  onClick={() => {
+                    // Toggle: click same callout to close, click different to open
+                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                    // Auto-navigate to callout's page via shared state
+                    if (isPdf && c.page_number) {
+                      setPage(c.page_number);
+                    }
+                  }}
+                />
+              ))}
             </div>
           </div>
         )}
