@@ -28,21 +28,28 @@ export default function JuryView() {
     });
   }, [activeCase?.id]);
 
-  // Use shared presentation state (jury is reader-only).
-  // usePresentationState loads initial state + subscribes — same record as sessionState.
+  // Use shared presentation state (jury is reader-only) for page/zoom/scroll sync
   const { state: presentationState } = usePresentationState(trialSessionId, false);
-  const externalPage = sessionState?.proof_current_page ?? presentationState?.proof_current_page ?? null;
-  // Attorney uses iframe — never writes zoom/scroll. Pass null so centerOnInit applies.
-  const externalScale = null;
-  const externalPositionX = null;
-  const externalPositionY = null;
+  const externalPage = presentationState?.proof_current_page ?? null;
+  // Only pass zoom/position to SharedProofViewer if attorney has actually set them
+  // (proof_zoom_level default is 1 and proof_scroll_left/top default 0 — only relay
+  //  once the attorney has actually moved/zoomed, indicated by zoom != 1 or scroll != 0)
+  const hasTransform = presentationState != null && (
+    (presentationState.proof_zoom_level != null && presentationState.proof_zoom_level !== 1) ||
+    (presentationState.proof_scroll_left != null && presentationState.proof_scroll_left !== 0) ||
+    (presentationState.proof_scroll_top != null && presentationState.proof_scroll_top !== 0)
+  );
+  const externalScale = hasTransform ? (presentationState.proof_zoom_level ?? null) : null;
+  const externalPositionX = hasTransform ? (presentationState.proof_scroll_left != null ? -presentationState.proof_scroll_left : null) : null;
+  const externalPositionY = hasTransform ? (presentationState.proof_scroll_top != null ? -presentationState.proof_scroll_top : null) : null;
 
-  // Load initial session state + subscribe to changes
+  // Initial load of session state + subscribe to real-time changes
   useEffect(() => {
     if (!trialSessionId) return;
-    // Fetch initial state immediately so jury doesn't wait for first event
+
+    // Fetch initial state so jury isn't blank on first load
     base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId })
-      .then((states) => { if (states[0]) setSessionState(states[0]); });
+      .then((rows) => { if (rows[0]) setSessionState(rows[0]); });
 
     const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
       if (event.data?.trial_session_id === trialSessionId) {
@@ -115,7 +122,7 @@ export default function JuryView() {
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
 
   return (
-    <div className="fixed inset-0 bg-[#060810] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black flex flex-col overflow-hidden">
       {/* Depo clip view */}
       {proofItem.type === 'depoClip' && depoClip && (
         <div className="w-full h-full flex flex-col justify-center px-10 py-10">
@@ -142,42 +149,48 @@ export default function JuryView() {
         </div>
       )}
 
-      {/* Extract view — use SharedProofViewer in readOnly mode, mirroring attorney */}
+      {/* Extract view — centered presentation frame */}
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="flex flex-col flex-1 overflow-hidden relative">
-          {exhibitLabel && (
-            <div className="absolute top-3 right-4 z-30">
-              <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
-            </div>
-          )}
-          {/* Spotlight driven by session state callout */}
-          {spotlightCallout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.72)' }}>
-              <img
-                src={spotlightCallout.snapshot_image_url}
-                alt={spotlightCallout.name || 'Callout'}
-                className="block shadow-2xl rounded-lg border border-white/10"
-                style={{ maxWidth: '92%', maxHeight: '88vh', objectFit: 'contain' }}
-                draggable={false}
-              />
-              {spotlightCallout.name && (
-                <div className="absolute bottom-4 left-0 right-0 text-center z-30">
-                  <span className="text-slate-300 text-lg bg-black/70 px-4 py-1.5 rounded-full">{spotlightCallout.name}</span>
-                </div>
-              )}
-            </div>
-          )}
-          <SharedProofViewer
-            extract={extract}
-            callouts={[]}
-            caseParties={{}}
-            proofItem={proofItem}
-            externalPage={externalPage}
-            externalScale={externalScale}
-            externalPositionX={externalPositionX}
-            externalPositionY={externalPositionY}
-            readOnly={true}
-          />
+        <div className="flex-1 flex items-center justify-center overflow-hidden relative">
+          {/* Bounded centered frame with black margins */}
+          <div
+            className="relative bg-[#060810] overflow-hidden"
+            style={{ width: '100%', height: '100%', maxWidth: '1400px', margin: '0 auto' }}
+          >
+            {exhibitLabel && (
+              <div className="absolute top-3 right-4 z-30">
+                <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
+              </div>
+            )}
+            {/* Spotlight driven by session state callout */}
+            {spotlightCallout?.snapshot_image_url && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.72)' }}>
+                <img
+                  src={spotlightCallout.snapshot_image_url}
+                  alt={spotlightCallout.name || 'Callout'}
+                  className="block shadow-2xl rounded-lg border border-white/10"
+                  style={{ maxWidth: '92%', maxHeight: '88vh', objectFit: 'contain' }}
+                  draggable={false}
+                />
+                {spotlightCallout.name && (
+                  <div className="absolute bottom-4 left-0 right-0 text-center z-30">
+                    <span className="text-slate-300 text-lg bg-black/70 px-4 py-1.5 rounded-full">{spotlightCallout.name}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <SharedProofViewer
+              extract={extract}
+              callouts={[]}
+              caseParties={{}}
+              proofItem={proofItem}
+              externalPage={externalPage}
+              externalScale={externalScale}
+              externalPositionX={externalPositionX}
+              externalPositionY={externalPositionY}
+              readOnly={true}
+            />
+          </div>
         </div>
       )}
     </div>
