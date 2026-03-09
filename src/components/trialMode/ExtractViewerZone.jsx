@@ -59,6 +59,15 @@ export default function ExtractViewerZone({
       setCallouts(sorted);
       setJx(jxList[0] || null);
 
+      // Auto-jump to linked callout page on proof load
+      if (selectedProof.callout_id) {
+        const linked = sorted.find((c) => c.id === selectedProof.callout_id);
+        if (linked) {
+          setSelectedCallout(linked);
+          if (linked.page_number) _syncPage(linked.page_number);
+        }
+      }
+
       // Load witness names
       const wids = [...new Set(sorted.map((c) => c.witness_id).filter(Boolean))];
       const wMap = {};
