@@ -47,9 +47,11 @@ export default function TrialMode() {
 
   const [resolvedLinks, setResolvedLinks] = useState({ evidenceGroups: [], proofItems: [], trialPoints: [] });
   const [childResolvedLinks, setChildResolvedLinks] = useState(null); // non-null when a child is selected
+  const [latestQuestionId, setLatestQuestionId] = useState(null); // track which question last updated state
 
   const [trialSession, setTrialSession] = useState(null);
   const [publishedProof, setPublishedProof] = useState(null);
+  const [publishedQuestionId, setPublishedQuestionId] = useState(null); // which question was publishing
   const [selectedProof, setSelectedProof] = useState(null);
 
   // Resizable layout state
@@ -139,10 +141,15 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
-    // Auto-unpublish if question changes and published proof is different
-    if (publishedProof) {
+    // Only update if this is the newest question selection (prevent cascading from stale selections)
+    if (latestQuestionId && latestQuestionId !== selectedQuestionId) return;
+    
+    // Auto-unpublish if switching to a different parent question (not just scrolling proofs)
+    if (publishedProof && publishedQuestionId && publishedQuestionId !== questionId) {
       await handleClearJury();
     }
+    
+    setLatestQuestionId(questionId);
     setSelectedQuestionId(questionId);
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
@@ -152,11 +159,15 @@ export default function TrialMode() {
   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
+    // Only update if this is the newest selection
+    if (latestQuestionId && latestQuestionId !== selectedChildQuestionId) return;
+    
     if (selectedChildQuestionId === childQuestion.id) {
-      // Deselect — revert to parent's proof; auto-unpublish if needed
+      // Deselect — revert to parent's proof; auto-unpublish
       if (publishedProof) {
         await handleClearJury();
       }
+      setLatestQuestionId(null);
       setSelectedChildQuestionId(null);
       setChildResolvedLinks(null);
       setSelectedProof(null);
@@ -165,6 +176,7 @@ export default function TrialMode() {
       if (publishedProof) {
         await handleClearJury();
       }
+      setLatestQuestionId(childQuestion.id);
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
@@ -201,6 +213,7 @@ export default function TrialMode() {
     }
     await publishProofToJury(trialSession.id, proofItem.id);
     setPublishedProof(proofItem);
+    setPublishedQuestionId(selectedChildQuestionId || selectedQuestionId);
     window.__trialModePublished = true;
   };
 
@@ -208,6 +221,7 @@ export default function TrialMode() {
     if (!trialSession) return;
     await clearJuryDisplay(trialSession.id);
     setPublishedProof(null);
+    setPublishedQuestionId(null);
     window.__trialModePublished = false;
   };
 
@@ -433,10 +447,8 @@ export default function TrialMode() {
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
               onSelectProof={async (proof) => {
-                // Auto-unpublish if switching to a different proof
-                if (publishedProof && publishedProof.id !== proof.id) {
-                  await handleClearJury();
-                }
+                // Keep publish active when switching proofs in same question context
+                // Only unpublish if changing to a different question context
                 setSelectedProof(proof);
               }}
               childQuestionActive={!!selectedChildQuestionId}
