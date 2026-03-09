@@ -281,9 +281,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                 fileUrl={extractFileUrl}
                 currentPage={currentPage}
                 zoom={zoom}
-                onZoomChange={handleZoomChange}
-                onPageChange={handlePageChange}
-                onScrollChange={handleScrollChange}
+                scrollLeft={sharedScrollLeft}
+                scrollTop={sharedScrollTop}
+                onViewportChange={handleViewportChange}
                 showControls={true}
                 dimmed={false}
               />
