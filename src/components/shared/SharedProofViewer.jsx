@@ -203,10 +203,14 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
   }, [externalPage]);
 
   // External transform sync (jury follows attorney)
+  // Skip default values (scale=1, x=0, y=0) so centerOnInit can position the PDF correctly.
+  // Attorney uses iframe so it never writes non-default transforms; applying defaults
+  // would override centerOnInit and leave the PDF at top-left.
   useEffect(() => {
     if (externalScale == null || !transformRef.current) return;
     const x = externalPositionX ?? 0;
     const y = externalPositionY ?? 0;
+    if (externalScale === 1 && x === 0 && y === 0) return; // defaults — let centerOnInit handle
     transformRef.current.setTransform(x, y, externalScale, 0);
   }, [externalScale, externalPositionX, externalPositionY]);
 
@@ -257,8 +261,8 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
 
       {/* Main PDF/image area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Page nav — always shown for PDFs; disabled (not hidden) in readOnly */}
-        {isPdf && (
+        {/* Page nav — attorney only (readOnly/jury just follows externalPage) */}
+        {isPdf && !readOnly && (
           <div className="flex items-center gap-1 px-2 py-1 bg-[#0f1629] border-b border-[#1e2a45] flex-shrink-0">
             <button
               onClick={() => !readOnly && goToPage(currentPage - 1)}
