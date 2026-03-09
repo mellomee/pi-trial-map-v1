@@ -123,7 +123,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const sidebarRef = useRef(null);
 
   // Use shared presentation state (attorney is the writer, jury is the reader)
-  const { state: presentationState, setPage, setZoom, setScroll } = usePresentationState(trialSessionId, true);
+  const { state: presentationState, setPage, setZoom, setScroll, setViewerSize } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
 
