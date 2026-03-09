@@ -210,10 +210,9 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   // ── Page navigation ───────────────────────────────────────────────────────
   const goToPage = useCallback((pageNum) => {
     const next = clamp(pageNum, 1, totalPagesRef.current || 1);
-    localPageStampRef.current = Date.now(); // stamp to block stale echo
+    localPageStampRef.current = Date.now();
     setDisplayPage(next);
     displayPageRef.current = next;
-    onPageChange?.(next);
     expectedScrollRef.current = { left: 0, top: 0 };
     requestAnimationFrame(() => {
       if (containerRef.current) {
@@ -221,7 +220,9 @@ const PdfViewer = React.forwardRef(function PdfViewer(
         containerRef.current.scrollTop = 0;
       }
     });
-  }, [onPageChange]);
+    // Flush page + scroll reset together as one combined update
+    notifyViewport({ page: next, scrollLeft: 0, scrollTop: 0 }, true);
+  }, [notifyViewport]);
 
   const handlePrevPage = useCallback(() => goToPage(displayPageRef.current - 1), [goToPage]);
   const handleNextPage = useCallback(() => goToPage(displayPageRef.current + 1), [goToPage]);
