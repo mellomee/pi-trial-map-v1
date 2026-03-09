@@ -123,26 +123,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const sidebarRef = useRef(null);
 
   // Use shared presentation state (attorney is the writer, jury is the reader)
-  const { state: presentationState, setPage, setZoom, setScroll, setViewportSize } = usePresentationState(trialSessionId, true);
+  const { state: presentationState, setPage, setZoom, setScroll } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
-
-  // Derived from extract state — must be declared before any useEffect that references them
-  const extractFileUrl = extract?.extract_file_url || null;
-  const isPdf = extractFileUrl?.match(/\.pdf(\?|$)/i);
-
-  // Observe the PDF container size so the jury can build a matching viewport frame
-  useEffect(() => {
-    if (!imgContainerRef.current || !isPdf) return;
-    const obs = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        if (width > 50 && height > 50) setViewportSize(Math.round(width), Math.round(height));
-      }
-    });
-    obs.observe(imgContainerRef.current);
-    return () => obs.disconnect();
-  }, [setViewportSize, isPdf]); // re-run when PDF state changes
 
   // When spotlight changes while publishing, notify TrialMode via module-level callback
   useEffect(() => {
@@ -205,7 +188,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   }, [selectedProof?.source_id, selectedProof?.callout_id]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
+  const extractFileUrl = extract?.extract_file_url || null;
   const spotlightHighlights = spotlightCallout ? (highlightsByCallout[spotlightCallout.id] || []) : [];
+  const isPdf = extractFileUrl?.match(/\.pdf(\?|$)/i);
   
   // Calculate max width for spotlight based on sidebar visibility
   const sidebarWidth = allCallouts.length > 0 ? 112 : 0; // w-28 = 112px
@@ -291,8 +276,8 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           />
         )}
 
-        {/* Main extract file viewer */}
-        <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
+        {/* Main extract file viewer — gesture wrapper ONLY wraps PDF content, not toolbar */}
+         <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
           {extractFileUrl ? (
             isPdf ? (
               <PdfViewerWithGestures
