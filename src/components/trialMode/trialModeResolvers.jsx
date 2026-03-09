@@ -34,14 +34,9 @@ export async function resolveQuestionLinks(questionId, caseId) {
       : [[], []];
 
     // Proof items shown in ProofZone = only directly question-linked ones (QuestionLinks + QuestionProofItems)
-    // Fall back to all EG proof items only if no direct links exist at all
-    const directProofItemIds = directProofLinks.map(l => l.proof_item_id);
-    const hasDirectLinks = questionLinkedProofIds.length > 0 || directProofItemIds.length > 0;
-    const egProofItemIds = egProofItemLinks.map(l => l.proof_item_id);
-
-    const allProofItemIds = hasDirectLinks
-      ? [...new Set([...questionLinkedProofIds, ...directProofItemIds])]
-      : [...new Set(egProofItemIds)];
+     // Never fall back to evidence-group proof items
+     const directProofItemIds = directProofLinks.map(l => l.proof_item_id);
+     const allProofItemIds = [...new Set([...questionLinkedProofIds, ...directProofItemIds])];
 
     let proofItems = allProofItemIds.length
       ? await Promise.all(allProofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))).then(r => r.flat())
