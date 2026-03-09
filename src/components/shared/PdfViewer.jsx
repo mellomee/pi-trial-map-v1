@@ -22,27 +22,35 @@ function clamp(v, min, max) {
 }
 
 /**
- * PdfViewer — "map/document viewport" model.
+ * PdfViewer — map/document viewport model.
  *
- * Two-phase zoom:
- *   Phase 1 (gesture active):  only visualZoom changes → CSS transform, no pdf.js rerender.
- *   Phase 2 (gesture end):     renderZoom = finalZoom  → one pdf.js rerender at final scale.
+ * Gesture model:
+ *   1-finger touch  → drag-to-pan (scrollLeft/scrollTop)
+ *   2-finger touch  → combined pinch-zoom + two-finger pan (both happen simultaneously)
+ *   ctrl+wheel      → focal-point zoom (trackpad pinch gesture)
+ *   native scroll   → regular wheel/trackpad pan (passed through, synced)
  *
- * Page state:
- *   - Locally responsive (immediate) via displayPage.
- *   - Stale external echoes blocked by localPageStampRef (600ms guard).
+ * Two-phase zoom (no flash):
+ *   Phase 1 (gesture active):  visualZoom changes → CSS transform only, no pdf.js rerender
+ *   Phase 2 (gesture end):     renderZoom = finalZoom → one pdf.js rerender
  *
- * Scroll anchoring:
- *   - expectedScrollRef tracks "where we expect the scroll to be" across rapid events,
- *     avoiding stale DOM reads before rAF commits scroll changes.
+ * Scroll sync:
+ *   Attorney: onScrollChange(sl, st) throttled during gesture, immediate on end
+ *   Jury: externalScrollLeft/externalScrollTop mirrored to containerRef
+ *
+ * Page nav:
+ *   Local-first with 600ms stale-echo guard on externalPage
  */
 const PdfViewer = React.forwardRef(function PdfViewer(
   {
     fileUrl,
     externalZoom = null,
     externalPage = null,
+    externalScrollLeft = null,
+    externalScrollTop = null,
     onZoomChange = null,
     onPageChange = null,
+    onScrollChange = null,
     readOnly = false,
     showControls = true,
     dimmed = false,
@@ -53,10 +61,6 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [displayPage, setDisplayPage] = useState(1);
-
-  // renderZoom: the scale at which pdf.js last rendered the canvas.
-  // visualZoom: the scale the user currently sees (CSS transform during gesture).
-  // After gesture end, renderZoom = visualZoom = finalZoom, transformScale = 1.
   const [renderZoom, setRenderZoom] = useState(1);
   const [visualZoom, setVisualZoom] = useState(1);
   const [pageSize, setPageSize] = useState({ width: 0, height: 0 });
@@ -66,25 +70,24 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   const renderTaskRef = useRef(null);
   const mountedRef = useRef(true);
 
-  // Always-current value refs (safe inside event handlers / rAF)
+  // Always-current refs (safe in event handlers / rAF)
   const renderZoomRef = useRef(1);
   const visualZoomRef = useRef(1);
   const displayPageRef = useRef(1);
   const totalPagesRef = useRef(0);
-  const pageSizeRef = useRef({ width: 0, height: 0 });
 
-  // Gesture control
-  const isGestureRef = useRef(false);
-  const touchGestureRef = useRef(null); // { startDist, startZoom }
+  // Gesture state
+  const isGestureRef = useRef(false);   // true during pinch — blocks external zoom echoes
+  const touchRef = useRef(null);        // { type: 'pan' | 'pinch', ...data }
   const gestureTimerRef = useRef(null);
-  const syncTimerRef = useRef(null);
+  const zoomSyncTimerRef = useRef(null);
+  const scrollSyncTimerRef = useRef(null);
   const rafRef = useRef(null);
 
-  // Expected scroll: tracks scroll we *intend* to be at after rAF, so rapid
-  // successive events don't read stale DOM scrollLeft/scrollTop.
+  // Tracks intended scroll across rapid events (avoids stale DOM reads before rAF commits)
   const expectedScrollRef = useRef({ left: 0, top: 0 });
 
-  // Stale-echo guard: ignore externalPage updates within 600ms of a local nav.
+  // Stale-echo guard: ignore externalPage echoes within 600ms of local navigation
   const localPageStampRef = useRef(0);
 
   // Keep refs in sync with state
@@ -92,16 +95,16 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   useEffect(() => { visualZoomRef.current = visualZoom; }, [visualZoom]);
   useEffect(() => { displayPageRef.current = displayPage; }, [displayPage]);
   useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
-  useEffect(() => { pageSizeRef.current = pageSize; }, [pageSize]);
 
-  // Cleanup
+  // Cleanup on unmount
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       if (renderTaskRef.current) { try { renderTaskRef.current.cancel(); } catch {} }
       if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
-      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      if (zoomSyncTimerRef.current) clearTimeout(zoomSyncTimerRef.current);
+      if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
@@ -135,21 +138,18 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   }, [fileUrl]);
 
   // ── External page sync ─────────────────────────────────────────────────────
-  // Jury: mirrors attorney freely.
-  // Attorney: stale echo guard prevents own broadcast echoing back.
   useEffect(() => {
     if (externalPage == null || externalPage === displayPageRef.current) return;
     if (externalPage < 1 || externalPage > Math.max(totalPagesRef.current, 1)) return;
-    if (Date.now() - localPageStampRef.current < 600) return; // stale echo
+    if (Date.now() - localPageStampRef.current < 600) return; // stale echo guard
     setDisplayPage(externalPage);
     displayPageRef.current = externalPage;
   }, [externalPage, totalPages]);
 
-  // ── External zoom sync ──────────────────────────────────────────────────────
-  // Ignored during attorney's active gesture to prevent feedback loop.
+  // ── External zoom sync (jury mirrors attorney) ────────────────────────────
   useEffect(() => {
     if (externalZoom == null) return;
-    if (isGestureRef.current) return;
+    if (isGestureRef.current) return; // never override attorney's in-progress gesture
     const next = clamp(externalZoom, MIN_ZOOM, MAX_ZOOM);
     if (Math.abs(next - visualZoomRef.current) < 0.001) return;
     setVisualZoom(next);
@@ -158,8 +158,19 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     renderZoomRef.current = next;
   }, [externalZoom]);
 
-  // ── PDF canvas render ───────────────────────────────────────────────────────
-  // Only fires when renderZoom or displayPage changes — NOT during gesture.
+  // ── External scroll sync (jury mirrors attorney's viewport position) ───────
+  useEffect(() => {
+    if (externalScrollLeft == null && externalScrollTop == null) return;
+    if (isGestureRef.current) return;
+    requestAnimationFrame(() => {
+      if (!containerRef.current) return;
+      if (externalScrollLeft != null) containerRef.current.scrollLeft = externalScrollLeft;
+      if (externalScrollTop != null) containerRef.current.scrollTop = externalScrollTop;
+    });
+  }, [externalScrollLeft, externalScrollTop]);
+
+  // ── PDF canvas render ─────────────────────────────────────────────────────
+  // Only fires when renderZoom or displayPage changes — NOT during active gesture.
   useEffect(() => {
     if (!pdf || !displayPage || !canvasRef.current) return;
     let cancelled = false;
@@ -182,10 +193,7 @@ const PdfViewer = React.forwardRef(function PdfViewer(
 
         canvas.width = Math.ceil(viewport.width);
         canvas.height = Math.ceil(viewport.height);
-
-        const size = { width: viewport.width, height: viewport.height };
-        setPageSize(size);
-        pageSizeRef.current = size;
+        setPageSize({ width: viewport.width, height: viewport.height });
 
         const task = page.render({ canvasContext: ctx, viewport });
         renderTaskRef.current = task;
@@ -205,10 +213,10 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     };
   }, [pdf, displayPage, renderZoom]);
 
-  // ── Page navigation ─────────────────────────────────────────────────────────
+  // ── Page navigation ───────────────────────────────────────────────────────
   const goToPage = useCallback((pageNum) => {
     const next = clamp(pageNum, 1, totalPagesRef.current || 1);
-    localPageStampRef.current = Date.now(); // guard against stale echo
+    localPageStampRef.current = Date.now(); // stamp to block stale echo
     setDisplayPage(next);
     displayPageRef.current = next;
     onPageChange?.(next);
@@ -224,42 +232,72 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   const handlePrevPage = useCallback(() => goToPage(displayPageRef.current - 1), [goToPage]);
   const handleNextPage = useCallback(() => goToPage(displayPageRef.current + 1), [goToPage]);
 
-  // ── Zoom sync throttle (jury live mirror) ───────────────────────────────────
+  // ── Throttled sync callbacks ──────────────────────────────────────────────
   const scheduleZoomSync = useCallback(() => {
-    if (readOnly || syncTimerRef.current) return;
-    syncTimerRef.current = setTimeout(() => {
-      syncTimerRef.current = null;
+    if (readOnly || zoomSyncTimerRef.current) return;
+    zoomSyncTimerRef.current = setTimeout(() => {
+      zoomSyncTimerRef.current = null;
       onZoomChange?.(visualZoomRef.current);
     }, SYNC_THROTTLE_MS);
   }, [onZoomChange, readOnly]);
 
-  // ── Visual zoom with focal-point scroll anchoring ───────────────────────────
-  // Uses expectedScrollRef to accumulate scroll intent across rapid events,
-  // avoiding stale DOM reads before previous rAF has committed.
-  const applyVisualZoom = useCallback((nextZoom, focalClientX, focalClientY) => {
+  const scheduleScrollSync = useCallback(() => {
+    if (readOnly || !onScrollChange || scrollSyncTimerRef.current) return;
+    scrollSyncTimerRef.current = setTimeout(() => {
+      scrollSyncTimerRef.current = null;
+      onScrollChange?.(
+        Math.round(expectedScrollRef.current.left),
+        Math.round(expectedScrollRef.current.top)
+      );
+    }, SYNC_THROTTLE_MS);
+  }, [onScrollChange, readOnly]);
+
+  // ── Commit gesture end: one pdf.js rerender, finalize sync ───────────────
+  const commitGestureEnd = useCallback(() => {
+    isGestureRef.current = false;
+    if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
+    if (zoomSyncTimerRef.current) clearTimeout(zoomSyncTimerRef.current);
+    if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
+    zoomSyncTimerRef.current = null;
+    scrollSyncTimerRef.current = null;
+
+    const finalZoom = visualZoomRef.current;
+    setRenderZoom(finalZoom);
+    renderZoomRef.current = finalZoom;
+    onZoomChange?.(finalZoom);
+    onScrollChange?.(
+      Math.round(expectedScrollRef.current.left),
+      Math.round(expectedScrollRef.current.top)
+    );
+  }, [onZoomChange, onScrollChange]);
+
+  // ── Wheel: ctrl+wheel = trackpad pinch zoom ───────────────────────────────
+  const handleWheel = useCallback((e) => {
+    if (readOnly || !e.ctrlKey) return;
+    e.preventDefault();
+
     const container = containerRef.current;
     if (!container) return;
 
+    if (!isGestureRef.current) {
+      expectedScrollRef.current = { left: container.scrollLeft, top: container.scrollTop };
+    }
+    isGestureRef.current = true;
+
     const prevZoom = visualZoomRef.current;
-    const clamped = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
-    if (Math.abs(clamped - prevZoom) < 0.0001) return;
+    const nextZoom = clamp(prevZoom - e.deltaY * 0.008, MIN_ZOOM, MAX_ZOOM);
+    if (Math.abs(nextZoom - prevZoom) < 0.0001) return;
 
     const rect = container.getBoundingClientRect();
-    const localX = focalClientX - rect.left;
-    const localY = focalClientY - rect.top;
+    const localX = e.clientX - rect.left;
+    const localY = e.clientY - rect.top;
+    const scaleChange = nextZoom / prevZoom;
+    const newScrollLeft = (expectedScrollRef.current.left + localX) * scaleChange - localX;
+    const newScrollTop = (expectedScrollRef.current.top + localY) * scaleChange - localY;
 
-    // Use expectedScroll (not container.scrollLeft) to avoid stale reads
-    const contentX = expectedScrollRef.current.left + localX;
-    const contentY = expectedScrollRef.current.top + localY;
-    const scaleChange = clamped / prevZoom;
-
-    const newScrollLeft = contentX * scaleChange - localX;
-    const newScrollTop = contentY * scaleChange - localY;
-
-    // Record intent before rAF fires
     expectedScrollRef.current = { left: newScrollLeft, top: newScrollTop };
-    visualZoomRef.current = clamped;
-    setVisualZoom(clamped); // triggers CSS transform update + toolbar display
+    visualZoomRef.current = nextZoom;
+    setVisualZoom(nextZoom);
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
@@ -269,100 +307,179 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     });
 
     scheduleZoomSync();
-  }, [scheduleZoomSync]);
-
-  // ── Commit gesture end: one pdf.js rerender at final zoom ──────────────────
-  const commitGestureEnd = useCallback(() => {
-    isGestureRef.current = false;
-    touchGestureRef.current = null;
-    if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
-    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-    syncTimerRef.current = null;
-
-    const finalZoom = visualZoomRef.current;
-    setRenderZoom(finalZoom);
-    renderZoomRef.current = finalZoom;
-    onZoomChange?.(finalZoom);
-  }, [onZoomChange]);
-
-  // ── Wheel (trackpad pinch = ctrlKey + wheel) ────────────────────────────────
-  const handleWheel = useCallback((e) => {
-    if (readOnly || !e.ctrlKey) return;
-    e.preventDefault();
-
-    // Sync expected scroll on first wheel event of a new gesture
-    if (!isGestureRef.current && containerRef.current) {
-      expectedScrollRef.current = {
-        left: containerRef.current.scrollLeft,
-        top: containerRef.current.scrollTop,
-      };
-    }
-    isGestureRef.current = true;
-
-    applyVisualZoom(visualZoomRef.current - e.deltaY * 0.008, e.clientX, e.clientY);
+    scheduleScrollSync();
 
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
     gestureTimerRef.current = setTimeout(commitGestureEnd, GESTURE_COMMIT_DELAY);
-  }, [applyVisualZoom, commitGestureEnd, readOnly]);
+  }, [commitGestureEnd, readOnly, scheduleZoomSync, scheduleScrollSync]);
 
-  // ── Touch pinch ─────────────────────────────────────────────────────────────
-  const handleTouchStart = useCallback((e) => {
-    if (readOnly || e.touches.length !== 2) return;
-    const [t1, t2] = e.touches;
-
-    // Sync expected scroll at gesture start
-    if (containerRef.current) {
-      expectedScrollRef.current = {
-        left: containerRef.current.scrollLeft,
-        top: containerRef.current.scrollTop,
-      };
-    }
-
-    touchGestureRef.current = {
-      startDist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY),
-      startZoom: visualZoomRef.current,
+  // ── Native scroll (trackpad pan, mouse wheel) — sync to jury ─────────────
+  const handleNativeScroll = useCallback((e) => {
+    if (readOnly || isGestureRef.current) return;
+    expectedScrollRef.current = {
+      left: e.currentTarget.scrollLeft,
+      top: e.currentTarget.scrollTop,
     };
-    isGestureRef.current = true;
+    scheduleScrollSync();
+  }, [readOnly, scheduleScrollSync]);
+
+  // ── Touch: 1-finger pan + 2-finger pinch/pan ─────────────────────────────
+  const handleTouchStart = useCallback((e) => {
+    if (readOnly) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const sl = container.scrollLeft;
+    const st = container.scrollTop;
+    expectedScrollRef.current = { left: sl, top: st };
+
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      touchRef.current = {
+        type: 'pan',
+        startClientX: t.clientX,
+        startClientY: t.clientY,
+        startScrollLeft: sl,
+        startScrollTop: st,
+      };
+    } else if (e.touches.length >= 2) {
+      const [t1, t2] = e.touches;
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const clientCX = (t1.clientX + t2.clientX) / 2;
+      const clientCY = (t1.clientY + t2.clientY) / 2;
+      const localCX = clientCX - rect.left;
+      const localCY = clientCY - rect.top;
+
+      touchRef.current = {
+        type: 'pinch',
+        startDist: dist,
+        startZoom: visualZoomRef.current,
+        containerLeft: rect.left,
+        containerTop: rect.top,
+        // Content coordinate anchored under initial finger center.
+        // This point stays under the current finger center throughout the gesture.
+        anchorContentX: sl + localCX,
+        anchorContentY: st + localCY,
+      };
+      isGestureRef.current = true;
+    }
   }, [readOnly]);
 
   const handleTouchMove = useCallback((e) => {
-    if (readOnly || e.touches.length !== 2 || !touchGestureRef.current) return;
+    if (readOnly || !touchRef.current) return;
     e.preventDefault();
 
-    const [t1, t2] = e.touches;
-    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-    const centerX = (t1.clientX + t2.clientX) / 2;
-    const centerY = (t1.clientY + t2.clientY) / 2;
-    const nextZoom = touchGestureRef.current.startZoom * (dist / touchGestureRef.current.startDist);
+    if (touchRef.current.type === 'pan' && e.touches.length === 1) {
+      // Single-finger drag pan
+      const t = e.touches[0];
+      const { startClientX, startClientY, startScrollLeft, startScrollTop } = touchRef.current;
+      const newScrollLeft = startScrollLeft - (t.clientX - startClientX);
+      const newScrollTop = startScrollTop - (t.clientY - startClientY);
+      expectedScrollRef.current = { left: newScrollLeft, top: newScrollTop };
 
-    applyVisualZoom(nextZoom, centerX, centerY);
-  }, [applyVisualZoom, readOnly]);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        containerRef.current.scrollLeft = newScrollLeft;
+        containerRef.current.scrollTop = newScrollTop;
+      });
+      scheduleScrollSync();
+
+    } else if (touchRef.current.type === 'pinch' && e.touches.length >= 2) {
+      // Two-finger combined zoom + pan
+      // Math: keep the content point that was under the initial finger center
+      // anchored under the current finger center as zoom and position change.
+      //
+      // newScrollLeft = anchorContentX * (newZoom / startZoom) - currentLocalCX
+      // This handles both zoom (via scale ratio) and pan (via center shift) in one formula.
+      const [t1, t2] = e.touches;
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const clientCX = (t1.clientX + t2.clientX) / 2;
+      const clientCY = (t1.clientY + t2.clientY) / 2;
+
+      const { startDist, startZoom, containerLeft, containerTop, anchorContentX, anchorContentY } = touchRef.current;
+      const newZoom = clamp(startZoom * (dist / startDist), MIN_ZOOM, MAX_ZOOM);
+      const ratio = newZoom / startZoom;
+      const localCX = clientCX - containerLeft;
+      const localCY = clientCY - containerTop;
+
+      const newScrollLeft = anchorContentX * ratio - localCX;
+      const newScrollTop = anchorContentY * ratio - localCY;
+
+      visualZoomRef.current = newZoom;
+      expectedScrollRef.current = { left: newScrollLeft, top: newScrollTop };
+      setVisualZoom(newZoom);
+
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        containerRef.current.scrollLeft = newScrollLeft;
+        containerRef.current.scrollTop = newScrollTop;
+      });
+      scheduleZoomSync();
+      scheduleScrollSync();
+    }
+  }, [readOnly, scheduleZoomSync, scheduleScrollSync]);
 
   const handleTouchEnd = useCallback(() => {
-    if (readOnly) return;
-    commitGestureEnd();
-  }, [commitGestureEnd, readOnly]);
+    if (readOnly || !touchRef.current) return;
 
-  // ── Zoom buttons (focal at viewport center) ─────────────────────────────────
+    if (touchRef.current.type === 'pinch') {
+      commitGestureEnd();
+    } else if (touchRef.current.type === 'pan') {
+      // Finalize scroll sync for pan gesture
+      if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
+      scrollSyncTimerRef.current = null;
+      onScrollChange?.(
+        Math.round(expectedScrollRef.current.left),
+        Math.round(expectedScrollRef.current.top)
+      );
+    }
+    touchRef.current = null;
+    isGestureRef.current = false;
+  }, [readOnly, commitGestureEnd, onScrollChange]);
+
+  // ── Zoom buttons (focal at viewport center) ───────────────────────────────
   const zoomAtCenter = useCallback((direction) => {
     const container = containerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
-    // Sync expected scroll — button presses don't have stale scroll
     expectedScrollRef.current = { left: container.scrollLeft, top: container.scrollTop };
     isGestureRef.current = true;
-    const next = direction === "in"
-      ? visualZoomRef.current + ZOOM_STEP
-      : visualZoomRef.current - ZOOM_STEP;
-    applyVisualZoom(next, rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+    const prevZoom = visualZoomRef.current;
+    const nextZoom = clamp(direction === "in" ? prevZoom + ZOOM_STEP : prevZoom - ZOOM_STEP, MIN_ZOOM, MAX_ZOOM);
+    const localX = rect.width / 2;
+    const localY = rect.height / 2;
+    const scaleChange = nextZoom / prevZoom;
+    const newScrollLeft = (expectedScrollRef.current.left + localX) * scaleChange - localX;
+    const newScrollTop = (expectedScrollRef.current.top + localY) * scaleChange - localY;
+
+    expectedScrollRef.current = { left: newScrollLeft, top: newScrollTop };
+    visualZoomRef.current = nextZoom;
+    setVisualZoom(nextZoom);
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (!containerRef.current) return;
+      containerRef.current.scrollLeft = newScrollLeft;
+      containerRef.current.scrollTop = newScrollTop;
+    });
+
+    scheduleZoomSync();
+    scheduleScrollSync();
+
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
     gestureTimerRef.current = setTimeout(commitGestureEnd, GESTURE_COMMIT_DELAY);
-  }, [applyVisualZoom, commitGestureEnd]);
+  }, [commitGestureEnd, scheduleZoomSync, scheduleScrollSync]);
 
   useImperativeHandle(ref, () => ({
     setPage: (pageNum) => goToPage(pageNum),
   }), [goToPage]);
 
+  // CSS scale ratio — 1.0 at rest; deviates only during active gesture.
+  // This is what keeps the canvas stable (no rerender) during pinch.
   const transformScale = renderZoom > 0 ? visualZoom / renderZoom : 1;
   const contentW = pageSize.width * transformScale;
   const contentH = pageSize.height * transformScale;
@@ -374,26 +491,17 @@ const PdfViewer = React.forwardRef(function PdfViewer(
           Loading PDF...
         </div>
       )}
+
       {showControls && !readOnly && (
         <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-700 gap-4 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handlePrevPage}
-              disabled={displayPage <= 1}
-            >
+            <Button size="sm" variant="outline" onClick={handlePrevPage} disabled={displayPage <= 1}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <span className="text-xs text-slate-300 w-16 text-center">
               {displayPage} / {totalPages}
             </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleNextPage}
-              disabled={displayPage >= totalPages}
-            >
+            <Button size="sm" variant="outline" onClick={handleNextPage} disabled={displayPage >= totalPages}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -411,7 +519,7 @@ const PdfViewer = React.forwardRef(function PdfViewer(
         </div>
       )}
 
-      {/* ── Scroll viewport ("map surface") ── */}
+      {/* Scroll viewport — the "map surface" */}
       <div
         ref={containerRef}
         className="flex-1 overflow-auto"
@@ -419,19 +527,20 @@ const PdfViewer = React.forwardRef(function PdfViewer(
           background: "#1a1a1a",
           opacity: dimmed ? 0.15 : 1,
           filter: dimmed ? "blur(0.5px)" : "none",
-          // "none" blocks native browser zoom while allowing our handlers to fire.
-          // readOnly viewers can pan freely.
+          // "none" = we own all touch events. Allows pinch + 1-finger pan via our handlers.
+          // readOnly viewers (jury) use "auto" so the browser handles their natural scroll.
           touchAction: readOnly ? "auto" : "none",
           overscrollBehavior: "contain",
         }}
         onWheel={handleWheel}
+        onScroll={handleNativeScroll}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        {/* ── Content layer: sized to the visual page dimensions ── */}
-        {/* This makes the scroll container aware of the full zoomed extent. */}
+        {/* Content layer: physically sized to match visual page dimensions.
+            This gives the scroll container accurate scroll boundaries. */}
         <div
           style={{
             width: `${Math.max(contentW, 1)}px`,
@@ -439,8 +548,7 @@ const PdfViewer = React.forwardRef(function PdfViewer(
             position: "relative",
           }}
         >
-          {/* ── Canvas wrapper: CSS transform for live gesture zoom ── */}
-          {/* transform-origin: 0 0 ensures top-left anchoring matches scroll math. */}
+          {/* Canvas wrapper: transform-origin "0 0" matches top-left scroll math. */}
           <div
             style={{
               position: "absolute",

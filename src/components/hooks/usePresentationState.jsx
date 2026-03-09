@@ -46,5 +46,14 @@ export function usePresentationState(trialSessionId, isAttorney = false) {
     base44.entities.TrialSessionStates.update(state.id, { proof_zoom_level: newZoom }).catch(console.error);
   }, [state, isAttorney]);
 
-  return { state, setPage, setZoom };
+  // Attorney only: update scroll position (throttled by caller)
+  const setScroll = useCallback((scrollLeft, scrollTop) => {
+    if (!isAttorney || !state) return;
+    base44.entities.TrialSessionStates.update(state.id, {
+      proof_scroll_left: scrollLeft,
+      proof_scroll_top: scrollTop,
+    }).catch(console.error);
+  }, [state, isAttorney]);
+
+  return { state, setPage, setZoom, setScroll };
 }

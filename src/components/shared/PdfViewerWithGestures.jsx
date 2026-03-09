@@ -3,15 +3,17 @@ import PdfViewer from '@/components/shared/PdfViewer';
 
 /**
  * Synchronized PDF viewer for attorney/jury presentation.
- * All gesture handling (pinch, wheel) happens inside PdfViewer at the canvas level.
- * Zoom and page state flow through shared presentation state via callbacks.
+ * Passes through all gesture/scroll/zoom/page props to PdfViewer.
  */
 export default function PdfViewerWithGestures({
   fileUrl,
   currentPage = 1,
   zoom = 1,
+  scrollLeft = null,
+  scrollTop = null,
   onZoomChange,
   onPageChange,
+  onScrollChange,
   showControls = true,
   dimmed = false,
 }) {
@@ -23,8 +25,11 @@ export default function PdfViewerWithGestures({
       fileUrl={fileUrl}
       externalPage={currentPage}
       externalZoom={zoom}
+      externalScrollLeft={scrollLeft}
+      externalScrollTop={scrollTop}
       onPageChange={onPageChange}
       onZoomChange={onZoomChange}
+      onScrollChange={onScrollChange}
       showControls={showControls}
       dimmed={dimmed}
     />
