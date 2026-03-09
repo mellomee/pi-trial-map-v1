@@ -1,13 +1,9 @@
 /**
  * SharedProofViewer
- * 
- * Reusable PDF/image viewer with callout sidebar, spotlight overlay,
- * pinch-zoom and pan via react-zoom-pan-pinch.
  *
- * Used in:
- *   - ProofViewerModal (modal, no jury sync)
- *   - ExtractViewerZone (trial preview, attorney → jury sync)
- *   - JuryView (readOnly, mirrors attorney via external props)
+ * Single PDF/image viewer used by BOTH attorney (ExtractViewerZone) and jury (JuryView).
+ * Attorney mode: interactive pan/zoom/page nav, writes sync state.
+ * Jury mode:     readOnly=true, mirrors external page/scale/position, no sidebar.
  */
 import React, { useState, useEffect, useRef, useCallback, useImperativeHandle } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -22,7 +18,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 const PAGE_WIDTH = 620;
 const SYNC_THROTTLE_MS = 90;
 
-// ── Highlight overlay (on top of callout image in spotlight) ─────────────────
+// ── Highlight overlay ────────────────────────────────────────────────────────
 function HighlightOverlay({ highlights }) {
   if (!highlights?.length) return null;
   const colorMap = {
@@ -125,17 +121,21 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
   caseParties = {},
   proofItem,
 
+  // Auto-spotlight / auto-jump: if set, viewer will spotlight this callout on load
+  activeCalloutId = null,
+
   // Callbacks (attorney mode)
   onPageChange,
-  onTransformChange,
-  onSpotlightChange,
-  onSetAsProofCallout,    // (callout) => void — shows "Set as Proof" in sidebar
+  onTransformChange,  // ({ scale, positionX, positionY }) => void
+  onSpotlightChange,  // (callout | null) => void
+  onSetAsProofCallout,
 
-  // External state (jury mode — pass from presentationState)
+  // External state (jury mode)
   externalPage = null,
   externalScale = null,
   externalPositionX = null,
   externalPositionY = null,
+  externalCalloutId = null, // jury follows attorney spotlight
 
   readOnly = false,
 }, ref) {
@@ -149,9 +149,9 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
   const numPagesRef = useRef(0);
   const currentPageRef = useRef(1);
 
-  // Expose for parent (e.g. ExtractViewerZone to read/clear spotlight)
   useImperativeHandle(ref, () => ({
     getSpotlightCallout: () => spotlightCallout,
+    clearSpotlight: () => handleSetSpotlight(null),
   }), [spotlightCallout]);
 
   // Load highlights whenever spotlightCallout changes
@@ -162,16 +162,40 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
       .catch(() => setHighlights([]));
   }, [spotlightCallout?.id]);
 
-  // Notify parent on spotlight changes
   const handleSetSpotlight = useCallback((callout) => {
     setSpotlightCallout(callout);
     onSpotlightChange?.(callout);
   }, [onSpotlightChange]);
 
+  // Auto-jump + auto-spotlight when activeCalloutId or callouts change (attorney side)
+  useEffect(() => {
+    if (!activeCalloutId || !callouts.length || readOnly) return;
+    const match = callouts.find((c) => c.id === activeCalloutId);
+    if (!match) return;
+    handleSetSpotlight(match);
+    if (match.page_number) {
+      const page = Math.max(1, Math.min(match.page_number, numPagesRef.current || 9999));
+      setCurrentPage(page);
+      currentPageRef.current = page;
+      onPageChange?.(page);
+    }
+  }, [activeCalloutId, callouts]);
+
+  // Jury: follow external spotlight
+  useEffect(() => {
+    if (!readOnly) return;
+    if (externalCalloutId === null) {
+      setSpotlightCallout(null);
+      return;
+    }
+    const match = callouts.find((c) => c.id === externalCalloutId) || null;
+    setSpotlightCallout(match);
+  }, [externalCalloutId, callouts, readOnly]);
+
   // External page sync (jury follows attorney)
   useEffect(() => {
     if (externalPage == null) return;
-    const page = Math.max(1, Math.min(externalPage, numPagesRef.current || 1));
+    const page = Math.max(1, Math.min(externalPage, numPagesRef.current || 9999));
     if (page !== currentPageRef.current) {
       setCurrentPage(page);
       currentPageRef.current = page;
@@ -216,6 +240,8 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
 
   const isPdf = extract?.extract_file_url?.match(/\.pdf(\?|$)/i);
   const fileUrl = extract?.extract_file_url;
+  // Show sidebar only when interactive (attorney)
+  const showSidebar = !readOnly && callouts.length > 0;
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
@@ -231,20 +257,22 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
 
       {/* Main PDF/image area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Page nav (PDF only, not in readOnly/jury mode) */}
-        {isPdf && !readOnly && (
+        {/* Page nav — always shown for PDFs; disabled (not hidden) in readOnly */}
+        {isPdf && (
           <div className="flex items-center gap-1 px-2 py-1 bg-[#0f1629] border-b border-[#1e2a45] flex-shrink-0">
             <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage <= 1}
+              onClick={() => !readOnly && goToPage(currentPage - 1)}
+              disabled={readOnly || currentPage <= 1}
               className="p-1 rounded hover:bg-white/10 disabled:opacity-30 touch-manipulation"
             >
               <ChevronLeft className="w-3.5 h-3.5 text-slate-300" />
             </button>
-            <span className="text-[10px] text-slate-400 font-mono">{currentPage} / {numPages || '?'}</span>
+            <span className="text-[10px] text-slate-400 font-mono flex-1 text-center">
+              {currentPage} / {numPages || '?'}
+            </span>
             <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage >= (numPages || 1)}
+              onClick={() => !readOnly && goToPage(currentPage + 1)}
+              disabled={readOnly || currentPage >= (numPages || 1)}
               className="p-1 rounded hover:bg-white/10 disabled:opacity-30 touch-manipulation"
             >
               <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
@@ -307,8 +335,8 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
         </div>
       </div>
 
-      {/* Callout sidebar */}
-      {callouts.length > 0 && (
+      {/* Callout sidebar — attorney only */}
+      {showSidebar && (
         <div className="w-28 flex-shrink-0 bg-[#0f1629] border-l border-[#1e2a45] overflow-y-auto">
           <div className="p-1.5 space-y-1.5">
             <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
