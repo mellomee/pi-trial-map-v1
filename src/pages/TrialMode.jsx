@@ -98,10 +98,6 @@ export default function TrialMode() {
     ]);
     setWitnesses(witnessesList);
     setTrialSession(session);
-    // Always clear jury display on attorney load — ensures jury screen is blank until explicitly published
-    if (session?.id) {
-      clearJuryDisplay(session.id).catch(() => {});
-    }
 
     const witnessIdParam = searchParams.get("witnessId");
     const saved = loadPersisted(PERSIST_KEY, {});
