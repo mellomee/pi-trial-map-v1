@@ -59,12 +59,11 @@ export default function ExtractViewerZone({
       setCallouts(sorted);
       setJx(jxList[0] || null);
 
-      // Auto-jump to linked callout page on proof load
+      // Auto-jump to linked callout page when proof loads
       if (selectedProof.callout_id) {
         const linked = sorted.find((c) => c.id === selectedProof.callout_id);
-        if (linked) {
-          setSelectedCallout(linked);
-          if (linked.page_number) _syncPage(linked.page_number);
+        if (linked?.page_number) {
+          _syncPage(linked.page_number);
         }
       }
 
