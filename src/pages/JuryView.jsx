@@ -60,8 +60,6 @@ export default function JuryView() {
   const { state: presentationState } = usePresentationState(trialSessionId, false);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
-  const sharedScrollLeft = presentationState?.proof_scroll_left ?? null;
-  const sharedScrollTop = presentationState?.proof_scroll_top ?? null;
 
   // Subscribe to full session state changes (for proof, callout, etc)
   useEffect(() => {
@@ -198,12 +196,10 @@ export default function JuryView() {
           {isPdf ? (
           <>
           {/* PDF with optional spotlight overlay */}
-          <PdfViewer
+          <PdfViewerReact
             fileUrl={extract.extract_file_url}
             externalZoom={zoom}
             externalPage={currentPage}
-            externalScrollLeft={sharedScrollLeft}
-            externalScrollTop={sharedScrollTop}
             readOnly={true}
             showControls={false}
             dimmed={false}
