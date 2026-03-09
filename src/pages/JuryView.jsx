@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
 import PdfViewer from "@/components/shared/PdfViewer";
 
-function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
+function HighlightOverlay({ highlights }) {
   if (!highlights?.length) return null;
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -17,10 +17,8 @@ function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
               key={`${hi}-${ri}`}
               style={{
                 position: 'absolute',
-                left: `${rect.x * 100}%`,
-                top: `${rect.y * 100}%`,
-                width: `${rect.w * 100}%`,
-                height: `${rect.h * 100}%`,
+                left: `${rect.x * 100}%`, top: `${rect.y * 100}%`,
+                width: `${rect.w * 100}%`, height: `${rect.h * 100}%`,
                 backgroundColor: bg,
                 mixBlendMode: 'multiply',
               }}
@@ -35,7 +33,6 @@ function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
 export default function JuryView() {
   const { activeCase } = useActiveCase();
   const [trialSessionId, setTrialSessionId] = useState(null);
-  const [sessionState, setSessionState] = useState(null);
   const [proofItem, setProofItem] = useState(null);
   const [extract, setExtract] = useState(null);
   const [callout, setCallout] = useState(null);
@@ -55,41 +52,29 @@ export default function JuryView() {
     });
   }, [activeCase?.id]);
 
-  // Use shared presentation state (jury is the reader only)
+  // Single source of truth — subscribe to shared presentation state (jury reads only)
   const { state: presentationState } = usePresentationState(trialSessionId, false);
+
+  const juryCanSee = !!presentationState?.jury_can_see_proof;
+  const proofItemId = presentationState?.current_proof_item_id || null;
+  const calloutId = presentationState?.current_callout_id || null;
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
   const sharedScrollLeft = presentationState?.proof_scroll_left ?? null;
   const sharedScrollTop = presentationState?.proof_scroll_top ?? null;
+  // Attorney viewer exact pixel dimensions — jury mirrors this to guarantee identical zoom behaviour
+  const viewerW = presentationState?.viewer_width_px || 700;
+  const viewerH = presentationState?.viewer_height_px || 520;
 
-  // Subscribe to full session state changes (for proof, callout, etc)
+  // Load proof item data when juryCanSee / proofItemId / calloutId changes
   useEffect(() => {
-    if (!trialSessionId) return;
-    const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
-      if (event.data?.trial_session_id === trialSessionId) {
-        setSessionState(event.data);
-      }
-    });
-    return unsub;
-  }, [trialSessionId]);
-
-  // Load proof item when session state changes
-  useEffect(() => {
-    const pid = sessionState?.current_proof_item_id;
-    // Clear display if proof is NOT approved for jury view
-    if (!sessionState?.jury_can_see_proof || !pid) {
-      setProofItem(null);
-      setExtract(null);
-      setCallout(null);
-      setHighlights([]);
-      setDepoClip(null);
-      setDepo(null);
-      setJx(null);
+    if (!juryCanSee || !proofItemId) {
+      setProofItem(null); setExtract(null); setCallout(null);
+      setHighlights([]); setDepoClip(null); setDepo(null); setJx(null);
       return;
     }
 
-    // Proof IS approved — load it
-    base44.entities.ProofItems.filter({ id: pid }).then(async (items) => {
+    base44.entities.ProofItems.filter({ id: proofItemId }).then(async (items) => {
       const item = items[0];
       if (!item) return;
       setProofItem(item);
@@ -102,60 +87,47 @@ export default function JuryView() {
           const depos = await base44.entities.Depositions.filter({ id: clip.deposition_id });
           setDepo(depos[0] || null);
         }
-        setExtract(null);
-        setCallout(null);
-        setHighlights([]);
-        setJx(null);
-      } else if (item.type === 'extract' && item.source_id) {
-        // Load extract file
-        const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
-        const extract = extracts[0];
-        if (!extract || !extract.extract_file_url) {
-          setExtract(null);
-          setCallout(null);
-          return;
-        }
-        setExtract(extract);
+        setExtract(null); setCallout(null); setHighlights([]); setJx(null);
 
-        // Load callouts and highlights ONLY if a specific callout is spotlighted
-        const spotlightCalloutId = sessionState?.current_callout_id;
-        if (spotlightCalloutId) {
-          const callouts = await base44.entities.Callouts.filter({ id: spotlightCalloutId });
-          const targetCallout = callouts[0] || null;
-          setCallout(targetCallout);
-          // Load highlights for this callout
-          if (targetCallout) {
-            const hs = await base44.entities.Highlights.filter({ callout_id: targetCallout.id });
+      } else if (item.type === 'extract' && item.source_id) {
+        const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
+        const ext = extracts[0];
+        if (!ext?.extract_file_url) { setExtract(null); setCallout(null); return; }
+        setExtract(ext);
+
+        if (calloutId) {
+          const callouts = await base44.entities.Callouts.filter({ id: calloutId });
+          const c = callouts[0] || null;
+          setCallout(c);
+          if (c) {
+            const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
             setHighlights(hs);
           } else {
             setHighlights([]);
           }
         } else {
-          // No spotlight — show full extract, no callout
-          setCallout(null);
-          setHighlights([]);
+          setCallout(null); setHighlights([]);
         }
 
-        // Load joint exhibit for label
-        const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: extract.id });
+        const jxs = await base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id });
         setJx(jxs[0] || null);
-        setDepoClip(null);
-        setDepo(null);
+        setDepoClip(null); setDepo(null);
       }
     });
-  }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof, sessionState?.current_callout_id]);
+  }, [juryCanSee, proofItemId, calloutId]);
 
-  // Waiting / blank screen
-  if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
+  // Blank screen — nothing published or jury can't see
+  if (!juryCanSee || !proofItem) {
     return <div className="fixed inset-0 bg-black" />;
   }
 
-  // Build exhibit label: only "Exhibit X" using admitted number
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const isPdf = extract?.extract_file_url?.match(/\.pdf(\?|$)/i);
 
   return (
     <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
+
+      {/* ── DepoClip ── */}
       {proofItem.type === 'depoClip' && depoClip && (
         <div className="w-full h-full flex flex-col justify-center px-10 py-10">
           <div className="mb-6 flex flex-wrap gap-4 items-baseline">
@@ -181,8 +153,9 @@ export default function JuryView() {
         </div>
       )}
 
+      {/* ── Extract (PDF or image) ── */}
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="w-full h-full relative overflow-hidden">
+        <>
           {/* Exhibit label */}
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-20">
@@ -190,69 +163,69 @@ export default function JuryView() {
             </div>
           )}
 
+          {/* PDF viewer — exact same pixel dimensions as attorney's Zone C viewer */}
           {isPdf ? (
-          <>
-          {/* PDF with optional spotlight overlay */}
-          <PdfViewer
-            fileUrl={extract.extract_file_url}
-            externalZoom={zoom}
-            externalPage={currentPage}
-            externalScrollLeft={sharedScrollLeft}
-            externalScrollTop={sharedScrollTop}
-            readOnly={true}
-            showControls={false}
-            dimmed={false}
-          />
+            <div
+              style={{
+                width: `${viewerW}px`,
+                height: `${viewerH}px`,
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '4px',
+              }}
+            >
+              <PdfViewer
+                fileUrl={extract.extract_file_url}
+                externalZoom={zoom}
+                externalPage={currentPage}
+                externalScrollLeft={sharedScrollLeft}
+                externalScrollTop={sharedScrollTop}
+                readOnly={true}
+                showControls={false}
+                dimmed={false}
+              />
 
-          {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-          {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+              {/* Dark overlay when callout is spotlighted */}
+              {callout?.snapshot_image_url && (
+                <div className="absolute inset-0 z-10" style={{ background: 'rgba(0,0,0,0.35)' }} />
               )}
 
-              {/* Layer 2: Spotlighted callout (if active) */}
+              {/* Spotlighted callout */}
               {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="absolute inset-0 flex items-center justify-center z-20">
                   <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
                     <img
                       src={callout.snapshot_image_url}
                       alt="Callout"
-                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                      style={{ display: 'block', maxWidth: `${viewerW * 0.95}px`, maxHeight: `${viewerH * 0.92}px`, objectFit: 'contain' }}
                       draggable={false}
                     />
                     <HighlightOverlay highlights={highlights} />
                   </div>
                 </div>
               )}
-
-            </>
+            </div>
           ) : (
-            <>
-              {/* Image with optional spotlight overlay */}
-              <div className="absolute inset-0 flex items-center justify-center z-0">
-                <img
-                  src={extract.extract_file_url}
-                  alt="Extract"
-                  style={{
-                    display: 'block',
-                    maxWidth: '100vw',
-                    maxHeight: '100vh',
-                    objectFit: 'contain',
-                    opacity: callout?.snapshot_image_url ? 0.25 : 1,
-                    filter: callout?.snapshot_image_url ? 'blur(0px)' : 'none',
-                    userSelect: 'none'
-                  }}
-                  draggable={false}
-                />
-              </div>
-
-              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+            /* Image extract — full screen */
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img
+                src={extract.extract_file_url}
+                alt="Extract"
+                style={{
+                  display: 'block',
+                  maxWidth: '100vw',
+                  maxHeight: '100vh',
+                  objectFit: 'contain',
+                  opacity: callout?.snapshot_image_url ? 0.25 : 1,
+                  userSelect: 'none',
+                }}
+                draggable={false}
+              />
               {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+                <div className="absolute inset-0 z-10" style={{ background: 'rgba(0,0,0,0.35)' }} />
               )}
-
-              {/* Layer 2: Spotlighted callout (if active) */}
               {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="absolute inset-0 flex items-center justify-center z-20">
                   <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
                     <img
                       src={callout.snapshot_image_url}
@@ -264,10 +237,9 @@ export default function JuryView() {
                   </div>
                 </div>
               )}
-
-            </>
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
