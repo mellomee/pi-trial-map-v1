@@ -78,8 +78,6 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   const isGestureRef = useRef(false);   // true during pinch — blocks external zoom echoes
   const touchRef = useRef(null);        // { type: 'pan' | 'pinch', ...data }
   const gestureTimerRef = useRef(null);
-  const zoomSyncTimerRef = useRef(null);
-  const scrollSyncTimerRef = useRef(null);
   const rafRef = useRef(null);
 
   // Tracks intended scroll across rapid events (avoids stale DOM reads before rAF commits)
