@@ -151,7 +151,7 @@ export default function JuryView() {
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <Scale className="w-25 h-25 text-slate-700" strokeWidth={1.5} />
+        <Scale className="w-16 h-16 text-slate-700" strokeWidth={1.5} />
       </div>
     );
   }
