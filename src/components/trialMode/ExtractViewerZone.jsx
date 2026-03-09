@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import PdfViewerWithGestures from '@/components/shared/PdfViewerWithGestures';
+import PdfViewerReact from '@/components/shared/PdfViewerReact';
 import { usePresentationState } from '@/components/hooks/usePresentationState';
 import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
 
