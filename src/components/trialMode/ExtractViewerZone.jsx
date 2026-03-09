@@ -123,7 +123,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const sidebarRef = useRef(null);
 
   // Use shared presentation state (attorney is the writer, jury is the reader)
-  const { state: presentationState, setPage, setZoom } = usePresentationState(trialSessionId, true);
+  const { state: presentationState, setPage, setZoom, setScroll } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
 
@@ -141,6 +141,10 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const handlePageChange = useCallback((newPage) => {
     setPage(newPage);
   }, [setPage]);
+
+  const handleScrollChange = useCallback((sl, st) => {
+    setScroll(sl, st);
+  }, [setScroll]);
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
