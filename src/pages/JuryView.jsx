@@ -148,7 +148,11 @@ export default function JuryView() {
 
   // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
-    return <div className="fixed inset-0 bg-black" />;
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <Scale className="w-10 h-10 text-slate-800" strokeWidth={1.2} />
+      </div>
+    );
   }
 
   // Build exhibit label: only "Exhibit X" using admitted number
