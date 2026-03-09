@@ -76,33 +76,39 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoo
 }
 
 // ---------- Callout sidebar item ----------
-function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-500/40 bg-cyan-900/30 hover:bg-cyan-900/40' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
-      }`}
-    >
-      {callout.snapshot_image_url ? (
-        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
-          <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
-        </div>
-      ) : (
-        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
-          <ImageIcon className="w-4 h-4 text-slate-600" />
-        </div>
-      )}
-      {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
-      {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
-      {isActive && (
-        <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
-          <Eye className="w-2.5 h-2.5" /> Spotlighted
-        </span>
-      )}
-    </button>
-  );
-}
+function CalloutItem({ callout, witnessName, isActive, isLinked, onClick, isDisabled = false }) {
+   return (
+     <button
+       onClick={isDisabled ? undefined : onClick}
+       disabled={isDisabled}
+       style={isDisabled ? { pointerEvents: 'none' } : {}}
+       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
+         isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' 
+         : isDisabled ? 'border-[#1e2a45] bg-[#0a0f1e]/50 opacity-40 cursor-not-allowed'
+         : isLinked ? 'border-cyan-400 border-2 bg-cyan-900/40 hover:bg-cyan-900/50' 
+         : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
+       }`}
+     >
+       {callout.snapshot_image_url ? (
+         <div className={`relative w-full aspect-video rounded overflow-hidden bg-black`}>
+           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
+         </div>
+       ) : (
+         <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center`}>
+           <ImageIcon className="w-4 h-4 text-slate-600" />
+         </div>
+       )}
+       {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
+       {callout.page_number && <p className={`text-[9px] text-slate-400 font-mono`}>Pg. {callout.page_number}</p>}
+       {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
+       {isActive && (
+         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
+           <Eye className="w-2.5 h-2.5" /> Spotlighted
+         </span>
+       )}
+     </button>
+   );
+ }
 
 // ---------- Main component ----------
 // Module-level spotlight callback so TrialMode can subscribe without prop-drilling through frozen ProofPreviewZone
