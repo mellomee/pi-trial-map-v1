@@ -99,8 +99,6 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       mountedRef.current = false;
       if (renderTaskRef.current) { try { renderTaskRef.current.cancel(); } catch {} }
       if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
-      if (zoomSyncTimerRef.current) clearTimeout(zoomSyncTimerRef.current);
-      if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
