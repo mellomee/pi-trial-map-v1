@@ -363,27 +363,17 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     setPage: (pageNum) => goToPage(pageNum),
   }), [goToPage]);
 
-  // Show loading until first canvas render completes
-  if (loading || pageSize.width === 0) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-black text-slate-400">
-        Loading PDF...
-      </div>
-    );
-  }
-
-  // CSS scale ratio: 1.0 when at rest (after gesture commit), deviates during gesture.
-  // This is the key to flash-free pinch: only the CSS transform changes during gesture,
-  // not the pdf.js render scale.
   const transformScale = renderZoom > 0 ? visualZoom / renderZoom : 1;
-
-  // Physical size of the content layer (what the scroll container "sees").
-  // Must match what the CSS-transformed canvas visually occupies, so scroll works correctly.
   const contentW = pageSize.width * transformScale;
   const contentH = pageSize.height * transformScale;
 
   return (
     <div className="w-full h-full flex flex-col bg-black" style={{ userSelect: "none" }}>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center text-slate-400 z-10">
+          Loading PDF...
+        </div>
+      )}
       {showControls && !readOnly && (
         <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-slate-700 gap-4 flex-shrink-0">
           <div className="flex items-center gap-2">
