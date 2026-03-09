@@ -139,7 +139,7 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
-    // Auto-unpublish if question changes and published proof is different
+    // Auto-unpublish if question changes
     if (publishedProof) {
       await handleClearJury();
     }
@@ -147,8 +147,11 @@ export default function TrialMode() {
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
     setSelectedProof(null);
+    // Resolve links: filter only proofs linked to the question
     const links = await resolveQuestionLinks(questionId, activeCase.id);
-    setResolvedLinks(links);
+    // CRITICAL: Only keep proofs that are actually linked to this question
+    const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
+    setResolvedLinks({ ...links, proofItems: filteredProofs });
   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
@@ -168,7 +171,9 @@ export default function TrialMode() {
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
-      setChildResolvedLinks(links);
+      // CRITICAL: Only keep proofs that are actually linked to this question
+      const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
+      setChildResolvedLinks({ ...links, proofItems: filteredProofs });
     }
   };
 
@@ -430,24 +435,28 @@ export default function TrialMode() {
           {/* Zone E */}
           <div className="overflow-hidden flex-1">
             <ProofZone
-              proofItems={activeProofItems}
-              selectedProofId={selectedProof?.id}
-              onSelectProof={async (proof) => {
-                // Auto-unpublish if switching to a different proof
-                if (publishedProof && publishedProof.id !== proof.id) {
-                  await handleClearJury();
-                }
-                setSelectedProof(proof);
-              }}
-              childQuestionActive={!!selectedChildQuestionId}
-              onProofAdmitted={() => {
-                // Re-resolve proof list so admitted status updates
-                if (selectedChildQuestionId && childResolvedLinks) {
-                  resolveQuestionLinks(selectedChildQuestionId, activeCase.id).then(setChildResolvedLinks);
-                } else if (selectedQuestionId) {
-                  resolveQuestionLinks(selectedQuestionId, activeCase.id).then(setResolvedLinks);
-                }
-              }}
+             proofItems={activeProofItems}
+             selectedProofId={selectedProof?.id}
+             onSelectProof={async (proof) => {
+               // Keep published state alive when switching proofs within the same question
+               // publishedProof stays active, just update the preview
+               setSelectedProof(proof);
+             }}
+             childQuestionActive={!!selectedChildQuestionId}
+             onProofAdmitted={() => {
+               // Re-resolve proof list so admitted status updates
+               if (selectedChildQuestionId && childResolvedLinks) {
+                 resolveQuestionLinks(selectedChildQuestionId, activeCase.id).then(links => {
+                   const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
+                   setChildResolvedLinks({ ...links, proofItems: filteredProofs });
+                 });
+               } else if (selectedQuestionId) {
+                 resolveQuestionLinks(selectedQuestionId, activeCase.id).then(links => {
+                   const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
+                   setResolvedLinks({ ...links, proofItems: filteredProofs });
+                 });
+               }
+             }}
             />
           </div>
         </div>
