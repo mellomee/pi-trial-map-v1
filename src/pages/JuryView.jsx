@@ -69,7 +69,7 @@ export default function JuryView() {
           const depos = await base44.entities.Depositions.filter({ id: clip.deposition_id });
           setDepo(depos[0] || null);
         }
-        setExtract(null); setCallouts([]); setSpotlightCallout(null); setJx(null);
+        setExtract(null); setCallouts([]); setJx(null);
 
       } else if (item.type === 'extract' && item.source_id) {
         const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
