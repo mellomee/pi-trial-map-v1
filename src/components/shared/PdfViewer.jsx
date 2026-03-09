@@ -443,12 +443,10 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       containerRef.current.scrollTop = newScrollTop;
     });
 
-    scheduleZoomSync();
-    scheduleScrollSync();
-
+    notifyViewport();
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
     gestureTimerRef.current = setTimeout(commitGestureEnd, GESTURE_COMMIT_DELAY);
-  }, [commitGestureEnd, scheduleZoomSync, scheduleScrollSync]);
+  }, [commitGestureEnd, notifyViewport]);
 
   useImperativeHandle(ref, () => ({
     setPage: (pageNum) => goToPage(pageNum),
