@@ -182,7 +182,7 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+        <div className="w-full h-full relative overflow-hidden">
           {/* Exhibit label */}
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-20">
@@ -191,23 +191,22 @@ export default function JuryView() {
           )}
 
           {isPdf ? (
-            <>
-              <PresentationFrame>
-                <PdfViewer
-                  fileUrl={extract.extract_file_url}
-                  externalZoom={zoom}
-                  externalPage={currentPage}
-                  externalScrollLeft={sharedScrollLeft}
-                  externalScrollTop={sharedScrollTop}
-                  readOnly={true}
-                  showControls={false}
-                  dimmed={false}
-                />
-              </PresentationFrame>
+          <>
+          {/* PDF with optional spotlight overlay */}
+          <PdfViewer
+            fileUrl={extract.extract_file_url}
+            externalZoom={zoom}
+            externalPage={currentPage}
+            externalScrollLeft={sharedScrollLeft}
+            externalScrollTop={sharedScrollTop}
+            readOnly={true}
+            showControls={false}
+            dimmed={false}
+          />
 
-              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+          {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+          {callout?.snapshot_image_url && (
+            <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
               )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
@@ -224,6 +223,7 @@ export default function JuryView() {
                   </div>
                 </div>
               )}
+
             </>
           ) : (
             <>

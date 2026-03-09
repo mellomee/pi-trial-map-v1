@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import PresentationFrame from '@/components/pdf/PresentationFrame';
 import PdfViewerWithGestures from '@/components/shared/PdfViewerWithGestures';
 import { usePresentationState } from '@/components/hooks/usePresentationState';
 import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
@@ -278,21 +277,19 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         )}
 
         {/* Main extract file viewer — gesture wrapper ONLY wraps PDF content, not toolbar */}
-         <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col items-center justify-center" ref={imgContainerRef}>
+         <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
           {extractFileUrl ? (
             isPdf ? (
-              <PresentationFrame>
-                <PdfViewerWithGestures
-                  fileUrl={extractFileUrl}
-                  currentPage={currentPage}
-                  zoom={zoom}
-                  onZoomChange={handleZoomChange}
-                  onPageChange={handlePageChange}
-                  onScrollChange={handleScrollChange}
-                  showControls={true}
-                  dimmed={false}
-                />
-              </PresentationFrame>
+              <PdfViewerWithGestures
+                fileUrl={extractFileUrl}
+                currentPage={currentPage}
+                zoom={zoom}
+                onZoomChange={handleZoomChange}
+                onPageChange={handlePageChange}
+                onScrollChange={handleScrollChange}
+                showControls={true}
+                dimmed={false}
+              />
             ) : (
               <div className="min-h-full flex items-start justify-center p-3 overflow-auto touch-manipulation"
                 style={{ touchAction: 'none' }}
