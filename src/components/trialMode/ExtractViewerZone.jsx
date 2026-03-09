@@ -181,7 +181,18 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
+      // ISSUE #1: Auto-navigate to linked callout's page if one is linked
+      if (selectedProof?.callout_id && sorted.length > 0) {
+        const linkedCallout = sorted.find(c => c.id === selectedProof.callout_id);
+        if (linkedCallout?.page_number) {
+          setPage(linkedCallout.page_number);
+        } else {
+          setPage(1);
+        }
+      } else {
+        // No linked callout — reset to page 1
+        setPage(1);
+      }
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
