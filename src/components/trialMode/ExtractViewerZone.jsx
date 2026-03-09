@@ -285,13 +285,12 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
          <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
           {extractFileUrl ? (
             isPdf ? (
-              <PdfViewerWithGestures
+              <PdfViewerReact
                 fileUrl={extractFileUrl}
-                currentPage={currentPage}
-                zoom={zoom}
+                externalPage={currentPage}
+                externalZoom={zoom}
                 onZoomChange={handleZoomChange}
                 onPageChange={handlePageChange}
-                onScrollChange={handleScrollChange}
                 showControls={true}
                 dimmed={false}
               />
