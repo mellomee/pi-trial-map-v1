@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
-import PdfViewerReact from "@/components/shared/PdfViewerReact";
-import { Scale } from "lucide-react";
+import PdfViewer from "@/components/shared/PdfViewer";
 
 function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
   if (!highlights?.length) return null;
@@ -60,6 +59,8 @@ export default function JuryView() {
   const { state: presentationState } = usePresentationState(trialSessionId, false);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
+  const sharedScrollLeft = presentationState?.proof_scroll_left ?? null;
+  const sharedScrollTop = presentationState?.proof_scroll_top ?? null;
 
   // Subscribe to full session state changes (for proof, callout, etc)
   useEffect(() => {
@@ -146,11 +147,7 @@ export default function JuryView() {
 
   // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
-    return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <Scale className="w-20 h-20 text-slate-800" strokeWidth={1.2} />
-      </div>
-    );
+    return <div className="fixed inset-0 bg-black" />;
   }
 
   // Build exhibit label: only "Exhibit X" using admitted number
@@ -196,10 +193,12 @@ export default function JuryView() {
           {isPdf ? (
           <>
           {/* PDF with optional spotlight overlay */}
-          <PdfViewerReact
+          <PdfViewer
             fileUrl={extract.extract_file_url}
             externalZoom={zoom}
             externalPage={currentPage}
+            externalScrollLeft={sharedScrollLeft}
+            externalScrollTop={sharedScrollTop}
             readOnly={true}
             showControls={false}
             dimmed={false}

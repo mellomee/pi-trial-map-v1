@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import PdfViewerReact from '@/components/shared/PdfViewerReact';
+import PdfViewerWithGestures from '@/components/shared/PdfViewerWithGestures';
 import { usePresentationState } from '@/components/hooks/usePresentationState';
 import { Monitor, Square, ZoomIn, ZoomOut, X, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
 
@@ -154,7 +154,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     }
     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
     setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
-    setPage(1);
 
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
       const ext = r[0];
@@ -182,11 +181,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Auto-select linked callout if proof has one
-      if (selectedProof.callout_id) {
-        const linked = sorted.find(c => c.id === selectedProof.callout_id);
-        if (linked) setSpotlightCallout(linked);
-      }
+      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
@@ -285,12 +280,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
          <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
           {extractFileUrl ? (
             isPdf ? (
-              <PdfViewerReact
+              <PdfViewerWithGestures
                 fileUrl={extractFileUrl}
-                externalPage={currentPage}
-                externalZoom={zoom}
+                currentPage={currentPage}
+                zoom={zoom}
                 onZoomChange={handleZoomChange}
                 onPageChange={handlePageChange}
+                onScrollChange={handleScrollChange}
                 showControls={true}
                 dimmed={false}
               />
@@ -341,26 +337,23 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
               </p>
-              {allCallouts.map(c => {
-                const isLinked = selectedProof?.callout_id === c.id;
-                const isDisabled = !!selectedProof?.callout_id && !isLinked;
-                return (
-                  <div key={c.id} style={{ opacity: isDisabled ? 0.3 : 1, pointerEvents: isDisabled ? 'none' : 'auto' }}>
-                    <CalloutItem
-                      callout={c}
-                      witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
-                      isActive={spotlightCallout?.id === c.id}
-                      isLinked={isLinked}
-                      onClick={() => {
-                        setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                        if (isPdf && c.page_number) {
-                          setPage(c.page_number);
-                        }
-                      }}
-                    />
-                  </div>
-                );
-              })}
+              {allCallouts.map(c => (
+                <CalloutItem
+                  key={c.id}
+                  callout={c}
+                  witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
+                  isActive={spotlightCallout?.id === c.id}
+                  isLinked={selectedProof?.callout_id === c.id}
+                  onClick={() => {
+                    // Toggle: click same callout to close, click different to open
+                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                    // Auto-navigate to callout's page via shared state
+                    if (isPdf && c.page_number) {
+                      setPage(c.page_number);
+                    }
+                  }}
+                />
+              ))}
             </div>
           </div>
         )}
