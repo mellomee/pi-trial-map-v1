@@ -128,12 +128,15 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       );
       setWitnessByCallout(wMap);
 
-      // Jump to callout page if linked
+      // Jump to callout page and auto-select if linked
       if (selectedProof.callout_id) {
         const linked = sorted.find((c) => c.id === selectedProof.callout_id);
-        if (linked?.page_number) {
-          setPage(linked.page_number);
-          setPan(0, 0);
+        if (linked) {
+          setSpotlightCallout(linked);
+          if (linked.page_number) {
+            setPage(linked.page_number);
+            setPan(0, 0);
+          }
         }
       }
     });
@@ -202,22 +205,24 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           <SpotlightOverlay callout={spotlightCallout} onClose={() => setSpotlightCallout(null)} />
         )}
 
-        {/* PDF Viewer */}
-        <div className="flex-1">
-          <SharedPdfViewer
-            fileUrl={extract.extract_file_url}
-            page={presentationState?.proof_current_page || 1}
-            zoom={presentationState?.proof_zoom_level || 1}
-            panX={presentationState?.proof_pan_x || 0}
-            panY={presentationState?.proof_pan_y || 0}
-            onPageChange={setPage}
-            onZoomChange={setZoom}
-            onPanChange={setPan}
-            readOnly={false}
-            showControls={true}
-            showToolbar={true}
-          />
-        </div>
+        {/* PDF Viewer - bounded frame for jury sync */}
+          <div className="flex-1 flex items-center justify-center bg-[#0a0f1e] overflow-hidden">
+            <div style={{ width: '92%', height: '92%', maxWidth: '92vw', maxHeight: '92vh' }}>
+              <SharedPdfViewer
+                fileUrl={extract.extract_file_url}
+                page={presentationState?.proof_current_page || 1}
+                zoom={presentationState?.proof_zoom_level || 1}
+                panX={presentationState?.proof_pan_x || 0}
+                panY={presentationState?.proof_pan_y || 0}
+                onPageChange={setPage}
+                onZoomChange={setZoom}
+                onPanChange={setPan}
+                readOnly={false}
+                showControls={true}
+                showToolbar={true}
+              />
+            </div>
+          </div>
 
         {/* Callout sidebar */}
         {allCallouts.length > 0 && (
