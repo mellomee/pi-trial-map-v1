@@ -122,6 +122,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const lastDist = useRef(null);
   const sidebarRef = useRef(null);
 
+  // Use shared presentation state (attorney is the writer, jury is the reader)
+  const { state: presentationState, setPage, setZoom, setScroll, setViewerSize } = usePresentationState(trialSessionId, true);
+
   // Report PDF viewer container dimensions to jury whenever it changes
   useEffect(() => {
     if (!imgContainerRef.current || !isPublishing) return;
@@ -134,9 +137,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     ro.observe(el);
     return () => ro.disconnect();
   }, [isPublishing, setViewerSize]);
-
-  // Use shared presentation state (attorney is the writer, jury is the reader)
-  const { state: presentationState, setPage, setZoom, setScroll, setViewerSize } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
 
