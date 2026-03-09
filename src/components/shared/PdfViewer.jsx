@@ -531,6 +531,9 @@ const PdfViewer = React.forwardRef(function PdfViewer(
           // readOnly viewers (jury) use "auto" so the browser handles their natural scroll.
           touchAction: readOnly ? "auto" : "none",
           overscrollBehavior: "contain",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
         }}
         onWheel={handleWheel}
         onScroll={handleNativeScroll}
@@ -546,6 +549,7 @@ const PdfViewer = React.forwardRef(function PdfViewer(
             width: `${Math.max(contentW, 1)}px`,
             height: `${Math.max(contentH, 1)}px`,
             position: "relative",
+            flexShrink: 0,
           }}
         >
           {/* Canvas wrapper: transform-origin "0 0" matches top-left scroll math. */}
