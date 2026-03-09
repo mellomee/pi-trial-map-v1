@@ -147,8 +147,17 @@ export default function TrialMode() {
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
     setSelectedProof(null);
+    
+    // Use a timestamp to prevent stale updates on rapid question switches
+    const requestTimestamp = Date.now();
+    setResolvedLinks(prev => ({ ...prev, __requestTimestamp: requestTimestamp }));
+    
     const links = await resolveQuestionLinks(questionId, activeCase.id);
-    setResolvedLinks(links);
+    
+    // Only update if this is still the most recent request
+    if (requestTimestamp === selectedQuestionId) {
+      setResolvedLinks(links);
+    }
   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
@@ -167,8 +176,17 @@ export default function TrialMode() {
       }
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
+      
+      // Use a timestamp to prevent stale updates on rapid child question switches
+      const requestTimestamp = Date.now();
+      setChildResolvedLinks(prev => ({ ...prev, __requestTimestamp: requestTimestamp }));
+      
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
-      setChildResolvedLinks(links);
+      
+      // Only update if this is still the most recent request
+      if (requestTimestamp === childQuestion.id) {
+        setChildResolvedLinks(links);
+      }
     }
   };
 
@@ -433,7 +451,8 @@ export default function TrialMode() {
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
               onSelectProof={async (proof) => {
-                // Auto-unpublish if switching to a different proof
+                // Only auto-unpublish if switching to a different proof (not within same question context)
+                // Keep publish active while clicking between proofs of same question
                 if (publishedProof && publishedProof.id !== proof.id) {
                   await handleClearJury();
                 }
