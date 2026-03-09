@@ -123,9 +123,11 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const sidebarRef = useRef(null);
 
   // Use shared presentation state (attorney is the writer, jury is the reader)
-  const { state: presentationState, setPage, setZoom, setScroll } = usePresentationState(trialSessionId, true);
+  const { state: presentationState, setViewport } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
+  const sharedScrollLeft = presentationState?.proof_scroll_left ?? null;
+  const sharedScrollTop = presentationState?.proof_scroll_top ?? null;
 
   // When spotlight changes while publishing, notify TrialMode via module-level callback
   useEffect(() => {
@@ -134,17 +136,10 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     }
   }, [spotlightCallout?.id, isPublishing, calloutVisible]);
 
-  const handleZoomChange = useCallback((newZoom) => {
-    setZoom(newZoom);
-  }, [setZoom]);
-
-  const handlePageChange = useCallback((newPage) => {
-    setPage(newPage);
-  }, [setPage]);
-
-  const handleScrollChange = useCallback((sl, st) => {
-    setScroll(sl, st);
-  }, [setScroll]);
+  // Single unified viewport handler — PdfViewer batches zoom+scroll+page together.
+  const handleViewportChange = useCallback((fields, options) => {
+    setViewport(fields, options);
+  }, [setViewport]);
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
