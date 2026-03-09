@@ -48,7 +48,9 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     externalPage = null,
     externalScrollLeft = null,
     externalScrollTop = null,
-    onViewportChange = null,  // ({ page?, zoom?, scrollLeft?, scrollTop? }, { flush? }) => void
+    onZoomChange = null,
+    onPageChange = null,
+    onScrollChange = null,
     readOnly = false,
     showControls = true,
     dimmed = false,
@@ -78,6 +80,8 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   const isGestureRef = useRef(false);   // true during pinch — blocks external zoom echoes
   const touchRef = useRef(null);        // { type: 'pan' | 'pinch', ...data }
   const gestureTimerRef = useRef(null);
+  const zoomSyncTimerRef = useRef(null);
+  const scrollSyncTimerRef = useRef(null);
   const rafRef = useRef(null);
 
   // Tracks intended scroll across rapid events (avoids stale DOM reads before rAF commits)
@@ -99,6 +103,8 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       mountedRef.current = false;
       if (renderTaskRef.current) { try { renderTaskRef.current.cancel(); } catch {} }
       if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
+      if (zoomSyncTimerRef.current) clearTimeout(zoomSyncTimerRef.current);
+      if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
@@ -207,26 +213,13 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     };
   }, [pdf, displayPage, renderZoom]);
 
-  // ── Viewport sync ─────────────────────────────────────────────────────────
-  // All viewport changes (zoom + scroll) are reported together via onViewportChange.
-  // During gestures this is throttled by the caller (usePresentationState).
-  // We always pass flush=false during gesture and flush=true at gesture end.
-  const notifyViewport = useCallback((extra = {}, flush = false) => {
-    if (readOnly || !onViewportChange) return;
-    onViewportChange({
-      zoom: visualZoomRef.current,
-      scrollLeft: Math.round(expectedScrollRef.current.left),
-      scrollTop: Math.round(expectedScrollRef.current.top),
-      ...extra,
-    }, { flush });
-  }, [onViewportChange, readOnly]);
-
   // ── Page navigation ───────────────────────────────────────────────────────
   const goToPage = useCallback((pageNum) => {
     const next = clamp(pageNum, 1, totalPagesRef.current || 1);
-    localPageStampRef.current = Date.now();
+    localPageStampRef.current = Date.now(); // stamp to block stale echo
     setDisplayPage(next);
     displayPageRef.current = next;
+    onPageChange?.(next);
     expectedScrollRef.current = { left: 0, top: 0 };
     requestAnimationFrame(() => {
       if (containerRef.current) {
@@ -234,24 +227,49 @@ const PdfViewer = React.forwardRef(function PdfViewer(
         containerRef.current.scrollTop = 0;
       }
     });
-    // Flush page + scroll reset together as one combined update
-    notifyViewport({ page: next, scrollLeft: 0, scrollTop: 0 }, true);
-  }, [notifyViewport]);
+  }, [onPageChange]);
 
   const handlePrevPage = useCallback(() => goToPage(displayPageRef.current - 1), [goToPage]);
   const handleNextPage = useCallback(() => goToPage(displayPageRef.current + 1), [goToPage]);
+
+  // ── Throttled sync callbacks ──────────────────────────────────────────────
+  const scheduleZoomSync = useCallback(() => {
+    if (readOnly || zoomSyncTimerRef.current) return;
+    zoomSyncTimerRef.current = setTimeout(() => {
+      zoomSyncTimerRef.current = null;
+      onZoomChange?.(visualZoomRef.current);
+    }, SYNC_THROTTLE_MS);
+  }, [onZoomChange, readOnly]);
+
+  const scheduleScrollSync = useCallback(() => {
+    if (readOnly || !onScrollChange || scrollSyncTimerRef.current) return;
+    scrollSyncTimerRef.current = setTimeout(() => {
+      scrollSyncTimerRef.current = null;
+      onScrollChange?.(
+        Math.round(expectedScrollRef.current.left),
+        Math.round(expectedScrollRef.current.top)
+      );
+    }, SYNC_THROTTLE_MS);
+  }, [onScrollChange, readOnly]);
 
   // ── Commit gesture end: one pdf.js rerender, finalize sync ───────────────
   const commitGestureEnd = useCallback(() => {
     isGestureRef.current = false;
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
+    if (zoomSyncTimerRef.current) clearTimeout(zoomSyncTimerRef.current);
+    if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
+    zoomSyncTimerRef.current = null;
+    scrollSyncTimerRef.current = null;
 
     const finalZoom = visualZoomRef.current;
     setRenderZoom(finalZoom);
     renderZoomRef.current = finalZoom;
-    // Flush the final combined viewport state immediately
-    notifyViewport({}, true);
-  }, [notifyViewport]);
+    onZoomChange?.(finalZoom);
+    onScrollChange?.(
+      Math.round(expectedScrollRef.current.left),
+      Math.round(expectedScrollRef.current.top)
+    );
+  }, [onZoomChange, onScrollChange]);
 
   // ── Wheel: ctrl+wheel = trackpad pinch zoom ───────────────────────────────
   const handleWheel = useCallback((e) => {
@@ -288,10 +306,12 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       containerRef.current.scrollTop = newScrollTop;
     });
 
-    notifyViewport();
+    scheduleZoomSync();
+    scheduleScrollSync();
+
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
     gestureTimerRef.current = setTimeout(commitGestureEnd, GESTURE_COMMIT_DELAY);
-  }, [commitGestureEnd, notifyViewport, readOnly]);
+  }, [commitGestureEnd, readOnly, scheduleZoomSync, scheduleScrollSync]);
 
   // ── Native scroll (trackpad pan, mouse wheel) — sync to jury ─────────────
   const handleNativeScroll = useCallback((e) => {
@@ -300,8 +320,8 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       left: e.currentTarget.scrollLeft,
       top: e.currentTarget.scrollTop,
     };
-    notifyViewport();
-  }, [readOnly, notifyViewport]);
+    scheduleScrollSync();
+  }, [readOnly, scheduleScrollSync]);
 
   // ── Touch: 1-finger pan + 2-finger pinch/pan ─────────────────────────────
   const handleTouchStart = useCallback((e) => {
@@ -364,7 +384,7 @@ const PdfViewer = React.forwardRef(function PdfViewer(
         containerRef.current.scrollLeft = newScrollLeft;
         containerRef.current.scrollTop = newScrollTop;
       });
-      notifyViewport();
+      scheduleScrollSync();
 
     } else if (touchRef.current.type === 'pinch' && e.touches.length >= 2) {
       // Two-finger combined zoom + pan
@@ -397,9 +417,10 @@ const PdfViewer = React.forwardRef(function PdfViewer(
         containerRef.current.scrollLeft = newScrollLeft;
         containerRef.current.scrollTop = newScrollTop;
       });
-      notifyViewport();
+      scheduleZoomSync();
+      scheduleScrollSync();
     }
-  }, [readOnly, notifyViewport]);
+  }, [readOnly, scheduleZoomSync, scheduleScrollSync]);
 
   const handleTouchEnd = useCallback(() => {
     if (readOnly || !touchRef.current) return;
@@ -407,11 +428,17 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     if (touchRef.current.type === 'pinch') {
       commitGestureEnd();
     } else if (touchRef.current.type === 'pan') {
-      notifyViewport({}, true); // flush final pan position
+      // Finalize scroll sync for pan gesture
+      if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
+      scrollSyncTimerRef.current = null;
+      onScrollChange?.(
+        Math.round(expectedScrollRef.current.left),
+        Math.round(expectedScrollRef.current.top)
+      );
     }
     touchRef.current = null;
     isGestureRef.current = false;
-  }, [readOnly, commitGestureEnd, notifyViewport]);
+  }, [readOnly, commitGestureEnd, onScrollChange]);
 
   // ── Zoom buttons (focal at viewport center) ───────────────────────────────
   const zoomAtCenter = useCallback((direction) => {
@@ -440,10 +467,12 @@ const PdfViewer = React.forwardRef(function PdfViewer(
       containerRef.current.scrollTop = newScrollTop;
     });
 
-    notifyViewport();
+    scheduleZoomSync();
+    scheduleScrollSync();
+
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
     gestureTimerRef.current = setTimeout(commitGestureEnd, GESTURE_COMMIT_DELAY);
-  }, [commitGestureEnd, notifyViewport]);
+  }, [commitGestureEnd, scheduleZoomSync, scheduleScrollSync]);
 
   useImperativeHandle(ref, () => ({
     setPage: (pageNum) => goToPage(pageNum),

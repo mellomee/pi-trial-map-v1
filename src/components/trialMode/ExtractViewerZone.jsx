@@ -123,11 +123,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const sidebarRef = useRef(null);
 
   // Use shared presentation state (attorney is the writer, jury is the reader)
-  const { state: presentationState, setViewport } = usePresentationState(trialSessionId, true);
+  const { state: presentationState, setPage, setZoom, setScroll } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
-  const sharedScrollLeft = presentationState?.proof_scroll_left ?? null;
-  const sharedScrollTop = presentationState?.proof_scroll_top ?? null;
 
   // When spotlight changes while publishing, notify TrialMode via module-level callback
   useEffect(() => {
@@ -136,21 +134,26 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     }
   }, [spotlightCallout?.id, isPublishing, calloutVisible]);
 
-  // Single unified viewport handler — PdfViewer batches zoom+scroll+page together.
-  const handleViewportChange = useCallback((fields, options) => {
-    setViewport(fields, options);
-  }, [setViewport]);
+  const handleZoomChange = useCallback((newZoom) => {
+    setZoom(newZoom);
+  }, [setZoom]);
+
+  const handlePageChange = useCallback((newPage) => {
+    setPage(newPage);
+  }, [setPage]);
+
+  const handleScrollChange = useCallback((sl, st) => {
+    setScroll(sl, st);
+  }, [setScroll]);
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-      setWitnessByCallout({}); setJx(null); setSpotlightCallout(null);
-      setViewport({ zoom: 1, scrollLeft: 0, scrollTop: 0, page: 1 }, { flush: true });
+      setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
       return;
     }
     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-    setWitnessByCallout({}); setJx(null); setSpotlightCallout(null);
-    setViewport({ zoom: 1, scrollLeft: 0, scrollTop: 0, page: 1 }, { flush: true });
+    setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
 
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
       const ext = r[0];
@@ -224,13 +227,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           null
         ) : (
           <>
-            <button onClick={() => setViewport({ zoom: Math.max(zoom - 0.25, 0.25) }, { flush: true })} className="p-1 rounded hover:bg-white/10 touch-manipulation">
+            <button onClick={() => handleZoomChange(Math.max(zoom - 0.25, 0.25))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
               <ZoomOut className="w-3.5 h-3.5 text-slate-300" />
             </button>
-            <button onClick={() => setViewport({ zoom: 1 }, { flush: true })} className="text-[10px] text-slate-300 font-mono px-1.5 py-0.5 rounded hover:bg-white/10 min-w-[36px] text-center touch-manipulation">
+            <button onClick={() => handleZoomChange(1)} className="text-[10px] text-slate-300 font-mono px-1.5 py-0.5 rounded hover:bg-white/10 min-w-[36px] text-center touch-manipulation">
               {Math.round(zoom * 100)}%
             </button>
-            <button onClick={() => setViewport({ zoom: Math.min(zoom + 0.25, 5) }, { flush: true })} className="p-1 rounded hover:bg-white/10 touch-manipulation">
+            <button onClick={() => handleZoomChange(Math.min(zoom + 0.25, 5))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
               <ZoomIn className="w-3.5 h-3.5 text-slate-300" />
             </button>
           </>
@@ -281,9 +284,9 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                 fileUrl={extractFileUrl}
                 currentPage={currentPage}
                 zoom={zoom}
-                scrollLeft={sharedScrollLeft}
-                scrollTop={sharedScrollTop}
-                onViewportChange={handleViewportChange}
+                onZoomChange={handleZoomChange}
+                onPageChange={handlePageChange}
+                onScrollChange={handleScrollChange}
                 showControls={true}
                 dimmed={false}
               />
@@ -302,7 +305,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                     if (lastDist.current > 0) {
                       const delta = dist - lastDist.current;
                       const newZoom = Math.min(5, Math.max(0.25, zoom + delta * 0.01));
-                      setViewport({ zoom: newZoom });
+                      handleZoomChange(newZoom);
                     }
                     lastDist.current = dist;
                   }
@@ -346,7 +349,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                     setSpotlightCallout(prev => prev?.id === c.id ? null : c);
                     // Auto-navigate to callout's page via shared state
                     if (isPdf && c.page_number) {
-                      setViewport({ page: c.page_number, scrollLeft: 0, scrollTop: 0 }, { flush: true });
+                      setPage(c.page_number);
                     }
                   }}
                 />
