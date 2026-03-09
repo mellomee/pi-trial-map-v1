@@ -60,7 +60,6 @@ import Extracts from './pages/Extracts';
 import Import from './pages/Import';
 import JointExhibitPrint from './pages/JointExhibitPrint';
 import JointExhibits from './pages/JointExhibits';
-import JuryView from './pages/JuryView';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
 import Present from './pages/Present';
@@ -81,6 +80,7 @@ import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
+import JuryView from './pages/JuryView';
 import __Layout from './Layout.jsx';
 
 
@@ -98,7 +98,6 @@ export const PAGES = {
     "Import": Import,
     "JointExhibitPrint": JointExhibitPrint,
     "JointExhibits": JointExhibits,
-    "JuryView": JuryView,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
     "Present": Present,
@@ -119,6 +118,7 @@ export const PAGES = {
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
+    "JuryView": JuryView,
 }
 
 export const pagesConfig = {

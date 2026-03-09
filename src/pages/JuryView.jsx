@@ -59,8 +59,8 @@ export default function JuryView() {
   const { state: presentationState } = usePresentationState(trialSessionId, false);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
-  const sharedScrollLeft = presentationState?.proof_scroll_left ?? null;
-  const sharedScrollTop = presentationState?.proof_scroll_top ?? null;
+  const panX = presentationState?.proof_pan_x || 0;
+  const panY = presentationState?.proof_pan_y || 0;
 
   // Subscribe to full session state changes (for proof, callout, etc)
   useEffect(() => {
@@ -182,7 +182,7 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="w-full h-full relative overflow-hidden">
+        <div className="w-full h-full relative flex items-center justify-center overflow-hidden" style={{ maxWidth: '92vw', maxHeight: '92vh', margin: '0 auto' }}>
           {/* Exhibit label */}
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-20">
@@ -190,81 +190,33 @@ export default function JuryView() {
             </div>
           )}
 
-          {isPdf ? (
-          <>
-          {/* PDF with optional spotlight overlay */}
-          <PdfViewer
+          {/* Shared PDF Viewer */}
+          <SharedPdfViewer
             fileUrl={extract.extract_file_url}
-            externalZoom={zoom}
-            externalPage={currentPage}
-            externalScrollLeft={sharedScrollLeft}
-            externalScrollTop={sharedScrollTop}
+            page={currentPage}
+            zoom={zoom}
+            panX={panX}
+            panY={panY}
             readOnly={true}
             showControls={false}
-            dimmed={false}
+            showToolbar={false}
           />
 
-          {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+          {/* Spotlight overlay (if active) */}
           {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
-              )}
-
-              {/* Layer 2: Spotlighted callout (if active) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                    <img
-                      src={callout.snapshot_image_url}
-                      alt="Callout"
-                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                      draggable={false}
-                    />
-                    <HighlightOverlay highlights={highlights} />
-                  </div>
-                </div>
-              )}
-
-            </>
-          ) : (
             <>
-              {/* Image with optional spotlight overlay */}
-              <div className="absolute inset-0 flex items-center justify-center z-0">
-                <img
-                  src={extract.extract_file_url}
-                  alt="Extract"
-                  style={{
-                    display: 'block',
-                    maxWidth: '100vw',
-                    maxHeight: '100vh',
-                    objectFit: 'contain',
-                    opacity: callout?.snapshot_image_url ? 0.25 : 1,
-                    filter: callout?.snapshot_image_url ? 'blur(0px)' : 'none',
-                    userSelect: 'none'
-                  }}
-                  draggable={false}
-                />
-              </div>
-
-              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
-              )}
-
-              {/* Layer 2: Spotlighted callout (if active) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                    <img
-                      src={callout.snapshot_image_url}
-                      alt="Callout"
-                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                      draggable={false}
-                    />
-                    <HighlightOverlay highlights={highlights} />
-                  </div>
+              <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                  <img
+                    src={callout.snapshot_image_url}
+                    alt="Callout"
+                    style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                    draggable={false}
+                  />
+                  <HighlightOverlay highlights={highlights} />
                 </div>
-              )}
-
+              </div>
             </>
           )}
         </div>
