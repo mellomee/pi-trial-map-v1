@@ -147,11 +147,9 @@ export default function TrialMode() {
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
     setSelectedProof(null);
-    // Resolve links: filter only proofs linked to the question
+    // Resolve links and return proofs as-is (resolver already filters)
     const links = await resolveQuestionLinks(questionId, activeCase.id);
-    // CRITICAL: Only keep proofs that are actually linked to this question
-    const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
-    setResolvedLinks({ ...links, proofItems: filteredProofs });
+    setResolvedLinks(links);
   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
@@ -171,9 +169,7 @@ export default function TrialMode() {
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
-      // CRITICAL: Only keep proofs that are actually linked to this question
-      const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
-      setChildResolvedLinks({ ...links, proofItems: filteredProofs });
+      setChildResolvedLinks(links);
     }
   };
 
@@ -446,15 +442,9 @@ export default function TrialMode() {
              onProofAdmitted={() => {
                // Re-resolve proof list so admitted status updates
                if (selectedChildQuestionId && childResolvedLinks) {
-                 resolveQuestionLinks(selectedChildQuestionId, activeCase.id).then(links => {
-                   const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
-                   setChildResolvedLinks({ ...links, proofItems: filteredProofs });
-                 });
+                 resolveQuestionLinks(selectedChildQuestionId, activeCase.id).then(setChildResolvedLinks);
                } else if (selectedQuestionId) {
-                 resolveQuestionLinks(selectedQuestionId, activeCase.id).then(links => {
-                   const filteredProofs = links.proofItems.filter(p => p.questionLinkId);
-                   setResolvedLinks({ ...links, proofItems: filteredProofs });
-                 });
+                 resolveQuestionLinks(selectedQuestionId, activeCase.id).then(setResolvedLinks);
                }
              }}
             />
