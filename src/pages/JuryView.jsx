@@ -12,7 +12,6 @@ export default function JuryView() {
   const [proofItem, setProofItem] = useState(null);
   const [extract, setExtract] = useState(null);
   const [callouts, setCallouts] = useState([]);
-  const [spotlightCallout, setSpotlightCallout] = useState(null);
   const [depoClip, setDepoClip] = useState(null);
   const [depo, setDepo] = useState(null);
   const [jx, setJx] = useState(null);
@@ -32,10 +31,9 @@ export default function JuryView() {
   const { state: presentationState } = usePresentationState(trialSessionId, false);
   const externalPage = presentationState?.proof_current_page ?? null;
   const externalScale = presentationState?.proof_zoom_level ?? null;
-  // positionX/Y are stored directly (not negated) from react-zoom-pan-pinch
-  const externalPositionX = presentationState?.proof_scroll_left ?? null;
-  const externalPositionY = presentationState?.proof_scroll_top ?? null;
-  const externalCalloutId = sessionState?.current_callout_id ?? null;
+  // proof_scroll_left/top stored as negative positionX/Y for react-zoom-pan-pinch
+  const externalPositionX = presentationState?.proof_scroll_left != null ? -presentationState.proof_scroll_left : null;
+  const externalPositionY = presentationState?.proof_scroll_top != null ? -presentationState.proof_scroll_top : null;
 
   // Subscribe to full session state changes
   useEffect(() => {

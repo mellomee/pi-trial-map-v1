@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,37 +22,31 @@ export default function ExtractViewerZone({
   const [witnessNames, setWitnessNames] = useState({});
   const [jx, setJx] = useState(null);
   const [calloutVisible, setCalloutVisible] = useState(true);
-  const [activeCalloutId, setActiveCalloutId] = useState(null);
+  const [activeSpotlight, setActiveSpotlight] = useState(null);
 
-  const viewerRef = useRef(null);
+  const { setPage: _syncPage, setTransform } = usePresentationState(trialSessionId, true);
 
-  // Shared presentation state — attorney writes
-  const { state: _ps, setPage, setTransform } = usePresentationState(trialSessionId, true);
-
-  // Track current spotlight to push to jury
+  // When spotlight changes, sync to jury if publishing
   const handleSpotlightChange = useCallback((callout) => {
-    if (!isPublishing) return;
-    const id = calloutVisible && callout ? callout.id : null;
-    if (_spotlightChangeCallback) _spotlightChangeCallback(id);
+    setActiveSpotlight(callout);
+    if (_spotlightChangeCallback) {
+      _spotlightChangeCallback(isPublishing && calloutVisible ? (callout?.id || null) : null);
+    }
   }, [isPublishing, calloutVisible]);
 
-  // When calloutVisible toggles while publishing, re-push spotlight state
+  // Re-push when calloutVisible or isPublishing toggles
   useEffect(() => {
-    if (!isPublishing || !_spotlightChangeCallback) return;
-    const current = viewerRef.current?.getSpotlightCallout?.();
-    const id = calloutVisible && current ? current.id : null;
-    _spotlightChangeCallback(id);
+    if (!_spotlightChangeCallback) return;
+    _spotlightChangeCallback(isPublishing && calloutVisible ? (activeSpotlight?.id || null) : null);
   }, [calloutVisible, isPublishing]);
 
   // Load extract + callouts when proof changes
   useEffect(() => {
     if (!selectedProof?.source_id) {
-      setExtract(null); setCallouts([]); setWitnessNames({});
-      setJx(null); setActiveCalloutId(null);
+      setExtract(null); setCallouts([]); setWitnessNames({}); setJx(null); setActiveSpotlight(null);
       return;
     }
-    setExtract(null); setCallouts([]); setWitnessNames({});
-    setJx(null); setActiveCalloutId(null);
+    setExtract(null); setCallouts([]); setWitnessNames({}); setJx(null); setActiveSpotlight(null);
 
     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async (r) => {
       const e = r[0];
@@ -68,12 +62,6 @@ export default function ExtractViewerZone({
       setCallouts(sorted);
       setJx(jxList[0] || null);
 
-      // Auto-activate the proof's linked callout
-      if (selectedProof.callout_id) {
-        setActiveCalloutId(selectedProof.callout_id);
-      }
-
-      // Load witness names
       const wids = [...new Set(sorted.map((c) => c.witness_id).filter(Boolean))];
       const wMap = {};
       await Promise.all(wids.map(async (wid) => {
@@ -82,17 +70,7 @@ export default function ExtractViewerZone({
       }));
       setWitnessNames(wMap);
     });
-  }, [selectedProof?.source_id, selectedProof?.callout_id]);
-
-  const handlePageChange = useCallback((page) => {
-    setPage(page);
-  }, [setPage]);
-
-  const handleTransformChange = useCallback(({ scale, positionX, positionY }) => {
-    // positionX/Y from react-zoom-pan-pinch are the transform offsets
-    // Store as-is; jury receives them directly
-    setTransform(scale, positionX, positionY);
-  }, [setTransform]);
+  }, [selectedProof?.source_id]);
 
   // ── Empty states ──────────────────────────────────────────────────────────
   if (!selectedProof) {
@@ -130,7 +108,7 @@ export default function ExtractViewerZone({
           <Badge className="bg-red-700 text-red-100 text-[10px] px-1.5 py-0 animate-pulse">LIVE</Badge>
         )}
         <div className="flex-1" />
-        {isPublishing && (
+        {isPublishing && activeSpotlight && (
           <button
             onClick={() => setCalloutVisible((v) => !v)}
             className={`p-1.5 rounded touch-manipulation ${calloutVisible ? 'text-amber-300 bg-amber-900/20' : 'text-slate-500 hover:text-slate-300'}`}
@@ -151,19 +129,16 @@ export default function ExtractViewerZone({
       </div>
 
       {/* SharedProofViewer — same engine as JuryView */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden flex">
         <SharedProofViewer
-          ref={viewerRef}
           extract={extract}
           callouts={callouts}
           caseParties={witnessNames}
           proofItem={selectedProof}
-          activeCalloutId={activeCalloutId}
-          onPageChange={handlePageChange}
-          onTransformChange={handleTransformChange}
+          activeCalloutId={selectedProof?.callout_id}
+          onPageChange={_syncPage}
+          onTransformChange={(s) => setTransform(s.scale, -s.positionX, -s.positionY)}
           onSpotlightChange={handleSpotlightChange}
-          onSetAsProofCallout={null}
-          readOnly={false}
         />
       </div>
     </div>
