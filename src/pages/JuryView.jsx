@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
-import PdfViewer from "@/components/shared/PdfViewer";
+import SharedPdfViewer from "@/components/pdf/SharedPdfViewer";
+import { Scale } from "lucide-react";
 
-function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
+function HighlightOverlay({ highlights }) {
   if (!highlights?.length) return null;
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -147,15 +148,19 @@ export default function JuryView() {
 
   // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
-    return <div className="fixed inset-0 bg-black" />;
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <Scale className="w-20 h-20 text-slate-800" strokeWidth={1} />
+      </div>
+    );
   }
 
-  // Build exhibit label: only "Exhibit X" using admitted number
+  // Build exhibit label
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
-  const isPdf = extract?.extract_file_url?.match(/\.pdf(\?|$)/i);
 
   return (
     <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
+      {/* Deposition Clip */}
       {proofItem.type === 'depoClip' && depoClip && (
         <div className="w-full h-full flex flex-col justify-center px-10 py-10">
           <div className="mb-6 flex flex-wrap gap-4 items-baseline">
@@ -181,8 +186,9 @@ export default function JuryView() {
         </div>
       )}
 
+      {/* Extract (PDF or Image) */}
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="w-full h-full relative flex items-center justify-center overflow-hidden" style={{ maxWidth: '92vw', maxHeight: '92vh', margin: '0 auto' }}>
+        <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
           {/* Exhibit label */}
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-20">
@@ -190,17 +196,19 @@ export default function JuryView() {
             </div>
           )}
 
-          {/* Shared PDF Viewer */}
-          <SharedPdfViewer
-            fileUrl={extract.extract_file_url}
-            page={currentPage}
-            zoom={zoom}
-            panX={panX}
-            panY={panY}
-            readOnly={true}
-            showControls={false}
-            showToolbar={false}
-          />
+          {/* Shared PDF/Image Viewer */}
+          <div style={{ width: '92vw', maxHeight: '92vh' }}>
+            <SharedPdfViewer
+              fileUrl={extract.extract_file_url}
+              page={currentPage}
+              zoom={zoom}
+              panX={panX}
+              panY={panY}
+              readOnly={true}
+              showControls={false}
+              showToolbar={false}
+            />
+          </div>
 
           {/* Spotlight overlay (if active) */}
           {callout?.snapshot_image_url && (
