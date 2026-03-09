@@ -81,20 +81,19 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
     <button
       onClick={onClick}
       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
-        isLinked && !isActive ? 'border-cyan-400 border-2 bg-cyan-900/40' : isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e] opacity-50'
+        isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-500/40 bg-cyan-900/30 hover:bg-cyan-900/40' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
       }`}
     >
       {callout.snapshot_image_url ? (
-        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black`}>
+        <div className={`relative w-full aspect-video rounded overflow-hidden bg-black ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <img src={callout.snapshot_image_url} alt={callout.name} className="w-full h-full object-contain" />
         </div>
       ) : (
-        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center`}>
+        <div className={`w-full aspect-video rounded bg-[#0a0f1e] flex items-center justify-center ${isLinked && !isActive ? 'ring-1 ring-red-500/60' : ''}`}>
           <ImageIcon className="w-4 h-4 text-slate-600" />
         </div>
       )}
       {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
-      {callout.page_number && <p className="text-[9px] text-slate-400 font-mono">Pg. {callout.page_number}</p>}
       {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
       {isActive && (
         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
@@ -182,22 +181,11 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Handle page init: if linked callout, jump to its page; else page 1
-      const linkedCalloutId = selectedProof?.callout_id;
-      if (linkedCalloutId) {
-        const linked = sorted.find(c => c.id === linkedCalloutId);
-        if (linked?.page_number) {
-          setPage(linked.page_number);
-        } else {
-          setPage(1);
-        }
-      } else {
-        setPage(1);
-      }
+      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
-  }, [selectedProof?.source_id]);
+  }, [selectedProof?.source_id, selectedProof?.callout_id]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;

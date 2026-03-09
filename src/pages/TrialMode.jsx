@@ -139,7 +139,7 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
-    // Auto-unpublish when switching to a different question context
+    // Auto-unpublish if question changes and published proof is different
     if (publishedProof) {
       await handleClearJury();
     }
@@ -413,7 +413,7 @@ export default function TrialMode() {
           <div className="overflow-hidden" style={{ height: `${layout.topCPct}%` }}>
             <ProofPreviewZone
               selectedProof={selectedProof}
-              isPublishing={!!publishedProof}
+              isPublishing={!!(publishedProof && selectedProof && publishedProof.id === selectedProof.id)}
               onPublish={handlePublishProof}
               onUnpublish={handleClearJury}
               trialSessionId={trialSession?.id}
@@ -432,8 +432,11 @@ export default function TrialMode() {
             <ProofZone
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
-              onSelectProof={(proof) => {
-                // Keep publish active when switching between proofs within same question context
+              onSelectProof={async (proof) => {
+                // Auto-unpublish if switching to a different proof
+                if (publishedProof && publishedProof.id !== proof.id) {
+                  await handleClearJury();
+                }
                 setSelectedProof(proof);
               }}
               childQuestionActive={!!selectedChildQuestionId}
