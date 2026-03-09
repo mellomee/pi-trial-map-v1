@@ -121,25 +121,25 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
   const sidebarRef = useRef(null);
-  const pdfContainerRef = useRef(null); // ref to the PDF viewer container for ResizeObserver
+  const pdfContainerRef = useRef(null);
 
   // Use shared presentation state (attorney is the writer, jury is the reader)
   const { state: presentationState, setPage, setZoom, setScroll, setViewportSize } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
 
-  // Report PDF viewer container size to shared state so jury can mirror it
+  // Observe the PDF container size so the jury can build a matching viewport frame
   useEffect(() => {
     if (!pdfContainerRef.current) return;
-    const ro = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const { width, height } = entry.contentRect;
-      setViewportSize(width, height);
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 50 && height > 50) setViewportSize(Math.round(width), Math.round(height));
+      }
     });
-    ro.observe(pdfContainerRef.current);
-    return () => ro.disconnect();
-  }, [setViewportSize]);
+    obs.observe(pdfContainerRef.current);
+    return () => obs.disconnect();
+  }, [setViewportSize, extract]); // re-attach when extract changes (PDF becomes visible)
 
   // When spotlight changes while publishing, notify TrialMode via module-level callback
   useEffect(() => {
@@ -291,7 +291,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
         )}
 
         {/* Main extract file viewer — gesture wrapper ONLY wraps PDF content, not toolbar */}
-         <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={(el) => { imgContainerRef.current = el; pdfContainerRef.current = el; }}>
+         <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
           {extractFileUrl ? (
             isPdf ? (
               <PdfViewerWithGestures
