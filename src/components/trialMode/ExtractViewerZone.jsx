@@ -185,11 +185,21 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
+      // Set initial page based on linked callout or explicitly to page 1
+      if (selectedProof?.callout_id) {
+        const linkedCallout = sorted.find(c => c.id === selectedProof.callout_id);
+        if (linkedCallout?.page_number) {
+          setPage(linkedCallout.page_number);
+        } else {
+          setPage(1);
+        }
+      } else {
+        setPage(1);
+      }
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
-  }, [selectedProof?.source_id, selectedProof?.callout_id]);
+  }, [selectedProof?.source_id, selectedProof?.callout_id, setPage]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
