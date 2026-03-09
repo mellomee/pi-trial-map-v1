@@ -230,25 +230,19 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   const handlePrevPage = useCallback(() => goToPage(displayPageRef.current - 1), [goToPage]);
   const handleNextPage = useCallback(() => goToPage(displayPageRef.current + 1), [goToPage]);
 
-  // ── Throttled sync callbacks ──────────────────────────────────────────────
-  const scheduleZoomSync = useCallback(() => {
-    if (readOnly || zoomSyncTimerRef.current) return;
-    zoomSyncTimerRef.current = setTimeout(() => {
-      zoomSyncTimerRef.current = null;
-      onZoomChange?.(visualZoomRef.current);
-    }, SYNC_THROTTLE_MS);
-  }, [onZoomChange, readOnly]);
-
-  const scheduleScrollSync = useCallback(() => {
-    if (readOnly || !onScrollChange || scrollSyncTimerRef.current) return;
-    scrollSyncTimerRef.current = setTimeout(() => {
-      scrollSyncTimerRef.current = null;
-      onScrollChange?.(
-        Math.round(expectedScrollRef.current.left),
-        Math.round(expectedScrollRef.current.top)
-      );
-    }, SYNC_THROTTLE_MS);
-  }, [onScrollChange, readOnly]);
+  // ── Viewport sync ─────────────────────────────────────────────────────────
+  // All viewport changes (zoom + scroll) are reported together via onViewportChange.
+  // During gestures this is throttled by the caller (usePresentationState).
+  // We always pass flush=false during gesture and flush=true at gesture end.
+  const notifyViewport = useCallback((extra = {}, flush = false) => {
+    if (readOnly || !onViewportChange) return;
+    onViewportChange({
+      zoom: visualZoomRef.current,
+      scrollLeft: Math.round(expectedScrollRef.current.left),
+      scrollTop: Math.round(expectedScrollRef.current.top),
+      ...extra,
+    }, { flush });
+  }, [onViewportChange, readOnly]);
 
   // ── Commit gesture end: one pdf.js rerender, finalize sync ───────────────
   const commitGestureEnd = useCallback(() => {
