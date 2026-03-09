@@ -248,20 +248,13 @@ const PdfViewer = React.forwardRef(function PdfViewer(
   const commitGestureEnd = useCallback(() => {
     isGestureRef.current = false;
     if (gestureTimerRef.current) clearTimeout(gestureTimerRef.current);
-    if (zoomSyncTimerRef.current) clearTimeout(zoomSyncTimerRef.current);
-    if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
-    zoomSyncTimerRef.current = null;
-    scrollSyncTimerRef.current = null;
 
     const finalZoom = visualZoomRef.current;
     setRenderZoom(finalZoom);
     renderZoomRef.current = finalZoom;
-    onZoomChange?.(finalZoom);
-    onScrollChange?.(
-      Math.round(expectedScrollRef.current.left),
-      Math.round(expectedScrollRef.current.top)
-    );
-  }, [onZoomChange, onScrollChange]);
+    // Flush the final combined viewport state immediately
+    notifyViewport({}, true);
+  }, [notifyViewport]);
 
   // ── Wheel: ctrl+wheel = trackpad pinch zoom ───────────────────────────────
   const handleWheel = useCallback((e) => {
