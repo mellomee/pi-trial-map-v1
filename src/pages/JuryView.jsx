@@ -31,9 +31,10 @@ export default function JuryView() {
   const { state: presentationState } = usePresentationState(trialSessionId, false);
   const externalPage = presentationState?.proof_current_page ?? null;
   const externalScale = presentationState?.proof_zoom_level ?? null;
-  // proof_scroll_left/top stored as negative positionX/Y for react-zoom-pan-pinch
-  const externalPositionX = presentationState?.proof_scroll_left != null ? -presentationState.proof_scroll_left : null;
-  const externalPositionY = presentationState?.proof_scroll_top != null ? -presentationState.proof_scroll_top : null;
+  // positionX/Y are stored directly (not negated) from react-zoom-pan-pinch
+  const externalPositionX = presentationState?.proof_scroll_left ?? null;
+  const externalPositionY = presentationState?.proof_scroll_top ?? null;
+  const externalCalloutId = sessionState?.current_callout_id ?? null;
 
   // Subscribe to full session state changes
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function JuryView() {
           const depos = await base44.entities.Depositions.filter({ id: clip.deposition_id });
           setDepo(depos[0] || null);
         }
-        setExtract(null); setCallouts([]); setJx(null);
+        setExtract(null); setCallouts([]); setSpotlightCallout(null); setJx(null);
 
       } else if (item.type === 'extract' && item.source_id) {
         const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.source_id });
@@ -84,9 +85,18 @@ export default function JuryView() {
         const sorted = [...cos].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
         setCallouts(sorted);
         setJx(jxList[0] || null);
+
+        // Spotlight: driven by session state
+        const sid = sessionState?.current_callout_id;
+        if (sid) {
+          const sc = sorted.find((c) => c.id === sid) || null;
+          setSpotlightCallout(sc);
+        } else {
+          setSpotlightCallout(null);
+        }
       }
     });
-  }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof]);
+  }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof, sessionState?.current_callout_id]);
 
   // Blank screen when nothing is published
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
@@ -127,7 +137,7 @@ export default function JuryView() {
         </div>
       )}
 
-      {/* Extract view — use SharedProofViewer in readOnly mode, mirroring attorney */}
+      {/* Extract view — SharedProofViewer in readOnly mode, mirrors attorney exactly */}
       {proofItem.type === 'extract' && extract?.extract_file_url && (
         <div className="flex flex-col flex-1 overflow-hidden relative">
           {exhibitLabel && (
@@ -135,32 +145,16 @@ export default function JuryView() {
               <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
             </div>
           )}
-          {/* Spotlight driven by session state callout */}
-          {spotlightCallout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.72)' }}>
-              <img
-                src={spotlightCallout.snapshot_image_url}
-                alt={spotlightCallout.name || 'Callout'}
-                className="block shadow-2xl rounded-lg border border-white/10"
-                style={{ maxWidth: '92%', maxHeight: '88vh', objectFit: 'contain' }}
-                draggable={false}
-              />
-              {spotlightCallout.name && (
-                <div className="absolute bottom-4 left-0 right-0 text-center z-30">
-                  <span className="text-slate-300 text-lg bg-black/70 px-4 py-1.5 rounded-full">{spotlightCallout.name}</span>
-                </div>
-              )}
-            </div>
-          )}
           <SharedProofViewer
             extract={extract}
-            callouts={[]}
+            callouts={callouts}
             caseParties={{}}
             proofItem={proofItem}
             externalPage={externalPage}
             externalScale={externalScale}
             externalPositionX={externalPositionX}
             externalPositionY={externalPositionY}
+            externalCalloutId={externalCalloutId}
             readOnly={true}
           />
         </div>
