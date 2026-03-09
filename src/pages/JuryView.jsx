@@ -191,39 +191,40 @@ export default function JuryView() {
           )}
 
           {isPdf ? (
-          <PresentationFrame>
-            <PdfViewer
-              fileUrl={extract.extract_file_url}
-              externalZoom={zoom}
-              externalPage={currentPage}
-              externalScrollLeft={sharedScrollLeft}
-              externalScrollTop={sharedScrollTop}
-              readOnly={true}
-              showControls={false}
-              dimmed={false}
-            />
-          </PresentationFrame>
-
-          {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-          {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
-          )}
-
-          {/* Layer 2: Spotlighted callout (if active) */}
-          {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                <img
-                  src={callout.snapshot_image_url}
-                  alt="Callout"
-                  style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                  draggable={false}
+            <>
+              <PresentationFrame>
+                <PdfViewer
+                  fileUrl={extract.extract_file_url}
+                  externalZoom={zoom}
+                  externalPage={currentPage}
+                  externalScrollLeft={sharedScrollLeft}
+                  externalScrollTop={sharedScrollTop}
+                  readOnly={true}
+                  showControls={false}
+                  dimmed={false}
                 />
-                <HighlightOverlay highlights={highlights} />
-              </div>
-            </div>
-          )}
-          </>
+              </PresentationFrame>
+
+              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+              {callout?.snapshot_image_url && (
+                <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+              )}
+
+              {/* Layer 2: Spotlighted callout (if active) */}
+              {callout?.snapshot_image_url && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                    <img
+                      src={callout.snapshot_image_url}
+                      alt="Callout"
+                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                      draggable={false}
+                    />
+                    <HighlightOverlay highlights={highlights} />
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <>
               {/* Image with optional spotlight overlay */}
