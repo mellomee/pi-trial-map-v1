@@ -28,13 +28,14 @@ export default function JuryView() {
     });
   }, [activeCase?.id]);
 
-  // Use shared presentation state (jury is reader-only)
+  // Use shared presentation state (jury is reader-only).
+  // usePresentationState loads initial state + subscribes — same record as sessionState.
   const { state: presentationState } = usePresentationState(trialSessionId, false);
-  const externalPage = presentationState?.proof_current_page ?? null;
-  const externalScale = presentationState?.proof_zoom_level ?? null;
-  // proof_scroll_left/top stored as negative positionX/Y for react-zoom-pan-pinch
-  const externalPositionX = presentationState?.proof_scroll_left != null ? -presentationState.proof_scroll_left : null;
-  const externalPositionY = presentationState?.proof_scroll_top != null ? -presentationState.proof_scroll_top : null;
+  const externalPage = sessionState?.proof_current_page ?? presentationState?.proof_current_page ?? null;
+  // Attorney uses iframe — never writes zoom/scroll. Pass null so centerOnInit applies.
+  const externalScale = null;
+  const externalPositionX = null;
+  const externalPositionY = null;
 
   // Load initial session state + subscribe to changes
   useEffect(() => {
