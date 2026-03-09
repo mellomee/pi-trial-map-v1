@@ -289,8 +289,8 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           />
         )}
 
-        {/* Main extract file viewer — gesture wrapper ONLY wraps PDF content, not toolbar */}
-         <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
+        {/* Main extract file viewer */}
+        <div className="flex-1 overflow-hidden bg-[#080c18] relative flex flex-col" ref={imgContainerRef}>
           {extractFileUrl ? (
             isPdf ? (
               <PdfViewerWithGestures
