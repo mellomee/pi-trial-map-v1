@@ -400,10 +400,9 @@ const PdfViewer = React.forwardRef(function PdfViewer(
         containerRef.current.scrollLeft = newScrollLeft;
         containerRef.current.scrollTop = newScrollTop;
       });
-      scheduleZoomSync();
-      scheduleScrollSync();
+      notifyViewport();
     }
-  }, [readOnly, scheduleZoomSync, scheduleScrollSync]);
+  }, [readOnly, notifyViewport]);
 
   const handleTouchEnd = useCallback(() => {
     if (readOnly || !touchRef.current) return;
@@ -411,17 +410,11 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     if (touchRef.current.type === 'pinch') {
       commitGestureEnd();
     } else if (touchRef.current.type === 'pan') {
-      // Finalize scroll sync for pan gesture
-      if (scrollSyncTimerRef.current) clearTimeout(scrollSyncTimerRef.current);
-      scrollSyncTimerRef.current = null;
-      onScrollChange?.(
-        Math.round(expectedScrollRef.current.left),
-        Math.round(expectedScrollRef.current.top)
-      );
+      notifyViewport({}, true); // flush final pan position
     }
     touchRef.current = null;
     isGestureRef.current = false;
-  }, [readOnly, commitGestureEnd, onScrollChange]);
+  }, [readOnly, commitGestureEnd, notifyViewport]);
 
   // ── Zoom buttons (focal at viewport center) ───────────────────────────────
   const zoomAtCenter = useCallback((direction) => {
