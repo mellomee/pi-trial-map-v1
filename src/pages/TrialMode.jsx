@@ -116,9 +116,10 @@ export default function TrialMode() {
       setQuestions(qs);
       if (savedQuestionId) {
         setSelectedQuestionId(savedQuestionId);
-        // Stale-async guard
+        // Stale-async guard: abort early if newer request came in
         const token = ++requestTokenRef.current;
         currentRequestTokenRef.current = token;
+        if (currentRequestTokenRef.current !== token) return;
         const links = await resolveQuestionLinks(savedQuestionId, activeCase.id);
         if (currentRequestTokenRef.current === token) {
           setResolvedLinks(links);
@@ -157,10 +158,13 @@ export default function TrialMode() {
     setChildResolvedLinks(null);
     setSelectedProof(null);
 
-    // Stale-async guard: increment token, only update state if this request is still current
+    // Stale-async guard: increment token, abort if newer request already fired
     const token = ++requestTokenRef.current;
     currentRequestTokenRef.current = token;
+    // Abort early if a newer request came in while we were preparing
+    if (currentRequestTokenRef.current !== token) return;
     const links = await resolveQuestionLinks(questionId, activeCase.id);
+    // Only update if this token is still current
     if (currentRequestTokenRef.current === token) {
       setResolvedLinks(links);
     }
@@ -183,9 +187,10 @@ export default function TrialMode() {
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
 
-      // Stale-async guard
+      // Stale-async guard: abort early if newer request came in
       const token = ++requestTokenRef.current;
       currentRequestTokenRef.current = token;
+      if (currentRequestTokenRef.current !== token) return;
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
       if (currentRequestTokenRef.current === token) {
         setChildResolvedLinks(links);
