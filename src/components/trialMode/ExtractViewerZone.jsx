@@ -147,45 +147,60 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   }, [setScroll]);
 
   useEffect(() => {
-    if (!selectedProof?.source_id) {
-      setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-      setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
-      return;
-    }
-    setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-    setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
+     if (!selectedProof?.source_id) {
+       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
+       setWitnessByCallout({}); setJx(null); setSpotlightCallout(null);
+       // Reset page/zoom/scroll for new proof
+       setPage(1); setZoom(1); setScroll(0, 0);
+       return;
+     }
+     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
+     setWitnessByCallout({}); setJx(null); setSpotlightCallout(null);
 
-    base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
-      const ext = r[0];
-      if (!ext) return;
-      setExtract(ext);
+     base44.entities.ExhibitExtracts.filter({ id: selectedProof.source_id }).then(async r => {
+       const ext = r[0];
+       if (!ext) return;
+       setExtract(ext);
 
-      const allCs = await base44.entities.Callouts.filter({ extract_id: ext.id });
-      const sorted = [...allCs].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
-      setAllCallouts(sorted);
+       const allCs = await base44.entities.Callouts.filter({ extract_id: ext.id });
+       const sorted = [...allCs].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
+       setAllCallouts(sorted);
 
-      // Load highlights for all callouts
-      const hMap = {};
-      await Promise.all(sorted.map(async c => {
-        const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
-        hMap[c.id] = hs;
-      }));
-      setHighlightsByCallout(hMap);
+       // Load highlights for all callouts
+       const hMap = {};
+       await Promise.all(sorted.map(async c => {
+         const hs = await base44.entities.Highlights.filter({ callout_id: c.id });
+         hMap[c.id] = hs;
+       }));
+       setHighlightsByCallout(hMap);
 
-      // Load witness names
-      const wMap = {};
-      const witnessIds = [...new Set(sorted.map(c => c.witness_id).filter(Boolean))];
-      await Promise.all(witnessIds.map(async wid => {
-        const pts = await base44.entities.Parties.filter({ id: wid });
-        if (pts[0]) wMap[wid] = pts[0].display_name || `${pts[0].first_name || ''} ${pts[0].last_name}`.trim();
-      }));
-      setWitnessByCallout(wMap);
+       // Load witness names
+       const wMap = {};
+       const witnessIds = [...new Set(sorted.map(c => c.witness_id).filter(Boolean))];
+       await Promise.all(witnessIds.map(async wid => {
+         const pts = await base44.entities.Parties.filter({ id: wid });
+         if (pts[0]) wMap[wid] = pts[0].display_name || `${pts[0].first_name || ''} ${pts[0].last_name}`.trim();
+       }));
+       setWitnessByCallout(wMap);
 
-      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
+       // Initialize page based on linked callout or to page 1
+       const linkedCalloutId = selectedProof?.callout_id;
+       if (linkedCalloutId && sorted.length > 0) {
+         const linkedCallout = sorted.find(c => c.id === linkedCalloutId);
+         if (linkedCallout && linkedCallout.page_number) {
+           setPage(linkedCallout.page_number);
+         } else {
+           setPage(1);
+         }
+       } else {
+         setPage(1);
+       }
+       // Reset zoom and scroll for new proof
+       setZoom(1); setScroll(0, 0);
 
-      base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
-    });
-  }, [selectedProof?.source_id, selectedProof?.callout_id]);
+       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
+     });
+   }, [selectedProof?.source_id, selectedProof?.callout_id]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
