@@ -204,6 +204,7 @@ export default function JuryView() {
               zoom={zoom}
               panX={panX}
               panY={panY}
+              onViewportChange={() => {}} // read-only, no-op
               readOnly={true}
               showControls={false}
               showToolbar={false}
