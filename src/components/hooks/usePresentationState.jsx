@@ -55,5 +55,14 @@ export function usePresentationState(trialSessionId, isAttorney = false) {
     }).catch(console.error);
   }, [state, isAttorney]);
 
-  return { state, setPage, setZoom, setScroll };
+  // Attorney only: report viewer container dimensions so jury can mirror exact size
+  const setViewerSize = useCallback((widthPx, heightPx) => {
+    if (!isAttorney || !state) return;
+    base44.entities.TrialSessionStates.update(state.id, {
+      viewer_width_px: Math.round(widthPx),
+      viewer_height_px: Math.round(heightPx),
+    }).catch(console.error);
+  }, [state, isAttorney]);
+
+  return { state, setPage, setZoom, setScroll, setViewerSize };
 }
