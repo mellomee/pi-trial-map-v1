@@ -76,11 +76,13 @@ function SpotlightOverlay({ extractFileUrl, callout, highlights, onClose, pdfZoo
 }
 
 // ---------- Callout sidebar item ----------
-function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
+function CalloutItem({ callout, witnessName, isActive, isLinked, onClick, isDisabled }) {
   return (
     <button
       onClick={onClick}
+      disabled={isDisabled}
       className={`w-full text-left rounded-lg border p-2 transition-all touch-manipulation space-y-1 ${
+        isDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' :
         isActive ? 'border-cyan-300 bg-cyan-500/40 border-2 border-cyan-300' : isLinked ? 'border-cyan-500/40 bg-cyan-900/30 hover:bg-cyan-900/40' : 'border-[#1e2a45] hover:border-slate-500 bg-[#0f1629] hover:bg-[#131a2e]'
       }`}
     >
@@ -95,6 +97,7 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
       )}
       {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
       {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
+      {callout.page_number && <p className={`text-[10px] font-semibold ${isActive ? 'text-amber-300' : isDisabled ? 'text-slate-600' : 'text-slate-400'}`}>Pg. {callout.page_number}</p>}
       {isActive && (
         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
           <Eye className="w-2.5 h-2.5" /> Spotlighted
@@ -149,7 +152,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   useEffect(() => {
     if (!selectedProof?.source_id) {
       setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
-      setWitnessByCallout({}); setJx(null); setZoom(1); setSpotlightCallout(null);
+      setWitnessByCallout({}); setJx(null); setZoom(1); setPage(1); setSpotlightCallout(null);
       return;
     }
     setExtract(null); setAllCallouts([]); setHighlightsByCallout({});
@@ -181,11 +184,21 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
+      // Set page: if proof has linked callout, jump to that callout's page; else page 1
+      if (selectedProof?.callout_id && sorted.length > 0) {
+        const linkedCallout = sorted.find(c => c.id === selectedProof.callout_id);
+        if (linkedCallout?.page_number) {
+          setPage(linkedCallout.page_number);
+        } else {
+          setPage(1);
+        }
+      } else {
+        setPage(1);
+      }
 
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
     });
-  }, [selectedProof?.source_id, selectedProof?.callout_id]);
+  }, [selectedProof?.source_id, selectedProof?.callout_id, setPage]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
@@ -337,23 +350,31 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
               </p>
-              {allCallouts.map(c => (
-                <CalloutItem
-                  key={c.id}
-                  callout={c}
-                  witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
-                  isActive={spotlightCallout?.id === c.id}
-                  isLinked={selectedProof?.callout_id === c.id}
-                  onClick={() => {
-                    // Toggle: click same callout to close, click different to open
-                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                    // Auto-navigate to callout's page via shared state
-                    if (isPdf && c.page_number) {
-                      setPage(c.page_number);
-                    }
-                  }}
-                />
-              ))}
+              {allCallouts.map(c => {
+                const isLinkedCallout = selectedProof?.callout_id === c.id;
+                const hasLinkedCallout = !!selectedProof?.callout_id;
+                const isDisabled = hasLinkedCallout && !isLinkedCallout; // disable non-linked callouts if proof has linked callout
+                return (
+                  <CalloutItem
+                    key={c.id}
+                    callout={c}
+                    witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
+                    isActive={spotlightCallout?.id === c.id}
+                    isLinked={isLinkedCallout}
+                    isDisabled={isDisabled}
+                    onClick={() => {
+                      if (!isDisabled) {
+                        // Toggle: click same callout to close, click different to open
+                        setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                        // Auto-navigate to callout's page via shared state
+                        if (isPdf && c.page_number) {
+                          setPage(c.page_number);
+                        }
+                      }
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
