@@ -30,27 +30,31 @@ function loadPersisted(key, fallback) {
 }
 
 export default function TrialMode() {
-  const { activeCase, loading } = useActiveCase();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+   const { activeCase, loading } = useActiveCase();
+   const [searchParams] = useSearchParams();
+   const navigate = useNavigate();
 
-  const savedState = loadPersisted(PERSIST_KEY, {});
-  const savedLayout = loadPersisted(LAYOUT_KEY, DEFAULT_LAYOUT);
+   const savedState = loadPersisted(PERSIST_KEY, {});
+   const savedLayout = loadPersisted(LAYOUT_KEY, DEFAULT_LAYOUT);
 
-  const [witnesses, setWitnesses] = useState([]);
-  const [questions, setQuestions] = useState([]);
-  const [selectedWitnessId, setSelectedWitnessId] = useState(savedState.witnessId || null);
-  const [selectedQuestionId, setSelectedQuestionId] = useState(savedState.questionId || null);
-  const [selectedChildQuestionId, setSelectedChildQuestionId] = useState(null);
-  const [examType, setExamType] = useState(savedState.examType || "Main");
-  const [panelVisible, setPanelVisible] = useState(savedState.panelVisible !== false);
+   const [witnesses, setWitnesses] = useState([]);
+   const [questions, setQuestions] = useState([]);
+   const [selectedWitnessId, setSelectedWitnessId] = useState(savedState.witnessId || null);
+   const [selectedQuestionId, setSelectedQuestionId] = useState(savedState.questionId || null);
+   const [selectedChildQuestionId, setSelectedChildQuestionId] = useState(null);
+   const [examType, setExamType] = useState(savedState.examType || "Main");
+   const [panelVisible, setPanelVisible] = useState(savedState.panelVisible !== false);
 
-  const [resolvedLinks, setResolvedLinks] = useState({ evidenceGroups: [], proofItems: [], trialPoints: [] });
-  const [childResolvedLinks, setChildResolvedLinks] = useState(null); // non-null when a child is selected
+   const [resolvedLinks, setResolvedLinks] = useState({ evidenceGroups: [], proofItems: [], trialPoints: [] });
+   const [childResolvedLinks, setChildResolvedLinks] = useState(null); // non-null when a child is selected
 
-  const [trialSession, setTrialSession] = useState(null);
-  const [publishedProof, setPublishedProof] = useState(null);
-  const [selectedProof, setSelectedProof] = useState(null);
+   const [trialSession, setTrialSession] = useState(null);
+   const [publishedProof, setPublishedProof] = useState(null);
+   const [selectedProof, setSelectedProof] = useState(null);
+
+   // Request tokens to guard against stale async results
+   const latestQuestionRequestToken = useRef(null);
+   const latestChildQuestionRequestToken = useRef(null);
 
   // Resizable layout state
   const [layout, setLayout] = useState({
