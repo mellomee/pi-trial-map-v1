@@ -95,6 +95,11 @@ function CalloutItem({ callout, witnessName, isActive, isLinked, onClick }) {
       )}
       {callout.name && <p className={`text-[10px] truncate font-medium leading-tight ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>{callout.name}</p>}
       {witnessName && <p className={`text-[10px] truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-cyan-400'}`}>{witnessName}</p>}
+      {callout.page_number && (
+        <p className={`text-[9px] font-mono font-semibold ${isActive ? 'text-amber-300' : 'text-slate-400'}`}>
+          p. {callout.page_number}
+        </p>
+      )}
       {isActive && (
         <span className="flex items-center gap-0.5 text-[9px] text-amber-400 font-medium">
           <Eye className="w-2.5 h-2.5" /> Spotlighted
@@ -181,11 +186,17 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
       }));
       setWitnessByCallout(wMap);
 
-      // Do NOT auto-spotlight — just highlight the linked callout in the sidebar
-
       base44.entities.JointExhibits.filter({ exhibit_extract_id: ext.id }).then(j => setJx(j[0] || null));
+
+      // If a callout is linked to this proof, jump to its page
+      if (selectedProof?.callout_id && sorted.length > 0) {
+        const linkedCallout = sorted.find(c => c.id === selectedProof.callout_id);
+        if (linkedCallout && linkedCallout.page_number) {
+          setPage(linkedCallout.page_number);
+        }
+      }
     });
-  }, [selectedProof?.source_id, selectedProof?.callout_id]);
+  }, [selectedProof?.source_id, selectedProof?.callout_id, setPage]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
   const extractFileUrl = extract?.extract_file_url || null;
@@ -337,23 +348,28 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
               <p className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold px-1 pt-1">
                 Callouts ({allCallouts.length})
               </p>
-              {allCallouts.map(c => (
-                <CalloutItem
-                  key={c.id}
-                  callout={c}
-                  witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
-                  isActive={spotlightCallout?.id === c.id}
-                  isLinked={selectedProof?.callout_id === c.id}
-                  onClick={() => {
-                    // Toggle: click same callout to close, click different to open
-                    setSpotlightCallout(prev => prev?.id === c.id ? null : c);
-                    // Auto-navigate to callout's page via shared state
-                    if (isPdf && c.page_number) {
-                      setPage(c.page_number);
-                    }
-                  }}
-                />
-              ))}
+              {allCallouts.map(c => {
+                const isLinkedCallout = selectedProof?.callout_id === c.id;
+                return (
+                  <CalloutItem
+                    key={c.id}
+                    callout={c}
+                    witnessName={c.witness_id ? witnessByCallout[c.witness_id] : null}
+                    isActive={spotlightCallout?.id === c.id}
+                    isLinked={isLinkedCallout}
+                    onClick={() => {
+                      // If a callout is linked as proof, don't allow clicking others
+                      if (selectedProof?.callout_id && !isLinkedCallout) return;
+                      // Toggle: click same callout to close, click different to open
+                      setSpotlightCallout(prev => prev?.id === c.id ? null : c);
+                      // Auto-navigate to callout's page via shared state
+                      if (isPdf && c.page_number) {
+                        setPage(c.page_number);
+                      }
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
