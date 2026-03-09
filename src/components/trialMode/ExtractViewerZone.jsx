@@ -224,13 +224,13 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           null
         ) : (
           <>
-            <button onClick={() => handleZoomChange(Math.max(zoom - 0.25, 0.25))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
+            <button onClick={() => setViewport({ zoom: Math.max(zoom - 0.25, 0.25) }, { flush: true })} className="p-1 rounded hover:bg-white/10 touch-manipulation">
               <ZoomOut className="w-3.5 h-3.5 text-slate-300" />
             </button>
-            <button onClick={() => handleZoomChange(1)} className="text-[10px] text-slate-300 font-mono px-1.5 py-0.5 rounded hover:bg-white/10 min-w-[36px] text-center touch-manipulation">
+            <button onClick={() => setViewport({ zoom: 1 }, { flush: true })} className="text-[10px] text-slate-300 font-mono px-1.5 py-0.5 rounded hover:bg-white/10 min-w-[36px] text-center touch-manipulation">
               {Math.round(zoom * 100)}%
             </button>
-            <button onClick={() => handleZoomChange(Math.min(zoom + 0.25, 5))} className="p-1 rounded hover:bg-white/10 touch-manipulation">
+            <button onClick={() => setViewport({ zoom: Math.min(zoom + 0.25, 5) }, { flush: true })} className="p-1 rounded hover:bg-white/10 touch-manipulation">
               <ZoomIn className="w-3.5 h-3.5 text-slate-300" />
             </button>
           </>
