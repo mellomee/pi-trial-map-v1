@@ -36,9 +36,13 @@ export default function JuryView() {
   const externalPositionX = presentationState?.proof_scroll_left != null ? -presentationState.proof_scroll_left : null;
   const externalPositionY = presentationState?.proof_scroll_top != null ? -presentationState.proof_scroll_top : null;
 
-  // Subscribe to full session state changes
+  // Load initial session state + subscribe to changes
   useEffect(() => {
     if (!trialSessionId) return;
+    // Fetch initial state immediately so jury doesn't wait for first event
+    base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId })
+      .then((states) => { if (states[0]) setSessionState(states[0]); });
+
     const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
       if (event.data?.trial_session_id === trialSessionId) {
         setSessionState(event.data);
