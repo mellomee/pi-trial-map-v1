@@ -177,8 +177,14 @@ export default function TrialMode() {
       }
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
+
+      // Request token guard: only latest request is allowed to update state
+      const token = {};
+      latestChildQuestionRequestToken.current = token;
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
-      setChildResolvedLinks(links);
+      if (latestChildQuestionRequestToken.current === token) {
+        setChildResolvedLinks(links);
+      }
     }
   };
 
