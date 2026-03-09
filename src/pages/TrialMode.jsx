@@ -151,8 +151,14 @@ export default function TrialMode() {
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
     setSelectedProof(null);
+
+    // Request token guard: only latest request is allowed to update state
+    const token = {};
+    latestQuestionRequestToken.current = token;
     const links = await resolveQuestionLinks(questionId, activeCase.id);
-    setResolvedLinks(links);
+    if (latestQuestionRequestToken.current === token) {
+      setResolvedLinks(links);
+    }
   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
