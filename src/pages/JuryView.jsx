@@ -193,12 +193,10 @@ export default function JuryView() {
           {isPdf ? (
           <>
           {/* PDF with optional spotlight overlay */}
-          <PdfViewer
+          <PdfViewerReact
             fileUrl={extract.extract_file_url}
             externalZoom={zoom}
             externalPage={currentPage}
-            externalScrollLeft={sharedScrollLeft}
-            externalScrollTop={sharedScrollTop}
             readOnly={true}
             showControls={false}
             dimmed={false}
