@@ -121,11 +121,25 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const imgContainerRef = useRef(null);
   const lastDist = useRef(null);
   const sidebarRef = useRef(null);
+  const pdfContainerRef = useRef(null); // ref to the PDF viewer container for ResizeObserver
 
   // Use shared presentation state (attorney is the writer, jury is the reader)
-  const { state: presentationState, setPage, setZoom, setScroll } = usePresentationState(trialSessionId, true);
+  const { state: presentationState, setPage, setZoom, setScroll, setViewportSize } = usePresentationState(trialSessionId, true);
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
+
+  // Report PDF viewer container size to shared state so jury can mirror it
+  useEffect(() => {
+    if (!pdfContainerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      setViewportSize(width, height);
+    });
+    ro.observe(pdfContainerRef.current);
+    return () => ro.disconnect();
+  }, [setViewportSize]);
 
   // When spotlight changes while publishing, notify TrialMode via module-level callback
   useEffect(() => {
