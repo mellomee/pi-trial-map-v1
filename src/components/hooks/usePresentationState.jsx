@@ -1,43 +1,35 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 
 /**
- * Shared presentation state hook.
+ * Shared presentation state for attorney and jury views.
  *
- * Attorney (isAttorney=true): reads + writes state.
- * Jury (isAttorney=false):    reads state only.
+ * Attorney (isAttorney=true): reads + writes via setPage/setZoom/setScroll/setViewportSize
+ * Jury  (isAttorney=false): reads only — all setters are no-ops
  *
- * Single source of truth design:
- *   - Loads initial TrialSessionStates record on mount.
- *   - Subscribes to real-time changes immediately (not only after initial load).
- *   - This prevents the dual-subscription race condition that caused stale
- *     jury_can_see_proof values to leak into JuryView.
+ * The hook loads initial state from the DB AND subscribes to real-time changes.
+ * These are independent so no change is ever missed.
  */
 export function usePresentationState(trialSessionId, isAttorney = false) {
   const [state, setState] = useState(null);
-  const vpDebounceRef = useRef(null);
 
   useEffect(() => {
     if (!trialSessionId) return;
 
-    // Subscribe first so we never miss an event that fires during the initial fetch.
+    // Load initial state (independent of subscription — avoids missing state on first load)
+    base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId })
+      .then((states) => { if (states[0]) setState(states[0]); })
+      .catch(console.error);
+
+    // Subscribe to all future changes
     const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
       if (event.data?.trial_session_id === trialSessionId) {
         setState(event.data);
       }
     });
 
-    // Then load the current record.
-    base44.entities.TrialSessionStates.filter({ trial_session_id: trialSessionId })
-      .then((records) => {
-        if (records[0]) setState(records[0]);
-      })
-      .catch(console.error);
-
     return () => unsub();
   }, [trialSessionId]);
-
-  // ── Writer callbacks (attorney only) ─────────────────────────────────────
 
   const setPage = useCallback((newPage) => {
     if (!isAttorney || !state) return;
@@ -58,18 +50,16 @@ export function usePresentationState(trialSessionId, isAttorney = false) {
   }, [state, isAttorney]);
 
   /**
-   * Report the attorney PDF viewer's container size so the jury can render
-   * an identical-sized framed viewport. Debounced to 400ms to avoid thrashing.
+   * Write the attorney's usable PDF viewport dimensions so the jury
+   * can build a matching proportional frame.
+   * Call this from a ResizeObserver on the attorney's PDF container div.
    */
-  const setViewportSize = useCallback((w, h) => {
-    if (!isAttorney || !state || !w || !h) return;
-    if (vpDebounceRef.current) clearTimeout(vpDebounceRef.current);
-    vpDebounceRef.current = setTimeout(() => {
-      base44.entities.TrialSessionStates.update(state.id, {
-        proof_viewport_width: Math.round(w),
-        proof_viewport_height: Math.round(h),
-      }).catch(console.error);
-    }, 400);
+  const setViewportSize = useCallback((width, height) => {
+    if (!isAttorney || !state) return;
+    base44.entities.TrialSessionStates.update(state.id, {
+      attorney_viewport_width: width,
+      attorney_viewport_height: height,
+    }).catch(console.error);
   }, [state, isAttorney]);
 
   return { state, setPage, setZoom, setScroll, setViewportSize };
