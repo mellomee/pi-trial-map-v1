@@ -48,9 +48,7 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     externalPage = null,
     externalScrollLeft = null,
     externalScrollTop = null,
-    onZoomChange = null,
-    onPageChange = null,
-    onScrollChange = null,
+    onViewportChange = null,  // ({ page?, zoom?, scrollLeft?, scrollTop? }, { flush? }) => void
     readOnly = false,
     showControls = true,
     dimmed = false,
