@@ -70,6 +70,15 @@ export default function ExtractViewerZone({
     });
   }, [selectedProof?.source_id]);
 
+  // Auto-select linked callout and jump to its page when proof first loads
+  useEffect(() => {
+    if (!selectedProof?.callout_id || !callouts.length) return;
+    const linked = callouts.find((c) => c.id === selectedProof.callout_id);
+    if (!linked) return;
+    setSelectedCallout(linked);
+    if (linked.page_number) _syncPage(linked.page_number);
+  }, [callouts, selectedProof?.callout_id]);
+
   // Load highlights when callout changes
   useEffect(() => {
     if (!selectedCallout?.id) { setHighlights([]); return; }
