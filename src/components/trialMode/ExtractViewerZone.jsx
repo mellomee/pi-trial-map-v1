@@ -127,6 +127,10 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   const zoom = presentationState?.proof_zoom_level || 1;
   const currentPage = presentationState?.proof_current_page || 1;
 
+  // Derived from extract state — must be declared before any useEffect that references them
+  const extractFileUrl = extract?.extract_file_url || null;
+  const isPdf = extractFileUrl?.match(/\.pdf(\?|$)/i);
+
   // Observe the PDF container size so the jury can build a matching viewport frame
   useEffect(() => {
     if (!imgContainerRef.current || !isPdf) return;
