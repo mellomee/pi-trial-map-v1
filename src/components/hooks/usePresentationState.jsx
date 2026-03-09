@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import React from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 
 /**
@@ -10,8 +9,8 @@ import { base44 } from '@/api/base44Client';
 export function usePresentationState(trialSessionId, isAttorney = false) {
   const [state, setState] = useState(null);
   const [unsubscribe, setUnsubscribe] = useState(null);
-  const updateTimerRef = React.useRef(null);
-  const pendingUpdateRef = React.useRef({});
+  const updateTimerRef = useRef(null);
+  const pendingUpdateRef = useRef({});
 
   // Subscribe to real-time changes
   useEffect(() => {
