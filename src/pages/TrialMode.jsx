@@ -51,6 +51,7 @@ export default function TrialMode() {
   const [trialSession, setTrialSession] = useState(null);
   const [publishedProof, setPublishedProof] = useState(null);
   const [selectedProof, setSelectedProof] = useState(null);
+  const [publishContextQuestionId, setPublishContextQuestionId] = useState(null); // track which question context the proof was published in
 
   // Resizable layout state
   const [layout, setLayout] = useState({
@@ -127,6 +128,7 @@ export default function TrialMode() {
     // Auto-unpublish if witness changes away from published proof
     if (publishedProof) {
       await handleClearJury();
+      setPublishContextQuestionId(null);
     }
     setSelectedWitnessId(witnessId);
     setSelectedQuestionId(null);
@@ -139,9 +141,10 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
-    // Auto-unpublish if question changes and published proof is different
-    if (publishedProof) {
+    // Only unpublish if switching to a different question context (not same question)
+    if (publishedProof && publishContextQuestionId !== questionId) {
       await handleClearJury();
+      setPublishContextQuestionId(null);
     }
     setSelectedQuestionId(questionId);
     setSelectedChildQuestionId(null);
@@ -156,6 +159,7 @@ export default function TrialMode() {
       // Deselect — revert to parent's proof; auto-unpublish if needed
       if (publishedProof) {
         await handleClearJury();
+        setPublishContextQuestionId(null);
       }
       setSelectedChildQuestionId(null);
       setChildResolvedLinks(null);
@@ -164,6 +168,7 @@ export default function TrialMode() {
       // Auto-unpublish if child context changes
       if (publishedProof) {
         await handleClearJury();
+        setPublishContextQuestionId(null);
       }
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
@@ -201,6 +206,7 @@ export default function TrialMode() {
     }
     await publishProofToJury(trialSession.id, proofItem.id);
     setPublishedProof(proofItem);
+    setPublishContextQuestionId(selectedChildQuestionId || selectedQuestionId);
     window.__trialModePublished = true;
   };
 
@@ -208,6 +214,7 @@ export default function TrialMode() {
     if (!trialSession) return;
     await clearJuryDisplay(trialSession.id);
     setPublishedProof(null);
+    setPublishContextQuestionId(null);
     window.__trialModePublished = false;
   };
 
@@ -433,8 +440,8 @@ export default function TrialMode() {
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
               onSelectProof={async (proof) => {
-                // Auto-unpublish if switching to a different proof
-                if (publishedProof && publishedProof.id !== proof.id) {
+                // Keep publish state if switching within same question context, otherwise unpublish
+                if (publishedProof && publishedProof.id !== proof.id && publishContextQuestionId !== (selectedChildQuestionId || selectedQuestionId)) {
                   await handleClearJury();
                 }
                 setSelectedProof(proof);
