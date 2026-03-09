@@ -150,7 +150,7 @@ const SharedProofViewer = React.forwardRef(function SharedProofViewer({
   const currentPageRef = useRef(1);
 
   // Expose for parent (e.g. ExtractViewerZone to read/clear spotlight)
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     getSpotlightCallout: () => spotlightCallout,
   }), [spotlightCallout]);
 
