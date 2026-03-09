@@ -85,15 +85,6 @@ export default function JuryView() {
         const sorted = [...cos].sort((a, b) => (a.page_number || 0) - (b.page_number || 0));
         setCallouts(sorted);
         setJx(jxList[0] || null);
-
-        // Spotlight: driven by session state
-        const sid = sessionState?.current_callout_id;
-        if (sid) {
-          const sc = sorted.find((c) => c.id === sid) || null;
-          setSpotlightCallout(sc);
-        } else {
-          setSpotlightCallout(null);
-        }
       }
     });
   }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof, sessionState?.current_callout_id]);
