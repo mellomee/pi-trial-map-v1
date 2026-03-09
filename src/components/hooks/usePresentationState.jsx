@@ -55,5 +55,14 @@ export function usePresentationState(trialSessionId, isAttorney = false) {
     }).catch(console.error);
   }, [state, isAttorney]);
 
-  return { state, setPage, setZoom, setScroll };
+  // Attorney only: update pan (X, Y offsets for shared PDF viewer)
+  const setPan = useCallback((panX, panY) => {
+    if (!isAttorney || !state) return;
+    base44.entities.TrialSessionStates.update(state.id, {
+      proof_pan_x: panX,
+      proof_pan_y: panY,
+    }).catch(console.error);
+  }, [state, isAttorney]);
+
+  return { state, setPage, setZoom, setScroll, setPan };
 }
