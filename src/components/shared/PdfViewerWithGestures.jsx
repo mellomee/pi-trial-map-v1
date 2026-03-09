@@ -2,8 +2,9 @@ import React, { useRef } from 'react';
 import PdfViewer from '@/components/shared/PdfViewer';
 
 /**
- * Synchronized PDF viewer for attorney/jury presentation.
- * Passes through all gesture/scroll/zoom/page props to PdfViewer.
+ * Thin wrapper that passes all viewport sync props to PdfViewer.
+ * onViewportChange({ page?, zoom?, scrollLeft?, scrollTop? }, { flush? }) is called
+ * as a single batched callback — no separate zoom/scroll/page signals.
  */
 export default function PdfViewerWithGestures({
   fileUrl,
@@ -11,9 +12,7 @@ export default function PdfViewerWithGestures({
   zoom = 1,
   scrollLeft = null,
   scrollTop = null,
-  onZoomChange,
-  onPageChange,
-  onScrollChange,
+  onViewportChange,
   showControls = true,
   dimmed = false,
 }) {
@@ -27,9 +26,7 @@ export default function PdfViewerWithGestures({
       externalZoom={zoom}
       externalScrollLeft={scrollLeft}
       externalScrollTop={scrollTop}
-      onPageChange={onPageChange}
-      onZoomChange={onZoomChange}
-      onScrollChange={onScrollChange}
+      onViewportChange={onViewportChange}
       showControls={showControls}
       dimmed={dimmed}
     />
