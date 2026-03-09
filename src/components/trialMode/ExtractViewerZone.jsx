@@ -139,7 +139,6 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           setSpotlightCallout(linked);
           if (linked.page_number) {
             setPage(linked.page_number);
-            setPan(0, 0);
           }
         }
       }
