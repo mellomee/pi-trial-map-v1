@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
-import PdfViewer from "@/components/shared/PdfViewer";
+import { Scale } from "lucide-react";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
   if (!highlights?.length) return null;
@@ -147,7 +152,11 @@ export default function JuryView() {
 
   // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
-    return <div className="fixed inset-0 bg-black" />;
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <Scale className="w-5 h-5 text-slate-800" strokeWidth={1} />
+      </div>
+    );
   }
 
   // Build exhibit label: only "Exhibit X" using admitted number
@@ -192,21 +201,35 @@ export default function JuryView() {
 
           {isPdf ? (
           <>
-          {/* PDF with optional spotlight overlay */}
-          <PdfViewer
-            fileUrl={extract.extract_file_url}
-            externalZoom={zoom}
-            externalPage={currentPage}
-            externalScrollLeft={sharedScrollLeft}
-            externalScrollTop={sharedScrollTop}
-            readOnly={true}
-            showControls={false}
-            dimmed={false}
-          />
+          {/* PDF with synchronized scroll/zoom from attorney view */}
+          <div
+            ref={useRef(null)}
+            className="w-full h-full overflow-auto bg-black relative"
+            style={{
+              scrollBehavior: 'auto',
+              scrollLeft: sharedScrollLeft ?? undefined,
+              scrollTop: sharedScrollTop ?? undefined,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px', minHeight: '100%' }}>
+              <Document
+                file={extract.extract_file_url}
+                loading={<div className="text-slate-400 text-xs p-8">Loading PDF…</div>}
+                error={<div className="text-red-400 text-xs p-4">Failed to load PDF</div>}
+              >
+                <Page
+                  pageNumber={currentPage}
+                  scale={zoom}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                />
+              </Document>
+            </div>
+          </div>
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
           {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+            <div className="absolute inset-0 z-10 pointer-events-none" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
               )}
 
               {/* Layer 2: Spotlighted callout (if active) */}
@@ -246,24 +269,24 @@ export default function JuryView() {
               </div>
 
               {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
-              )}
+               {callout?.snapshot_image_url && (
+                 <div className="absolute inset-0 z-10 pointer-events-none" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+               )}
 
-              {/* Layer 2: Spotlighted callout (if active) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                    <img
-                      src={callout.snapshot_image_url}
-                      alt="Callout"
-                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                      draggable={false}
-                    />
-                    <HighlightOverlay highlights={highlights} />
-                  </div>
-                </div>
-              )}
+               {/* Layer 2: Spotlighted callout (if active) */}
+               {callout?.snapshot_image_url && (
+                 <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                   <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                     <img
+                       src={callout.snapshot_image_url}
+                       alt="Callout"
+                       style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                       draggable={false}
+                     />
+                     <HighlightOverlay highlights={highlights} />
+                   </div>
+                 </div>
+               )}
 
             </>
           )}
