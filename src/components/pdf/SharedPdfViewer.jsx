@@ -23,6 +23,7 @@ export default function SharedPdfViewer({
   onPageChange,
   onZoomChange,
   onPanChange,
+  onViewportChange,
   readOnly = false,
   showControls = true,
   showToolbar = true,
@@ -31,11 +32,15 @@ export default function SharedPdfViewer({
   const [numPages, setNumPages] = useState(null);
   const [isImage, setIsImage] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [visualZoom, setVisualZoom] = useState(zoom);
+  const [visualPanX, setVisualPanX] = useState(panX);
+  const [visualPanY, setVisualPanY] = useState(panY);
   const touchRef = useRef(null);
   const gestureActiveRef = useRef(false);
   const committedZoomRef = useRef(zoom);
   const cssScaleRef = useRef(1);
   const pinchAnchorRef = useRef({ x: 0, y: 0 });
+  const syncTimerRef = useRef(null);
 
   useEffect(() => {
     const lowerUrl = fileUrl?.toLowerCase() || '';
@@ -45,7 +50,16 @@ export default function SharedPdfViewer({
 
   useEffect(() => {
     committedZoomRef.current = zoom;
+    setVisualZoom(zoom);
   }, [zoom]);
+
+  useEffect(() => {
+    setVisualPanX(panX);
+  }, [panX]);
+
+  useEffect(() => {
+    setVisualPanY(panY);
+  }, [panY]);
 
   const handlePrevPage = () => {
     if (page > 1) onPageChange?.(page - 1);
@@ -109,7 +123,9 @@ export default function SharedPdfViewer({
     if (t.type === 'pan' && e.touches.length === 1) {
       const dx = e.touches[0].clientX - t.x0;
       const dy = e.touches[0].clientY - t.y0;
-      onPanChange?.(t.px0 + dx, t.py0 + dy);
+      // Update local visual state only, do not call backend
+      setVisualPanX(t.px0 + dx);
+      setVisualPanY(t.py0 + dy);
     } else if (t.type === 'pinch' && e.touches.length >= 2) {
       e.preventDefault();
       const [t1, t2] = e.touches;
@@ -121,16 +137,35 @@ export default function SharedPdfViewer({
       const newPanX = anchorX * (1 - ratio) + t.px0;
       const newPanY = anchorY * (1 - ratio) + t.py0;
       cssScaleRef.current = ratio;
-      onZoomChange?.(newZoom);
-      onPanChange?.(newPanX, newPanY);
+      // Update local visual state only, do not call backend
+      setVisualZoom(newZoom);
+      setVisualPanX(newPanX);
+      setVisualPanY(newPanY);
+      // Throttle sync to backend: collect updates, send once per 150ms
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = setTimeout(() => {
+        onViewportChange?.({ zoom: newZoom, panX: newPanX, panY: newPanY });
+      }, 150);
     }
-  }, [readOnly, onPanChange, onZoomChange]);
+  }, [readOnly, onViewportChange]);
 
   const handleTouchEnd = useCallback(() => {
+    if (!touchRef.current) return;
+    const t = touchRef.current;
     gestureActiveRef.current = false;
     cssScaleRef.current = 1;
+
+    // Send final committed update once on gesture end
+    if (t.type === 'pinch') {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      onViewportChange?.({ zoom: visualZoom, panX: visualPanX, panY: visualPanY });
+    } else if (t.type === 'pan') {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      onViewportChange?.({ panX: visualPanX, panY: visualPanY });
+    }
+
     touchRef.current = null;
-  }, []);
+  }, [visualZoom, visualPanX, visualPanY, onViewportChange]);
 
   if (!fileUrl) {
     return (
@@ -192,7 +227,7 @@ export default function SharedPdfViewer({
       >
         <div
           style={{
-            transform: `translate(${panX}px, ${panY}px) scale(${gestureActiveRef.current ? cssScaleRef.current : 1})`,
+            transform: `translate(${gestureActiveRef.current ? visualPanX : panX}px, ${gestureActiveRef.current ? visualPanY : panY}px) scale(${gestureActiveRef.current ? cssScaleRef.current : 1})`,
             transformOrigin: 'top left',
             transition: gestureActiveRef.current ? 'none' : 'transform 0.1s ease-out',
           }}
