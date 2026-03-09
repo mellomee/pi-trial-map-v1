@@ -205,9 +205,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
   }, [selectedProof?.source_id, selectedProof?.callout_id]);
 
   const exhibitLabel = jx?.admitted_no ? `Exhibit ${jx.admitted_no}` : jx?.marked_no ? `Exhibit ${jx.marked_no}` : null;
-  const extractFileUrl = extract?.extract_file_url || null;
   const spotlightHighlights = spotlightCallout ? (highlightsByCallout[spotlightCallout.id] || []) : [];
-  const isPdf = extractFileUrl?.match(/\.pdf(\?|$)/i);
   
   // Calculate max width for spotlight based on sidebar visibility
   const sidebarWidth = allCallouts.length > 0 ? 112 : 0; // w-28 = 112px
