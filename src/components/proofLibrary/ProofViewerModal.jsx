@@ -283,18 +283,19 @@ export default function ProofViewerModal({ proofItem, isOpen, onClose, onCallout
           <div className="space-y-4">
                 <Badge className="bg-purple-500/20 text-purple-300">Exhibit Extract</Badge>
 
-                {/* Extract file + callout sidebar */}
-                <ExtractFileWithCallouts
-                  extract={extract}
-                  callouts={callouts}
-                  caseParties={caseParties}
-                  proofItem={proofItem}
-                  spotlightCallout={selectedCallout}
-                  highlights={highlights}
-                  onSpotlightCallout={setSelectedCallout}
-                  onSetAsProofCallout={handleSetAsProofCallout}
-                  isCurrentProofCallout={isCurrentProofCallout}
-                />
+                {/* Extract file + callout sidebar — shared component */}
+                <div className="rounded-lg border border-[#1e2a45] overflow-hidden bg-[#0a0f1e]" style={{ minHeight: '320px', maxHeight: '500px' }}>
+                  <SharedProofViewerBody
+                    extract={extract}
+                    callouts={callouts}
+                    witnessNames={caseParties}
+                    selectedCallout={selectedCallout}
+                    onSelectCallout={setSelectedCallout}
+                    proofItemCalloutId={proofItem?.callout_id}
+                    highlights={highlights}
+                    onSetAsProof={!isCurrentProofCallout ? handleSetAsProofCallout : null}
+                  />
+                </div>
 
 
 
