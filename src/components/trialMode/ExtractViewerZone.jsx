@@ -346,7 +346,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
                     setSpotlightCallout(prev => prev?.id === c.id ? null : c);
                     // Auto-navigate to callout's page via shared state
                     if (isPdf && c.page_number) {
-                      setPage(c.page_number);
+                      setViewport({ page: c.page_number, scrollLeft: 0, scrollTop: 0 }, { flush: true });
                     }
                   }}
                 />
