@@ -367,7 +367,7 @@ const PdfViewer = React.forwardRef(function PdfViewer(
         containerRef.current.scrollLeft = newScrollLeft;
         containerRef.current.scrollTop = newScrollTop;
       });
-      scheduleScrollSync();
+      notifyViewport();
 
     } else if (touchRef.current.type === 'pinch' && e.touches.length >= 2) {
       // Two-finger combined zoom + pan
