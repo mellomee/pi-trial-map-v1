@@ -142,9 +142,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
     setPage(newPage);
   }, [setPage]);
 
-  const handleScrollChange = useCallback((sl, st) => {
-    setScroll(sl, st);
-  }, [setScroll]);
+
 
   useEffect(() => {
     if (!selectedProof?.source_id) {
