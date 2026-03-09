@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 
 /**
@@ -9,6 +10,8 @@ import { base44 } from '@/api/base44Client';
 export function usePresentationState(trialSessionId, isAttorney = false) {
   const [state, setState] = useState(null);
   const [unsubscribe, setUnsubscribe] = useState(null);
+  const updateTimerRef = React.useRef(null);
+  const pendingUpdateRef = React.useRef({});
 
   // Subscribe to real-time changes
   useEffect(() => {
@@ -58,11 +61,35 @@ export function usePresentationState(trialSessionId, isAttorney = false) {
   // Attorney only: update pan (X, Y offsets for shared PDF viewer)
   const setPan = useCallback((panX, panY) => {
     if (!isAttorney || !state) return;
-    base44.entities.TrialSessionStates.update(state.id, {
-      proof_pan_x: panX,
-      proof_pan_y: panY,
-    }).catch(console.error);
+    pendingUpdateRef.current.proof_pan_x = panX;
+    pendingUpdateRef.current.proof_pan_y = panY;
+    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+    updateTimerRef.current = setTimeout(() => {
+      if (Object.keys(pendingUpdateRef.current).length > 0) {
+        base44.entities.TrialSessionStates.update(state.id, pendingUpdateRef.current).catch(console.error);
+        pendingUpdateRef.current = {};
+      }
+    }, 100);
   }, [state, isAttorney]);
 
-  return { state, setPage, setZoom, setScroll, setPan };
+  // Attorney only: combined viewport update (throttled)
+  const setViewport = useCallback((viewport) => {
+    if (!isAttorney || !state) return;
+    const { page, zoom, panX, panY } = viewport;
+    const update = {};
+    if (page !== undefined) update.proof_current_page = page;
+    if (zoom !== undefined) update.proof_zoom_level = zoom;
+    if (panX !== undefined) update.proof_pan_x = panX;
+    if (panY !== undefined) update.proof_pan_y = panY;
+    Object.assign(pendingUpdateRef.current, update);
+    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+    updateTimerRef.current = setTimeout(() => {
+      if (Object.keys(pendingUpdateRef.current).length > 0) {
+        base44.entities.TrialSessionStates.update(state.id, pendingUpdateRef.current).catch(console.error);
+        pendingUpdateRef.current = {};
+      }
+    }, 100);
+  }, [state, isAttorney]);
+
+  return { state, setPage, setZoom, setScroll, setPan, setViewport };
 }
