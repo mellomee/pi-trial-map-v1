@@ -207,6 +207,20 @@ const PdfViewer = React.forwardRef(function PdfViewer(
     };
   }, [pdf, displayPage, renderZoom]);
 
+  // ── Viewport sync ─────────────────────────────────────────────────────────
+  // All viewport changes (zoom + scroll) are reported together via onViewportChange.
+  // During gestures this is throttled by the caller (usePresentationState).
+  // We always pass flush=false during gesture and flush=true at gesture end.
+  const notifyViewport = useCallback((extra = {}, flush = false) => {
+    if (readOnly || !onViewportChange) return;
+    onViewportChange({
+      zoom: visualZoomRef.current,
+      scrollLeft: Math.round(expectedScrollRef.current.left),
+      scrollTop: Math.round(expectedScrollRef.current.top),
+      ...extra,
+    }, { flush });
+  }, [onViewportChange, readOnly]);
+
   // ── Page navigation ───────────────────────────────────────────────────────
   const goToPage = useCallback((pageNum) => {
     const next = clamp(pageNum, 1, totalPagesRef.current || 1);
@@ -226,20 +240,6 @@ const PdfViewer = React.forwardRef(function PdfViewer(
 
   const handlePrevPage = useCallback(() => goToPage(displayPageRef.current - 1), [goToPage]);
   const handleNextPage = useCallback(() => goToPage(displayPageRef.current + 1), [goToPage]);
-
-  // ── Viewport sync ─────────────────────────────────────────────────────────
-  // All viewport changes (zoom + scroll) are reported together via onViewportChange.
-  // During gestures this is throttled by the caller (usePresentationState).
-  // We always pass flush=false during gesture and flush=true at gesture end.
-  const notifyViewport = useCallback((extra = {}, flush = false) => {
-    if (readOnly || !onViewportChange) return;
-    onViewportChange({
-      zoom: visualZoomRef.current,
-      scrollLeft: Math.round(expectedScrollRef.current.left),
-      scrollTop: Math.round(expectedScrollRef.current.top),
-      ...extra,
-    }, { flush });
-  }, [onViewportChange, readOnly]);
 
   // ── Commit gesture end: one pdf.js rerender, finalize sync ───────────────
   const commitGestureEnd = useCallback(() => {
