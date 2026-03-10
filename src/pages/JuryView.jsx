@@ -218,22 +218,21 @@ export default function JuryView() {
     extract?.extract_file_url?.match(/\.pdf(\?|$)/i);
 
   return (
-    <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
 
       {proofItem.type === "extract" && extract?.extract_file_url && (
-        <div style={PRESENTATION_FRAME_STYLE.container}>
-          <div style={PRESENTATION_FRAME_STYLE.inner}>
+        <div style={PRESENTATION_FRAME_STYLE.inner}>
 
-            {exhibitLabel && (
-              <div className="absolute top-3 right-4 z-20">
-                <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">
-                  {exhibitLabel}
-                </span>
-              </div>
-            )}
+          {exhibitLabel && (
+            <div className="absolute top-3 right-4 z-20">
+              <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">
+                {exhibitLabel}
+              </span>
+            </div>
+          )}
 
-            {isPdf && (
-              <div style={{ width: "100%", height: "100%", position: "relative" }}>
+          {isPdf && (
+            <div style={{ width: "100%", height: "100%", position: "relative" }}>
                 <PdfViewer
                   fileUrl={extract.extract_file_url}
                   externalZoom={zoom}
@@ -271,12 +270,11 @@ export default function JuryView() {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
+                </div>
+                )}
 
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                </div>
+                )}
+                </div>
+                );
+                }
