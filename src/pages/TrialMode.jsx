@@ -124,12 +124,9 @@ export default function TrialMode() {
   };
 
   const handleSelectWitness = async (witnessId) => {
-    if (isClearing.current) return;
-    // Auto-unpublish if witness changes away from published proof
+    // Auto-unpublish when switching witnesses
     if (publishedProof) {
-      isClearing.current = true;
       await handleClearJury();
-      isClearing.current = false;
     }
     setSelectedWitnessId(witnessId);
     setSelectedQuestionId(null);
