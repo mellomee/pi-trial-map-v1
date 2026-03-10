@@ -9,6 +9,7 @@ import { Zap, Monitor, Square, ChevronDown } from "lucide-react";
 export default function Attorney3() {
   const { activeCase } = useActiveCase();
   const [sessionId, setSessionId] = useState(null);
+  const [stateId, setStateId] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [questionProofs, setQuestionProofs] = useState([]);
