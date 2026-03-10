@@ -118,40 +118,18 @@ export default function Questions() {
     const { source, destination } = result;
     if (!destination) return;
 
-    const isFromOrdered = source.droppableId === "ordered";
-    const isToOrdered = destination.droppableId === "ordered";
-
-    if (isFromOrdered && isToOrdered) {
-      // Reorder within ordered list
-      const newFiltered = Array.from(allFiltered);
-      if (source.index === destination.index) return;
-      
-      const [moved] = newFiltered.splice(source.index, 1);
-      newFiltered.splice(destination.index, 0, moved);
-      
-      // Renumber and persist
-      Promise.all(newFiltered.map((q, i) => base44.entities.Questions.update(q.id, { order_index: i })));
-      
-      setQuestions(qs => qs.map(q => {
-        const idx = newFiltered.findIndex(nf => nf.id === q.id);
-        return idx >= 0 ? { ...q, order_index: idx } : q;
-      }));
-    } else if (!isFromOrdered && isToOrdered) {
-      // Move from unordered to ordered
-      const movedQuestion = unordered[source.index];
-      if (!movedQuestion) return;
-
-      const newOrdered = Array.from(allFiltered);
-      newOrdered.splice(destination.index, 0, movedQuestion);
-      
-      // Renumber all ordered questions
-      Promise.all(newOrdered.map((q, i) => base44.entities.Questions.update(q.id, { order_index: i })));
-      
-      setQuestions(qs => qs.map(q => {
-        const idx = newOrdered.findIndex(no => no.id === q.id);
-        return idx >= 0 ? { ...q, order_index: idx } : q;
-      }));
-    }
+    // Work with filtered (already sorted) questions
+    const newFiltered = Array.from(allFiltered);
+    if (source.index === destination.index) return;
+    
+    const [moved] = newFiltered.splice(source.index, 1);
+    newFiltered.splice(destination.index, 0, moved);
+    
+    // Update state with new ordering (display only, don't persist)
+    setQuestions(qs => {
+      const map = new Map(qs.map(q => [q.id, q]));
+      return newFiltered.map(q => map.get(q.id) || q);
+    });
   };
 
   const unlinkProof = async (questionId, proofId) => {
@@ -193,17 +171,8 @@ export default function Questions() {
     const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
     const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
-    const hasOrder = q.order_index !== null && q.order_index !== undefined;
-    return matchSearch && matchParty && matchType && hasOrder;
+    return matchSearch && matchParty && matchType;
   }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-
-  const unordered = questions.filter(q => {
-    const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
-    const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
-    const matchType = typeFilter === "all" || q.exam_type === typeFilter;
-    const hasOrder = q.order_index !== null && q.order_index !== undefined;
-    return matchSearch && matchParty && matchType && !hasOrder;
-  });
 
   const filtered = buildQuestionTree(allFiltered);
 
@@ -247,54 +216,9 @@ export default function Questions() {
 
       {/* Render question hierarchy */}
       <DragDropContext onDragEnd={onDragEnd}>
-        {/* Unordered Questions Section */}
-        {unordered.length > 0 && (
-          <div className="mb-8 p-4 bg-[#0a0f1e] border border-amber-500/30 rounded-lg">
-            <h2 className="text-lg font-semibold text-amber-400 mb-4">Unordered Questions</h2>
-            <p className="text-xs text-slate-500 mb-4">Drag questions below into the ordered list to add them to the attorney's view.</p>
-            <Droppable droppableId="unordered">
-              {(provided) => (
-                <div className="space-y-2 min-h-20" {...provided.droppableProps} ref={provided.innerRef}>
-                  {unordered.map((q, idx) => (
-                    <Draggable key={q.id} draggableId={`unordered-${q.id}`} index={idx}>
-                      {(dragProvided, snapshot) => (
-                        <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
-                          <Card className="bg-[#131a2e] border-[#1e2a45]">
-                            <CardContent className="py-2 px-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-start gap-2 flex-1">
-                                  <button {...dragProvided.dragHandleProps} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5">
-                                    <GripVertical className="w-3 h-3" />
-                                  </button>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-slate-300">{q.question_text}</p>
-                                    <div className="flex gap-2 mt-1 flex-wrap">
-                                      <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400 text-xs" : "bg-red-500/20 text-red-400 text-xs"}>{q.exam_type}</Badge>
-                                      <Badge variant="outline" className="text-slate-400 border-slate-600 text-xs">{getPartyName(q.party_id)}</Badge>
-                                    </div>
-                                  </div>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-400 flex-shrink-0" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
-                              </div>
-                            </CardContent>
-                            </Card>
-                            </div>
-                            )}
-                            </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </div>
-        )}
-
-        {/* Ordered Questions Section */}
-        <div className="p-4 bg-[#0f1629] border border-cyan-500/20 rounded-lg">
-          <h2 className="text-lg font-semibold text-cyan-400 mb-4">Ordered Questions (Attorney View)</h2>
-          <Droppable droppableId="ordered">
-            {(provided) => (
-              <div className="space-y-2 min-h-20" {...provided.droppableProps} ref={provided.innerRef}>
+        <Droppable droppableId="questions">
+          {(provided) => (
+            <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
               {filtered.map((q, parentIdx) => {
                 const linkedProofIds = questionProofs[q.id] || [];
                 const hasChildren = q.children && q.children.length > 0;
@@ -338,7 +262,8 @@ export default function Questions() {
                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
                               </div>
-                              {linkedProofIds.length > 0 && (
+                            </div>
+                            {linkedProofIds.length > 0 && (
                               <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
                                 <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
                                 {linkedProofIds.map((proofId) => {
@@ -372,15 +297,15 @@ export default function Questions() {
                                   );
                                 })}
                               </div>
-                              )}
-                              </CardContent>
-                              </Card>
-                              </div>
-                              )}
-                              </Draggable>
-
-                              {/* Render child questions below parent */}
-                              {hasChildren && (
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </Draggable>
+                  
+                  {/* Render child questions below parent */}
+                  {hasChildren && (
                       <div className="ml-8 space-y-2 mt-2 border-l-2 border-slate-700 pl-3">
                         {q.children.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map((child, childIdx) => {
                           const childProofIds = questionProofs[child.id] || [];
@@ -419,10 +344,9 @@ export default function Questions() {
                 );
               })}
               {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </div>
+            </div>
+          )}
+        </Droppable>
       </DragDropContext>
 
       <ChildrenQuestionsModal
