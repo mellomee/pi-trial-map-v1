@@ -195,28 +195,62 @@ export default function Questions() {
       </div>
 
       <div className="space-y-3 mb-6">
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-            <Input placeholder="Search questions..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+         <div className="flex flex-wrap gap-3">
+           <div className="relative flex-1 max-w-sm">
+             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+             <Input placeholder="Search questions..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+           </div>
+           <Select value={selectedPartyId} onValueChange={setSelectedPartyId}>
+             <SelectTrigger className="w-48 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select witness..." /></SelectTrigger>
+             <SelectContent>
+               <SelectItem value="all">All Witnesses</SelectItem>
+               {parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}
+             </SelectContent>
+           </Select>
+           <Select value={typeFilter} onValueChange={setTypeFilter}>
+             <SelectTrigger className="w-32 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+             <SelectContent>
+               <SelectItem value="all">All Types</SelectItem>
+               <SelectItem value="Direct">Direct</SelectItem>
+               <SelectItem value="Cross">Cross</SelectItem>
+             </SelectContent>
+           </Select>
+         </div>
+       </div>
+
+      {/* Unordered Questions Section */}
+      {unorderedQuestions.length > 0 && (
+        <div className="mb-8 p-4 bg-[#0f1629] border border-amber-500/30 rounded-lg">
+          <h2 className="text-sm font-semibold text-amber-400 mb-3">Unordered Questions ({unorderedQuestions.length})</h2>
+          <div className="space-y-2">
+            {unorderedQuestions.map(q => (
+              <Card key={q.id} className="bg-[#131a2e] border-[#1e2a45]">
+                <CardContent className="py-2 px-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white">{q.question_text}</p>
+                      <div className="flex gap-2 mt-1 flex-wrap">
+                        <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
+                        <Badge variant="outline" className="text-slate-400 border-slate-600 text-xs">{getPartyName(q.party_id)}</Badge>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-cyan-400" 
+                        onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-400" 
+                        onClick={() => remove(q.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          <Select value={selectedPartyId} onValueChange={setSelectedPartyId}>
-            <SelectTrigger className="w-48 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select witness..." /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Witnesses</SelectItem>
-              {parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-32 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Direct">Direct</SelectItem>
-              <SelectItem value="Cross">Cross</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
-      </div>
+      )}
 
       {/* Render question hierarchy */}
       <DragDropContext onDragEnd={onDragEnd}>
