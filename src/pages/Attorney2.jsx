@@ -242,6 +242,14 @@ export default function Attorney2() {
                   ))
                 )}
               </div>
+              {selectedProof && !isPublished && (
+                <Button
+                  onClick={() => handlePublish(selectedProof)}
+                  className="m-3 bg-green-700 hover:bg-green-600 w-auto h-9 text-xs"
+                >
+                  Publish Selected Proof
+                </Button>
+              )}
             </div>
           )}
         </div>
