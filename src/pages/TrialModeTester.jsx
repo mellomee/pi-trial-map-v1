@@ -8,6 +8,8 @@ export default function TrialModeTester() {
   const [trialSession, setTrialSession] = useState(null);
   const [sessionState, setSessionState] = useState(null);
   const [proof, setProof] = useState(null);
+  const [availableProofs, setAvailableProofs] = useState([]);
+  const [selectedProofId, setSelectedProofId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

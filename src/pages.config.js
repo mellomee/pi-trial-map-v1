@@ -75,13 +75,13 @@ import Runner from './pages/Runner';
 import SettingsPage from './pages/SettingsPage';
 import Transcripts from './pages/Transcripts';
 import TrialMode from './pages/TrialMode';
+import TrialModeTester from './pages/TrialModeTester';
 import TrialPointDetail from './pages/TrialPointDetail';
 import TrialPoints from './pages/TrialPoints';
 import TrialRunner from './pages/TrialRunner';
 import VideoClipEditor from './pages/VideoClipEditor';
 import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
-import TrialModeTester from './pages/TrialModeTester';
 import __Layout from './Layout.jsx';
 
 
@@ -114,13 +114,13 @@ export const PAGES = {
     "SettingsPage": SettingsPage,
     "Transcripts": Transcripts,
     "TrialMode": TrialMode,
+    "TrialModeTester": TrialModeTester,
     "TrialPointDetail": TrialPointDetail,
     "TrialPoints": TrialPoints,
     "TrialRunner": TrialRunner,
     "VideoClipEditor": VideoClipEditor,
     "VideoHub": VideoHub,
     "VideoLibrary": VideoLibrary,
-    "TrialModeTester": TrialModeTester,
 }
 
 export const pagesConfig = {
