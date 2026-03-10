@@ -4,6 +4,7 @@ import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
 import PdfViewer from "@/components/shared/PdfViewer";
 import { PRESENTATION_FRAME_STYLE } from "@/components/trialMode/presentationFrameStyle";
+import { Scale } from "lucide-react";
 
 function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
   if (!highlights?.length) return null;
@@ -146,9 +147,13 @@ export default function JuryView() {
     });
   }, [sessionState?.current_proof_item_id, sessionState?.jury_can_see_proof, sessionState?.current_callout_id]);
 
-  // Waiting / blank screen
+  // Waiting / blank screen with centered Scale icon
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
-    return <div className="fixed inset-0 bg-black" />;
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <Scale className="w-[70px] h-[70px] text-slate-600 opacity-40" />
+      </div>
+    );
   }
 
   // Build exhibit label: only "Exhibit X" using admitted number
