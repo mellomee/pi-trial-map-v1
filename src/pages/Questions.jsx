@@ -234,21 +234,22 @@ export default function Questions() {
         <Droppable droppableId="questions">
           {(provided) => (
             <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
-              {filtered.map((q, idx) => {
+              {filtered.map((q, parentIdx) => {
                 const linkedProofIds = questionProofs[q.id] || [];
                 const hasChildren = q.children && q.children.length > 0;
                 return (
-                  <Draggable key={q.id} draggableId={q.id} index={idx}>
-                    {(dragProvided, snapshot) => (
-                      <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
-                        <Card className="bg-[#131a2e] border-[#1e2a45]">
-                          <CardContent className="py-3 space-y-2">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-start gap-2 flex-1">
-                                <button {...dragProvided.dragHandleProps} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5">
-                                  <GripVertical className="w-3 h-3" />
-                                </button>
-                                <span className="text-sm font-semibold text-cyan-400">{idx + 1}.</span>
+                  <div key={q.id}>
+                    <Draggable draggableId={q.id} index={parentIdx}>
+                      {(dragProvided, snapshot) => (
+                        <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
+                          <Card className="bg-[#131a2e] border-[#1e2a45]">
+                            <CardContent className="py-3 space-y-2">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-2 flex-1">
+                                  <button {...dragProvided.dragHandleProps} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5">
+                                    <GripVertical className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-sm font-semibold text-cyan-400">{parentIdx + 1}.</span>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm text-white">{q.question_text}</p>
                                   <div className="flex gap-2 mt-2 flex-wrap">
