@@ -496,7 +496,7 @@ export default function ProofLibrary() {
                 </div>
                 {/* Tab buttons */}
                 <div className="flex gap-2 border-b border-gray-700 -mx-4 px-4">
-                  {['proof', 'trialPoints', 'witnesses', 'questions'].map((tab) => (
+                  {['proof', 'trialPoints', 'witnesses'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setCenterTab(tab)}
@@ -509,7 +509,6 @@ export default function ProofLibrary() {
                       {tab === 'proof' && `Proof (${proofItems.length})`}
                       {tab === 'trialPoints' && `Trial Points (${linkedTrialPoints.length})`}
                       {tab === 'witnesses' && `Witnesses (${linkedWitnesses.length})`}
-                      {tab === 'questions' && `Questions (${linkedQuestions.length})`}
                     </button>
                   ))}
                 </div>
