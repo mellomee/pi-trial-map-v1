@@ -78,6 +78,7 @@ export default function ProofPreviewZone({ selectedProof, isPublishing, onPublis
     );
   }
 
+
   if (!selectedProof) {
     return (
       <div className="flex flex-col h-full bg-[#0a0f1e] border-t border-[#1e2a45]">
