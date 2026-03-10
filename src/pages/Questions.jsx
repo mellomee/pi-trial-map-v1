@@ -118,18 +118,40 @@ export default function Questions() {
     const { source, destination } = result;
     if (!destination) return;
 
-    // Work with filtered (already sorted) questions
-    const newFiltered = Array.from(allFiltered);
-    if (source.index === destination.index) return;
-    
-    const [moved] = newFiltered.splice(source.index, 1);
-    newFiltered.splice(destination.index, 0, moved);
-    
-    // Update state with new ordering (display only, don't persist)
-    setQuestions(qs => {
-      const map = new Map(qs.map(q => [q.id, q]));
-      return newFiltered.map(q => map.get(q.id) || q);
-    });
+    const isFromOrdered = source.droppableId === "ordered";
+    const isToOrdered = destination.droppableId === "ordered";
+
+    if (isFromOrdered && isToOrdered) {
+      // Reorder within ordered list
+      const newFiltered = Array.from(allFiltered);
+      if (source.index === destination.index) return;
+      
+      const [moved] = newFiltered.splice(source.index, 1);
+      newFiltered.splice(destination.index, 0, moved);
+      
+      // Renumber and persist
+      Promise.all(newFiltered.map((q, i) => base44.entities.Questions.update(q.id, { order_index: i })));
+      
+      setQuestions(qs => qs.map(q => {
+        const idx = newFiltered.findIndex(nf => nf.id === q.id);
+        return idx >= 0 ? { ...q, order_index: idx } : q;
+      }));
+    } else if (!isFromOrdered && isToOrdered) {
+      // Move from unordered to ordered
+      const movedQuestion = unordered[source.index];
+      if (!movedQuestion) return;
+
+      const newOrdered = Array.from(allFiltered);
+      newOrdered.splice(destination.index, 0, movedQuestion);
+      
+      // Renumber all ordered questions
+      Promise.all(newOrdered.map((q, i) => base44.entities.Questions.update(q.id, { order_index: i })));
+      
+      setQuestions(qs => qs.map(q => {
+        const idx = newOrdered.findIndex(no => no.id === q.id);
+        return idx >= 0 ? { ...q, order_index: idx } : q;
+      }));
+    }
   };
 
   const unlinkProof = async (questionId, proofId) => {
