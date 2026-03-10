@@ -14,6 +14,7 @@ export default function Attorney2() {
   const [isPublished, setIsPublished] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [questionProofs, setQuestionProofs] = useState([]);
 
   // Initialize or get trial session
   useEffect(() => {
