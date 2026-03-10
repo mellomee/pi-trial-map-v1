@@ -14,7 +14,7 @@ import AddProofModal from '@/components/proofLibrary/AddProofModal';
 import ProofViewerModal from '@/components/proofLibrary/ProofViewerModal';
 import ProofInUseModal from '@/components/proofLibrary/ProofInUseModal';
 import QuestionProofLinker from '@/components/proofLibrary/QuestionProofLinker';
-import HierarchicalQuestionsList from '@/components/proofLibrary/HierarchicalQuestionsList';
+
 import { createPageUrl } from '@/utils';
 
 export default function ProofLibrary() {
