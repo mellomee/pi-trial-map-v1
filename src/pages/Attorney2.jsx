@@ -77,6 +77,22 @@ export default function Attorney2() {
     loadProofs();
   }, [selectedQuestion?.id]);
 
+  // Subscribe to session state changes
+  useEffect(() => {
+    if (!sessionId) return;
+    const unsubscribe = base44.entities.TrialSessionStates.subscribe((event) => {
+      if (event.data?.trial_session_id === sessionId) {
+        const state = event.data;
+        setIsPublished(!!state.jury_display_enabled && !!state.current_proof_item_id);
+        if (state.current_proof_item_id) {
+          const proof = questionProofs.find(p => p.id === state.current_proof_item_id);
+          setSelectedProof(proof);
+        }
+      }
+    });
+    return unsubscribe;
+  }, [sessionId, questionProofs]);
+
   // Handle publish
   const handlePublish = async (proof) => {
     if (!sessionId || !proof) return;
