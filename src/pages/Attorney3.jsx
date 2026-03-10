@@ -135,18 +135,14 @@ export default function Attorney3() {
 
   // Publish proof to jury
   const handlePublish = async (proof) => {
-    if (!sessionId || !proof) return;
+    if (!stateId || !proof) return;
     try {
-      const states = await base44.entities.TrialSessionStates.filter({ trial_session_id: sessionId });
-      if (states[0]) {
-        await base44.entities.TrialSessionStates.update(states[0].id, {
-          current_proof_item_id: proof.id,
-          jury_display_enabled: true,
-          jury_can_see_proof: true,
-        });
-        setSelectedProof(proof);
-        setIsPublished(true);
-      }
+      await base44.entities.TrialSessionStates.update(stateId, {
+        current_proof_item_id: proof.id,
+        jury_display_enabled: true,
+        jury_can_see_proof: true,
+      });
+      setSelectedProof(proof);
     } catch (err) {
       console.error('Publish failed:', err);
     }
