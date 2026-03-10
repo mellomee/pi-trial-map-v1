@@ -44,6 +44,7 @@ const NAV_SECTIONS = [
     items: [
       { name: "Attorney View", icon: Zap, page: "TrialMode" },
       { name: "Jury View", icon: Monitor, page: "JuryView" },
+      { name: "Sync Tester", icon: AlertTriangle, page: "TrialModeTester" },
     ],
   },
   {
