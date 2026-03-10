@@ -136,11 +136,14 @@ export default function TrialModeTester() {
               className="w-full bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-300"
             >
               <option value="">-- Choose a proof --</option>
-              {availableProofs.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.proof_type === 'extract' ? '📄' : '📹'} {p.proof_label || `${p.proof_type} ${p.id.slice(0, 6)}`}
-                </option>
-              ))}
+              {availableProofs.map(p => {
+                const label = p.label || (p.type === 'extract' ? `Extract ${p.id?.slice(0, 6)}` : `${p.type} ${p.id?.slice(0, 6)}`);
+                return (
+                  <option key={p.id} value={p.id}>
+                    {p.type === 'extract' ? '📄' : '📹'} {label}
+                  </option>
+                );
+              })}
             </select>
           ) : (
             <p className="text-xs text-slate-500">No proofs available</p>
