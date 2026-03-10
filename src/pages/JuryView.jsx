@@ -200,8 +200,9 @@ export default function JuryView() {
             {isPdf ? (
             <>
             {/* PDF with optional spotlight overlay */}
-            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <div style={{ width: '100%', height: '100%', position: 'relative' }} key={`pdf-${extract.id}-${currentPage}`}>
               <PdfViewer
+                key={`viewer-${extract.id}-${currentPage}`}
                 fileUrl={extract.extract_file_url}
                 externalZoom={zoom}
                 externalPage={currentPage}
