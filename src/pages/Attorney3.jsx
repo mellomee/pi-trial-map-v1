@@ -37,7 +37,10 @@ export default function Attorney3() {
         // Ensure state record exists
         const states = await base44.entities.TrialSessionStates.filter({ trial_session_id: session.id });
         if (!states.length) {
-          await base44.entities.TrialSessionStates.create({ trial_session_id: session.id });
+          const newState = await base44.entities.TrialSessionStates.create({ trial_session_id: session.id });
+          setStateId(newState.id);
+        } else {
+          setStateId(states[0].id);
         }
       } catch (err) {
         console.error('Session init failed:', err);
