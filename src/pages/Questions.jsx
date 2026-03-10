@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Search, GripVertical, ExternalLink, Link2, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import ProofViewerModal from "@/components/proofLibrary/ProofViewerModal";
+import ProofLinkingModal from "@/components/questions/ProofLinkingModal";
 
 const EMPTY = {
   party_id: "",
@@ -50,6 +51,9 @@ export default function Questions() {
   const [selectedProofItem, setSelectedProofItem] = useState(null);
   const [showProofViewer, setShowProofViewer] = useState(false);
   const [newlyCreatedQuestionId, setNewlyCreatedQuestionId] = useState(null);
+  const [showProofLinking, setShowProofLinking] = useState(false);
+  const [proofLinkingQuestion, setProofLinkingQuestion] = useState(null);
+  const [allProofItems, setAllProofItems] = useState([]);
   const scrollRef = useRef(null);
 
   const load = async () => {
@@ -105,6 +109,10 @@ export default function Questions() {
     setCalloutNames(cnMap);
     setCalloutWitnesses(cwMap);
     setProofItemsMap(proofMap);
+
+    // Load all proof items for the case
+    const allProofs = await base44.entities.ProofItems.filter({ case_id: activeCase.id });
+    setAllProofItems(allProofs);
   };
 
   useEffect(() => {
@@ -235,7 +243,7 @@ export default function Questions() {
         <Button
           className="bg-cyan-600 hover:bg-cyan-700"
           onClick={() => {
-            setEditing({ ...EMPTY });
+            setEditing({ ...EMPTY, party_id: selectedPartyId });
             setOpen(true);
             setModalKey(k => k + 1);
           }}
@@ -329,6 +337,18 @@ export default function Questions() {
                                   </div>
                                 </div>
                                 <div className="flex gap-1 flex-shrink-0 items-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-slate-400 hover:text-cyan-400"
+                                    title="Link proof"
+                                    onClick={() => {
+                                      setProofLinkingQuestion(q);
+                                      setShowProofLinking(true);
+                                    }}
+                                  >
+                                    <Link2 className="w-3 h-3" />
+                                  </Button>
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -431,6 +451,24 @@ export default function Questions() {
         proofItem={selectedProofItem}
         isOpen={showProofViewer}
         onClose={() => setShowProofViewer(false)}
+      />
+
+      <ProofLinkingModal
+        open={showProofLinking}
+        onClose={() => {
+          setShowProofLinking(false);
+          setProofLinkingQuestion(null);
+        }}
+        question={proofLinkingQuestion}
+        caseId={activeCase.id}
+        bucketId={proofLinkingQuestion?.evidence_group_id}
+        linkedProofIds={questionProofs[proofLinkingQuestion?.id] || []}
+        onLinkProof={linkProof}
+        onUnlinkProof={unlinkProof}
+        calloutNames={calloutNames}
+        calloutWitnesses={calloutWitnesses}
+        proofItemsMap={proofItemsMap}
+        allProofItems={allProofItems}
       />
 
       {/* Create/Edit Question Modal */}
