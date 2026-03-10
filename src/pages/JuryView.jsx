@@ -62,9 +62,20 @@ export default function JuryView() {
   const sharedScrollLeft = presentationState?.proof_scroll_left ?? null;
   const sharedScrollTop = presentationState?.proof_scroll_top ?? null;
 
-  // Subscribe to full session state changes (for proof, callout, etc)
+  // Load initial session state and subscribe to changes
   useEffect(() => {
     if (!trialSessionId) return;
+    
+    // Load initial state
+    base44.entities.TrialSessionStates.filter({
+      trial_session_id: trialSessionId,
+    }).then((states) => {
+      if (states.length > 0) {
+        setSessionState(states[0]);
+      }
+    });
+    
+    // Subscribe to updates
     const unsub = base44.entities.TrialSessionStates.subscribe((event) => {
       if (event.data?.trial_session_id === trialSessionId) {
         setSessionState(event.data);
