@@ -79,13 +79,18 @@ export default function TrialModeTester() {
 
   const handleUnpublishTest = async () => {
     if (!sessionState?.id) return;
+    setError(null);
     try {
-      await base44.entities.TrialSessionStates.update(sessionState.id, {
+      console.log('Unpublishing state:', sessionState.id);
+      const result = await base44.entities.TrialSessionStates.update(sessionState.id, {
         jury_display_enabled: false,
         jury_can_see_proof: false,
+        current_proof_item_id: null,
       });
-      console.log('Unpublished successfully');
+      console.log('Unpublish result:', result);
+      setSessionState(result);
     } catch (err) {
+      console.error('Unpublish error:', err);
       setError(`Unpublish failed: ${err.message}`);
     }
   };
