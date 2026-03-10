@@ -49,6 +49,8 @@
  */
 import AdmittedExhibits from './pages/AdmittedExhibits';
 import AnnotatePage from './pages/AnnotatePage';
+import Attorney2 from './pages/Attorney2';
+import Attorney3 from './pages/Attorney3';
 import BattleCards from './pages/BattleCards';
 import Dashboard from './pages/Dashboard';
 import DepoClips from './pages/DepoClips';
@@ -60,6 +62,8 @@ import Extracts from './pages/Extracts';
 import Import from './pages/Import';
 import JointExhibitPrint from './pages/JointExhibitPrint';
 import JointExhibits from './pages/JointExhibits';
+import Jury2 from './pages/Jury2';
+import Jury3 from './pages/Jury3';
 import JuryView from './pages/JuryView';
 import MasterExhibits from './pages/MasterExhibits';
 import Parties from './pages/Parties';
@@ -87,6 +91,8 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "AdmittedExhibits": AdmittedExhibits,
     "AnnotatePage": AnnotatePage,
+    "Attorney2": Attorney2,
+    "Attorney3": Attorney3,
     "BattleCards": BattleCards,
     "Dashboard": Dashboard,
     "DepoClips": DepoClips,
@@ -98,6 +104,8 @@ export const PAGES = {
     "Import": Import,
     "JointExhibitPrint": JointExhibitPrint,
     "JointExhibits": JointExhibits,
+    "Jury2": Jury2,
+    "Jury3": Jury3,
     "JuryView": JuryView,
     "MasterExhibits": MasterExhibits,
     "Parties": Parties,
