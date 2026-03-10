@@ -83,6 +83,8 @@ import VideoHub from './pages/VideoHub';
 import VideoLibrary from './pages/VideoLibrary';
 import Attorney2 from './pages/Attorney2';
 import Jury2 from './pages/Jury2';
+import Attorney3 from './pages/Attorney3';
+import Jury3 from './pages/Jury3';
 import __Layout from './Layout.jsx';
 
 
@@ -123,6 +125,8 @@ export const PAGES = {
     "VideoLibrary": VideoLibrary,
     "Attorney2": Attorney2,
     "Jury2": Jury2,
+    "Attorney3": Attorney3,
+    "Jury3": Jury3,
 }
 
 export const pagesConfig = {
