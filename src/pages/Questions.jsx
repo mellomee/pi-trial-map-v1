@@ -318,6 +318,44 @@ export default function Questions() {
                       </div>
                     )}
                   </Draggable>
+                    
+                    {/* Render child questions below parent */}
+                    {hasChildren && (
+                      <div className="ml-8 space-y-2 mt-2 border-l-2 border-slate-700 pl-3">
+                        {q.children.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map((child, childIdx) => {
+                          const childProofIds = questionProofs[child.id] || [];
+                          return (
+                            <Card key={child.id} className="bg-[#0f1629] border-[#1e2a45]">
+                              <CardContent className="py-2 space-y-2">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex items-start gap-2 flex-1">
+                                    <span className="text-xs text-slate-500 flex-shrink-0 mt-0.5">{parentIdx + 1}.{childIdx + 1}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm text-slate-100">{child.question_text}</p>
+                                      <div className="flex gap-2 mt-1 flex-wrap">
+                                        <Badge className={child.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"} variant="outline">{child.exam_type}</Badge>
+                                        <Badge variant="outline" className="text-slate-400 border-slate-600 text-xs">{getPartyName(child.party_id)}</Badge>
+                                        {child.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{child.question_type}</Badge>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1 flex-shrink-0">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...child }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-400" onClick={() => remove(child.id)}><Trash2 className="w-3 h-3" /></Button>
+                                  </div>
+                                </div>
+                                {childProofIds.length > 0 && (
+                                  <div className="text-xs text-slate-400 pt-1">
+                                    {childProofIds.length} proof item(s) linked
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
               {provided.placeholder}
