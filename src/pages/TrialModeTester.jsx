@@ -25,6 +25,12 @@ export default function TrialModeTester() {
           const session = sessions[0];
           setTrialSession(session);
           
+          // Load available proofs
+          base44.entities.ProofItems.filter({ case_id: activeCase.id })
+            .then(proofs => {
+              setAvailableProofs(proofs);
+            });
+          
           // Subscribe to session state changes
           const unsub = base44.entities.TrialSessionStates.subscribe(event => {
             if (event.data?.trial_session_id === session.id) {
