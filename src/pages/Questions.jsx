@@ -114,15 +114,6 @@ export default function Questions() {
     setQuestions(qs => qs.filter(q => q.id !== id));
   };
 
-  const saveQuestionsOrder = async (reorderedQuestions) => {
-    for (let i = 0; i < reorderedQuestions.length; i++) {
-      const q = reorderedQuestions[i];
-      if (q.order_index !== i) {
-        await base44.entities.Questions.update(q.id, { order_index: i });
-      }
-    }
-  };
-
   const onDragEnd = (result) => {
     const { source, destination } = result;
     if (!destination) return;
@@ -134,7 +125,7 @@ export default function Questions() {
     const [moved] = newFiltered.splice(source.index, 1);
     newFiltered.splice(destination.index, 0, moved);
     
-    // Update order_index for all moved questions
+    // Renumber ALL filtered questions with consecutive indices
     const updated = newFiltered.map((q, i) => ({ ...q, order_index: i }));
     
     // Update state with new ordering
@@ -143,8 +134,8 @@ export default function Questions() {
       return u ? { ...q, order_index: u.order_index } : q;
     }));
     
-    // Save to backend
-    saveQuestionsOrder(updated);
+    // Save ALL updated questions to backend
+    Promise.all(updated.map(q => base44.entities.Questions.update(q.id, { order_index: q.order_index })));
   };
 
   const unlinkProof = async (questionId, proofId) => {
