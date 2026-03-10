@@ -290,9 +290,11 @@ export default function Questions() {
         )}
 
         {/* Ordered Questions Section */}
-        <Droppable droppableId="ordered">
-          {(provided) => (
-            <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
+        <div className="p-4 bg-[#0f1629] border border-cyan-500/20 rounded-lg">
+          <h2 className="text-lg font-semibold text-cyan-400 mb-4">Ordered Questions (Attorney View)</h2>
+          <Droppable droppableId="ordered">
+            {(provided) => (
+              <div className="space-y-2 min-h-20" {...provided.droppableProps} ref={provided.innerRef}>
               {filtered.map((q, parentIdx) => {
                 const linkedProofIds = questionProofs[q.id] || [];
                 const hasChildren = q.children && q.children.length > 0;
