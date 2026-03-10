@@ -182,91 +182,99 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="w-full h-full relative overflow-hidden">
-          {/* Exhibit label */}
-          {exhibitLabel && (
-            <div className="absolute top-3 right-4 z-20">
-              <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
-            </div>
-          )}
+        <div className="w-full h-full relative overflow-hidden flex items-center justify-center bg-black">
+          {/* Normalized frame — same dimensions as attorney viewer */}
+          <div style={{
+            width: '92%',
+            height: '92%',
+            maxWidth: '92vw',
+            maxHeight: '92vh',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Exhibit label */}
+            {exhibitLabel && (
+              <div className="absolute top-2 right-2 z-20">
+                <span className="text-slate-300 text-xs font-semibold bg-black/60 rounded px-2 py-0.5 tracking-wide">{exhibitLabel}</span>
+              </div>
+            )}
 
-          {isPdf ? (
-          <>
-          {/* PDF with optional spotlight overlay */}
-          <PdfViewer
-            fileUrl={extract.extract_file_url}
-            externalZoom={zoom}
-            externalPage={currentPage}
-            externalScrollLeft={sharedScrollLeft}
-            externalScrollTop={sharedScrollTop}
-            readOnly={true}
-            showControls={false}
-            dimmed={false}
-          />
-
-          {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
-          {callout?.snapshot_image_url && (
-            <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
-              )}
-
-              {/* Layer 2: Spotlighted callout (if active) */}
-              {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                    <img
-                      src={callout.snapshot_image_url}
-                      alt="Callout"
-                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                      draggable={false}
-                    />
-                    <HighlightOverlay highlights={highlights} />
-                  </div>
-                </div>
-              )}
-
-            </>
-          ) : (
+            {isPdf ? (
             <>
-              {/* Image with optional spotlight overlay */}
-              <div className="absolute inset-0 flex items-center justify-center z-0">
+            {/* PDF viewer in normalized frame */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <PdfViewerWithGestures
+                fileUrl={extract.extract_file_url}
+                currentPage={currentPage}
+                zoom={zoom}
+                scrollLeft={sharedScrollLeft}
+                scrollTop={sharedScrollTop}
+                showControls={false}
+              />
+
+            {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+            {callout?.snapshot_image_url && (
+              <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
+            )}
+
+            {/* Layer 2: Spotlighted callout (if active) */}
+            {callout?.snapshot_image_url && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                  <img
+                    src={callout.snapshot_image_url}
+                    alt="Callout"
+                    style={{ display: 'block', maxWidth: 'calc(100% - 20px)', maxHeight: 'calc(100% - 20px)', objectFit: 'contain' }}
+                    draggable={false}
+                  />
+                  <HighlightOverlay highlights={highlights} />
+                </div>
+              </div>
+            )}
+            </>
+            ) : (
+            <>
+              {/* Image viewer in normalized frame */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 <img
                   src={extract.extract_file_url}
                   alt="Extract"
                   style={{
                     display: 'block',
-                    maxWidth: '100vw',
-                    maxHeight: '100vh',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
                     objectFit: 'contain',
                     opacity: callout?.snapshot_image_url ? 0.25 : 1,
-                    filter: callout?.snapshot_image_url ? 'blur(0px)' : 'none',
                     userSelect: 'none'
                   }}
                   draggable={false}
                 />
               </div>
 
-              {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
+              {/* Layer 1: Dark overlay */}
               {callout?.snapshot_image_url && (
                 <div className="absolute inset-0 z-5" style={{ background: 'rgba(0, 0, 0, 0.35)' }} />
               )}
 
-              {/* Layer 2: Spotlighted callout (if active) */}
+              {/* Layer 2: Spotlighted callout */}
               {callout?.snapshot_image_url && (
                 <div className="absolute inset-0 flex items-center justify-center z-10">
                   <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
                     <img
                       src={callout.snapshot_image_url}
                       alt="Callout"
-                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                      style={{ display: 'block', maxWidth: 'calc(100% - 20px)', maxHeight: 'calc(100% - 20px)', objectFit: 'contain' }}
                       draggable={false}
                     />
                     <HighlightOverlay highlights={highlights} />
                   </div>
                 </div>
               )}
-
             </>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>
