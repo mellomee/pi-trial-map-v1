@@ -64,7 +64,6 @@ export default function QuestionsTab({ evidenceGroup, witnesses, proofItems, cas
         party_id: newQuestion.party_id,
         exam_type: newQuestion.exam_type,
         primary_evidence_group_id: evidenceGroup.id,
-        order_index: questions.length,
       });
       
       // Create link to evidence group
