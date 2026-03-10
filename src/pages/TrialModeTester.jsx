@@ -68,9 +68,13 @@ export default function TrialModeTester() {
   }, [sessionState?.current_proof_item_id]);
 
   const handlePublishTest = async () => {
-    if (!sessionState?.id) return;
+    if (!sessionState?.id || !selectedProofId) {
+      setError('Select a proof first');
+      return;
+    }
     try {
       await base44.entities.TrialSessionStates.update(sessionState.id, {
+        current_proof_item_id: selectedProofId,
         jury_display_enabled: true,
         jury_can_see_proof: true,
       });
