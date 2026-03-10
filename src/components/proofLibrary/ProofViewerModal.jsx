@@ -185,6 +185,7 @@ function ExtractFileWithCallouts({ extract, callouts, caseParties, proofItem, sp
                         <Image className="w-3 h-3 text-slate-600" />
                       </div>
                     )}
+                    {c.page_number && <p className="text-[8px] text-amber-400 font-semibold">pg {c.page_number}</p>}
                     {c.name && <p className="text-[9px] text-slate-300 truncate leading-tight">{c.name}</p>}
                     {witName && <p className="text-[9px] text-cyan-400 truncate leading-tight">{witName}</p>}
                     <div className="flex items-center gap-1 flex-wrap">
