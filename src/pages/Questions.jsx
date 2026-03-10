@@ -171,8 +171,17 @@ export default function Questions() {
     const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
     const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
-    return matchSearch && matchParty && matchType;
+    const hasOrder = q.order_index !== null && q.order_index !== undefined;
+    return matchSearch && matchParty && matchType && hasOrder;
   }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+  const unordered = questions.filter(q => {
+    const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
+    const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
+    const matchType = typeFilter === "all" || q.exam_type === typeFilter;
+    const hasOrder = q.order_index !== null && q.order_index !== undefined;
+    return matchSearch && matchParty && matchType && !hasOrder;
+  });
 
   const filtered = buildQuestionTree(allFiltered);
 
