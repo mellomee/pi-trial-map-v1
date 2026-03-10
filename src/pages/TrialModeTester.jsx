@@ -61,13 +61,18 @@ export default function TrialModeTester() {
 
   const handlePublishTest = async () => {
     if (!sessionState?.id) return;
+    setError(null);
     try {
-      await base44.entities.TrialSessionStates.update(sessionState.id, {
+      console.log('Updating state:', sessionState.id);
+      const result = await base44.entities.TrialSessionStates.update(sessionState.id, {
         jury_display_enabled: true,
         jury_can_see_proof: true,
+        current_proof_item_id: proof?.id || null,
       });
-      console.log('Published successfully');
+      console.log('Publish result:', result);
+      setSessionState(result);
     } catch (err) {
+      console.error('Publish error:', err);
       setError(`Publish failed: ${err.message}`);
     }
   };
