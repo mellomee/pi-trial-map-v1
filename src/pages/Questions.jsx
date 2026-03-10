@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,48 +9,66 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, GripVertical, GitBranch, X, ExternalLink } from "lucide-react";
-import ChildrenQuestionsModal from "@/components/questions/ChildrenQuestionsModal";
-import ProofViewerModal from "@/components/proofLibrary/ProofViewerModal";
-import { createPageUrl } from "@/utils";
-import BranchBuilder from "@/components/runner/BranchBuilder";
+import { Plus, Pencil, Trash2, Search, GripVertical, ExternalLink, Link2, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import ProofViewerModal from "@/components/proofLibrary/ProofViewerModal";
 
-const EMPTY = { party_id: "", exam_type: "Direct", order_index: 0, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "", is_branch_root: false, branch_prompt: "", importance: "Med", ask_if_time: true };
+const EMPTY = {
+  party_id: "",
+  evidence_group_id: "",
+  exam_type: "Direct",
+  question_text: "",
+  goal: "",
+  expected_answer: "",
+  status: "NotAsked",
+  answer_quality: "",
+  admission_obtained: false,
+  live_notes: "",
+  is_branch_root: false,
+  branch_prompt: "",
+  importance: "Med",
+  ask_if_time: true,
+};
 
 export default function Questions() {
   const { activeCase } = useActiveCase();
   const [questions, setQuestions] = useState([]);
   const [parties, setParties] = useState([]);
-  const [selectedPartyId, setSelectedPartyId] = useState("all");
+  const [evidenceGroups, setEvidenceGroups] = useState([]);
+  const [selectedPartyId, setSelectedPartyId] = useState("");
+  const [selectedBucketId, setSelectedBucketId] = useState("");
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
-  const [childrenModal, setChildrenModal] = useState(null); // parent question node
-  const [questionProofs, setQuestionProofs] = useState({}); // questionId -> array of proofItems
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [tempQuestionData, setTempQuestionData] = useState(null); // for proof linking in create modal
+  const [questionProofs, setQuestionProofs] = useState({});
   const [calloutNames, setCalloutNames] = useState({});
   const [calloutWitnesses, setCalloutWitnesses] = useState({});
-  const [proofItemsMap, setProofItemsMap] = useState({}); // proofId -> proof details
+  const [proofItemsMap, setProofItemsMap] = useState({});
   const [selectedProofItem, setSelectedProofItem] = useState(null);
   const [showProofViewer, setShowProofViewer] = useState(false);
+  const [newlyCreatedQuestionId, setNewlyCreatedQuestionId] = useState(null);
+  const scrollRef = useRef(null);
 
   const load = async () => {
     if (!activeCase) return;
-    const [q, p] = await Promise.all([
+    const [q, p, eg] = await Promise.all([
       base44.entities.Questions.filter({ case_id: activeCase.id }),
       base44.entities.Parties.filter({ case_id: activeCase.id }),
+      base44.entities.EvidenceGroups.filter({ case_id: activeCase.id }),
     ]);
     setQuestions(q);
     setParties(p);
+    setEvidenceGroups(eg);
 
     // Load question-proof links
     const allQPLinks = await base44.entities.QuestionProofItems.filter({ case_id: activeCase.id });
     const qMap = {};
     const cnMap = {};
     const cwMap = {};
+    const proofMap = {};
 
     allQPLinks.forEach(link => {
       if (!qMap[link.question_id]) qMap[link.question_id] = [];
@@ -58,15 +76,13 @@ export default function Questions() {
     });
     setQuestionProofs(qMap);
 
-    // Load proof item details and callout info with reduced rate
     const uniqueProofIds = [...new Set(allQPLinks.map(l => l.proof_item_id))];
-    const proofMap = {};
     if (uniqueProofIds.length > 0) {
       try {
         const proofs = await base44.entities.ProofItems.filter({ id: { $in: uniqueProofIds } });
         proofs.forEach(pf => proofMap[pf.id] = pf);
 
-        const calloutIds = proofs.filter(p => p.callout_id).map(p => p.callout_id);
+        const calloutIds = proofs.filter(pf => pf.callout_id).map(pf => pf.callout_id);
         if (calloutIds.length > 0) {
           const callouts = await base44.entities.Callouts.filter({ id: { $in: calloutIds } });
           callouts.forEach(c => cnMap[c.id] = c.name);
@@ -90,7 +106,7 @@ export default function Questions() {
     setCalloutWitnesses(cwMap);
     setProofItemsMap(proofMap);
   };
-  
+
   useEffect(() => {
     load();
   }, [activeCase]);
@@ -101,10 +117,15 @@ export default function Questions() {
       await base44.entities.Questions.update(editing.id, data);
       setQuestions(qs => qs.map(q => q.id === editing.id ? { ...q, ...data } : q));
     } else {
-      const newQ = await base44.entities.Questions.create(data);
+      // For new questions, assign order_index as the highest for this witness + 1
+      const witnessQs = questions.filter(q => q.party_id === editing.party_id);
+      const maxOrder = witnessQs.length > 0 ? Math.max(...witnessQs.map(q => q.order_index || 0)) : -1;
+      const newQ = await base44.entities.Questions.create({ ...data, order_index: maxOrder + 1 });
       setQuestions(qs => [...qs, newQ]);
+      setNewlyCreatedQuestionId(newQ.id);
     }
     setOpen(false);
+    setEditing(null);
     setModalKey(k => k + 1);
   };
 
@@ -117,19 +138,24 @@ export default function Questions() {
   const onDragEnd = (result) => {
     const { source, destination } = result;
     if (!destination) return;
-
-    // Work with filtered (already sorted) questions
-    const newFiltered = Array.from(allFiltered);
+    
+    const filtered = getFilteredQuestions();
+    const newFiltered = Array.from(filtered);
     if (source.index === destination.index) return;
     
     const [moved] = newFiltered.splice(source.index, 1);
     newFiltered.splice(destination.index, 0, moved);
     
-    // Update state with new ordering (display only, don't persist)
-    setQuestions(qs => {
-      const map = new Map(qs.map(q => [q.id, q]));
-      return newFiltered.map(q => map.get(q.id) || q);
-    });
+    // Renumber all filtered questions per witness
+    const updated = newFiltered.map((q, i) => ({ ...q, order_index: i }));
+    
+    setQuestions(qs => qs.map(q => {
+      const u = updated.find(r => r.id === q.id);
+      return u ? { ...q, order_index: u.order_index } : q;
+    }));
+    
+    // Save all updated questions
+    Promise.all(updated.map(q => base44.entities.Questions.update(q.id, { order_index: q.order_index })));
   };
 
   const unlinkProof = async (questionId, proofId) => {
@@ -138,43 +164,64 @@ export default function Questions() {
     setQuestionProofs(prev => ({ ...prev, [questionId]: (prev[questionId] || []).filter(id => id !== proofId) }));
   };
 
+  const linkProof = async (questionId, proofId, bucketId) => {
+    try {
+      const existing = await base44.entities.QuestionProofItems.filter({
+        question_id: questionId,
+        proof_item_id: proofId,
+      });
+      if (existing.length === 0) {
+        await base44.entities.QuestionProofItems.create({
+          case_id: activeCase.id,
+          question_id: questionId,
+          proof_item_id: proofId,
+          evidence_group_id: bucketId,
+        });
+      }
+      setQuestionProofs(prev => ({
+        ...prev,
+        [questionId]: [...(prev[questionId] || []), proofId],
+      }));
+    } catch (error) {
+      console.error('Error linking proof:', error);
+    }
+  };
+
   const getPartyName = (pid) => {
     const p = parties.find(x => x.id === pid);
     return p ? `${p.first_name} ${p.last_name}` : "Unassigned";
   };
 
-  // Build hierarchy from parent_id relationships
-  const buildQuestionTree = (allQuestions) => {
-    const tree = [];
-    const qMap = {};
-
-    // First pass: index all questions
-    allQuestions.forEach(q => {
-      qMap[q.id] = { ...q, children: [] };
-    });
-
-    // Second pass: build parent-child relationships
-    allQuestions.forEach(q => {
-      if (q.parent_id && qMap[q.parent_id]) {
-        // This is a child question
-        qMap[q.parent_id].children.push(qMap[q.id]);
-      } else {
-        // This is a root question
-        tree.push(qMap[q.id]);
-      }
-    });
-
-    return tree;
+  const getBucketName = (bid) => {
+    const b = evidenceGroups.find(x => x.id === bid);
+    return b ? b.title : "Unknown";
   };
 
-  const allFiltered = questions.filter(q => {
-    const matchSearch = !search || q.question_text?.toLowerCase().includes(search.toLowerCase());
-    const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
-    const matchType = typeFilter === "all" || q.exam_type === typeFilter;
-    return matchSearch && matchParty && matchType;
-  }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  const getFilteredQuestions = () => {
+    return questions
+      .filter(q => q.party_id === selectedPartyId)
+      .filter(q => !selectedBucketId || q.evidence_group_id === selectedBucketId)
+      .filter(q => !search || q.question_text?.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  };
 
-  const filtered = buildQuestionTree(allFiltered);
+  const filtered = getFilteredQuestions();
+  const bucketOptions = selectedPartyId
+    ? evidenceGroups.filter(eg => questions.some(q => q.party_id === selectedPartyId && q.evidence_group_id === eg.id))
+    : [];
+
+  // Scroll to newly created question
+  useEffect(() => {
+    if (newlyCreatedQuestionId && scrollRef.current) {
+      setTimeout(() => {
+        const elem = document.getElementById(`question-${newlyCreatedQuestionId}`);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setNewlyCreatedQuestionId(null);
+        }
+      }, 100);
+    }
+  }, [newlyCreatedQuestionId, filtered]);
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
@@ -183,50 +230,81 @@ export default function Questions() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Questions</h1>
-          <p className="text-sm text-slate-500">Direct & Cross Examination</p>
+          <p className="text-sm text-slate-500">Manage witness questions by bucket</p>
         </div>
-        <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={() => { setEditing({ ...EMPTY }); setOpen(true); setModalKey(k => k + 1); }}>
+        <Button
+          className="bg-cyan-600 hover:bg-cyan-700"
+          onClick={() => {
+            setEditing({ ...EMPTY });
+            setOpen(true);
+            setModalKey(k => k + 1);
+          }}
+        >
           <Plus className="w-4 h-4 mr-2" /> Add Question
         </Button>
       </div>
 
       <div className="space-y-3 mb-6">
         <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-            <Input placeholder="Search questions..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200" />
+          <div className="w-48">
+            <Select value={selectedPartyId} onValueChange={v => { setSelectedPartyId(v); setSelectedBucketId(""); }}>
+              <SelectTrigger className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+                <SelectValue placeholder="Select witness..." />
+              </SelectTrigger>
+              <SelectContent>
+                {parties.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={selectedPartyId} onValueChange={setSelectedPartyId}>
-            <SelectTrigger className="w-48 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select witness..." /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Witnesses</SelectItem>
-              {parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-32 bg-[#131a2e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Direct">Direct</SelectItem>
-              <SelectItem value="Cross">Cross</SelectItem>
-            </SelectContent>
-          </Select>
+
+          {selectedPartyId && (
+            <div className="w-48">
+              <Select value={selectedBucketId} onValueChange={setSelectedBucketId}>
+                <SelectTrigger className="bg-[#131a2e] border-[#1e2a45] text-slate-200">
+                  <SelectValue placeholder="Filter by bucket..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>All buckets</SelectItem>
+                  {bucketOptions.map(eg => (
+                    <SelectItem key={eg.id} value={eg.id}>{eg.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {selectedPartyId && (
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+              <Input
+                placeholder="Search questions..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9 bg-[#131a2e] border-[#1e2a45] text-slate-200"
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Render question hierarchy */}
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="questions">
-          {(provided) => (
-            <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
-              {filtered.map((q, parentIdx) => {
-                const linkedProofIds = questionProofs[q.id] || [];
-                const hasChildren = q.children && q.children.length > 0;
-                return (
-                  <div key={q.id}>
-                    <Draggable draggableId={q.id} index={parentIdx}>
+      {selectedPartyId ? (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="questions">
+            {(provided) => (
+              <div className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
+                {filtered.map((q, idx) => {
+                  const linkedProofIds = questionProofs[q.id] || [];
+                  return (
+                    <Draggable key={q.id} draggableId={q.id} index={idx}>
                       {(dragProvided, snapshot) => (
-                        <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} className={snapshot.isDragging ? 'opacity-50' : ''}>
+                        <div
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          id={`question-${q.id}`}
+                          className={snapshot.isDragging ? 'opacity-50' : ''}
+                        >
                           <Card className="bg-[#131a2e] border-[#1e2a45]">
                             <CardContent className="py-3 space-y-2">
                               <div className="flex items-start justify-between gap-3">
@@ -234,133 +312,120 @@ export default function Questions() {
                                   <button {...dragProvided.dragHandleProps} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-0.5">
                                     <GripVertical className="w-3 h-3" />
                                   </button>
-                                  <span className="text-sm font-semibold text-cyan-400">{parentIdx + 1}.</span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-white">{q.question_text}</p>
-                                  <div className="flex gap-2 mt-2 flex-wrap">
-                                    <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>{q.exam_type}</Badge>
-                                    <Badge variant="outline" className="text-slate-400 border-slate-600">{getPartyName(q.party_id)}</Badge>
-                                    <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
-                                    {q.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{q.question_type}</Badge>}
+                                  <span className="text-sm font-semibold text-cyan-400">{idx + 1}.</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-white">{q.question_text}</p>
+                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                      <Badge className={q.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
+                                        {q.exam_type}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-slate-400 border-slate-600 text-xs">
+                                        📦 {getBucketName(q.evidence_group_id)}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-slate-500 border-slate-600">{q.status}</Badge>
+                                    </div>
+                                    {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
+                                    {q.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {q.expected_answer}</p>}
                                   </div>
-                                  {q.goal && <p className="text-xs text-slate-500 mt-1">Goal: {q.goal}</p>}
-                                  {q.expected_answer && <p className="text-xs text-cyan-400 mt-1">Expected: {q.expected_answer}</p>}
                                 </div>
-                              </div>
-                              <div className="flex gap-1 flex-shrink-0 items-center">
-                                {hasChildren && (
+                                <div className="flex gap-1 flex-shrink-0 items-center">
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 text-purple-400 hover:text-purple-300"
-                                    title={`${q.children.length} child question(s)`}
-                                    onClick={() => setChildrenModal(q)}
+                                    className="h-7 w-7 text-slate-400 hover:text-cyan-400"
+                                    onClick={() => {
+                                      setEditing({ ...q });
+                                      setOpen(true);
+                                      setModalKey(k => k + 1);
+                                    }}
                                   >
-                                    <GitBranch className="w-3 h-3" />
+                                    <Pencil className="w-3 h-3" />
                                   </Button>
-                                )}
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...q }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-400" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
-                              </div>
-                            </div>
-                            {linkedProofIds.length > 0 && (
-                              <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
-                                <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
-                                {linkedProofIds.map((proofId) => {
-                                  const proof = proofItemsMap[proofId];
-                                  if (!proof) return null;
-                                  return (
-                                    <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 flex items-start justify-between gap-2">
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-slate-100">{proof.label}</p>
-                                        {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
-                                          <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
-                                        )}
-                                        {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
-                                          <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
-                                        )}
-                                        <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
-                                      </div>
-                                      <div className="flex gap-0.5 flex-shrink-0">
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-slate-500 hover:text-cyan-400"
-                                          title="Preview proof"
-                                          onClick={() => { setSelectedProofItem(proof); setShowProofViewer(true); }}>
-                                          <ExternalLink className="w-3 h-3" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400"
-                                          title="Remove proof link"
-                                          onClick={() => unlinkProof(q.id, proofId)}>
-                                          <X className="w-3 h-3" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </div>
-                    )}
-                  </Draggable>
-                  
-                  {/* Render child questions below parent */}
-                  {hasChildren && (
-                      <div className="ml-8 space-y-2 mt-2 border-l-2 border-slate-700 pl-3">
-                        {q.children.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map((child, childIdx) => {
-                          const childProofIds = questionProofs[child.id] || [];
-                          return (
-                            <Card key={child.id} className="bg-[#0f1629] border-[#1e2a45]">
-                              <CardContent className="py-2 space-y-2">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex items-start gap-2 flex-1">
-                                    <span className="text-xs text-slate-500 flex-shrink-0 mt-0.5">{parentIdx + 1}.{childIdx + 1}</span>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-slate-100">{child.question_text}</p>
-                                      <div className="flex gap-2 mt-1 flex-wrap">
-                                        <Badge className={child.exam_type === "Direct" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"} variant="outline">{child.exam_type}</Badge>
-                                        <Badge variant="outline" className="text-slate-400 border-slate-600 text-xs">{getPartyName(child.party_id)}</Badge>
-                                        {child.question_type && <Badge className="bg-purple-500/20 text-purple-400 text-xs">{child.question_type}</Badge>}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-1 flex-shrink-0">
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-cyan-400" onClick={() => { setEditing({ ...child }); setOpen(true); setModalKey(k => k + 1); }}><Pencil className="w-3 h-3" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-400" onClick={() => remove(child.id)}><Trash2 className="w-3 h-3" /></Button>
-                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-slate-400 hover:text-red-400"
+                                    onClick={() => remove(q.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
                                 </div>
-                                {childProofIds.length > 0 && (
-                                  <div className="text-xs text-slate-400 pt-1">
-                                    {childProofIds.length} proof item(s) linked
-                                  </div>
-                                )}
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+                              </div>
 
-      <ChildrenQuestionsModal
-        isOpen={!!childrenModal}
-        onClose={() => setChildrenModal(null)}
-        parent={childrenModal}
-        proofItemsMap={proofItemsMap}
-        calloutNames={calloutNames}
-        calloutWitnesses={calloutWitnesses}
-        getPartyName={getPartyName}
-        onEdit={(child) => { setChildrenModal(null); setEditing({ ...child }); setOpen(true); setModalKey(k => k + 1); }}
-        onDelete={remove}
-        onReordered={load}
-      />
+                              {linkedProofIds.length > 0 && (
+                                <div className="border-t border-slate-700 pt-2 ml-2 space-y-2">
+                                  <p className="text-[10px] font-semibold text-slate-500 uppercase">Linked Proof:</p>
+                                  {linkedProofIds.map((proofId) => {
+                                    const proof = proofItemsMap[proofId];
+                                    if (!proof) return null;
+                                    return (
+                                      <div key={proofId} className="text-xs text-slate-300 bg-slate-700/30 rounded p-2 flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-medium text-slate-100">{proof.label}</p>
+                                          {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                                            <p className="text-slate-400">↳ {calloutNames[proof.callout_id]}</p>
+                                          )}
+                                          {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                                            <p className="text-cyan-400">👤 {calloutWitnesses[proof.callout_id]}</p>
+                                          )}
+                                          <p className="text-slate-500 text-[10px]">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                                        </div>
+                                        <div className="flex gap-0.5 flex-shrink-0">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-5 w-5 p-0 text-slate-500 hover:text-cyan-400"
+                                            title="Preview proof"
+                                            onClick={() => {
+                                              setSelectedProofItem(proof);
+                                              setShowProofViewer(true);
+                                            }}
+                                          >
+                                            <ExternalLink className="w-3 h-3" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-5 w-5 p-0 text-slate-500 hover:text-red-400"
+                                            title="Remove proof link"
+                                            onClick={() => unlinkProof(q.id, proofId)}
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="w-full h-7 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/50"
+                                    onClick={() => {
+                                      setTempQuestionData(q);
+                                      setShowProofModal(true);
+                                    }}
+                                  >
+                                    <Link2 className="w-3 h-3 mr-1" /> Link More Proof
+                                  </Button>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      ) : (
+        <div className="text-center text-slate-400 mt-8">
+          <p>Select a witness to view their questions</p>
+        </div>
+      )}
 
       <ProofViewerModal
         proofItem={selectedProofItem}
@@ -368,111 +433,196 @@ export default function Questions() {
         onClose={() => setShowProofViewer(false)}
       />
 
+      {/* Create/Edit Question Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent key={modalKey} className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Add"} Question</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing?.id ? "Edit" : "Add"} Question</DialogTitle>
+          </DialogHeader>
           {editing && (
             <div className="space-y-3">
-              <div><Label className="text-slate-400 text-xs">Question</Label><Textarea value={editing.question_text} onChange={e => setEditing({ ...editing, question_text: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={3} /></div>
+              <div>
+                <Label className="text-slate-400 text-xs">Witness *</Label>
+                <Select value={editing.party_id || ""} onValueChange={v => setEditing({ ...editing, party_id: v })}>
+                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {parties.map(p => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.first_name} {p.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-slate-400 text-xs">Bucket *</Label>
+                <Select value={editing.evidence_group_id || ""} onValueChange={v => setEditing({ ...editing, evidence_group_id: v })}>
+                  <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {evidenceGroups.map(eg => (
+                      <SelectItem key={eg.id} value={eg.id}>{eg.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-slate-400 text-xs">Question *</Label>
+                <Textarea
+                  value={editing.question_text}
+                  onChange={e => setEditing({ ...editing, question_text: e.target.value })}
+                  className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
+                  rows={3}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-slate-400 text-xs">Witness</Label>
-                  <Select value={editing.party_id || ""} onValueChange={v => setEditing({ ...editing, party_id: v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue placeholder="Select..." /></SelectTrigger>
-                    <SelectContent>{parties.map(p => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <Label className="text-slate-400 text-xs">Goal</Label>
+                  <Input
+                    value={editing.goal || ""}
+                    onChange={e => setEditing({ ...editing, goal: e.target.value })}
+                    className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
+                  />
                 </div>
+                <div>
+                  <Label className="text-slate-400 text-xs">Expected Answer</Label>
+                  <Input
+                    value={editing.expected_answer || ""}
+                    onChange={e => setEditing({ ...editing, expected_answer: e.target.value })}
+                    className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-slate-400 text-xs">Type</Label>
                   <Select value={editing.exam_type} onValueChange={v => setEditing({ ...editing, exam_type: v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="Direct">Direct</SelectItem><SelectItem value="Cross">Cross</SelectItem></SelectContent>
+                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Direct">Direct</SelectItem>
+                      <SelectItem value="Cross">Cross</SelectItem>
+                      <SelectItem value="Repair">Repair</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div><Label className="text-slate-400 text-xs">Goal</Label><Input value={editing.goal || ""} onChange={e => setEditing({ ...editing, goal: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" /></div>
-                <div><Label className="text-slate-400 text-xs">Expected Answer</Label><Input value={editing.expected_answer || ""} onChange={e => setEditing({ ...editing, expected_answer: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" /></div>
                 <div>
-                  <Label className="text-slate-400 text-xs">Importance</Label>
-                  <Select value={editing.importance || "Med"} onValueChange={v => setEditing({ ...editing, importance: v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
+                  <Label className="text-slate-400 text-xs">Status</Label>
+                  <Select value={editing.status} onValueChange={v => setEditing({ ...editing, status: v })}>
+                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Med">Med</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="NotAsked">Not Asked</SelectItem>
+                      <SelectItem value="Asked">Asked</SelectItem>
+                      <SelectItem value="NeedsFollowUp">Needs Follow Up</SelectItem>
+                      <SelectItem value="Skipped">Skipped</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-slate-400 text-xs">Status</Label>
-                  <Select value={editing.status} onValueChange={v => setEditing({ ...editing, status: v })}>
-                    <SelectTrigger className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"><SelectValue /></SelectTrigger>
-                    <SelectContent>{["NotAsked","Asked","NeedsFollowUp","Skipped"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-slate-400 text-xs">Order Index</Label>
-                  <Input type="number" value={editing.order_index || 0} onChange={e => setEditing({ ...editing, order_index: parseInt(e.target.value) || 0 })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-4 items-center">
-                <div className="flex items-center gap-2">
-                  <Switch checked={!!editing.is_branch_root} onCheckedChange={v => setEditing({ ...editing, is_branch_root: v })} />
-                  <Label className="text-xs text-slate-400">Branch Root</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={editing.ask_if_time !== false} onCheckedChange={v => setEditing({ ...editing, ask_if_time: v })} />
-                  <Label className="text-xs text-slate-400">Ask if time permits</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={!!editing.admission_obtained} onCheckedChange={v => setEditing({ ...editing, admission_obtained: v })} />
-                  <Label className="text-xs text-slate-400">Admission Obtained</Label>
-                </div>
-              </div>
-              {editing.is_branch_root && (
-                <div><Label className="text-slate-400 text-xs">Branch Prompt</Label><Input value={editing.branch_prompt || ""} onChange={e => setEditing({ ...editing, branch_prompt: e.target.value })} placeholder="e.g. If they deny, go to impeachment branch" className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" /></div>
-              )}
-              <div><Label className="text-slate-400 text-xs">Live Notes</Label><Textarea value={editing.live_notes || ""} onChange={e => setEditing({ ...editing, live_notes: e.target.value })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" rows={2} /></div>
 
-              {/* Branching panel — only shown when editing an existing question */}
-              {editing.id && (
-                <div className="mt-4 pt-4 border-t border-[#1e2a45]">
-                  <BranchBuilder
-                    question={editing}
-                    allQuestions={questions}
-                    caseId={activeCase.id}
-                    onQuickCreate={async (type) => {
-                      const newQ = await base44.entities.Questions.create({
-                        case_id: activeCase.id,
-                        party_id: editing.party_id,
-                        exam_type: editing.exam_type,
-                        question_text: type === "impeachment" ? `[Impeachment] ${editing.question_text.slice(0, 40)}…` : `[Follow-up] ${editing.question_text.slice(0, 40)}…`,
-                        order_index: (editing.order_index || 0) + 0.5,
-                        is_branch_root: false,
-                        importance: "High",
-                      });
-                      // auto-create a branch rule pointing to it
-                      await base44.entities.QuestionBranches.create({
-                        case_id: activeCase.id,
-                        from_question_id: editing.id,
-                        condition_type: type === "impeachment" ? "WITNESS_DENIES" : "ANSWER_UNEXPECTED",
-                        to_question_id: newQ.id,
-                        priority: 1,
-                        auto_jump: true,
-                      });
-                      load();
-                    }}
-                  />
-                </div>
-              )}
+              <div>
+                <Label className="text-slate-400 text-xs">Live Notes</Label>
+                <Textarea
+                  value={editing.live_notes || ""}
+                  onChange={e => setEditing({ ...editing, live_notes: e.target.value })}
+                  className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200"
+                  rows={2}
+                />
+              </div>
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => { setOpen(false); setEditing(null); setModalKey(k => k + 1); }} className="border-slate-600 text-slate-300">Cancel</Button>
-            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={save}>Save</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpen(false);
+                setEditing(null);
+                setModalKey(k => k + 1);
+              }}
+              className="border-slate-600 text-slate-300"
+            >
+              Cancel
+            </Button>
+            <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={save}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Proof Linking Modal */}
+      <Dialog open={showProofModal} onOpenChange={setShowProofModal}>
+        <DialogContent className="bg-[#131a2e] border-[#1e2a45] text-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Link Proof to Question</DialogTitle>
+          </DialogHeader>
+          {tempQuestionData && (
+            <div className="space-y-3">
+              <p className="text-sm text-slate-400">{tempQuestionData.question_text}</p>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-slate-400">Available Proof in {getBucketName(tempQuestionData.evidence_group_id)}:</p>
+                {evidenceGroups.find(eg => eg.id === tempQuestionData.evidence_group_id) ? (
+                  (() => {
+                    const bucketProofs = questions
+                      .filter(q => q.evidence_group_id === tempQuestionData.evidence_group_id)
+                      .flatMap(q => questionProofs[q.id] || [])
+                      .filter((v, i, a) => a.indexOf(v) === i); // deduplicate
+
+                    return bucketProofs.length > 0 ? (
+                      bucketProofs.map(proofId => {
+                        const proof = proofItemsMap[proofId];
+                        if (!proof) return null;
+                        const isLinked = (questionProofs[tempQuestionData.id] || []).includes(proofId);
+                        return (
+                          <div
+                            key={proofId}
+                            className="border border-slate-600 rounded p-3 cursor-pointer hover:border-cyan-500 flex items-start justify-between"
+                            onClick={() => {
+                              if (!isLinked) {
+                                linkProof(tempQuestionData.id, proofId, tempQuestionData.evidence_group_id);
+                              }
+                            }}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white font-medium">{proof.label}</p>
+                              {proof.type === 'extract' && proof.callout_id && calloutNames[proof.callout_id] && (
+                                <p className="text-xs text-slate-400 mt-0.5">↳ {calloutNames[proof.callout_id]}</p>
+                              )}
+                              {proof.type === 'extract' && proof.callout_id && calloutWitnesses[proof.callout_id] && (
+                                <p className="text-xs text-cyan-400 mt-0.5">👤 {calloutWitnesses[proof.callout_id]}</p>
+                              )}
+                              <p className="text-xs text-slate-500 mt-1">{proof.type === 'depoClip' ? 'Deposition Clip' : 'Exhibit Extract'}</p>
+                            </div>
+                            {isLinked && <Badge className="bg-green-500/20 text-green-400 text-xs">✓ Linked</Badge>}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-xs text-slate-500">No proof in this bucket yet</p>
+                    );
+                  })()
+                ) : null}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowProofModal(false)}
+              className="border-slate-600 text-slate-300"
+            >
+              Done
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
