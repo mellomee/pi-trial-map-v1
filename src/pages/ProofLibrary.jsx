@@ -646,35 +646,7 @@ export default function ProofLibrary() {
                   </>
                 )}
 
-                {/* Questions Tab */}
-                {centerTab === 'questions' && (
-                  <HierarchicalQuestionsList
-                    questions={linkedQuestions}
-                    evidenceGroupId={selectedGroupId}
-                    caseId={activeCase.id}
-                    proofItems={proofItems}
-                    calloutNames={calloutNames}
-                    calloutWitnesses={calloutWitnesses}
-                    allWitnesses={allWitnesses}
-                    onQuestionCreated={(newQ) => {
-                      setLinkedQuestions(qs => [...qs, newQ]);
-                      // Link to evidence group if parent
-                      if (!newQ.parent_id) {
-                        base44.entities.QuestionEvidenceGroups.create({
-                          case_id: activeCase.id,
-                          question_id: newQ.id,
-                          evidence_group_id: selectedGroupId,
-                        });
-                      }
-                    }}
-                    onQuestionUpdated={(updatedQ) => {
-                      setLinkedQuestions(qs => qs.map(q => q.id === updatedQ.id ? updatedQ : q));
-                    }}
-                    onQuestionRemoved={(questionId) => {
-                      setLinkedQuestions(qs => qs.filter(q => q.id !== questionId));
-                    }}
-                  />
-                )}
+
               </div>
             </>
           ) : (
