@@ -3,20 +3,6 @@ import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
 import PdfViewer from "@/components/shared/PdfViewer";
-import { Scale } from "lucide-react";
-
-// Shared frame dimensions matching attorney preview
-const presentationFrameStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '92%',
-  height: '92%',
-  maxWidth: '92vw',
-  maxHeight: '92vh',
-  overflow: 'hidden',
-  position: 'relative',
-};
 
 function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
   if (!highlights?.length) return null;
@@ -196,27 +182,27 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div style={presentationFrameStyle}>
-           {/* Exhibit label */}
-           {exhibitLabel && (
-             <div className="absolute top-3 right-4 z-20">
-               <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
-             </div>
-           )}
+        <div className="w-full h-full relative overflow-hidden">
+          {/* Exhibit label */}
+          {exhibitLabel && (
+            <div className="absolute top-3 right-4 z-20">
+              <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">{exhibitLabel}</span>
+            </div>
+          )}
 
-           {isPdf ? (
-           <>
-           {/* PDF with optional spotlight overlay */}
-           <PdfViewer
-             fileUrl={extract.extract_file_url}
-             externalZoom={zoom}
-             externalPage={currentPage}
-             externalScrollLeft={sharedScrollLeft}
-             externalScrollTop={sharedScrollTop}
-             readOnly={true}
-             showControls={false}
-             dimmed={false}
-           />
+          {isPdf ? (
+          <>
+          {/* PDF with optional spotlight overlay */}
+          <PdfViewer
+            fileUrl={extract.extract_file_url}
+            externalZoom={zoom}
+            externalPage={currentPage}
+            externalScrollLeft={sharedScrollLeft}
+            externalScrollTop={sharedScrollTop}
+            readOnly={true}
+            showControls={false}
+            dimmed={false}
+          />
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
           {callout?.snapshot_image_url && (
@@ -248,8 +234,8 @@ export default function JuryView() {
                   alt="Extract"
                   style={{
                     display: 'block',
-                    maxWidth: '90%',
-                    maxHeight: '90%',
+                    maxWidth: '100vw',
+                    maxHeight: '100vh',
                     objectFit: 'contain',
                     opacity: callout?.snapshot_image_url ? 0.25 : 1,
                     filter: callout?.snapshot_image_url ? 'blur(0px)' : 'none',
