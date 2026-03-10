@@ -215,8 +215,7 @@ export default function JuryView() {
               {/* Layer 2: Spotlighted callout (if active) */}
               {callout?.snapshot_image_url && (
                 <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10"
-                    style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.15s' }}>
+                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
                     <img
                       src={callout.snapshot_image_url}
                       alt="Callout"
@@ -257,8 +256,7 @@ export default function JuryView() {
                 {/* Layer 2: Spotlighted callout (if active) */}
                 {callout?.snapshot_image_url && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <div className="relative inline-block shadow-2xl rounded-lg border border-white/10"
-                      style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.15s' }}>
+                    <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
                       <img
                         src={callout.snapshot_image_url}
                         alt="Callout"
