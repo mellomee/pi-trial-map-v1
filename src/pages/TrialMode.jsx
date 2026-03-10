@@ -51,6 +51,7 @@ export default function TrialMode() {
   const [trialSession, setTrialSession] = useState(null);
   const [publishedProof, setPublishedProof] = useState(null);
   const [selectedProof, setSelectedProof] = useState(null);
+  const isClearing = useRef(false);
 
   // Resizable layout state
   const [layout, setLayout] = useState({
