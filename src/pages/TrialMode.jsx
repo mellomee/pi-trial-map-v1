@@ -159,10 +159,13 @@ export default function TrialMode() {
   };
 
   const handleSelectChildQuestion = async (childQuestion) => {
+    if (isClearing.current) return;
     if (selectedChildQuestionId === childQuestion.id) {
       // Deselect — revert to parent's proof; auto-unpublish if needed
       if (publishedProof) {
+        isClearing.current = true;
         await handleClearJury();
+        isClearing.current = false;
       }
       setSelectedChildQuestionId(null);
       setChildResolvedLinks(null);
@@ -170,7 +173,9 @@ export default function TrialMode() {
     } else {
       // Auto-unpublish if child context changes
       if (publishedProof) {
+        isClearing.current = true;
         await handleClearJury();
+        isClearing.current = false;
       }
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
