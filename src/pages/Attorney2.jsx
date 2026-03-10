@@ -229,8 +229,12 @@ export default function Attorney2() {
                   questionProofs.map(proof => (
                     <button
                       key={proof.id}
-                      onClick={() => handlePublish(proof)}
-                      className="w-full text-left p-2 rounded-lg bg-slate-700/30 hover:bg-blue-600/40 border border-slate-600/30 hover:border-blue-400/60 transition-all text-xs text-slate-300 hover:text-blue-100"
+                      onClick={() => setSelectedProof(proof)}
+                      className={`w-full text-left p-2 rounded-lg transition-all text-xs ${
+                        selectedProof?.id === proof.id
+                          ? 'bg-blue-600/50 border border-blue-400/60 text-blue-100'
+                          : 'bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/30 text-slate-300 hover:text-slate-200'
+                      }`}
                     >
                       <p className="font-medium truncate">Proof {proof.id?.slice(0, 8)}</p>
                       {proof.label && <p className="text-[10px] text-slate-500 truncate">{proof.label}</p>}
