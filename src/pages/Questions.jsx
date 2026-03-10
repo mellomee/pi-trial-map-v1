@@ -420,9 +420,10 @@ export default function Questions() {
                 );
               })}
               {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+              </div>
+            )}
+          </Droppable>
+        </div>
       </DragDropContext>
 
       <ChildrenQuestionsModal
