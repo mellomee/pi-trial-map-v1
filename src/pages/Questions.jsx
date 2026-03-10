@@ -172,9 +172,13 @@ export default function Questions() {
     const matchParty = selectedPartyId === "all" || q.party_id === selectedPartyId;
     const matchType = typeFilter === "all" || q.exam_type === typeFilter;
     return matchSearch && matchParty && matchType;
-  }).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  });
 
-  const filtered = buildQuestionTree(allFiltered);
+  // Separate ordered and unordered questions
+  const orderedQuestions = allFiltered.filter(q => q.order_index !== null && q.order_index !== undefined).sort((a, b) => a.order_index - b.order_index);
+  const unorderedQuestions = allFiltered.filter(q => q.order_index === null || q.order_index === undefined);
+
+  const filtered = buildQuestionTree(orderedQuestions);
 
   if (!activeCase) return <div className="p-8 text-slate-400">No active case.</div>;
 
