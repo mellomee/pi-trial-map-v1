@@ -188,7 +188,12 @@ export async function publishProofToJury(trialSessionId, proofItemId, calloutId 
 /**
  * Clear jury display
  */
+let _clearJuryInProgress = false;
 export async function clearJuryDisplay(trialSessionId) {
+  // Prevent concurrent calls
+  if (_clearJuryInProgress) return;
+  _clearJuryInProgress = true;
+
   try {
     const existing = await base44.entities.TrialSessionStates.filter({
       trial_session_id: trialSessionId,
@@ -203,5 +208,7 @@ export async function clearJuryDisplay(trialSessionId) {
   } catch (error) {
     console.error('Error clearing jury:', error);
     throw error;
+  } finally {
+    _clearJuryInProgress = false;
   }
 }
