@@ -143,9 +143,12 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
+    if (isClearing.current) return;
     // Auto-unpublish if question changes and published proof is different
     if (publishedProof) {
+      isClearing.current = true;
       await handleClearJury();
+      isClearing.current = false;
     }
     setSelectedQuestionId(questionId);
     setSelectedChildQuestionId(null);
