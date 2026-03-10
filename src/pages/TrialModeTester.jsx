@@ -127,6 +127,26 @@ export default function TrialModeTester() {
           </div>
         </div>
 
+        <div className="bg-[#131a2e] border border-[#1e2a45] rounded p-3 space-y-2">
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Select Proof</p>
+          {availableProofs.length > 0 ? (
+            <select
+              value={selectedProofId}
+              onChange={(e) => setSelectedProofId(e.target.value)}
+              className="w-full bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-300"
+            >
+              <option value="">-- Choose a proof --</option>
+              {availableProofs.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.proof_type === 'extract' ? '📄' : '📹'} {p.proof_label || `${p.proof_type} ${p.id.slice(0, 6)}`}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-xs text-slate-500">No proofs available</p>
+          )}
+        </div>
+
         {proof && (
           <div className="bg-[#131a2e] border border-[#1e2a45] rounded p-3 space-y-2">
             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Current Proof</p>
