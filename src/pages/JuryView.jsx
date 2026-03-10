@@ -3,7 +3,19 @@ import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
 import PdfViewer from "@/components/shared/PdfViewer";
-import { presentationFrameStyle, presentationContainerStyle } from "@/components/trialMode/presentationFrameStyle";
+
+// Shared frame dimensions matching attorney preview
+const presentationFrameStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '92%',
+  height: '92%',
+  maxWidth: '92vw',
+  maxHeight: '92vh',
+  overflow: 'hidden',
+  position: 'relative',
+};
 
 function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
   if (!highlights?.length) return null;
