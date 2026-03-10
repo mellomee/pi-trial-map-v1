@@ -157,7 +157,7 @@ export default function JuryView() {
   return (
     <div className="fixed inset-0 bg-[#060810] flex items-center justify-center overflow-hidden">
       {proofItem.type === 'depoClip' && depoClip && (
-        <div className="w-full h-full flex flex-col justify-center px-10 py-10">
+        <div className="flex flex-col justify-center px-10 py-10" style={{ width: '92%', height: '92%', maxWidth: '92vw', maxHeight: '92vh', overflow: 'auto' }}>
           <div className="mb-6 flex flex-wrap gap-4 items-baseline">
             {depo && (
               <span className="text-slate-400 text-xl font-semibold tracking-wide uppercase">{depo.sheet_name}</span>
@@ -182,7 +182,9 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="w-full h-full relative overflow-hidden">
+        <div className="relative overflow-hidden flex items-center justify-center w-full h-full" style={{ background: '#000' }}>
+          {/* Normalized frame matching attorney viewer viewport */}
+          <div style={{ width: '92%', height: '92%', maxWidth: '92vw', maxHeight: '92vh', overflow: 'auto', position: 'relative', background: '#080c18' }}>
           {/* Exhibit label */}
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-20">
@@ -267,6 +269,7 @@ export default function JuryView() {
 
             </>
           )}
+          </div>
         </div>
       )}
     </div>
