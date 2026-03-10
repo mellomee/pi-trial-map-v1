@@ -277,10 +277,10 @@ export default function Questions() {
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-400 flex-shrink-0" onClick={() => remove(q.id)}><Trash2 className="w-3 h-3" /></Button>
                               </div>
                             </CardContent>
-                          </Card>
-                        </div>
-                      )}
-                    </Draggable>
+                            </Card>
+                            </div>
+                            )}
+                            </Draggable>
                   ))}
                   {provided.placeholder}
                 </div>
