@@ -126,6 +126,14 @@ export default function Attorney3() {
         setIsPublished(!!event.data.jury_display_enabled && !!event.data.current_proof_item_id);
       }
     });
+    // Also load initial state
+    const loadInitialState = async () => {
+      const states = await base44.entities.TrialSessionStates.filter({ trial_session_id: sessionId });
+      if (states[0]) {
+        setIsPublished(!!states[0].jury_display_enabled && !!states[0].current_proof_item_id);
+      }
+    };
+    loadInitialState();
     return unsubscribe;
   }, [sessionId]);
 
