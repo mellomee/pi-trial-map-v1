@@ -182,7 +182,7 @@ export default function JuryView() {
       )}
 
       {proofItem.type === 'extract' && extract?.extract_file_url && (
-        <div className="w-full h-full relative overflow-hidden">
+        <div className="fixed inset-0 flex items-center justify-center bg-[#060810] overflow-hidden">
           {/* Exhibit label */}
           {exhibitLabel && (
             <div className="absolute top-3 right-4 z-20">
@@ -192,17 +192,20 @@ export default function JuryView() {
 
           {isPdf ? (
           <>
-          {/* PDF with optional spotlight overlay */}
-          <PdfViewer
-            fileUrl={extract.extract_file_url}
-            externalZoom={zoom}
-            externalPage={currentPage}
-            externalScrollLeft={sharedScrollLeft}
-            externalScrollTop={sharedScrollTop}
-            readOnly={true}
-            showControls={false}
-            dimmed={false}
-          />
+          {/* Frame wrapper — matches attorney viewer frame exactly */}
+          <div style={PRESENTATION_FRAME_STYLE}>
+            {/* PDF with optional spotlight overlay */}
+            <PdfViewer
+              fileUrl={extract.extract_file_url}
+              externalZoom={zoom}
+              externalPage={currentPage}
+              externalScrollLeft={sharedScrollLeft}
+              externalScrollTop={sharedScrollTop}
+              readOnly={true}
+              showControls={false}
+              dimmed={false}
+            />
+          </div>
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
           {callout?.snapshot_image_url && (
@@ -211,38 +214,38 @@ export default function JuryView() {
 
               {/* Layer 2: Spotlighted callout (if active) */}
               {callout?.snapshot_image_url && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                    <img
-                      src={callout.snapshot_image_url}
-                      alt="Callout"
-                      style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
-                      draggable={false}
-                    />
-                    <HighlightOverlay highlights={highlights} />
-                  </div>
-                </div>
-              )}
+                <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'rgba(0,0,0,0.35)' }}>
+                      <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                        <img
+                          src={callout.snapshot_image_url}
+                          alt="Callout"
+                          style={{ display: 'block', maxWidth: '95vw', maxHeight: '92vh', objectFit: 'contain' }}
+                          draggable={false}
+                        />
+                        <HighlightOverlay highlights={highlights} />
+                      </div>
+                    </div>
+                  )}
 
-            </>
-          ) : (
-            <>
-              {/* Image with optional spotlight overlay */}
-              <div className="absolute inset-0 flex items-center justify-center z-0">
+                </>
+              ) : (
+                <>
+                  {/* Frame wrapper for image — matches PDF frame */}
+                  <div style={PRESENTATION_FRAME_STYLE} className="absolute inset-0 flex items-center justify-center z-0">
                 <img
-                  src={extract.extract_file_url}
-                  alt="Extract"
-                  style={{
-                    display: 'block',
-                    maxWidth: '100vw',
-                    maxHeight: '100vh',
-                    objectFit: 'contain',
-                    opacity: callout?.snapshot_image_url ? 0.25 : 1,
-                    filter: callout?.snapshot_image_url ? 'blur(0px)' : 'none',
-                    userSelect: 'none'
-                  }}
-                  draggable={false}
-                />
+                    src={extract.extract_file_url}
+                    alt="Extract"
+                    style={{
+                      display: 'block',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      opacity: callout?.snapshot_image_url ? 0.25 : 1,
+                      filter: callout?.snapshot_image_url ? 'blur(0px)' : 'none',
+                      userSelect: 'none'
+                    }}
+                    draggable={false}
+                  />
               </div>
 
               {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
@@ -264,11 +267,12 @@ export default function JuryView() {
                   </div>
                 </div>
               )}
+              </div>
 
-            </>
-          )}
-        </div>
-      )}
+              </>
+              )}
+              </div>
+              )}
     </div>
   );
 }
