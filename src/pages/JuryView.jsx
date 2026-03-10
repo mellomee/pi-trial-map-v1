@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
 import PdfViewer from "@/components/shared/PdfViewer";
-import { PRESENTATION_FRAME_STYLE } from "@/components/trialMode/presentationFrameStyle";
 import { Scale } from "lucide-react";
 
 function HighlightOverlay({ highlights }) {
@@ -218,63 +217,62 @@ export default function JuryView() {
     extract?.extract_file_url?.match(/\.pdf(\?|$)/i);
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-black overflow-hidden relative">
 
       {proofItem.type === "extract" && extract?.extract_file_url && (
-        <div style={PRESENTATION_FRAME_STYLE.inner}>
-
+        <>
           {exhibitLabel && (
-            <div className="absolute top-3 right-4 z-20">
+            <div className="absolute top-4 right-4 z-20">
               <span className="text-slate-300 text-base font-semibold bg-black/60 rounded px-3 py-1 tracking-wide">
                 {exhibitLabel}
               </span>
             </div>
           )}
 
-          {isPdf && (
-            <div style={{ width: "100%", height: "100%", position: "relative" }}>
-                <PdfViewer
-                  fileUrl={extract.extract_file_url}
-                  externalZoom={zoom}
-                  externalPage={currentPage}
-                  externalScrollLeft={sharedScrollLeft}
-                  externalScrollTop={sharedScrollTop}
-                  readOnly={true}
-                  showControls={false}
-                  dimmed={false}
+          {isPdf ? (
+            <PdfViewer
+              fileUrl={extract.extract_file_url}
+              externalZoom={zoom}
+              externalPage={currentPage}
+              externalScrollLeft={sharedScrollLeft}
+              externalScrollTop={sharedScrollTop}
+              readOnly={true}
+              showControls={false}
+              dimmed={false}
+            />
+          ) : (
+            <img
+              src={extract.extract_file_url}
+              alt="Extract"
+              className="w-full h-full object-contain"
+              draggable={false}
+            />
+          )}
+
+          {callout?.snapshot_image_url && (
+            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.35)", zIndex: 5 }} />
+          )}
+
+          {callout?.snapshot_image_url && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
+                <img
+                  src={callout.snapshot_image_url}
+                  alt="Callout"
+                  style={{
+                    display: "block",
+                    maxWidth: "95vw",
+                    maxHeight: "92vh",
+                    objectFit: "contain"
+                  }}
+                  draggable={false}
                 />
-
-                {callout?.snapshot_image_url && (
-                  <div
-                    className="absolute inset-0 z-5"
-                    style={{ background: "rgba(0,0,0,0.35)" }}
-                  />
-                )}
-
-                {callout?.snapshot_image_url && (
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <div className="relative inline-block shadow-2xl rounded-lg border border-white/10">
-                      <img
-                        src={callout.snapshot_image_url}
-                        alt="Callout"
-                        style={{
-                          display: "block",
-                          maxWidth: "95vw",
-                          maxHeight: "92vh",
-                          objectFit: "contain"
-                        }}
-                        draggable={false}
-                      />
-
-                      <HighlightOverlay highlights={highlights} />
-                    </div>
-                  </div>
-                )}
-                </div>
-                )}
-
-                </div>
-                )}
-                </div>
-                );
-                }
+                <HighlightOverlay highlights={highlights} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
