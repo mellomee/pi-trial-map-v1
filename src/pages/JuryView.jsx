@@ -4,7 +4,6 @@ import useActiveCase from "@/components/hooks/useActiveCase";
 import { usePresentationState } from "@/components/hooks/usePresentationState";
 import PdfViewer from "@/components/shared/PdfViewer";
 import { PRESENTATION_FRAME_STYLE } from "@/components/trialMode/presentationFrameStyle";
-import { Scale } from "lucide-react";
 
 function HighlightOverlay({ highlights, containerWidth, containerHeight }) {
   if (!highlights?.length) return null;
@@ -149,11 +148,7 @@ export default function JuryView() {
 
   // Waiting / blank screen
   if (!sessionState || !sessionState.jury_can_see_proof || !proofItem) {
-    return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <Scale className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
-      </div>
-    );
+    return <div className="fixed inset-0 bg-black" />;
   }
 
   // Build exhibit label: only "Exhibit X" using admitted number

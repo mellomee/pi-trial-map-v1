@@ -186,7 +186,7 @@ export default function Layout({ children, currentPageName }) {
         {children}
       </main>
 
-      {currentPageName !== 'JuryView' && <FloatingChat caseId={activeCase?.id} />}
+      <FloatingChat caseId={activeCase?.id} />
     </div>
   );
 }

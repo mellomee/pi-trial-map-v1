@@ -34,9 +34,14 @@ export async function resolveQuestionLinks(questionId, caseId) {
       : [[], []];
 
     // Proof items shown in ProofZone = only directly question-linked ones (QuestionLinks + QuestionProofItems)
-    // No fallback to EG proofs — if question has no direct links, show 0 proofs
+    // Fall back to all EG proof items only if no direct links exist at all
     const directProofItemIds = directProofLinks.map(l => l.proof_item_id);
-    const allProofItemIds = [...new Set([...questionLinkedProofIds, ...directProofItemIds])];
+    const hasDirectLinks = questionLinkedProofIds.length > 0 || directProofItemIds.length > 0;
+    const egProofItemIds = egProofItemLinks.map(l => l.proof_item_id);
+
+    const allProofItemIds = hasDirectLinks
+      ? [...new Set([...questionLinkedProofIds, ...directProofItemIds])]
+      : [...new Set(egProofItemIds)];
 
     let proofItems = allProofItemIds.length
       ? await Promise.all(allProofItemIds.map(piId => base44.entities.ProofItems.filter({ id: piId }))).then(r => r.flat())
@@ -188,34 +193,20 @@ export async function publishProofToJury(trialSessionId, proofItemId, calloutId 
 /**
  * Clear jury display
  */
-let _clearJuryInProgress = false;
-let _clearJuryTimeout = null;
 export async function clearJuryDisplay(trialSessionId) {
-  // Prevent concurrent calls with longer debounce
-  if (_clearJuryInProgress) return;
-  
-  // Cancel pending timeout if any
-  if (_clearJuryTimeout) clearTimeout(_clearJuryTimeout);
-  
-  _clearJuryInProgress = true;
-
   try {
     const existing = await base44.entities.TrialSessionStates.filter({
       trial_session_id: trialSessionId,
     });
 
     if (existing.length > 0) {
-      await base44.entities.TrialSessionStates.update(existing[0].id, {
+      return await base44.entities.TrialSessionStates.update(existing[0].id, {
         current_proof_item_id: null,
         jury_can_see_proof: false,
       });
     }
   } catch (error) {
     console.error('Error clearing jury:', error);
-  } finally {
-    // Keep flag locked for 1 second to prevent rapid re-triggering
-    _clearJuryTimeout = setTimeout(() => {
-      _clearJuryInProgress = false;
-    }, 1000);
+    throw error;
   }
 }
