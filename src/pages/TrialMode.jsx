@@ -177,6 +177,10 @@ export default function TrialMode() {
 
   const handleStatusChange = async (status) => {
     if (!selectedQuestionId) return;
+    // Auto-unpublish on status change
+    if (publishedProof) {
+      await handleClearJury();
+    }
     await updateQuestionStatus(selectedQuestionId, { status });
     setQuestions(q => q.map(qq => qq.id === selectedQuestionId ? { ...qq, status } : qq));
 
