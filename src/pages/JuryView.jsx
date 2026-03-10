@@ -267,8 +267,6 @@ export default function JuryView() {
                   </div>
                 </div>
               )}
-              </div>
-
               </>
               )}
               </div>
