@@ -90,7 +90,26 @@ export default function Attorney3() {
         const proofItems = await base44.entities.ProofItems.filter({ id: selectedProof.id });
         if (proofItems.length) {
           const item = proofItems[0];
-          setProofContent(item);
+          let content = { ...item };
+          
+          // If proof references an extract, load its file
+          if (item.exhibit_extract_id) {
+            const extracts = await base44.entities.ExhibitExtracts.filter({ id: item.exhibit_extract_id });
+            if (extracts.length) {
+              const extract = extracts[0];
+              content.file_url = extract.file_url;
+              content.label = extract.display_title || extract.title;
+            }
+          }
+          // If proof references a depo clip, load its metadata
+          else if (item.deposition_clip_id) {
+            const clips = await base44.entities.DepoClips.filter({ id: item.deposition_clip_id });
+            if (clips.length) {
+              content.label = clips[0].clip_title || `Clip: ${clips[0].start_cite}`;
+            }
+          }
+          
+          setProofContent(content);
         }
       } catch (err) {
         console.error('Load proof content failed:', err);
