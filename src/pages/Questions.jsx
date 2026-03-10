@@ -372,15 +372,15 @@ export default function Questions() {
                                   );
                                 })}
                               </div>
-                            )}
-                          </CardContent>
-                          </Card>
-                          </div>
-                          )}
-                          </Draggable>
+                              )}
+                              </CardContent>
+                              </Card>
+                              </div>
+                              )}
+                              </Draggable>
 
-                          {/* Render child questions below parent */}
-                          {hasChildren && (
+                              {/* Render child questions below parent */}
+                              {hasChildren && (
                       <div className="ml-8 space-y-2 mt-2 border-l-2 border-slate-700 pl-3">
                         {q.children.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map((child, childIdx) => {
                           const childProofIds = questionProofs[child.id] || [];
