@@ -251,7 +251,7 @@ export default function ExtractViewerZone({ selectedProof, isPublishing, onPubli
           </Button>
         )}
         {isPublishing ? (
-          <Button size="sm" onClick={onUnpublish} className="h-7 text-xs bg-red-700 hover:bg-red-600 px-2 gap-1 touch-manipulation">
+          <Button size="sm" onClick={() => onUnpublish?.()} className="h-7 text-xs bg-red-700 hover:bg-red-600 px-2 gap-1 touch-manipulation">
             <Square className="w-3 h-3" /> Unpublish
           </Button>
         ) : (
