@@ -193,18 +193,20 @@ export default function JuryView() {
           {isPdf ? (
           <>
           {/* Frame wrapper — matches attorney viewer frame exactly */}
-          <div style={PRESENTATION_FRAME_STYLE}>
+          <div style={{ ...PRESENTATION_FRAME_STYLE, position: 'absolute' }}>
             {/* PDF with optional spotlight overlay */}
-            <PdfViewer
-              fileUrl={extract.extract_file_url}
-              externalZoom={zoom}
-              externalPage={currentPage}
-              externalScrollLeft={sharedScrollLeft}
-              externalScrollTop={sharedScrollTop}
-              readOnly={true}
-              showControls={false}
-              dimmed={false}
-            />
+            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+              <PdfViewer
+                fileUrl={extract.extract_file_url}
+                externalZoom={zoom}
+                externalPage={currentPage}
+                externalScrollLeft={sharedScrollLeft}
+                externalScrollTop={sharedScrollTop}
+                readOnly={true}
+                showControls={false}
+                dimmed={false}
+              />
+            </div>
           </div>
 
           {/* Layer 1: Dark overlay (only when callout is spotlighted) */}
