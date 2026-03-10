@@ -124,10 +124,6 @@ export default function TrialMode() {
   };
 
   const handleSelectWitness = async (witnessId) => {
-    // Auto-unpublish if witness changes away from published proof
-    if (publishedProof) {
-      await handleClearJury();
-    }
     setSelectedWitnessId(witnessId);
     setSelectedQuestionId(null);
     setSelectedProof(null);
@@ -139,10 +135,6 @@ export default function TrialMode() {
   };
 
   const handleSelectQuestion = async (questionId) => {
-    // Auto-unpublish if question changes and published proof is different
-    if (publishedProof) {
-      await handleClearJury();
-    }
     setSelectedQuestionId(questionId);
     setSelectedChildQuestionId(null);
     setChildResolvedLinks(null);
@@ -153,18 +145,10 @@ export default function TrialMode() {
 
   const handleSelectChildQuestion = async (childQuestion) => {
     if (selectedChildQuestionId === childQuestion.id) {
-      // Deselect — revert to parent's proof; auto-unpublish if needed
-      if (publishedProof) {
-        await handleClearJury();
-      }
       setSelectedChildQuestionId(null);
       setChildResolvedLinks(null);
       setSelectedProof(null);
     } else {
-      // Auto-unpublish if child context changes
-      if (publishedProof) {
-        await handleClearJury();
-      }
       setSelectedChildQuestionId(childQuestion.id);
       setSelectedProof(null);
       const links = await resolveQuestionLinks(childQuestion.id, activeCase.id);
@@ -432,11 +416,7 @@ export default function TrialMode() {
             <ProofZone
               proofItems={activeProofItems}
               selectedProofId={selectedProof?.id}
-              onSelectProof={async (proof) => {
-                // Auto-unpublish if switching to a different proof
-                if (publishedProof && publishedProof.id !== proof.id) {
-                  await handleClearJury();
-                }
+              onSelectProof={(proof) => {
                 setSelectedProof(proof);
               }}
               childQuestionActive={!!selectedChildQuestionId}
