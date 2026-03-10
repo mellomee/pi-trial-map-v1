@@ -84,14 +84,10 @@ export default function Attorney2() {
       if (event.data?.trial_session_id === sessionId) {
         const state = event.data;
         setIsPublished(!!state.jury_display_enabled && !!state.current_proof_item_id);
-        if (state.current_proof_item_id) {
-          const proof = questionProofs.find(p => p.id === state.current_proof_item_id);
-          setSelectedProof(proof);
-        }
       }
     });
     return unsubscribe;
-  }, [sessionId, questionProofs]);
+  }, [sessionId]);
 
   // Handle publish
   const handlePublish = async (proof) => {
