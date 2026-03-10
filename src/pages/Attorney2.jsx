@@ -59,6 +59,24 @@ export default function Attorney2() {
     loadData();
   }, [activeCase?.id]);
 
+  // Load proofs for selected question
+  useEffect(() => {
+    if (!selectedQuestion?.id) {
+      setQuestionProofs([]);
+      return;
+    }
+    const loadProofs = async () => {
+      try {
+        const proofs = await base44.entities.QuestionProofItems.filter({ question_id: selectedQuestion.id });
+        setQuestionProofs(proofs);
+      } catch (err) {
+        console.error('Load proofs failed:', err);
+        setQuestionProofs([]);
+      }
+    };
+    loadProofs();
+  }, [selectedQuestion?.id]);
+
   // Handle publish
   const handlePublish = async (proof) => {
     if (!sessionId || !proof) return;
