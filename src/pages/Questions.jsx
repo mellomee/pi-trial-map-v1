@@ -124,16 +124,27 @@ export default function Questions() {
   };
 
   const onDragEnd = (result) => {
-    const { source, destination, draggableId } = result;
-    if (!destination || source.index === destination.index) return;
+    const { source, destination } = result;
+    if (!destination) return;
 
-    const newQuestions = Array.from(filtered);
-    const [moved] = newQuestions.splice(source.index, 1);
-    newQuestions.splice(destination.index, 0, moved);
+    // Work with filtered (already sorted) questions
+    const newFiltered = Array.from(allFiltered);
+    if (source.index === destination.index) return;
     
-    const reordered = newQuestions.map((q, i) => ({ ...q, order_index: i }));
-    setQuestions(qs => qs.map(q => reordered.find(r => r.id === q.id) || q));
-    saveQuestionsOrder(reordered);
+    const [moved] = newFiltered.splice(source.index, 1);
+    newFiltered.splice(destination.index, 0, moved);
+    
+    // Update order_index for all moved questions
+    const updated = newFiltered.map((q, i) => ({ ...q, order_index: i }));
+    
+    // Update state with new ordering
+    setQuestions(qs => qs.map(q => {
+      const u = updated.find(r => r.id === q.id);
+      return u ? { ...q, order_index: u.order_index } : q;
+    }));
+    
+    // Save to backend
+    saveQuestionsOrder(updated);
   };
 
   const unlinkProof = async (questionId, proofId) => {
