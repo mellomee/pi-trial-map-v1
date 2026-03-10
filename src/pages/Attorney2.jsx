@@ -116,16 +116,14 @@ export default function Attorney2() {
   const handleUnpublish = async () => {
     if (!sessionId) return;
     try {
-      const state = await base44.entities.TrialSessionStates.filter({ trial_session_id: sessionId });
-      if (state[0]) {
-        await base44.entities.TrialSessionStates.update(state[0].id, {
+      const states = await base44.entities.TrialSessionStates.filter({ trial_session_id: sessionId });
+      if (states && states[0]) {
+        await base44.entities.TrialSessionStates.update(states[0].id, {
           current_proof_item_id: null,
           jury_display_enabled: false,
           jury_can_see_proof: false,
         });
       }
-      setSelectedProof(null);
-      setIsPublished(false);
     } catch (err) {
       console.error('Unpublish failed:', err);
     }
