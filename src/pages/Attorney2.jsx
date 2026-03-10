@@ -202,12 +202,25 @@ export default function Attorney2() {
           {!isPublished && (
             <div className="flex-1 bg-slate-800/50 rounded-lg border border-slate-700/50 flex flex-col overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-700/50 bg-slate-900/50">
-                <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Available Proofs</p>
+                <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Available Proofs ({questionProofs.length})</p>
               </div>
               <div className="flex-1 overflow-y-auto space-y-2 p-3">
-                <div className="text-xs text-slate-500 text-center py-8">
-                  Select a question to view available proofs
-                </div>
+                {questionProofs.length === 0 ? (
+                  <div className="text-xs text-slate-500 text-center py-8">
+                    {selectedQuestion ? 'No proofs linked to this question' : 'Select a question to view available proofs'}
+                  </div>
+                ) : (
+                  questionProofs.map(proof => (
+                    <button
+                      key={proof.id}
+                      onClick={() => handlePublish(proof)}
+                      className="w-full text-left p-2 rounded-lg bg-slate-700/30 hover:bg-blue-600/40 border border-slate-600/30 hover:border-blue-400/60 transition-all text-xs text-slate-300 hover:text-blue-100"
+                    >
+                      <p className="font-medium truncate">Proof {proof.id?.slice(0, 8)}</p>
+                      {proof.label && <p className="text-[10px] text-slate-500 truncate">{proof.label}</p>}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           )}
