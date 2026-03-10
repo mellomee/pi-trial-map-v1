@@ -452,8 +452,8 @@ export default function Questions() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-slate-400 text-xs">Order Index</Label>
-                  <Input type="number" value={editing.order_index || 0} onChange={e => setEditing({ ...editing, order_index: parseInt(e.target.value) || 0 })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
+                  <Label className="text-slate-400 text-xs">Order Index (Leave blank for unordered)</Label>
+                  <Input type="number" value={editing.order_index !== null && editing.order_index !== undefined ? editing.order_index : ""} onChange={e => setEditing({ ...editing, order_index: e.target.value === "" ? null : parseInt(e.target.value) })} className="bg-[#0a0f1e] border-[#1e2a45] text-slate-200" />
                 </div>
               </div>
               <div className="flex flex-wrap gap-4 items-center">
