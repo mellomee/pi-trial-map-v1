@@ -189,9 +189,14 @@ export async function publishProofToJury(trialSessionId, proofItemId, calloutId 
  * Clear jury display
  */
 let _clearJuryInProgress = false;
+let _clearJuryTimeout = null;
 export async function clearJuryDisplay(trialSessionId) {
-  // Prevent concurrent calls
+  // Prevent concurrent calls with longer debounce
   if (_clearJuryInProgress) return;
+  
+  // Cancel pending timeout if any
+  if (_clearJuryTimeout) clearTimeout(_clearJuryTimeout);
+  
   _clearJuryInProgress = true;
 
   try {
@@ -200,15 +205,17 @@ export async function clearJuryDisplay(trialSessionId) {
     });
 
     if (existing.length > 0) {
-      return await base44.entities.TrialSessionStates.update(existing[0].id, {
+      await base44.entities.TrialSessionStates.update(existing[0].id, {
         current_proof_item_id: null,
         jury_can_see_proof: false,
       });
     }
   } catch (error) {
     console.error('Error clearing jury:', error);
-    throw error;
   } finally {
-    _clearJuryInProgress = false;
+    // Keep flag locked for 1 second to prevent rapid re-triggering
+    _clearJuryTimeout = setTimeout(() => {
+      _clearJuryInProgress = false;
+    }, 1000);
   }
 }
