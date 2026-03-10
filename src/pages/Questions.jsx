@@ -125,17 +125,11 @@ export default function Questions() {
     const [moved] = newFiltered.splice(source.index, 1);
     newFiltered.splice(destination.index, 0, moved);
     
-    // Renumber ALL filtered questions with consecutive indices
-    const updated = newFiltered.map((q, i) => ({ ...q, order_index: i }));
-    
-    // Update state with new ordering
-    setQuestions(qs => qs.map(q => {
-      const u = updated.find(r => r.id === q.id);
-      return u ? { ...q, order_index: u.order_index } : q;
-    }));
-    
-    // Save ALL updated questions to backend
-    Promise.all(updated.map(q => base44.entities.Questions.update(q.id, { order_index: q.order_index })));
+    // Update state with new ordering (display only, don't persist)
+    setQuestions(qs => {
+      const map = new Map(qs.map(q => [q.id, q]));
+      return newFiltered.map(q => map.get(q.id) || q);
+    });
   };
 
   const unlinkProof = async (questionId, proofId) => {
