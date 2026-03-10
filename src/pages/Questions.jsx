@@ -17,7 +17,7 @@ import { createPageUrl } from "@/utils";
 import BranchBuilder from "@/components/runner/BranchBuilder";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-const EMPTY = { party_id: "", exam_type: "Direct", order_index: 0, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "", is_branch_root: false, branch_prompt: "", importance: "Med", ask_if_time: true };
+const EMPTY = { party_id: "", exam_type: "Direct", order_index: null, question_text: "", goal: "", expected_answer: "", status: "NotAsked", answer_quality: "", admission_obtained: false, live_notes: "", is_branch_root: false, branch_prompt: "", importance: "Med", ask_if_time: true };
 
 export default function Questions() {
   const { activeCase } = useActiveCase();
